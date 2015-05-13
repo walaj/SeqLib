@@ -44,7 +44,12 @@ int32_t SnowTools::qualityTrimRead(int qualTrim, int32_t &startpoint, Read &r) {
 
 }
 
-
+void SnowTools::removeAllTags(Read& a) 
+{
+  size_t keep = (a->core.n_cigar<<2) + a->core.l_qname + ((a->core.l_qseq + 1)>>1) + a->core.l_qseq;
+  a->data = (uint8_t*)realloc(a->data, keep); // free the end, which has aux data
+  a->l_data = keep;
+}
 
 // get a string tag that might be separted by "x"
 std::vector<std::string> SnowTools::GetStringTag(const Read& a, const std::string tag) {
@@ -124,3 +129,4 @@ void SnowTools::rcomplement(std::string &a) {
     else
       *it = 'C';
 }
+

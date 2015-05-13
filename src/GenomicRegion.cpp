@@ -52,6 +52,9 @@
 #include <cassert>
 #include "SnowTools/gzstream.h" 
 
+// 4 billion
+#define END_MAX 4000000000
+
 namespace SnowTools {
 
 // return the width of the genomic region
@@ -114,6 +117,31 @@ bool GenomicRegion::operator<=(const GenomicRegion &b) const {
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   out << gr.toString();
   return out;
+}
+
+GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h) 
+{
+  // scrubtString
+  std::string reg2 = SnowTools::scrubString(reg, "chr");
+
+  // use htslib region parsing code
+  int tid, beg, end;
+  const char * q = hts_parse_reg(reg2.c_str(), &beg, &end);
+  if (q) {
+    char *tmp = (char*)alloca(q - reg2.c_str() + 1); // stack alloc
+    strncpy(tmp, reg2.c_str(), q - reg2.c_str());
+    tmp[q - reg2.c_str()] = 0;
+    tid = bam_name2id(h, tmp);
+  } else {
+    tid = bam_name2id(h, reg2.c_str());
+    beg = 0;
+    end = END_MAX;
+  }
+
+  chr = tid;
+  pos1 = beg;
+  pos2 = end;
+  
 }
 
 // constructor for SnowTools::GenomicRegion that takes strings. Assumes chr string is in 

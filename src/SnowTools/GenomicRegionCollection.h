@@ -16,11 +16,10 @@
 
 namespace SnowTools {
 
-
-typedef EInterval<size_t> GenomicInterval;
-typedef unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
-typedef EIntervalTree<size_t> GenomicIntervalTree;
-typedef unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
+typedef Interval<size_t> GenomicInterval;
+typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
+typedef IntervalTree<size_t> GenomicIntervalTree;
+typedef std::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
 typedef std::vector<GenomicInterval> GenomicIntervalVector;
 
 template<typename T=GenomicRegion>
@@ -135,8 +134,16 @@ class GenomicRegionCollection {
  
  GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<GenomicRegion> &subject, std::vector<size_t>& query_id, std::vector<size_t>& subject_id, bool ignore_strand = false);
 
+ /** Increase the left and right ends of each contained GenomicRegion by 
+  * the pad value.
+  * @param v Amount to pad each end by. Result is increase in width by 2*pad.
+  */
+ void pad(int v);
+
+ /** Set the i'th GenomicRegion */
  T& operator[](size_t i) { return m_grv[i]; }
  
+ /** Retreive the i'th GenomicRegion */
  const T& operator[](size_t i) const { return m_grv[i]; }
  
   /** Add two GenomicRegionCollection objects together
@@ -148,7 +155,7 @@ class GenomicRegionCollection {
    * Currently just outputs chr   pos   pos2 with no header.
    * @return BED formated string reprsentation 
    */
-  string sendToBED() const;
+  std::string sendToBED() const;
 
   /** Fill the next GenomicRegion object. 
    * @return false if add end of vector
@@ -173,7 +180,7 @@ class GenomicRegionCollection {
   // always construct this object any time m_grv is modifed
   GenomicIntervalTreeMap m_tree;
  
-  GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject);
+ GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
 
   std::vector<T> m_grv;
   

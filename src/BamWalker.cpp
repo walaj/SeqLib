@@ -1,6 +1,6 @@
 #include "SnowTools/BamWalker.h"
 
-#define DEBUG_WALKER 1
+//#define DEBUG_WALKER 1
 
 using namespace SnowTools;
 
@@ -10,19 +10,19 @@ bool BamWalker::__set_region(const GenomicRegion& gp) {
   assert(m_in.length());
 
 #ifdef DEBUG_WALKER
-    std::cout << "trying to set the region for "<< m_in << " and on region " << gp << std::endl;
+    std::cerr << "trying to set the region for "<< m_in << " and on region " << gp << std::endl;
 #endif
 
   //HTS set region
   if (!idx) {
     idx = hts_idx_load(m_in.c_str(), HTS_FMT_BAI);
 #ifdef DEBUG_WALKER
-    std::cout << "loading the index for "<< m_in << " and has value " << idx << std::endl;
+    std::cerr << "loading the index for "<< m_in << " and has value " << idx << std::endl;
 #endif
   }
   hts_itr = sam_itr_queryi(idx, gp.chr, gp.pos1, gp.pos2);
   if (!hts_itr) {
-    std::cerr << "Error: Failed to set region: " << gp << endl; 
+    std::cerr << "Error: Failed to set region: " << gp << std::endl; 
     return false;
   }
 
@@ -46,28 +46,40 @@ void BamWalker::setBamWalkerRegions(const GenomicRegionVector& grv)
   __set_region(grv[0]);
 }
 
-// closes the BamWriter and makes an index file
-/*void BamWalker::MakeIndex() {
+void BamWalker::__close_read_bam() {
 
-#ifdef HAVE_BAMTOOLS
-  m_writer->Close();
+  if (fp)
+    bgzf_close(fp);
+  if (br)
+    bam_hdr_destroy(br);
+  if (hts_itr)
+    hts_itr_destroy(hts_itr);
+  if (idx)
+    hts_idx_destroy(idx);
+
+  fp = NULL;
+  br = NULL;
+  hts_itr = NULL;
+  idx = NULL;
+
+}
+
+void BamWalker::__close_write_bam() 
+{
+  if (fop)
+    sam_close(fop);
+  fop = NULL;
   
-  // open the file 
-  BamReader reader;
-  if (!reader.Open(m_out)) {
-    cerr << "Error: Could not open the output BAM to create index " << m_out << endl;
-    exit(EXIT_FAILURE);
-  }
+}
+// closes the BamWriter and makes an index file
+void BamWalker::MakeIndex() {
+  
+  __close_write_bam();
+  
+  // call to htslib to buiild bai index
+  bam_index_build(m_out.c_str(), 0); // 0 is "min_shift", which is 0 for bai index
 
-  // create the index
-  if (!reader.CreateIndex()) {
-    cerr << "Error: Could not create the output BAM index for " << m_out << endl;
-    exit(EXIT_FAILURE);
-  }
-
-  reader.Close();
-#endif
-}*/
+}
 
 bool BamWalker::OpenReadBam(const std::string& bam) 
 {
@@ -78,7 +90,7 @@ bool BamWalker::OpenReadBam(const std::string& bam)
 
 bool BamWalker::OpenWriteBam(const std::string& bam) 
 {
-  m_in = bam;
+  m_out = bam;
 
   return __open_BAM_for_writing();
 }
@@ -102,13 +114,13 @@ bool BamWalker::__open_BAM_for_reading()
   fp = bgzf_open(m_in.c_str(), &rflag); 
   
   if (!fp) {
-    cerr << "Error using HTS reader on opening " << m_in << endl;
+    std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
     exit(EXIT_FAILURE);
   }
   br = bam_hdr_read(fp);
   
   if (!br) {
-    cerr << "Error using HTS reader on opening " << m_in << endl;
+    std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
     return false;
     //exit(EXIT_FAILURE);
   }
@@ -120,18 +132,21 @@ bool BamWalker::__open_BAM_for_reading()
 bool BamWalker::__open_BAM_for_writing() 
 {
 
-  assert(m_out.length());
-
   // hts open the writer
-  fop = sam_open(m_out.c_str(), "wb");
+  if (!fop) { // default is bam. if already set by flag, don't reopen
+    assert(m_out.length());
+    fop = sam_open(m_out.c_str(), "wb");
+    m_print_header = true;
+  }
   if (!fop) {
-    cerr << "Error: Cannot open BAM for writing " << m_out << endl;
+    std::cerr << "Error: Cannot open BAM for writing " << m_out << std::endl;
     return false;
     //exit(EXIT_FAILURE);
   }
 
   // hts write the header
-  sam_hdr_write(fop, br);
+  if (m_print_header)
+    sam_hdr_write(fop, br);
 
   return true;
 
@@ -139,7 +154,7 @@ bool BamWalker::__open_BAM_for_writing()
 
 // this is also opens the files for reading/writing and checks
 // that they are readable/writable
-BamWalker::BamWalker(const std::string& in, const std::string& out) : m_in(in), m_out(out)
+/*BamWalker::BamWalker(const std::string& in, const std::string& out) : m_in(in), m_out(out)
 {
 
   // open for reading
@@ -147,44 +162,35 @@ BamWalker::BamWalker(const std::string& in, const std::string& out) : m_in(in), 
     throw 20;
 
   // open for writing
-  if (!__open_BAM_for_writing())
-    throw 20;
+  if (out.length())
+    if (!__open_BAM_for_writing())
+      throw 20;
 
-}
+      }*/
 
 void BamWalker::SetMiniRulesCollection(const std::string& rules)
 {
+
   // construct the minirules
-  m_mr = MiniRulesCollection(rules);
+  m_mr = MiniRulesCollection(rules, br);
 
   // check that it worked
   if (!m_mr.size()) {
     std::cerr << "No MiniRules were successfully parsed" << std::endl;
-    throw 20;
+    //throw 20;
   }
 }
 
 void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const Read &r) const {
 
   char buffer[100];
-  string posstring = SnowTools::AddCommas<int>(r_pos(r));
+  std::string posstring = SnowTools::AddCommas<int>(r_pos(r));
   sprintf (buffer, "Reading read %11s at position %2s:%-11s. Kept %11s (%2d%%) [running count across whole BAM]",  
 	   rc_main.totalString().c_str(), GenomicRegion::chrToString(r_id(r)).c_str(), posstring.c_str(),  
 	   rc_main.keepString().c_str(), rc_main.percent());
   printf ("%s | ",buffer);
   SnowTools::displayRuntime(start);
-  cout << endl;
-  
-}
-
-void BamWalker::printRuleCounts(unordered_map<string, size_t> &rm) const {
-
-  size_t total = 0;
-  for (auto& i : rm)
-    total += i.second;
-  for (auto& i : rm) {
-    cout << "  " << i.first << ":" << i.second << "(" << SnowTools::percentCalc<size_t>(i.second, total) << "%)" << endl;
-  }
+  std::cerr << std::endl;
   
 }
 
@@ -197,7 +203,7 @@ bool BamWalker::GetNextRead(Read& r, std::string& rule)
     if (bam_read1(fp, b) < 0) { 
 
 #ifdef DEBUG_WALKER
-      std::cout << "ended reading on null hts_itr" << std::endl;
+      std::cerr << "ended reading on null hts_itr" << std::endl;
 #endif
       bam_destroy1(b); 
       return false;
@@ -214,7 +220,7 @@ bool BamWalker::GetNextRead(Read& r, std::string& rule)
     do {
 
 #ifdef DEBUG_WALKER
-      std::cout << "Failed read, trying next region. FP: "  << fp << " hts_itr " << 
+      std::cerr << "Failed read, trying next region. FP: "  << fp << " hts_itr " << 
 #endif
 
       // try next region, return if no others to try
@@ -222,7 +228,7 @@ bool BamWalker::GetNextRead(Read& r, std::string& rule)
       if (m_region_idx >= m_region.size()) {
 	bam_destroy1(b);
 #ifdef DEBUG_WALKER
-	std::cout << "reached end of regions " << std::endl;
+	std::cerr << "reached end of regions " << std::endl;
 #endif
 	return false;
       }
@@ -242,6 +248,11 @@ bool BamWalker::GetNextRead(Read& r, std::string& rule)
 
 void BamWalker::WriteAlignment(Read &r)
 {
+  if (m_strip_all_tags)
+    removeAllTags(r);
+  for (auto& i : m_tag_list)
+    r_remove_tag(r,i.c_str());
+    
   sam_write1(fop, br, r.get());
 }
 
@@ -249,14 +260,35 @@ std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
 {
   out << " -- In Bam:  " << b.m_in << std::endl;
   out << " -- Out Bam: " << b.m_out << std::endl;
+  out << " -- Output format: ";
+  if (!b.fop)
+    out << "BAM" << std::endl;
+  else if (b.fop->format.format == 4)
+    out << "BAM" << std::endl;
+  else if (b.fop->format.format == 6)
+    out << "CRAM" << std::endl;
+  else if (b.fop->format.format == text_format)
+    out << "SAM" << std::endl;
+
   out << b.m_mr << std::endl;
   if (b.m_region.size()) {
-    out << " ------- Regions ---------" << std::endl;;
+    out << " ------- BamWalker Regions ----------" << std::endl;;
     for (auto& i : b.m_region)
       out << i << std::endl;
   }
   else 
-    out << " -- Walking whole genome" << std::endl;
+    out << " - BamWalker - Walking whole genome -" << std::endl;
 
+  out <<   " ------------------------------------";
   return out;
+}
+
+void BamWalker::setStripTags(const std::string& list)
+{
+  std::istringstream iss(list);
+  std::string val;
+  while(std::getline(iss, val, ',')) 
+    {
+      m_tag_list.push_back(val);
+    }
 }

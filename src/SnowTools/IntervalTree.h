@@ -1,141 +1,131 @@
 #ifndef __INTERVAL_TREE_H
 #define __INTERVAL_TREE_H
 
-#include <climits>
 #include <vector>
 #include <algorithm>
 #include <iostream>
 
-using namespace std;
-
-template <class T, typename K = int>
-  class EInterval {
+template <class T, typename K = std::size_t>
+  class Interval {
   public:
   K start;
   K stop;
   T value;
-  EInterval()
-  : start(0)
-  , stop(INT_MAX)
-  , value("")
-  { }
-  EInterval(K s, K e, const T& v)
+  Interval(K s, K e, const T& v)
   : start(s)
   , stop(e)
   , value(v)
   { }
 };
 
-template <class T, typename K = int>
-  int intervalStart(const EInterval<T,K>& i) {
+template <class T, typename K>
+  K intervalStart(const Interval<T,K>& i) {
   return i.start;
 }
 
-  template <class T, typename K = int>
-  int intervalStop(const EInterval<T,K>& i) {
-    return i.stop;
-  }
+template <class T, typename K>
+  K intervalStop(const Interval<T,K>& i) {
+  return i.stop;
+}
 
-    template <class T, typename K = int>
-  ostream& operator<<(ostream& out, EInterval<T,K>& i) {
-      out << "Interval(" << i.start << ", " << i.stop << "): " << i.value;
-      return out;
-    }
+template <class T, typename K>
+  std::ostream& operator<<(std::ostream& out, Interval<T,K>& i) {
+  out << "Interval(" << i.start << ", " << i.stop << "): " << i.value;
+  return out;
+}
 
-      template <class T, typename K = int>
+template <class T, typename K = std::size_t>
   class IntervalStartSorter {
-	public:
-	bool operator() (const EInterval<T,K>& a, const EInterval<T,K>& b) {
-	  return a.start < b.start;
-	}
-      };
+  public:
+  bool operator() (const Interval<T,K>& a, const Interval<T,K>& b) {
+    return a.start < b.start;
+  }
+};
 
-template <class T, typename K = int>
-  class EIntervalTree {
+template <class T, typename K = std::size_t>
+  class IntervalTree {
 
   public:
-  typedef EInterval<T,K> interval;
-  typedef vector<interval> intervalVector;
-  typedef EIntervalTree<T,K> intervalTree;
+  typedef Interval<T,K> interval;
+  typedef std::vector<interval> intervalVector;
+  typedef IntervalTree<T,K> intervalTree;
     
   intervalVector intervals;
   intervalTree* left;
   intervalTree* right;
-  int center;
+  K center;
 
-  EIntervalTree<T,K>(void)
+  IntervalTree<T,K>(void)
   : left(NULL)
   , right(NULL)
   , center(0)
   { }
 
-  EIntervalTree<T,K>(const intervalTree& other) {
+  IntervalTree<T,K>(const intervalTree& other) 
+  : left(NULL)
+  , right(NULL)
+  {
     center = other.center;
     intervals = other.intervals;
     if (other.left) {
-      left = (intervalTree*) malloc(sizeof(intervalTree));
-      *left = *other.left;
-    } else {
-      left = NULL;
+      left = new intervalTree(*other.left);
     }
     if (other.right) {
-      right = new intervalTree();
-      *right = *other.right;
-    } else {
-      right = NULL;
+      right = new intervalTree(*other.right);
     }
   }
 
-  EIntervalTree<T,K>& operator=(const intervalTree& other) {
+  IntervalTree<T,K>& operator=(const intervalTree& other) {
     center = other.center;
     intervals = other.intervals;
     if (other.left) {
-      left = new intervalTree();
-      *left = *other.left;
+      left = new intervalTree(*other.left);
     } else {
+      if (left) delete left;
       left = NULL;
     }
     if (other.right) {
-      right = new intervalTree();
-      *right = *other.right;
+      right = new intervalTree(*other.right);
     } else {
+      if (right) delete right;
       right = NULL;
     }
     return *this;
   }
 
-  EIntervalTree<T,K>(
+  IntervalTree<T,K>(
 		    intervalVector& ivals,
-		    unsigned int depth = 16,
-		    unsigned int minbucket = 64,
-		    int leftextent = 0,
-		    int rightextent = 0,
-            unsigned int maxbucket = 512
+		    std::size_t depth = 16,
+		    std::size_t minbucket = 64,
+		    K leftextent = 0,
+		    K rightextent = 0,
+		    std::size_t maxbucket = 512
 		    )
   : left(NULL)
   , right(NULL)
   {
 
-    --depth;
+   --depth;
+    IntervalStartSorter<T,K> intervalStartSorter;
     if (depth == 0 || (ivals.size() < minbucket && ivals.size() < maxbucket)) {
+      std::sort(ivals.begin(), ivals.end(), intervalStartSorter);
       intervals = ivals;
     } else {
       if (leftextent == 0 && rightextent == 0) {
 	// sort intervals by start
-	IntervalStartSorter<T,K> intervalStartSorter;
-	sort(ivals.begin(), ivals.end(), intervalStartSorter);
+	std::sort(ivals.begin(), ivals.end(), intervalStartSorter);
       }
 
-      int leftp = 0;
-      int rightp = 0;
-      int centerp = 0;
+      K leftp = 0;
+      K rightp = 0;
+      K centerp = 0;
             
       if (leftextent || rightextent) {
 	leftp = leftextent;
 	rightp = rightextent;
       } else {
 	leftp = ivals.front().start;
-	vector<K> stops;
+	std::vector<K> stops;
 	stops.resize(ivals.size());
 	transform(ivals.begin(), ivals.end(), stops.begin(), intervalStop<T,K>);
 	rightp = *max_element(stops.begin(), stops.end());
@@ -168,10 +158,10 @@ template <class T, typename K = int>
     }
   }
 
-  void findOverlapping(K start, K stop, intervalVector& overlapping) {
+  void findOverlapping(K start, K stop, intervalVector& overlapping) const {
     if (!intervals.empty() && ! (stop < intervals.front().start)) {
-      for (typename intervalVector::iterator i = intervals.begin(); i != intervals.end(); ++i) {
-	interval& interval = *i;
+      for (typename intervalVector::const_iterator i = intervals.begin(); i != intervals.end(); ++i) {
+	const interval& interval = *i;
 	if (interval.stop >= start && interval.start <= stop) {
 	  overlapping.push_back(interval);
 	}
@@ -188,10 +178,10 @@ template <class T, typename K = int>
 
   }
 
-  void findContained(K start, K stop, intervalVector& contained) {
+  void findContained(K start, K stop, intervalVector& contained) const {
     if (!intervals.empty() && ! (stop < intervals.front().start)) {
-      for (typename intervalVector::iterator i = intervals.begin(); i != intervals.end(); ++i) {
-	interval& interval = *i;
+      for (typename intervalVector::const_iterator i = intervals.begin(); i != intervals.end(); ++i) {
+	const interval& interval = *i;
 	if (interval.start >= start && interval.stop <= stop) {
 	  contained.push_back(interval);
 	}
@@ -208,7 +198,7 @@ template <class T, typename K = int>
 
   }
 
-  ~EIntervalTree(void) {
+  ~IntervalTree(void) {
     // traverse the left and right
     // delete them all the way down
     if (left) {

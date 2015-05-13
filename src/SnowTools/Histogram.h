@@ -12,8 +12,8 @@
 
 class Bin;
 
-typedef EInterval<Bin> BinInterval;
-typedef EIntervalTree<Bin> BinIntervalTree;
+typedef Interval<Bin> BinInterval;
+typedef IntervalTree<Bin> BinIntervalTree;
 typedef std::vector<BinInterval> BinIntervalVector;
 
 typedef uint32_t S;

@@ -245,7 +245,7 @@ class AbstractRule {
   Range nbases = {-1,-1,true, "nbases"};
   Range ins = {-1,-1,true, "ins"};
   Range del = {-1,-1,true, "del"};
-  unordered_map<std::string,bool> orientation;
+  std::unordered_map<std::string,bool> orientation;
 
   std::string atm_file = "";
   bool atm_inv = false;
@@ -290,6 +290,8 @@ class AbstractRule {
     nm.setEvery();
     nbases.setEvery();
     fr.setEvery();
+    ins.setEvery();
+    del.setEvery();
     atm_file = "";
     subsam_frac = 1;
   }
@@ -303,12 +305,14 @@ class AbstractRule {
     nm.setNone();
     nbases.setNone();
     fr.setNone();
+    del.setNone();
+    ins.setNone();
     none = true;
   }
 
   // return if this rule accepts all reads
   bool isEvery() const {
-    return isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1);
+    return ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1);
   }
 
   // return if this rule accepts no reads
@@ -357,6 +361,8 @@ class MiniRules {
     return m_abstract_rules.size();
   }
 
+  void parseDiscordantShortcut(const std::string& line, const AbstractRule& ar);
+
   bool m_whole_genome = false;
 
   int m_width = 0;  
@@ -365,20 +371,21 @@ class MiniRules {
   //private:
 
   GRC m_grv;
-  GenomicIntervalTreeMap m_tree;
 
   int m_level = -1;
 
   int pad = 0; // how much should we pad the region?
 
-  vector<AbstractRule> m_abstract_rules;
+  std::vector<AbstractRule> m_abstract_rules;
 
   // rule applies to mate too
   bool m_applies_to_mate = false;
 
   // count the total number of valid reads
   int m_count = 0;
-  
+
+  // pointer to its containing MiniRulesCollection
+  MiniRulesCollection * mrc; 
 };
 
 // a hierarchy of mini rules to operate on
@@ -391,7 +398,7 @@ class MiniRulesCollection {
    */
   MiniRulesCollection() {}
 
-  MiniRulesCollection(std::string file);
+  MiniRulesCollection(std::string file, bam_hdr_t *b);
 
   std::string isValid(Read &r);
   
@@ -407,6 +414,8 @@ class MiniRulesCollection {
     return false;
   }
 
+  std::vector<int> rule_counts;
+
   GRC getAllRegions() const;
 
   size_t size() const { return m_regions.size(); } 
@@ -419,9 +428,13 @@ class MiniRulesCollection {
   }
 
   std::vector<MiniRules> m_regions;
+
+  bam_hdr_t * h;// in case we need to convert from text chr to id chr
+
  private:
 
 
+  
   
 };
 
