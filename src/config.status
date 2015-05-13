@@ -480,12 +480,12 @@ s,@INSTALL_DATA@,${INSTALL} -m 644,;t t
 s,@CYGPATH_W@,echo,;t t
 s,@PACKAGE@,snowtools,;t t
 s,@VERSION@,1.0,;t t
-s,@ACLOCAL@,${SHELL} /xchip/gistic/Jeremiah/GIT/isva/SnowTools/src/missing --run aclocal-1.9,;t t
-s,@AUTOCONF@,${SHELL} /xchip/gistic/Jeremiah/GIT/isva/SnowTools/src/missing --run autoconf,;t t
-s,@AUTOMAKE@,${SHELL} /xchip/gistic/Jeremiah/GIT/isva/SnowTools/src/missing --run automake-1.9,;t t
-s,@AUTOHEADER@,${SHELL} /xchip/gistic/Jeremiah/GIT/isva/SnowTools/src/missing --run autoheader,;t t
-s,@MAKEINFO@,${SHELL} /xchip/gistic/Jeremiah/GIT/isva/SnowTools/src/missing --run makeinfo,;t t
-s,@install_sh@,/xchip/gistic/Jeremiah/GIT/isva/SnowTools/src/install-sh,;t t
+s,@ACLOCAL@,${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run aclocal-1.9,;t t
+s,@AUTOCONF@,${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run autoconf,;t t
+s,@AUTOMAKE@,${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run automake-1.9,;t t
+s,@AUTOHEADER@,${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run autoheader,;t t
+s,@MAKEINFO@,${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run makeinfo,;t t
+s,@install_sh@,/xchip/gistic/Jeremiah/GIT/SnowTools/src/install-sh,;t t
 s,@STRIP@,,;t t
 s,@ac_ct_STRIP@,,;t t
 s,@INSTALL_STRIP_PROGRAM@,${SHELL} $(install_sh) -c -s,;t t
@@ -493,13 +493,13 @@ s,@mkdir_p@,mkdir -p --,;t t
 s,@AWK@,gawk,;t t
 s,@SET_MAKE@,,;t t
 s,@am__leading_dot@,.,;t t
-s,@AMTAR@,${SHELL} /xchip/gistic/Jeremiah/GIT/isva/SnowTools/src/missing --run tar,;t t
+s,@AMTAR@,${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run tar,;t t
 s,@am__tar@,${AMTAR} chof - "$$tardir",;t t
 s,@am__untar@,${AMTAR} xf -,;t t
 s,@CXX@,g++,;t t
 s,@CXXFLAGS@,-O3,;t t
-s,@LDFLAGS@,-Wl,-rpath,/xchip/gistic/Jeremiah/htslib-1.1 -L/xchip/gistic/Jeremiah/htslib-1.1  ,;t t
-s,@CPPFLAGS@, -I/xchip/gistic/Jeremiah/htslib-1.1 ,;t t
+s,@LDFLAGS@,-Wl,-rpath,/xchip/gistic/Jeremiah/GIT/htslib -L/xchip/gistic/Jeremiah/GIT/htslib  ,;t t
+s,@CPPFLAGS@, -I/xchip/gistic/Jeremiah/GIT/htslib ,;t t
 s,@ac_ct_CXX@,g++,;t t
 s,@EXEEXT@,,;t t
 s,@OBJEXT@,o,;t t

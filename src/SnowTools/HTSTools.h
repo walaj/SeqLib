@@ -78,6 +78,8 @@ typedef std::vector<Read> ReadVec;
     std::vector<int> GetIntTag(const Read& a, const std::string tag);
 
     void rcomplement(std::string& a);
+
+    void removeAllTags(Read& a);
   }
 
 #endif

@@ -9,6 +9,7 @@
 
 #include "SnowTools/SnowUtils.h"
 #include "SnowTools/SnowToolsCommon.h"
+#include "SnowTools/HTSTools.h"
 
 /** 
  */
@@ -34,6 +35,14 @@ class GenomicRegion {
   /** Construct a GenomicRegion from a string
    */
   GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2);
+  
+  /** Construct a GenomicRegion from a samtools style region string.
+   *
+   * This calls the samtools-like parser, which accepts in form "chr7:10,000-11,100".
+   * Note that this requires that a pointer to the BAM header be provided as well 
+   * to convert the text representation of the chr to the id number.
+   */
+  GenomicRegion(const std::string& reg, bam_hdr_t* h);
 
   static int32_t chrToNumber(std::string ref);
   static std::string chrToString(int32_t ref);

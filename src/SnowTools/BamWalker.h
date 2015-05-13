@@ -17,6 +17,19 @@ inline int char2phred(char b) {
   return v - 33;
 }
 
+// from samtools
+inline char *samfaipath(const char *fn_ref)
+{
+  char *fn_list = 0;
+  if (fn_ref == 0) return 0;
+  fn_list = (char*)calloc(strlen(fn_ref) + 5, 1);
+  strcat(strcpy(fn_list, fn_ref), ".fai");
+  if (access(fn_list, R_OK) == -1) { // fn_list is unreadable
+    std::cerr << "ERROR: Cannot read the index file for CRAM read/write" << std::endl;
+  }
+  return fn_list;
+}
+
 namespace SnowTools {
 
 /////////////// 
@@ -32,11 +45,11 @@ struct ReadCount {
     return perc;
   }
 
-  string totalString() const {
+  std::string totalString() const {
     return SnowTools::AddCommas<int>(total);
   }
 
-  string keepString() const {
+  std::string keepString() const {
     return SnowTools::AddCommas<int>(keep);
   }
 
@@ -54,8 +67,7 @@ class BamWalker {
    * This constructor will open the BAM file and read the header. 
    * It will also open the out BAM file.
    */
-  
-  BamWalker(const std::string& in, const std::string& out);
+  //BamWalker(const std::string& in, const std::string& out);
 
   /** Construct a new BamWalker for reading a BAM
    */
@@ -70,24 +82,10 @@ class BamWalker {
    * calls required within HTSlib to close a BAM or SAM file. 
    */
   ~BamWalker() {
-
-    if (fp)
-      bgzf_close(fp);
-    if (br)
-      bam_hdr_destroy(br);
-    if (hts_itr)
-      hts_itr_destroy(hts_itr);
-    if (idx)
-      hts_idx_destroy(idx);
-    if (fop)
-      sam_close(fop);
-
+    __close_read_bam();
+    __close_write_bam();
   }
 
-  struct timespec start;
-
-  void printRuleCounts(unordered_map<string, size_t> &rm) const;
-  
   /** Set a part of the BAM to walk.
    *
    * This will set the BAM pointer to the given region.
@@ -103,8 +101,11 @@ class BamWalker {
    */
   void setBamWalkerRegions(const GenomicRegionVector& grv);
 
-  // create the index file for the output bam
-  //void MakeIndex();
+  /** Create the index file for the output bam in BAI format.
+   *
+   * This will make a call to HTSlib bam_index_build for the output file.
+   */
+  void MakeIndex();
 
   /** Print a run-time message to stdout.
    *
@@ -161,13 +162,61 @@ class BamWalker {
   std::string m_out;
   MiniRulesCollection m_mr;
 
+  /** Set a flag to say if we should print reads to stdout
+   */
+  void setStdout() { fop = sam_open("-", "w"); }
+
+  /** Set a flag to say if we should print reads to CRAM format
+   */
+  void setCram(const std::string& out, const std::string& ref) { 
+    m_out = out;
+    fop = sam_open(m_out.c_str(), "wc"); 
+    if (!fop) {
+      std::cerr << "!!!\n!!!\n!!!\nCannot open CRAM file for writing. Will try BAM next. File: " <<  m_out << std::endl;
+      return;
+    }
+
+    // need to open reference for CRAM writing 
+    char* fn_list = samfaipath(ref.c_str());
+    if (fn_list) {
+      if (hts_set_fai_filename(fop, fn_list) != 0) {
+	fprintf(stderr, "Failed to use reference \"%s\".\n", fn_list);
+      }
+    } else {
+      std::cerr << "Failed to get the reference for CRAM compression" << std::endl;
+    }
+    m_print_header = true; 
+  }
+
+  void setPrintHeader() { 
+    m_print_header = true;
+  }
+
+  /** Set the output bam to remove all alignment tags */
+  void setStripAllTags() { m_strip_all_tags = true; }
+
+  /** Set a list of tags to strip */
+  void setStripTags(const std::string& list);
+  
+  /** Set to have verbose actions */
+  void setVerbose() { m_verbose = true; }
+
  protected:
+
+  // for stdout mode, print header?
+  bool m_print_header = false;
 
   // point index to this region of bam
   bool __set_region(const GenomicRegion& gp);
 
+  struct timespec start;
+
   //open bam, true if success
   bool __open_BAM_for_reading();
+
+  // close this bam file and delete all pointers
+  void __close_read_bam();
+  void __close_write_bam();
 
   // open m_out, true if success
   bool __open_BAM_for_writing();
@@ -176,11 +225,7 @@ class BamWalker {
   size_t m_region_idx = 0;
   GenomicRegionVector m_region;
 
-  int m_verbose = 1;
-
-  size_t m_reads_seen = 0;
-  
-  size_t m_reads_seen_valid = 0;
+  bool m_strip_all_tags = false;
 
   // hts
   BGZF * fp = 0;
@@ -188,9 +233,13 @@ class BamWalker {
   hts_itr_t * hts_itr = 0; // sam_itr_queryi(idx, 3, 60000, 80000);
   bam_hdr_t * br = 0;
 
-  samFile* fop = 0;
-  //fp = sam_open(fn, mode);
+  htsFile* fop = 0;
 
+  // which tags to strip
+  std::vector<std::string> m_tag_list;
+
+  // 
+  bool m_verbose = false;
 };
 
 

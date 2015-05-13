@@ -38,7 +38,7 @@ namespace SnowTools {
     return s;
   }
   
-  inline void displayRuntime(const timespec start) {
+  inline std::string displayRuntime(const timespec start) {
     
     struct timespec finish;
     clock_gettime(CLOCK_MONOTONIC, &finish);
@@ -49,7 +49,8 @@ namespace SnowTools {
     char buffer[100];
     sprintf (buffer, "CPU: %4dm%02ds Wall: %4dm%02ds", 
 	     (int)floor( ((double)t) /60.0), t % 60, min, sec);
-    printf ("%s",buffer);
+    buffer[99] = '\0';
+    return std::string(buffer);
   }
 
   /** Deprecated

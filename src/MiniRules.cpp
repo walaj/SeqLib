@@ -64,7 +64,6 @@ bool MiniRules::isReadOverlappingRegion(Read &r) {
 
   assert(!m_grv.empty());
 
-  //std::cout << "Checking read for overlap for gr " << GenomicRegion(r_id(r), r_pos(r), r_endpos(r)) << std::endl;
   if (m_grv.findOverlapping(GenomicRegion(r_id(r), r_pos(r), r_endpos(r))))
     return true;
   
@@ -73,14 +72,6 @@ bool MiniRules::isReadOverlappingRegion(Read &r) {
   
   if (m_grv.findOverlapping(GenomicRegion(r_mid(r), r_mpos(r), r_mpos(r) + r_length(r))))
     return true;
-
-  // check whether a read (or maybe its mate) hits a rule
-  //GenomicIntervalVector grv;
-  //if (m_tree.count(r_id(r)) == 1) // check that we have a tree for this chr
-  //  m_tree[r_id(r)].findOverlapping(r_pos(r), r_pos(r) + r_length(r), grv);
-  //if (m_tree.count(r_mid(r)) == 1 && m_applies_to_mate) // check that we have a tree for this chr
-  //  m_tree[r_mid(r)].findOverlapping (r_mpos(r), r_mpos(r) + r_length(r), grv);
-  //return grv.size() > 0;
 
   return false;
 }
@@ -135,26 +126,24 @@ void MiniRules::setRegionFromFile(const std::string& file) {
   
   m_region_file = file;
 
-  m_grv.regionFileToGRV(file, pad);
+  // parse if it's a file
+  if (SnowTools::read_access_test(file))
+    m_grv.regionFileToGRV(file, pad);
+  else {
+    if (mrc->h) {
+      GenomicRegion gr(file, mrc->h);
+      m_grv.add(gr);
+    } else {
+      std::cerr << "!!!!!!!!MiniRules region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
+    }
+  }
 
-#ifdef DEBUG_MINI
-  std::cout << "parsed file " << file << " to " << m_grv.size() << " regions: " << std::endl;
-  for (auto& i : m_grv)
-    std::cout << i << std::endl;
-#endif
-  //GenomicRegionVector grv = GenomicRegion::regionFileToGRV(file, pad);
-  //m_grv = GenomicRegion::mergeOverlappingIntervals(grv); 
-  //sort(m_grv.begin(), m_grv.end());
-
-  // set the width
-  //for (auto& it : m_grv)
-  //  m_width += it.width();
  
   if (m_grv.empty()) {
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-    std::cerr << "Warning: No regions detected in file: " << file << std::endl;
+    std::cerr << "Warning: No regions detected in region/file: " << file << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
@@ -170,7 +159,10 @@ void MiniRules::setRegionFromFile(const std::string& file) {
 // constructor to make a MiniRulesCollection from a rules file.
 // This will reduce each individual BED file and make the 
 // GenomicIntervalTreeMap
-MiniRulesCollection::MiniRulesCollection(std::string file) {
+MiniRulesCollection::MiniRulesCollection(std::string file, bam_hdr_t * b) {
+    
+    // set the header
+    h = b;
 
   // parse the rules file
   std::vector<std::string> region_files;
@@ -201,7 +193,7 @@ MiniRulesCollection::MiniRulesCollection(std::string file) {
   while(getline(iss_rules, line, delim)) {
 
 #ifdef DEBUG_MINI
-    std::cout << line << std::endl;
+    std::cerr << line << std::endl;
 #endif
     //exclude comments and empty lines
     bool line_empty = line.find_first_not_of("\t\n ") == std::string::npos;
@@ -209,149 +201,108 @@ MiniRulesCollection::MiniRulesCollection(std::string file) {
     if (!line_empty)
       line_comment = line.at(0) == '#';
     
-    if (!line_comment && !line_empty) {
-
-      // check that it doesn't have too many rules on it
-      if (count(line.begin(), line.end(), '@') > 1) {
-	std::cerr << "ERROR: Every line must start with region@, global@ or specify a rule, and only one region/rule per line" << std::endl;
-	std::cerr << "  If separating lines in -r flag, separate with %. If in file, use \\n" << std::endl;
-	std::cerr << "  Offending line: " << line << std::endl;
-	exit(EXIT_FAILURE);
+    if (line_comment || line_empty)
+      continue;
+    
+    // check that it doesn't have too many rules on it
+    if (count(line.begin(), line.end(), '@') > 1) {
+      std::cerr << "ERROR: Every line must start with region@, global@ or specify a rule, and only one region/rule per line" << std::endl;
+      std::cerr << "  If separating lines in -r flag, separate with %. If in file, use \\n" << std::endl;
+      std::cerr << "  Offending line: " << line << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    
+    //////////////////////////////////
+    // its a rule line, get the region
+    //////////////////////////////////
+    if (line.find("region@") != std::string::npos) {
+      
+      // check that the last one isnt empty. 
+      // if it is, add the global to it
+      if (m_regions.size() > 0)
+	if (m_regions.back().m_abstract_rules.size() == 0)
+	  m_regions.back().m_abstract_rules.push_back(rule_all);
+      
+      // start a new MiniRule set
+      MiniRules mr;
+      mr.mrc = this; // set the pointer to the collection
+      
+      // add the defaults
+      //mr->m_abstract_rules = all_rules;
+      
+      // check if the mate aplies
+      if (line.find(";mate") != std::string::npos) {
+	mr.m_applies_to_mate = true;
       }
-
-      //////////////////////////////////
-      // its a rule line, get the region
-      //////////////////////////////////
-      if (line.find("region@") != std::string::npos) {
-	
-	// check that the last one isnt empty. 
-	// if it is, add the global to it
-	if (m_regions.size() > 0)
-	  if (m_regions.back().m_abstract_rules.size() == 0)
-	    m_regions.back().m_abstract_rules.push_back(rule_all);
-
-	// start a new MiniRule set
-        MiniRules mr;
-	
-	// add the defaults
-	//mr->m_abstract_rules = all_rules;
-
-	// check if the mate aplies
-	if (line.find(";mate") != std::string::npos) {
-	  mr.m_applies_to_mate = true;
-	}
-	// check if we should pad 
-	std::regex reg_pad(".*?;pad\\[([0-9]+)\\].*");
-	std::smatch pmatch;
-	if (std::regex_search(line,pmatch,reg_pad))
-	  try { mr.pad = std::stoi(pmatch[1].str()); } catch (...) { std::cerr << "Cant read pad value for line " << line << ", setting to 0" << std::endl; }
-	  
-
-	if (line.find("@WG") != std::string::npos) {
+      // check if we should pad 
+      std::regex reg_pad(".*?;pad\\[([0-9]+)\\].*");
+      std::smatch pmatch;
+      if (std::regex_search(line,pmatch,reg_pad))
+	try { mr.pad = std::stoi(pmatch[1].str()); } catch (...) { std::cerr << "Cant read pad value for line " << line << ", setting to 0" << std::endl; }
+      
+      
+      if (line.find("@WG") != std::string::npos) {
 	  mr.m_whole_genome = true;
-        } else {
-	  std::regex file_reg("region@(.*?)(;|$)");
-	  std::smatch match;
-	  if (std::regex_search(line,match,file_reg))
-	    mr.setRegionFromFile(match[1].str());
-	  else {
-	    std::cerr << "Could not parse line: " << line << " to grab region " << std::endl;
-	    exit(EXIT_FAILURE);
-	  }
+      } else {
+	std::regex file_reg("region@(.*?)(;|$)");
+	std::smatch match;
+	if (std::regex_search(line,match,file_reg))
+	  mr.setRegionFromFile(match[1].str());
+	else {
+	  std::cerr << "Could not parse line: " << line << " to grab region " << std::endl;
+	  exit(EXIT_FAILURE);
 	}
-	mr.m_level = level++;
-	m_regions.push_back(mr);
       }
-      ////////////////////////////////////
-      // its a global rule
-      ///////////////////////////////////
-      else if (line.find("global@") != std::string::npos) {
-	rule_all.parseRuleLine(line);
-      }
-      ////////////////////////////////////
-      // its an rule
-      ////////////////////////////////////
-      else {
-	AbstractRule ar = rule_all;
 
-	// parse the line
-	ar.parseRuleLine(line);
-	m_regions.back().m_abstract_rules.push_back(ar);
+      mr.m_level = level++;
+      m_regions.push_back(mr);
+      rule_counts.push_back(0);
+
+
+    }
+    ////////////////////////////////////
+    // its a global rule
+    ///////////////////////////////////
+    else if (line.find("global@") != std::string::npos) {
+      rule_all.parseRuleLine(line);
+    }
+    ////////////////////////////////////
+    // its a rule
+    ////////////////////////////////////
+    else {
+
+      AbstractRule ar = rule_all;
+      // parse the line
+      ar.parseRuleLine(line);
+
+      m_regions.back().m_abstract_rules.push_back(ar);      
+      m_regions.back().parseDiscordantShortcut(line, ar);
 
 #ifdef DEBUG_MINI
-	std::cout << "trying to make rule for " << line << std::endl;
-	std::cout << " rule is " << ar << std::endl;
+      std::cerr << "trying to make rule for " << line << std::endl;
+      std::cerr << " rule is " << ar << std::endl;
 #endif
-	// check for "discordant" shortcut
-	std::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)");
-	std::smatch omatch;
-	if (std::regex_search(line, omatch, regex_disc)) {
-	  bool isneg = line.find("!discordant[") != std::string::npos;
-	  try {
-	    // fill in the isize condition 
-	    m_regions.back().m_abstract_rules.back().isize.min = std::stoi(omatch[1].str());
-	    m_regions.back().m_abstract_rules.back().isize.max = std::stoi(omatch[2].str());
-	    m_regions.back().m_abstract_rules.back().isize.inverted = !isneg;
-	    m_regions.back().m_abstract_rules.back().isize.every = false;
-	    // use the template to set a sequene of orientation rules
-	    AbstractRule aro = ar;
-	    if (isneg)
-	      aro.fr.ff.setOff();
-	    else
-	      aro.fr.ff.setOn();
-	    aro.fr.na = false;
-	    m_regions.back().m_abstract_rules.push_back(aro);
-	    // set another rr rule
-	    aro = ar;
-	    if (isneg)
-	      aro.fr.rr.setOff();
-	    else
-	      aro.fr.rr.setOn();
-	    aro.fr.na = false;
-	    m_regions.back().m_abstract_rules.push_back(aro);
-	    // set another rf rule
-	    aro = ar;
-	    if (isneg)
-	      aro.fr.rf.setOff();
-	    else
-	      aro.fr.rf.setOn();
-	    aro.fr.na = false;
-	    m_regions.back().m_abstract_rules.push_back(aro);
-	    // set another ic rule
-	    aro = ar;
-	    if (isneg)
-	      aro.fr.ic.setOff();
-	    else
-	      aro.fr.ic.setOn();
-	    aro.fr.na = false;
-	    m_regions.back().m_abstract_rules.push_back(aro);
-	  } catch (...) {
-	    std::cerr << "Caught error trying to parse for discordant " << " on line " << line << " match[1] " << omatch[1].str() << " match[2] " << omatch[2].str() << std::endl;     
-	    exit(EXIT_FAILURE);
-	  }
-	} // end discorant regex
-	  
-      }
-
-
-    } //end comment check
+    }
+    
   } // end \n parse
-
+  
   // check that the last one isnt empty. 
   // if it is, add the global to it
   if (m_regions.size() > 0)
     if (m_regions.back().m_abstract_rules.size() == 0)
       m_regions.back().m_abstract_rules.push_back(rule_all);
   
+  assert(m_regions.size() == rule_counts.size());
+
 }
 
 // print the MiniRulesCollection
 std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
 
-  std::cout << "----------MiniRulesCollection-------------" << std::endl;
+  std::cerr << "----------MiniRulesCollection-------------" << std::endl;
   for (auto it : mr.m_regions)
     out << it;
-  std::cout << "------------------------------------------";
+  std::cerr << "------------------------------------------";
   return out;
 
 }
@@ -362,7 +313,7 @@ std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
   std::string file_print = mr.m_whole_genome ? "WHOLE GENOME" : mr.m_region_file;
   out << "--Region: " << file_print;
   if (!mr.m_whole_genome) {
-    out << " --Size: " << AddCommas<int>(mr.m_width); 
+    //out << " --Size: " << AddCommas<int>(mr.m_width); 
     out << " --Pad: " << mr.pad;
     out << " --Include Mate: " << (mr.m_applies_to_mate ? "ON" : "OFF") << std::endl;
   } else {
@@ -378,7 +329,7 @@ std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
 // merge all of the intervals into one and send to a bed file
 void MiniRulesCollection::sendToBed(std::string file) {
 
-  ofstream out(file);
+  std::ofstream out(file);
   if (!out) {
     std::cerr << "Cannot write BED file: " << file << std::endl;
     return;
@@ -442,6 +393,7 @@ void FlagRule::parseRuleLine(std::string line) {
 // modify the rules based on the informaiton provided in the line
 void AbstractRule::parseRuleLine(std::string line) {
 
+
   // get everything but the global keyword, if there is one
   std::regex reg_noname("global@(.*)");
   std::smatch nnmatch;
@@ -455,9 +407,11 @@ void AbstractRule::parseRuleLine(std::string line) {
   // check that the conditoins are valid
   std::istringstream iss_c(noname);
   std::string tmp;
+
   while (getline(iss_c, tmp, ';')) {
     std::regex reg(".*?!?([a-z_]+).*");
     std::smatch cmatch;
+
     if (std::regex_search(tmp, cmatch, reg)) {
       if (valid.count(cmatch[1].str()) == 0) {
 	std::cerr << "Invalid condition of: " << tmp << std::endl;
@@ -476,15 +430,24 @@ void AbstractRule::parseRuleLine(std::string line) {
     setNone();
 
   // modify the ranges if need to
-  isize.parseRuleLine(noname);
-  mapq.parseRuleLine(noname);
-  len.parseRuleLine(noname);
-  clip.parseRuleLine(noname);
-  phred.parseRuleLine(noname);
-  nbases.parseRuleLine(noname);
-  ins.parseRuleLine(noname);
-  del.parseRuleLine(noname);
-  nm.parseRuleLine(noname);
+  if (noname.find("isize") != std::string::npos)
+    isize.parseRuleLine(noname);
+  if (noname.find("mapq") != std::string::npos)
+    mapq.parseRuleLine(noname);
+  if (noname.find("len") != std::string::npos)
+    len.parseRuleLine(noname);
+  if (noname.find("clip") != std::string::npos)
+    clip.parseRuleLine(noname);
+  if (noname.find("phred") != std::string::npos)
+    phred.parseRuleLine(noname);
+  if (noname.find("nbases") != std::string::npos)
+    nbases.parseRuleLine(noname);
+  if (noname.find("ins") != std::string::npos)
+    ins.parseRuleLine(noname);
+  if (noname.find("del") != std::string::npos)
+    del.parseRuleLine(noname);
+  if (noname.find("nm") != std::string::npos)
+    nm.parseRuleLine(noname);
 
   // parse the subsample data
   parseSubLine(noname);
@@ -493,7 +456,6 @@ void AbstractRule::parseRuleLine(std::string line) {
   fr.parseRuleLine(noname);
 
   parseSeqLine(noname);
-  
 }
 
 // parse for range
@@ -501,6 +463,7 @@ void Range::parseRuleLine(std::string line) {
   
   std::istringstream iss(line);
   std::string val;
+  
   while (getline(iss, val, ';')) {
     
     std::string i_reg_str = "!" + pattern + ":?\\[(.*?),(.*?)\\]";
@@ -539,7 +502,12 @@ void Range::parseRuleLine(std::string line) {
 	std::cerr << "Caught error trying to parse for " << pattern << " on line " << line << " match[1] " << match[1].str() << " match[2] " << match[2].str() << std::endl;     
 	exit(EXIT_FAILURE);
       }
+
     }
+    //else {
+    //  std::cerr << "Could not parse rule: " << val << " for range " << pattern << std::endl;
+    //  exit(EXIT_FAILURE);
+    //}
     
   } // end getline
 }
@@ -579,8 +547,6 @@ bool AbstractRule::isValid(Read &r) {
   if (!fr.isValid(r))
     return false;
 
-  //std::cout << "flag pass " << r_pos(r) << std::endl;
-
   // check the CIGAR
   if (!ins.isEvery() || !del.isEvery()) {
 
@@ -589,9 +555,9 @@ bool AbstractRule::isValid(Read &r) {
 
     for (size_t i = 0; i < r_cig_size(r); i++) {
       if (r_cig_type(r, i) == 'I')
-	imax = max(r_cig_len(r, i), imax);
+	imax = std::max(r_cig_len(r, i), imax);
       else if (r_cig_type(r, i) == 'D')
-	dmax = max(r_cig_len(r, i), dmax);	
+	dmax = std::max(r_cig_len(r, i), dmax);	
     }
 
     if (!ins.isValid(imax))
@@ -646,7 +612,7 @@ bool AbstractRule::isValid(Read &r) {
     if (new_len == 0)
       return false;
 
-    new_clipnum = max(0, static_cast<int>(clipnum - (r_length(r) - new_len)));
+    new_clipnum = std::max(0, static_cast<int>(clipnum - (r_length(r) - new_len)));
 
     // check the N
     if (!nbases.isEvery()) {
@@ -762,9 +728,9 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
 
   out << "  Rule: " << ar.name << " -- ";;
   if (ar.isEvery()) {
-    out << "  KEEPING ALL" << std::endl;
+    out << "  KEEPING ALL";
   } else if (ar.isNone()) {
-    out << "  KEEPING NONE" << std::endl;  
+    out << "  KEEPING NONE";  
   } else {
     if (!ar.isize.isEvery())
       out << "isize:" << ar.isize << " -- " ;
@@ -963,6 +929,12 @@ void AbstractRule::parseSeqLine(std::string line) {
   if (std::regex_search(line, match, reg)) {
     line = match[1].str();
     atm_file = line;
+    
+#ifndef HAVE_AHOCORASICK_AHOCORASICK_H
+    std::cerr << "Attempting to perform motif matching without Aho-Corasick library. Need to link to lahocorasick to do this." << std::endl;
+    exit(EXIT_FAILURE);
+#endif
+
   } else {
     return;
   }
@@ -986,7 +958,7 @@ void AbstractRule::parseSeqLine(std::string line) {
   atm = ac_automata_init(); //atm_ptr(ac_automata_init(), atm_free_delete);
   
   // make the Aho-Corasick key
-  std::cout << "...generating Aho-Corasick key"  << inv << " from file " << atm_file << std::endl;
+  std::cerr << "...generating Aho-Corasick key"  << inv << " from file " << atm_file << std::endl;
   std::string pat;
   size_t count = 0;
   while (getline(iss, pat, '\n')) {
@@ -997,7 +969,7 @@ void AbstractRule::parseSeqLine(std::string line) {
     ac_automata_add(atm, &tmp_pattern);
   }
   ac_automata_finalize(atm);
-  std::cout << "Done generating Aho-Corasick key of size " << count << std::endl;  
+  std::cerr << "Done generating Aho-Corasick key of size " << count << std::endl;  
 
   atm_count = count;
 #endif
@@ -1038,5 +1010,58 @@ GRC MiniRulesCollection::getAllRegions() const
   return out;
 }
 
+  void MiniRules::parseDiscordantShortcut(const std::string& line, const AbstractRule& ar)
+{
+
+  // check for "discordant" shortcut
+  std::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)");
+  std::smatch omatch;
+  if (std::regex_search(line, omatch, regex_disc)) {
+    bool isneg = line.find("!discordant[") != std::string::npos;
+    try {
+      // fill in the isize condition 
+      m_abstract_rules.back().isize.min = std::stoi(omatch[1].str());
+      m_abstract_rules.back().isize.max = std::stoi(omatch[2].str());
+      m_abstract_rules.back().isize.inverted = !isneg;
+      m_abstract_rules.back().isize.every = false;
+      // use the template to set a sequene of orientation rules
+      AbstractRule aro = ar;
+      if (isneg)
+	aro.fr.ff.setOff();
+      else
+	aro.fr.ff.setOn();
+      aro.fr.na = false;
+      m_abstract_rules.push_back(aro);
+      // set another rr rule
+      aro = ar;
+      if (isneg)
+	aro.fr.rr.setOff();
+      else
+	aro.fr.rr.setOn();
+      aro.fr.na = false;
+      m_abstract_rules.push_back(aro);
+      // set another rf rule
+      aro = ar;
+      if (isneg)
+	aro.fr.rf.setOff();
+      else
+	aro.fr.rf.setOn();
+      aro.fr.na = false;
+      m_abstract_rules.push_back(aro);
+      // set another ic rule
+      aro = ar;
+      if (isneg)
+	aro.fr.ic.setOff();
+      else
+	aro.fr.ic.setOn();
+      aro.fr.na = false;
+      m_abstract_rules.push_back(aro);
+    } catch (...) {
+      std::cerr << "Caught error trying to parse for discordant " << " on line " << line << " match[1] " << omatch[1].str() << " match[2] " << omatch[2].str() << std::endl;     
+      exit(EXIT_FAILURE);
+    }
+  } // end discorant regex
+  
 }
 
+}

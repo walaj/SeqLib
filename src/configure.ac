@@ -3,7 +3,7 @@
 AC_PREREQ(2.59) ## specificy version of autoconf
 AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
 AM_INIT_AUTOMAKE(foreign)
-AC_CONFIG_SRCDIR([SnowUtils.cpp])
+AC_CONFIG_SRCDIR([SnowTools.cpp])
 ##AC_CONFIG_HEADER([config.h])
 ##m4_include([m4/m4_ax_openmp.m4])
 
@@ -45,7 +45,7 @@ if test "$with_htslib" -a -d "$with_htslib"; then
     htslib_include="-I$with_htslib"
     htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
 else
-    htslibr=/xchip/gistic/Jeremiah/htslib-1.1	
+    htslibr=/xchip/gistic/Jeremiah/GIT/htslib	
     htslib_include="-I$htslibr"
     htslib_ldflags="-Wl,-rpath,$htslibr -L$htslibr"
 fi

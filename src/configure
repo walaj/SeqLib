@@ -273,7 +273,7 @@ PACKAGE_VERSION='1.0'
 PACKAGE_STRING='snowtools 1.0'
 PACKAGE_BUGREPORT='jwala@broadinstitute.org'
 
-ac_unique_file="SnowUtils.cpp"
+ac_unique_file="SnowTools.cpp"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -4343,7 +4343,7 @@ if test "$with_htslib" -a -d "$with_htslib"; then
     htslib_include="-I$with_htslib"
     htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
 else
-    htslibr=/xchip/gistic/Jeremiah/htslib-1.1
+    htslibr=/xchip/gistic/Jeremiah/GIT/htslib
     htslib_include="-I$htslibr"
     htslib_ldflags="-Wl,-rpath,$htslibr -L$htslibr"
 fi
