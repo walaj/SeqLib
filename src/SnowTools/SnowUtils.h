@@ -40,6 +40,7 @@ namespace SnowTools {
   
   inline std::string displayRuntime(const timespec start) {
     
+#ifndef __APPLE__
     struct timespec finish;
     clock_gettime(CLOCK_MONOTONIC, &finish);
     double elapsed = (finish.tv_sec - start.tv_sec);
@@ -51,6 +52,9 @@ namespace SnowTools {
 	     (int)floor( ((double)t) /60.0), t % 60, min, sec);
     buffer[99] = '\0';
     return std::string(buffer);
+#else
+    return "--- time not configured for apple\n";
+#endif
   }
 
   /** Deprecated
