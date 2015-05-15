@@ -54,6 +54,7 @@ namespace SnowTools {
     return std::string(buffer);
 #else
     return "--- time not configured for apple\n";
+    std::cerr << start << std::endl;
 #endif
   }
 

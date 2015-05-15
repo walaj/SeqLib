@@ -194,7 +194,7 @@ void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const Read &r) con
   
 }
 
-bool BamWalker::GetNextRead(Read& r, std::string& rule)
+bool BamWalker::GetNextRead(Read& r, bool& rule)
 {
   
   void* dum = 0;
@@ -291,4 +291,11 @@ void BamWalker::setStripTags(const std::string& list)
     {
       m_tag_list.push_back(val);
     }
+}
+
+std::string BamWalker::displayMiniRulesCollection() const 
+{
+  std::stringstream ss;
+  ss << m_mr;
+  return ss.str();
 }

@@ -11,13 +11,17 @@
 #include "SnowTools/SnowUtils.h"
 #include "SnowTools/HTSTools.h"
 
+#define HAVE_AHOCORASICK_AHOCORASICK_H 1
 #ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+
 #include "ahocorasick/ahocorasick.h"
+#include <memory>
+
 // custom deleter for aho-corasick
 struct atm_free_delete {
   void operator()(void* x) { free((AC_AUTOMATA_t*)x); }
 };
-typedef unique_ptr<AC_AUTOMATA_t> atm_ptr;
+typedef std::unique_ptr<AC_AUTOMATA_t> atm_ptr;
 #endif
 
 namespace SnowTools {
@@ -155,6 +159,7 @@ struct FlagRule {
     rf = Flag();
     rr = Flag();
     ic = Flag();
+    paired = Flag();
   }
   
 
@@ -172,7 +177,7 @@ struct FlagRule {
     }*/
 
   Flag dup, supp, qcfail, hardclip, fwd_strand, rev_strand,
-    mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic;
+    mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic, paired;
 
   bool na = true;
   void parseRuleLine(std::string line);
@@ -199,6 +204,7 @@ struct FlagRule {
     rf.setOn();
     rr.setOn();
     ic.setOn();
+    paired.setOn();
     na = true;
   }
 
@@ -219,6 +225,7 @@ struct FlagRule {
     rf.setOff();
     rr.setOff();
     ic.setOff();
+    paired.setOff();
   }
 
 
@@ -245,11 +252,17 @@ class AbstractRule {
   Range nbases = {-1,-1,true, "nbases"};
   Range ins = {-1,-1,true, "ins"};
   Range del = {-1,-1,true, "del"};
+  Range xp = {-1,-1,true, "xp"};
   std::unordered_map<std::string,bool> orientation;
 
   std::string atm_file = "";
   bool atm_inv = false;
   size_t atm_count = 0;
+
+  std::string id;
+
+  // how many reads pass this rule?
+  size_t m_count = 0;
 
 #ifdef HAVE_AHOCORASICK_AHOCORASICK_H
   //atm_ptr atm;
@@ -292,6 +305,7 @@ class AbstractRule {
     fr.setEvery();
     ins.setEvery();
     del.setEvery();
+    xp.setEvery();
     atm_file = "";
     subsam_frac = 1;
   }
@@ -306,13 +320,14 @@ class AbstractRule {
     nbases.setNone();
     fr.setNone();
     del.setNone();
+    xp.setNone();
     ins.setNone();
     none = true;
   }
 
   // return if this rule accepts all reads
   bool isEvery() const {
-    return ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1);
+    return ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1) && xp.isEvery();
   }
 
   // return if this rule accepts no reads
@@ -348,6 +363,8 @@ class MiniRules {
   public:
   MiniRules() {}
   ~MiniRules() {}
+
+  std::string id;
     
   bool isValid(Read &r);
    
@@ -381,11 +398,12 @@ class MiniRules {
   // rule applies to mate too
   bool m_applies_to_mate = false;
 
-  // count the total number of valid reads
-  int m_count = 0;
-
   // pointer to its containing MiniRulesCollection
   MiniRulesCollection * mrc; 
+
+  // how many reads pass this MiniRule
+  size_t m_count = 0;
+
 };
 
 // a hierarchy of mini rules to operate on
@@ -400,7 +418,7 @@ class MiniRulesCollection {
 
   MiniRulesCollection(std::string file, bam_hdr_t *b);
 
-  std::string isValid(Read &r);
+  bool isValid(Read &r);
   
   friend std::ostream& operator<<(std::ostream& out, const MiniRulesCollection &mr);
   
@@ -414,7 +432,8 @@ class MiniRulesCollection {
     return false;
   }
 
-  std::vector<int> rule_counts;
+  size_t m_count = 0; // passed
+  size_t m_count_seen = 0; // tested
 
   GRC getAllRegions() const;
 
@@ -431,10 +450,12 @@ class MiniRulesCollection {
 
   bam_hdr_t * h;// in case we need to convert from text chr to id chr
 
- private:
+  void countsToFile(const std::string& file) const;
 
+  // should we keep checking rules, even it passed? (useful for counting)
+  bool m_fall_through = false;
 
-  
+ private:  
   
 };
 

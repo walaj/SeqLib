@@ -469,11 +469,11 @@ s,@mandir@,${prefix}/man,;t t
 s,@build_alias@,,;t t
 s,@host_alias@,,;t t
 s,@target_alias@,,;t t
-s,@DEFS@,-DPACKAGE_NAME=\"snowtools\" -DPACKAGE_TARNAME=\"snowtools\" -DPACKAGE_VERSION=\"1.0\" -DPACKAGE_STRING=\"snowtools\ 1.0\" -DPACKAGE_BUGREPORT=\"jwala@broadinstitute.org\" -DPACKAGE=\"snowtools\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_HTSLIB_HTS_H=1 ,;t t
+s,@DEFS@,-DPACKAGE_NAME=\"snowtools\" -DPACKAGE_TARNAME=\"snowtools\" -DPACKAGE_VERSION=\"1.0\" -DPACKAGE_STRING=\"snowtools\ 1.0\" -DPACKAGE_BUGREPORT=\"jwala@broadinstitute.org\" -DPACKAGE=\"snowtools\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_CLOCK_GETTIME=1 ,;t t
 s,@ECHO_C@,,;t t
 s,@ECHO_N@,-n,;t t
 s,@ECHO_T@,,;t t
-s,@LIBS@,-lrt -lz  -lhts ,;t t
+s,@LIBS@,-lrt -lz ,;t t
 s,@INSTALL_PROGRAM@,${INSTALL},;t t
 s,@INSTALL_SCRIPT@,${INSTALL},;t t
 s,@INSTALL_DATA@,${INSTALL} -m 644,;t t
@@ -498,8 +498,8 @@ s,@am__tar@,${AMTAR} chof - "$$tardir",;t t
 s,@am__untar@,${AMTAR} xf -,;t t
 s,@CXX@,g++,;t t
 s,@CXXFLAGS@,-O3,;t t
-s,@LDFLAGS@,-Wl,-rpath,/xchip/gistic/Jeremiah/GIT/htslib -L/xchip/gistic/Jeremiah/GIT/htslib  ,;t t
-s,@CPPFLAGS@, -I/xchip/gistic/Jeremiah/GIT/htslib ,;t t
+s,@LDFLAGS@,,;t t
+s,@CPPFLAGS@, ,;t t
 s,@ac_ct_CXX@,g++,;t t
 s,@EXEEXT@,,;t t
 s,@OBJEXT@,o,;t t

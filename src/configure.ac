@@ -38,31 +38,31 @@ AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [clo
 ##fi
 
 # Check for the hts library paths
-AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
-	[specify directory containing the Heng Li's HTSlib)]))
+#AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
+#	[specify directory containing the Heng Li's HTSlib)]))
 
-if test "$with_htslib" -a -d "$with_htslib"; then
-    htslib_include="-I$with_htslib"
-    htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
-else
-    htslibr=/xchip/gistic/Jeremiah/GIT/htslib	
-    htslib_include="-I$htslibr"
-    htslib_ldflags="-Wl,-rpath,$htslibr -L$htslibr"
-fi
+#if test "$with_htslib" -a -d "$with_htslib"; then
+#    htslib_include="-I$with_htslib"
+#    htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
+#else
+#    htslibr=	
+#    htslib_include="-I$htslibr"
+#    htslib_ldflags="-Wl,-rpath,$htslibr -L$htslibr"
+#fi
 
 # Check for the aho library paths
-AC_ARG_WITH(aho, AS_HELP_STRING([--with-aho=PATH],
-	[specify directory containing the AhoCorasick string matching algorithm C code)]))
+#AC_ARG_WITH(aho, AS_HELP_STRING([--with-aho=PATH],
+#	[specify directory containing the AhoCorasick string matching algorithm C code)]))
 
-if test "$with_aho" -a -d "$with_aho"; then
-    aho_include="-I$with_aho"
-    aho_ldflags="-L$with_aho/ahocorasick/build"
-    aho_libs="-lahocorasick"
-##else
-##    aho=/xchip/gistic/Jeremiah/GIT/isva/ThirdParty/multifast-v1.4.2
-##    aho_include="-I$aho"
-##    aho_ldflags="-L$aho/ahocorasick"
-fi
+#if test "$with_aho" -a -d "$with_aho"; then
+#    aho_include="-I$with_aho"
+#    aho_ldflags="-L$with_aho/ahocorasick/build"
+#    aho_libs="-lahocorasick"
+#else
+#    aho=/xchip/gistic/Jeremiah/GIT/isva/ThirdParty/multifast-v1.4.2
+#    aho_include="-I$aho"
+#    aho_ldflags="-L$aho/ahocorasick"
+#fi
 
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -76,20 +76,23 @@ fi
 AC_SUBST(AM_CXXFLAGS, "-g -Wall -Wextra $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "-O3")
 AC_SUBST(CFLAGS, "-O3")
-AC_SUBST(CPPFLAGS, "$CPPFLAGS $htslib_include $aho_include")
-AC_SUBST(LDFLAGS, "$htslib_ldflags $aho_ldflags $LDFLAGS")
+#AC_SUBST(CPPFLAGS, "$CPPFLAGS $htslib_include $aho_include")
+AC_SUBST(CPPFLAGS, "$CPPFLAGS ")
+AC_SUBST(CPPFLAGS, "$CPPFLAGS") 
+AC_SUBST(LDFLAGS, "$LDFLAGS")
 
 # We always need to specify to link in bamtools
-AC_SUBST(LIBS, "$LIBS -lhts $aho_libs")
+#AC_SUBST(LIBS, "$LIBS -lhts $aho_libs")
+AC_SUBST(LIBS, "$LIBS")
 
 # Make sure the bamtools headers can be found
 ##AC_CHECK_HEADERS([api/BamReader.h],,[AC_MSG_ERROR([The bamtools library must be installed (http://github.com/pezmaster31/bamtools). You can specify its path with the --with-bamtools=PATH option])])
 
-# Make sure the bamtools headers can be found
-AC_CHECK_HEADERS([ahocorasick/ahocorasick.h],,[AC_MSG_WARN([The Aho-Corasick library must be installed (http://sourceforge.net/projects/multifast/). You can specify its path with the --with-aho=PATH option])])
+# Make sure the ahocorasick headers can be found
+#AC_CHECK_HEADERS([ahocorasick/ahocorasick.h],,[AC_MSG_WARN([The Aho-Corasick library must be installed (http://sourceforge.net/projects/multifast/). You can specify its path with the --with-aho=PATH option])])
 
 # Make sure the HTSlib headers can be found
-AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
+#AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
 
 AC_CONFIG_FILES([Makefile])
 
