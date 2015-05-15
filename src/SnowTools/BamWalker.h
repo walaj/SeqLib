@@ -144,10 +144,10 @@ class BamWalker {
    * If a MiniRulesCollection is defined for this BAM
    * will grab the next valid read.
    * r Read to fill with data
-   * ref String identifying which rule this read passed. Empty if not passed
+   * rule bool identifying if this read passed the rules
    * @return true if the next read is available
    */
-  bool GetNextRead(Read &r, std::string& ref);
+  bool GetNextRead(Read &r, bool& rule);
 
   /** Write an alignment to the output BAM file 
    * @param r The BamRead to save
@@ -157,6 +157,13 @@ class BamWalker {
   /** Return the MiniRulesCollection object used by this BamWalker
    */
   const MiniRulesCollection& GetMiniRulesCollection() const { return m_mr; }
+
+  /** Send the counts for passed rules to a file */
+  void MiniRulesToFile(const std::string& file) const { m_mr.countsToFile(file); }
+
+  /** Set the BamWalker to count reads for all rules */
+  void setCountAllRules() { m_mr.m_fall_through = true; }
+
 
   std::string m_in;
   std::string m_out;
@@ -200,6 +207,9 @@ class BamWalker {
   
   /** Set to have verbose actions */
   void setVerbose() { m_verbose = true; }
+
+  /** Return the MiniRulesCollection as a string */
+  std::string displayMiniRulesCollection() const;
 
  protected:
 
