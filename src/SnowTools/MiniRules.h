@@ -11,8 +11,9 @@
 #include "SnowTools/SnowUtils.h"
 #include "SnowTools/HTSTools.h"
 
-#define HAVE_AHOCORASICK_AHOCORASICK_H 1
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+//#define HAVE_AHOCORASICK_AHOCORASICK_H 1
+//#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
 
 #include "ahocorasick/ahocorasick.h"
 #include <memory>
@@ -264,7 +265,8 @@ class AbstractRule {
   // how many reads pass this rule?
   size_t m_count = 0;
 
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
   //atm_ptr atm;
   AC_AUTOMATA_t * atm = 0;
 #endif
@@ -284,7 +286,8 @@ class AbstractRule {
 
   void parseSubLine(std::string line);
 
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
   bool ahomatch(Read &r);
 
   bool ahomatch(const char * seq, unsigned len);
