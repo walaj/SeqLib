@@ -51,8 +51,7 @@ AR = ar
 ARFLAGS = cru
 libsnowtools_a_AR = $(AR) $(ARFLAGS)
 libsnowtools_a_DEPENDENCIES = $(top_srcdir)/bwa/libbwa.a \
-	$(top_srcdir)/htslib/libhts.a \
-	$(top_srcdir)/multifast-v1.4.2/ahocorasick/build/libahocorasick.a
+	$(top_srcdir)/htslib/libhts.a
 am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-Histogram.$(OBJEXT) \
 	libsnowtools_a-BamWalker.$(OBJEXT) \
@@ -68,7 +67,9 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-is.$(OBJEXT) libsnowtools_a-bwtindex.$(OBJEXT) \
 	libsnowtools_a-bwt_gen.$(OBJEXT) \
 	libsnowtools_a-QSufSort.$(OBJEXT) libsnowtools_a-bwt.$(OBJEXT) \
-	libsnowtools_a-bwamem_extra.$(OBJEXT)
+	libsnowtools_a-bwamem_extra.$(OBJEXT) \
+	libsnowtools_a-ahocorasick.$(OBJEXT) \
+	libsnowtools_a-node.$(OBJEXT)
 libsnowtools_a_OBJECTS = $(am_libsnowtools_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -185,20 +186,20 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib multifast-v1.4.2/ahocorasick
+SUBDIRS = bwa htslib 
 noinst_LIBRARIES = libsnowtools.a
 libsnowtools_a_CPPFLAGS = \
 	-I$(top_srcdir)/htslib \
 	-I$(top_srcdir)/multifast-v1.4.2 
 
-libsnowtools_a_LIBADD = $(top_srcdir)/bwa/libbwa.a $(top_srcdir)/htslib/libhts.a \
-			$(top_srcdir)/multifast-v1.4.2/ahocorasick/build/libahocorasick.a
-
+libsnowtools_a_LIBADD = $(top_srcdir)/bwa/libbwa.a $(top_srcdir)/htslib/libhts.a 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp HTSTools.cpp BamRead.cpp gzstream.C BWAWrapper.cpp \
 			bwa/is.c bwa/bwtindex.c \
-			bwa/bwt_gen.c bwa/QSufSort.c bwa/bwt.c bwa/bwamem_extra.c
+			bwa/bwt_gen.c bwa/QSufSort.c bwa/bwt.c bwa/bwamem_extra.c \
+			multifast-v1.4.2/ahocorasick/ahocorasick.c \
+			multifast-v1.4.2/ahocorasick/node.c 
 
 all: all-recursive
 
@@ -261,6 +262,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-MiniRules.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-QSufSort.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-SnowUtils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-ahocorasick.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-bwamem_extra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-bwt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-bwt_gen.Po@am__quote@
@@ -268,6 +270,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-gChain.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-gzstream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-is.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-node.Po@am__quote@
 
 .C.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -534,6 +537,34 @@ libsnowtools_a-bwamem_extra.obj: bwa/bwamem_extra.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bwa/bwamem_extra.c' object='libsnowtools_a-bwamem_extra.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwamem_extra.obj `if test -f 'bwa/bwamem_extra.c'; then $(CYGPATH_W) 'bwa/bwamem_extra.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwamem_extra.c'; fi`
+
+libsnowtools_a-ahocorasick.o: multifast-v1.4.2/ahocorasick/ahocorasick.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-ahocorasick.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" -c -o libsnowtools_a-ahocorasick.o `test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/ahocorasick.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" "$(DEPDIR)/libsnowtools_a-ahocorasick.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='multifast-v1.4.2/ahocorasick/ahocorasick.c' object='libsnowtools_a-ahocorasick.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-ahocorasick.o `test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/ahocorasick.c
+
+libsnowtools_a-ahocorasick.obj: multifast-v1.4.2/ahocorasick/ahocorasick.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-ahocorasick.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" -c -o libsnowtools_a-ahocorasick.obj `if test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/ahocorasick.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" "$(DEPDIR)/libsnowtools_a-ahocorasick.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='multifast-v1.4.2/ahocorasick/ahocorasick.c' object='libsnowtools_a-ahocorasick.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-ahocorasick.obj `if test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/ahocorasick.c'; fi`
+
+libsnowtools_a-node.o: multifast-v1.4.2/ahocorasick/node.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-node.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-node.Tpo" -c -o libsnowtools_a-node.o `test -f 'multifast-v1.4.2/ahocorasick/node.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/node.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libsnowtools_a-node.Tpo" "$(DEPDIR)/libsnowtools_a-node.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-node.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='multifast-v1.4.2/ahocorasick/node.c' object='libsnowtools_a-node.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-node.o `test -f 'multifast-v1.4.2/ahocorasick/node.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/node.c
+
+libsnowtools_a-node.obj: multifast-v1.4.2/ahocorasick/node.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-node.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-node.Tpo" -c -o libsnowtools_a-node.obj `if test -f 'multifast-v1.4.2/ahocorasick/node.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/node.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/node.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libsnowtools_a-node.Tpo" "$(DEPDIR)/libsnowtools_a-node.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-node.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='multifast-v1.4.2/ahocorasick/node.c' object='libsnowtools_a-node.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-node.obj `if test -f 'multifast-v1.4.2/ahocorasick/node.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/node.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/node.c'; fi`
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
