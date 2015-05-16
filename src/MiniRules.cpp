@@ -694,7 +694,8 @@ bool AbstractRule::isValid(Read &r) {
   }
 
 
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
   if (atm_file.length()) {
     bool m = ahomatch(r);
      if ( (!m && !atm_inv) || (m && atm_inv) )
@@ -811,7 +812,8 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
       out << "del:" << ar.del << " -- ";
     if (ar.subsam_frac < 1)
       out << "sub:" << ar.subsam_frac << " -- ";
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
+    //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
     if (ar.atm_file != "")
       out << "matching on " << ar.atm_count << " subsequences from file " << ar.atm_file << " -- ";
 #endif
@@ -944,7 +946,8 @@ bool Flag::parseRuleLine(std::string &val, std::regex &reg) {
   
 }
 
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 //bool AbstractRule::ahomatch(const string& seq) {
 bool AbstractRule::ahomatch(Read &r) {
@@ -967,7 +970,8 @@ bool AbstractRule::ahomatch(Read &r) {
 }
 #endif
 
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 bool AbstractRule::ahomatch(const char * seq, unsigned len) {
 
@@ -996,8 +1000,9 @@ void AbstractRule::parseSeqLine(std::string line) {
     line = match[1].str();
     atm_file = line;
     
-#ifndef HAVE_AHOCORASICK_AHOCORASICK_H
-    std::cerr << "Attempting to perform motif matching without Aho-Corasick library. Need to link to lahocorasick to do this." << std::endl;
+    //#ifndef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifdef __APPLE__
+    std::cerr << "NOT AVAILBLE ON APPLE -- Attempting to perform motif matching without Aho-Corasick library. Need to link to lahocorasick to do this." << std::endl;
     exit(EXIT_FAILURE);
 #endif
 
@@ -1019,7 +1024,8 @@ void AbstractRule::parseSeqLine(std::string line) {
     inv = " -- Inverted -- ";
   }
 
-#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+//#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
   // initialize it
   atm = ac_automata_init(); //atm_ptr(ac_automata_init(), atm_free_delete);
   
