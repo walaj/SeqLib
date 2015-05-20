@@ -175,29 +175,40 @@ void MiniRules::setRegionFromFile(const std::string& file) {
   return;
 }
 
+  MiniRulesCollection::MiniRulesCollection(const std::string& file, bam_hdr_t *b)
+  {
+    // set the header
+    h = b;
+    __construct_MRC(file);
+  }
+
+  MiniRulesCollection::MiniRulesCollection(const std::string& file)
+  {
+    __construct_MRC(file);
+  }
+
 // constructor to make a MiniRulesCollection from a rules file.
 // This will reduce each individual BED file and make the 
 // GenomicIntervalTreeMap
-MiniRulesCollection::MiniRulesCollection(std::string file, bam_hdr_t * b) {
-    
-  // set the header
-  h = b;
+void MiniRulesCollection::__construct_MRC(const std::string& file) {
 
   // parse the rules file
   std::vector<std::string> region_files;
   std::ifstream iss_file(file.c_str());
   char delim = '%';
 
+  std::string ffile = file;;
+
   if (iss_file) {
     std::string temp;
-    file = "";
+    ffile = "";
     while(getline(iss_file, temp)) {
-      file += temp + "\n";
+      ffile += temp + "\n";
     }
     iss_file.close();
     delim = '\n';
   }
-  std::istringstream iss_rules(file.c_str());
+  std::istringstream iss_rules(ffile.c_str());
   
   // loop through the rules file and grab the rules
   std::string line;

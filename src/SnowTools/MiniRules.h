@@ -419,7 +419,9 @@ class MiniRulesCollection {
    */
   MiniRulesCollection() {}
 
-  MiniRulesCollection(std::string file, bam_hdr_t *b);
+  MiniRulesCollection(const std::string& file, bam_hdr_t *b);
+
+  MiniRulesCollection(const std::string& file);
 
   bool isValid(Read &r);
   
@@ -459,7 +461,8 @@ class MiniRulesCollection {
   bool m_fall_through = false;
 
  private:  
-  
+
+  void __construct_MRC(const std::string& file);  
 };
 
 }
