@@ -199,6 +199,7 @@ bool BamWalker::GetNextRead(Read& r, bool& rule)
   
   void* dum = 0;
   bam1_t* b = bam_init1(); 
+
   if (hts_itr == 0) { 
     if (bam_read1(fp, b) < 0) { 
 
@@ -211,10 +212,14 @@ bool BamWalker::GetNextRead(Read& r, bool& rule)
   } 
 
   int32_t valid;
-  if (hts_itr == 0)
+  if (hts_itr == 0) {
+    //std::cerr << "debug snowtools intialized read FROM WHOLE " << std::endl;
     valid = bam_read1(fp, b);
-  else
+  } else {
+    //std::cerr << "debug snowtools intialized read FROM HTS_ITR_NEXT. fp " << fp << " hts_itr " << hts_itr << " b " << b << std::endl;
     valid = hts_itr_next(fp, hts_itr, b, dum);
+    //std::cerr << "debug snowtools DONE intialized read FROM HTS_ITR_NEXT" << std::endl;
+  }
 
   if (valid <= 0) { // read not found
     do {
