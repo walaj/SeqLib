@@ -10,7 +10,7 @@
 namespace SnowTools {
 
 template<class T>
-void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad) {
+void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, bam_hdr_t* h) {
   
   assert(pad >= 0);
 
@@ -46,17 +46,19 @@ void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad) {
 
 	}
 
-	if (GenomicRegion::chrToNumber(chr) >= 0) {
-	  T gr(chr, pos, pos);
+	// parse the strings and send to genomci region
+	T gr(chr, pos, pos, h);
+	if (gr.valid()) {
 	  gr.pad(pad);
 	  m_grv.push_back(gr);
 	}
+
       } // end "keep" conditional
     } // end main while
 }
 
 template<class T>
-void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad) {
+void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, bam_hdr_t* h) {
 
   assert(pad >= 0);
 
@@ -78,7 +80,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad) 
     if (line.find("#") == std::string::npos) {
       while(std::getline(iss_line, val, '\t')) {
 	switch (counter) { 
-	case 0 : chr = SnowTools::scrubString(val, "chr"); break; 
+	case 0 : chr = val; break; 
 	case 1 : pos1 = val; break;
 	case 2 : pos2 = val; break;
 	}
@@ -92,11 +94,15 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad) 
 	}
 	
       }
-      if (GenomicRegion::chrToNumber(chr) >= 0) {
-	T gr(chr, pos1, pos2);
+
+      // construct the GenomicRegion
+      T gr(chr, pos1, pos2, h);
+      if (gr.valid()) {
 	gr.pad(pad);
 	m_grv.push_back(gr);
       }
+	
+	//}
     } // end "keep" conditional
   } // end main while
 
@@ -104,7 +110,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad) 
 }
 
 template<class T>
-void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad) {
+void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, bam_hdr_t * h) {
 
   assert(pad >= 0);
 
@@ -134,9 +140,14 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad) 
 	if (count < 3) {
 	  std::cerr << "Didn't parse VCF line properly: " << line << std::endl;
 	} else {
-	  T gr(chr, pos, pos);
-	  gr.pad(pad);
-	  m_grv.push_back(gr);
+
+	  // construct the GenomicRegion
+	  T gr(chr, pos, pos, h);
+	  if (gr.valid()) {
+	    gr.pad(pad);
+	    m_grv.push_back(gr);
+	  }
+
 	}
 	
       }
@@ -147,7 +158,7 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad) 
 }
 
 template<class T>
-void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pad) {
+void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pad, bam_hdr_t *h) {
 
   igzstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
@@ -167,15 +178,15 @@ void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pa
   if ((header.find("MuTect") != std::string::npos) ||
       (file.find("call_stats") != std::string::npos) || 
       (file.find("callstats") != std::string::npos))
-    readMuTect(file, pad);
+    readMuTect(file, pad, h);
   // BED file
   else if (file.find(".bed") != std::string::npos)
-    readBEDfile(file, pad);
+    readBEDfile(file, pad, h);
   // VCF file
   else if (file.find(".vcf") != std::string::npos) 
-    readVCFfile(file, pad);
+    readVCFfile(file, pad, h);
   else // default is BED file
-    readBEDfile(file, pad);    
+    readBEDfile(file, pad, h);    
 }
 
 // reduce a set of GenomicRegions into the minium overlapping set (same as GenomicRanges "reduce")
@@ -410,3 +421,4 @@ void GenomicRegionCollection<T>::pad(int v)
 }
 
 }
+

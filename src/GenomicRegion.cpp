@@ -92,13 +92,13 @@ std::string GenomicRegion::toString() const {
   return out.str();
 }
 
-void GenomicRegion::pad(uint32_t pad) {
+void GenomicRegion::pad(int32_t pad) {
   if (pad > pos1)
     pos1 = 1;
   else
     pos1 = pos1-pad;
 
-  const uint32_t maxpos = 250000000;
+  const int32_t maxpos = 250000000;
   pos2 = std::min(pos2+pad, maxpos); // 2500000000 is dummy for now. should be chr end
 }
 
@@ -147,7 +147,7 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
 // constructor for SnowTools::GenomicRegion that takes strings. Assumes chr string is in 
 // natural (1, ..., X) or (chr1, ..., chrX) format. That is, it converts to
 // BamTools format with a -1 operation.
-GenomicRegion::GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2) {
+/*GenomicRegion::GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2) {
 
   chr = GenomicRegion::chrToNumber(t_chr);
   try {
@@ -159,6 +159,7 @@ GenomicRegion::GenomicRegion(std::string t_chr, std::string t_pos1, std::string 
     std::cerr << "stoi failed in GenomicRegion constructor. Tried: " << t_pos1 << " " << t_pos2 << std::endl;
   }
 }
+*/
 
 // constructor to take a pair of coordinates to define the genomic interval
 GenomicRegion::GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, bool t_strand) {
@@ -254,5 +255,52 @@ void GenomicRegion::random() {
   exit(EXIT_FAILURE);
   
 }
+
+  GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, bam_hdr_t *h)
+  {
+    // convert the pos strings
+    try {
+      pos1 = std::stoi(tpos1);
+    }
+    catch (...) {
+      std::cerr << "GenomicRegion: error making pos1 from " << tpos1 << std::endl;
+      pos1 = 0;
+    }
+    
+    // convert the pos strings
+    try {
+      pos2 = std::stoi(tpos2);
+    }
+    catch (...) {
+      std::cerr << "GenomicRegion: error making pos2 from " << tpos2 << std::endl;
+      pos2 = 0;
+    }
+    
+      chr = -1;
+
+      // if no header, assume that it is "standard"
+      if (!h) {
+	try { 
+	  chr = std::stoi(SnowTools::scrubString(tchr, "chr")) - 1;
+	} catch(...) {
+	  std::cerr << "GenomicRegion: error making chr from string " << tchr << std::endl;
+	}
+	return;
+      }
+
+      // TODO slow.
+      bool found = false;
+      for (int i = 0; i < h->n_targets; ++i)
+	if (strcmp(tchr.data(), h->target_name[i]))
+	  {
+	    chr = i;
+	    found = true;
+	    break;
+	  }
+
+      if (!found) 
+	std::cerr << "GenomicRegion: error, could not find matching chr in header for chr string " << tchr << std::endl;
+
+  }
 
 }
