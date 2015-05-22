@@ -34,8 +34,11 @@ class GenomicRegion {
 
   /** Construct a GenomicRegion from a string
    */
-  GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2);
+  //GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2);
   
+  /** Construct a GenomicRegion from a set of strings */
+  GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, bam_hdr_t* h = NULL);
+
   /** Construct a GenomicRegion from a samtools style region string.
    *
    * This calls the samtools-like parser, which accepts in form "chr7:10,000-11,100".
@@ -55,6 +58,9 @@ class GenomicRegion {
    * with val <= genome_size_XY and then converts to GenomicRegion
    */
   void random();
+
+  /** Does this GenomicRegion represent a valid region? */
+  bool valid() const { return chr >= 0; }
 
   /** Check if the GenomicRegion is empty (aka chr -1)
    */
@@ -77,13 +83,13 @@ class GenomicRegion {
 
   friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr);
   std::string toString() const;
-  void pad(uint32_t pad);
+  void pad(int32_t pad);
   
   int width() const;
 
   int32_t chr = 0;
-  uint32_t pos1 = 0;
-  uint32_t pos2 = 0;
+  int32_t pos1 = 0;
+  int32_t pos2 = 0;
   bool strand = true; // true = pos, false = neg
 
  private:

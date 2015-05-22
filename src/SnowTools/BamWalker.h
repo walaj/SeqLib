@@ -129,7 +129,7 @@ class BamWalker {
 
   /** Pass a MiniRules script to the BAM.
    * 
-   * This will call the constructor of MiniRulesCollection, and 
+4   * This will call the constructor of MiniRulesCollection, and 
    * parse the provides rules and add it as a rule set to this BamWalker.
    * @param rules A string of rules, or a file pointing to a rules script
    */
@@ -210,6 +210,9 @@ class BamWalker {
 
   /** Return the MiniRulesCollection as a string */
   std::string displayMiniRulesCollection() const;
+
+  /** Return a pointer to the BAM header */
+  bam_hdr_t * header() const { return br; };
 
  protected:
 

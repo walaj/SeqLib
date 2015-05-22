@@ -147,7 +147,7 @@ void MiniRules::setRegionFromFile(const std::string& file) {
 
   // parse if it's a file
   if (SnowTools::read_access_test(file))
-    m_grv.regionFileToGRV(file, pad);
+    m_grv.regionFileToGRV(file, pad, mrc->h);
   else {
     if (mrc->h) {
       GenomicRegion gr(file, mrc->h);

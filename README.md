@@ -7,6 +7,10 @@ C++ htslib/bwa-mem interface and command line tools for interrogating BAM and SA
 	
 **License:** [GNU GPLv3][license]
 
+API Documentation
+-----------------
+[API Documentation][htmldoc]
+
 Description
 -----------
 
@@ -80,3 +84,4 @@ Attributions
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
+[htmldoc]: http://www.broadinstitute.org/~jwala/SnowToolsDocs/index.html
