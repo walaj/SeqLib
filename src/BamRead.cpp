@@ -2,14 +2,15 @@
 
 namespace SnowTools {
 
-  BamRead::BamRead() {
-    b = bam_init1();
+  struct free_delete {
+    void operator()(void* x) { bam_destroy1((bam1_t*)x); }
+  };
+  
+  void BamRead::init() {
+    bam1_t* f = bam_init1();
+    b = std::shared_ptr<bam1_t>(f, free_delete());
   }
-
-  BamRead::~BamRead() {
-    bam_destroy1(b);
-  }
-
+  
   void BamRead::SetQname(std::string n)
   {
     // copy out the non-qname data
@@ -33,17 +34,17 @@ namespace SnowTools {
     free(nonq);
   }
 
-  void BamRead::SetSequence(std::string s)
+  /*void BamRead::SetSequence(std::string s)
   {
 
     // change the size to accomodate new sequence. Clear the quality string
-    std::cout << "osize " << b->l_data << " calcsize " << (b->core.l_qseq + b->core.l_qname + (b->core.n_cigar<<2)) << std::endl;
+    //std::cout << "osize " << b->l_data << " calcsize " << (b->core.l_qseq + b->core.l_qname + (b->core.n_cigar<<2)) << std::endl;
     b->data = (uint8_t*)realloc(b->data, b->core.l_qname + s.length() + (b->core.n_cigar<<2));
     
     // copy in the new sequence
     memcpy(b->data + b->core.l_qname + (b->core.n_cigar<<2), (uint8_t*)s.c_str(), s.length());
 
-  }
+    }*/
 
   /*  std::string BamRead::toSam(bam_hdr_t* h) const 
   {
@@ -57,12 +58,12 @@ namespace SnowTools {
     //kstring_t *str;
     //sam_format1(hdr, b, str);
     //out << str->s;
-    return out;
 
-    out << r.QnameChar()  << "\t" << r.AlignmentFlag()  << "\t"
-	<< r.ChrID() << "\t" 
-	<< r.InsertSize() << "\t" << r.AlignmentFlag() << "\t" 
-	<< r.MapQuality() << "\t" << r.Sequence();
+    out << bam_get_qname(r.b) << "\t" << r.b->core.flag
+	<< "\t" << r.b->core.tid << "\t" << r.b->core.pos 
+	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
+	<< "\t" << "=" << "\t" << 0 
+	<< "\t" << r.Sequence() << "\t" << "*";
     return out;
       
     

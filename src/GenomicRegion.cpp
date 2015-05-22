@@ -291,7 +291,7 @@ void GenomicRegion::random() {
       // TODO slow.
       bool found = false;
       for (int i = 0; i < h->n_targets; ++i)
-	if (strcmp(tchr.data(), h->target_name[i]))
+	if (strcmp(tchr.c_str(), h->target_name[i]) == 0)
 	  {
 	    chr = i;
 	    found = true;

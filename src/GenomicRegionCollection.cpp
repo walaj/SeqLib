@@ -97,6 +97,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
 
       // construct the GenomicRegion
       T gr(chr, pos1, pos2, h);
+
       if (gr.valid()) {
 	gr.pad(pad);
 	m_grv.push_back(gr);
@@ -387,7 +388,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
 #ifdef DEBUG_OVERLAPS
 		std::cerr << "find overlaps hit " << j.start << " " << j.stop << " -- " << j.value << std::endl;
 #endif
-		output.add(T(m_grv[i].chr, std::max((uint32_t)j.start, m_grv[i].pos1), std::min((uint32_t)j.stop, m_grv[i].pos2)));
+		output.add(T(m_grv[i].chr, std::max(j.start, m_grv[i].pos1), std::min(j.stop, m_grv[i].pos2)));
 	      }
 	  }
 	}

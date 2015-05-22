@@ -7,7 +7,7 @@ extern "C" {
   #include <string.h>
 }
 
-#define DEBUG_BWATOOLS 1
+//#define DEBUG_BWATOOLS 1
 
 #define _set_pac(pac, l, c) ((pac)[(l)>>2] |= (c)<<((~(l)&3)<<1))
 #define _get_pac(pac, l) ((pac)[(l)>>2]>>((~(l)&3)<<1)&3)
@@ -36,7 +36,7 @@ namespace SnowTools {
       tlen += i.seq.length();
 
 #ifdef DEBUG_BWATOOLS
-    //std::cerr << "ref seq length: " << tlen << std::endl;
+    std::cerr << "ref seq length: " << tlen << std::endl;
 #endif
 
     // make the bwt
@@ -76,11 +76,12 @@ namespace SnowTools {
     
   }
 
-  void BWAWrapper::alignSingleSequence(const std::string& seq) {
-
+  void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
+				       bool keep_secondary) {
+    
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
-
+    
 #ifdef DEBUG_BWATOOLS
     std::cout << "num hits: " << ar.n << std::endl;
     //std::cout << __print_bns() << std::endl;
@@ -88,23 +89,75 @@ namespace SnowTools {
 
     // loop through the hits
     for (size_t i = 0; i < ar.n; ++i) {
-      mem_aln_t a;
-      if (ar.a[i].secondary >= 0) 
-	continue; // skip secondary alignments
-      a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); // get forward-strand position and CIGAR
 
+      mem_aln_t a;
+      if (ar.a[i].secondary >= 0 && !keep_secondary) 
+      	continue; // skip secondary alignments
+
+      // get forward-strand position and CIGAR
+      a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
+
+      // instantiate the read
       BamRead b;
-      b.SetQname("testing123");
-      b.SetSequence(seq);
-      b.SetMapQuality(a.mapq);
-      //std::cout << b.toSam(h) << std::endl;
-#ifdef DEBUG_BWATOOLS
+      b.init();
+
+      b.b->core.tid = a.rid;
+      b.b->core.pos = a.pos;
+      b.b->core.qual = a.mapq;
+      b.b->core.flag = a.flag;
+      b.b->core.n_cigar = a.n_cigar;
+
+      // allocate all the data
+      b.b->core.l_qname = name.length() + 1;
+      b.b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+      b.b->l_data = b.b->core.l_qname + (a.n_cigar<<2) + ((b.b->core.l_qseq+1)>>1) + (b.b->core.l_qseq);
+      b.b.get()->data = (uint8_t*)malloc(b.b.get()->l_data);
+
+      // allocate the qname
+      memcpy(b.b->data, name.c_str(), name.length() + 1);
+
+      // allocate the cigar
+      memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a.cigar, a.n_cigar<<2);
+
+      // allocate the sequence
+      uint8_t* m_bases = b.b->data + b.b->core.l_qname + (b.b->core.n_cigar<<2);
+
+      // move this out of bigger loop
+      for (int i = 0; i < seq.length(); ++i) {
+
+	// bad idea but works for now
+	uint8_t base = 15;
+	if (seq.at(i) == 'A')
+	  base = 1;
+	else if (seq.at(i) == 'C')
+	  base = 2;
+	else if (seq.at(i) == 'G')
+	  base = 4;
+	else if (seq.at(i) == 'T')
+	  base = 8;
+
+	m_bases[i >> 1] &= ~(0xF << ((~i & 1) << 2));   ///< zero out previous 4-bit base encoding
+	m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
+      }
+
+      // allocate the quality
+      
+
+      //b.SetQname(name);
+      //b.SetSequence(seq);
+
+      b.AddIntTag("NA", ar.n); // number of matches
+      b.AddIntTag("NM", a.NM);
+
+      vec.push_back(b);
+
+      //#ifdef DEBUG_BWATOOLS
       // print alignment
-      printf("\t%c\t%s\t%ld\t%d\t", /*ks->name.s,*/ "+-"[a.is_rev], idx->bns->anns[a.rid].name, (long)a.pos, a.mapq);
-      for (int k = 0; k < a.n_cigar; ++k) // print CIGAR
-	printf("%d%c", a.cigar[k]>>4, "MIDSH"[a.cigar[k]&0xf]);
-      printf("\t%d\n", a.NM); // print edit distance
-#endif
+      //printf("\t%c\t%s\t%ld\t%d\t", /*ks->name.s,*/ "+-"[a.is_rev], idx->bns->anns[a.rid].name, (long)a.pos, a.mapq);
+      //for (int k = 0; k < a.n_cigar; ++k) // print CIGAR
+      //	printf("%d%c", a.cigar[k]>>4, "MIDSH"[a.cigar[k]&0xf]);
+      // printf("\t%d\n", a.NM); // print edit distance
+      //#endif
       free(a.cigar); // don't forget to deallocate CIGAR
     }
     free (ar.a); // dealloc the hit list
@@ -182,18 +235,19 @@ uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only, bool write_f
 
     // make the ref name kstring
     kstring_t * name = (kstring_t*)malloc(1 * sizeof(kstring_t));
-    name->l = v[k].name.length();
-    name->m = v[k].name.length() + 2;
-    name->s = (char*)calloc(v[k].name.length(), sizeof(char));
-    strncpy(name->s, v[k].name.c_str(), v[k].name.length());
+    name->l = v[k].name.length() + 1;
+    name->m = v[k].name.length() + 3;
+    name->s = (char*)calloc(name->m, sizeof(char));
+    memcpy(name->s, v[k].name.c_str(), v[k].name.length()+1);
     
     // make the sequence kstring
     kstring_t * t = (kstring_t*)malloc(sizeof(kstring_t));
     t->l = v[k].seq.length();
     t->m = v[k].seq.length() + 2;
-    t->s = (char*)calloc(v[k].seq.length(), sizeof(char));
-    strncpy(t->s, v[k].seq.c_str(), v[k].seq.length());
-
+    //t->s = (char*)calloc(v[k].seq.length(), sizeof(char));
+    t->s = (char*)malloc(t->m);
+    memcpy(t->s, v[k].seq.c_str(), v[k].seq.length());
+    
     // put into a kstring
     kseq_t *ks = (kseq_t*)calloc(1, sizeof(kseq_t));  
     ks->seq = *t;
