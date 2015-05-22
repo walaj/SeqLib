@@ -50,6 +50,10 @@ class BWAWrapper {
     memopt->flag |= MEM_F_SOFTCLIP;
   }
 
+  /** Destroy the BWAWrapper 
+   *
+   * This will call the destructor on the index and options stucture
+   */
   ~BWAWrapper() { 
     
     if (idx)
@@ -58,7 +62,8 @@ class BWAWrapper {
       free(memopt);
   }
 
-  void alignSingleSequence(const std::string& seq);
+  void alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
+			   bool keep_seconary);
 
   /** Construct a new bwa index for this object. 
    */

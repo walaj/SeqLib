@@ -18,9 +18,13 @@ libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			multifast-v1.4.2/ahocorasick/ahocorasick.c \
 			multifast-v1.4.2/ahocorasick/node.c 
 
-##bin_PROGRAMS = snowtools
+bin_PROGRAMS = snowtools
 
-##snowtools_LDADD = $(top_builddir)/libsnowtools.a $(top_builddir)/bwa/libbwa.a $(top_builddir)/htslib/lhtslib.a \
-##		$(top_builddir)/multifast-v1.4.2/ahocorasick/build/libahocorasick.a
-##snowtools_LDFLAGS = -pthread -std=c++11
-##snowtools_SOURCES = SnowTools.cpp CoverageTool.cpp RealignTool.cpp
+snowtools_CPPFLAGS = \
+	-I$(top_srcdir)/htslib \
+	-I$(top_srcdir)/multifast-v1.4.2 
+
+snowtools_LDADD = $(top_builddir)/libsnowtools.a $(top_builddir)/bwa/libbwa.a $(top_builddir)/htslib/libhts.a 
+		##$(top_builddir)/multifast-v1.4.2/ahocorasick/build/libahocorasick.a
+snowtools_LDFLAGS = -pthread -std=c++11
+snowtools_SOURCES = SnowTools.cpp CoverageTool.cpp RealignTool.cpp

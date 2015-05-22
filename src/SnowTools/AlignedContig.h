@@ -6,13 +6,24 @@
 #include "SnowTools/GenomicRegion.h"
 #include "SnowTools/GenomicRegionCollection.h"
 #include "SnowTools/SnowUtils.h"
+#include "SnowTools/BamRead.h"
 
 #include "BamToolsUtils.h"
 #include "BreakPoint.h"
 
+/*! Basic container for cigar data. 
+ */
+struct CigarField {
+  
+  char type; /**< The cigar operation (MIDSHPN) */
+  int32_t length; /**< The associated length */
+
+};
+
+typedef std::vector<CigarField> Cigar;
+
 using SnowTools::GRC;
 
-typedef std::vector<BamTools::CigarOp> CigarOpVec;
 typedef std::unordered_map<std::string, size_t> CigarMap;
 
 class AlignedContig;
@@ -28,10 +39,9 @@ struct AlignmentFragment {
   friend AlignedContig;
 
   /*! Construct an AlignmentFragment from a BWA alignment
-   * @param const reference to a BamAlignment
-   * @param const reference to a GenomicRegion window where this contig was assembled from
+   * @param const reference to an aligned sequencing read
    */
-  AlignmentFragment(const BamTools::BamAlignment &talign, const SnowTools::GenomicRegion &window, const CigarMap &nmap, const CigarMap &tmap);
+  AlignmentFragment(const BamRead &talign);
   
   //! sort AlignmentFragment objects by start position
   bool operator < (const AlignmentFragment& str) const { return (start < str.start); }
@@ -57,14 +67,14 @@ struct AlignmentFragment {
 
   BPVec indel_breaks; /**< indel variants on this alignment */
 
-  CigarOpVec cigar; /**< cigar oriented to assembled orientation */
-
+  Cigar cigar; /**< cigar oriented to assembled orientation */
+  
   private:
 
-  BamTools::BamAlignment align; /**< BWA alignment to reference */
-
+  BamRead align; /**< BWA alignment to reference */
+  
   size_t idx = 0; // index of the cigar where the last indel was taken from 
-
+  
   int break1 = -1; // 0-based breakpoint 1 on contig 
   int break2 = -1; /**< 0-based breakpoint 2 on contig */
   int gbreak1 = -1; /**< 0-based breakpoint 1 on reference chr */
@@ -79,13 +89,6 @@ struct AlignmentFragment {
   std::string m_seq; // sequence of the entire contig
 
 };
-
-// define a way to order the contigs by start
-/*struct AlignmentOrdering {
-  inline bool operator() (const AlignmentFragment& struct1, const AlignmentFragment& struct2) {
-    return (struct1.start < struct2.start);
-  }
-  };*/
 
 //! vector of AlignmentFragment objects
 typedef std::vector<AlignmentFragment> AlignmentFragmentVector;
@@ -102,13 +105,12 @@ class AlignedContig {
 
   /*! Constructor which parses an alignment record from BWA (a potentially multi-line SAM record)
    * @param const reference to a string representing a SAM alignment (contains newlines if multi-part alignment)
-   * @param const pointer to a BamReader, which is used to convert chr ids to strings (e.g. X, Y)
    * @param const reference to a SnowTools::GenomicRegion window specifying where in the reference this contig was assembled from.
    */
-  AlignedContig(const std::string &sam, const BamTools::BamReader * reader, const SnowTools::GenomicRegion &twindow, 
-		const CigarMap &nmap, const CigarMap &tmap);
+  //AlignedContig(const std::string &sam, const SnowTools::GenomicRegion &twindow, 
+  //		const CigarMap &nmap, const CigarMap &tmap);
 
-  std::string samrecord; /**< the original SAM record */
+  //std::string samrecord; /**< the original SAM record */
 
   SnowTools::GenomicRegion window; /**< reference window from where this contig was assembled */
 
@@ -122,8 +124,7 @@ class AlignedContig {
     @param  b  pointer to an alignment
     @return    boolean true if query is on the reverse strand
   */
-  void addAlignment(const BamTools::BamAlignment &align, const SnowTools::GenomicRegion &window, 
-		    const CigarMap &nmap, const CigarMap &tmap);
+  void addAlignment(const BamRead &align);
 
   //! add a discordant cluster that maps to same regions as this contig
   void addDiscordantCluster(DiscordantCluster dc) { m_dc.push_back(dc); } 
@@ -142,9 +143,10 @@ class AlignedContig {
   int getMaxMapq() const { 
     int m = -1;
     for (auto& i : m_align)
-      if (i.align.MapQuality > m)
-	m = i.align.MapQuality;
+      if (i.align.MapQuality() > m)
+	m = i.align.MapQuality();
     return m;
+
   }
 
   /*! @function get the minimum mapping quality from all alignments
@@ -153,8 +155,8 @@ class AlignedContig {
   int getMinMapq() const { 
     int m = 1000;
     for (auto& i : m_align)
-      if (i.align.MapQuality < m)
-	m = i.align.MapQuality;
+      if (i.align.MapQuality() < m)
+	m = i.align.MapQuality();
     return m;
   }
 

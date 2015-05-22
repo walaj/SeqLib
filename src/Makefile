@@ -14,6 +14,7 @@
 
 
 
+
 srcdir = .
 top_srcdir = .
 
@@ -34,6 +35,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+bin_PROGRAMS = snowtools$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure compile depcomp \
@@ -71,6 +73,15 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-ahocorasick.$(OBJEXT) \
 	libsnowtools_a-node.$(OBJEXT)
 libsnowtools_a_OBJECTS = $(am_libsnowtools_a_OBJECTS)
+am__installdirs = "$(DESTDIR)$(bindir)"
+binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
+PROGRAMS = $(bin_PROGRAMS)
+am_snowtools_OBJECTS = snowtools-SnowTools.$(OBJEXT) \
+	snowtools-CoverageTool.$(OBJEXT) \
+	snowtools-RealignTool.$(OBJEXT)
+snowtools_OBJECTS = $(am_snowtools_OBJECTS)
+snowtools_DEPENDENCIES = $(top_builddir)/libsnowtools.a \
+	$(top_builddir)/bwa/libbwa.a $(top_builddir)/htslib/libhts.a
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -83,8 +94,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libsnowtools_a_SOURCES)
-DIST_SOURCES = $(libsnowtools_a_SOURCES)
+SOURCES = $(libsnowtools_a_SOURCES) $(snowtools_SOURCES)
+DIST_SOURCES = $(libsnowtools_a_SOURCES) $(snowtools_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -201,6 +212,13 @@ libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			multifast-v1.4.2/ahocorasick/ahocorasick.c \
 			multifast-v1.4.2/ahocorasick/node.c 
 
+snowtools_CPPFLAGS = \
+	-I$(top_srcdir)/htslib \
+	-I$(top_srcdir)/multifast-v1.4.2 
+
+snowtools_LDADD = $(top_builddir)/libsnowtools.a $(top_builddir)/bwa/libbwa.a $(top_builddir)/htslib/libhts.a 
+snowtools_LDFLAGS = -pthread -std=c++11
+snowtools_SOURCES = SnowTools.cpp CoverageTool.cpp RealignTool.cpp
 all: all-recursive
 
 .SUFFIXES:
@@ -245,6 +263,32 @@ libsnowtools.a: $(libsnowtools_a_OBJECTS) $(libsnowtools_a_DEPENDENCIES)
 	-rm -f libsnowtools.a
 	$(libsnowtools_a_AR) libsnowtools.a $(libsnowtools_a_OBJECTS) $(libsnowtools_a_LIBADD)
 	$(RANLIB) libsnowtools.a
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+	  ; then \
+	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	  else :; fi; \
+	done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	done
+
+clean-binPROGRAMS:
+	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+snowtools$(EXEEXT): $(snowtools_OBJECTS) $(snowtools_DEPENDENCIES) 
+	@rm -f snowtools$(EXEEXT)
+	$(CXXLINK) $(snowtools_LDFLAGS) $(snowtools_OBJECTS) $(snowtools_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -271,6 +315,9 @@ include ./$(DEPDIR)/libsnowtools_a-gChain.Po
 include ./$(DEPDIR)/libsnowtools_a-gzstream.Po
 include ./$(DEPDIR)/libsnowtools_a-is.Po
 include ./$(DEPDIR)/libsnowtools_a-node.Po
+include ./$(DEPDIR)/snowtools-CoverageTool.Po
+include ./$(DEPDIR)/snowtools-RealignTool.Po
+include ./$(DEPDIR)/snowtools-SnowTools.Po
 
 .C.o:
 	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -439,6 +486,48 @@ libsnowtools_a-BWAWrapper.obj: BWAWrapper.cpp
 #	source='BWAWrapper.cpp' object='libsnowtools_a-BWAWrapper.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BWAWrapper.obj `if test -f 'BWAWrapper.cpp'; then $(CYGPATH_W) 'BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BWAWrapper.cpp'; fi`
+
+snowtools-SnowTools.o: SnowTools.cpp
+	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-SnowTools.o -MD -MP -MF "$(DEPDIR)/snowtools-SnowTools.Tpo" -c -o snowtools-SnowTools.o `test -f 'SnowTools.cpp' || echo '$(srcdir)/'`SnowTools.cpp; \
+	then mv -f "$(DEPDIR)/snowtools-SnowTools.Tpo" "$(DEPDIR)/snowtools-SnowTools.Po"; else rm -f "$(DEPDIR)/snowtools-SnowTools.Tpo"; exit 1; fi
+#	source='SnowTools.cpp' object='snowtools-SnowTools.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-SnowTools.o `test -f 'SnowTools.cpp' || echo '$(srcdir)/'`SnowTools.cpp
+
+snowtools-SnowTools.obj: SnowTools.cpp
+	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-SnowTools.obj -MD -MP -MF "$(DEPDIR)/snowtools-SnowTools.Tpo" -c -o snowtools-SnowTools.obj `if test -f 'SnowTools.cpp'; then $(CYGPATH_W) 'SnowTools.cpp'; else $(CYGPATH_W) '$(srcdir)/SnowTools.cpp'; fi`; \
+	then mv -f "$(DEPDIR)/snowtools-SnowTools.Tpo" "$(DEPDIR)/snowtools-SnowTools.Po"; else rm -f "$(DEPDIR)/snowtools-SnowTools.Tpo"; exit 1; fi
+#	source='SnowTools.cpp' object='snowtools-SnowTools.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-SnowTools.obj `if test -f 'SnowTools.cpp'; then $(CYGPATH_W) 'SnowTools.cpp'; else $(CYGPATH_W) '$(srcdir)/SnowTools.cpp'; fi`
+
+snowtools-CoverageTool.o: CoverageTool.cpp
+	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-CoverageTool.o -MD -MP -MF "$(DEPDIR)/snowtools-CoverageTool.Tpo" -c -o snowtools-CoverageTool.o `test -f 'CoverageTool.cpp' || echo '$(srcdir)/'`CoverageTool.cpp; \
+	then mv -f "$(DEPDIR)/snowtools-CoverageTool.Tpo" "$(DEPDIR)/snowtools-CoverageTool.Po"; else rm -f "$(DEPDIR)/snowtools-CoverageTool.Tpo"; exit 1; fi
+#	source='CoverageTool.cpp' object='snowtools-CoverageTool.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-CoverageTool.o `test -f 'CoverageTool.cpp' || echo '$(srcdir)/'`CoverageTool.cpp
+
+snowtools-CoverageTool.obj: CoverageTool.cpp
+	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-CoverageTool.obj -MD -MP -MF "$(DEPDIR)/snowtools-CoverageTool.Tpo" -c -o snowtools-CoverageTool.obj `if test -f 'CoverageTool.cpp'; then $(CYGPATH_W) 'CoverageTool.cpp'; else $(CYGPATH_W) '$(srcdir)/CoverageTool.cpp'; fi`; \
+	then mv -f "$(DEPDIR)/snowtools-CoverageTool.Tpo" "$(DEPDIR)/snowtools-CoverageTool.Po"; else rm -f "$(DEPDIR)/snowtools-CoverageTool.Tpo"; exit 1; fi
+#	source='CoverageTool.cpp' object='snowtools-CoverageTool.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-CoverageTool.obj `if test -f 'CoverageTool.cpp'; then $(CYGPATH_W) 'CoverageTool.cpp'; else $(CYGPATH_W) '$(srcdir)/CoverageTool.cpp'; fi`
+
+snowtools-RealignTool.o: RealignTool.cpp
+	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-RealignTool.o -MD -MP -MF "$(DEPDIR)/snowtools-RealignTool.Tpo" -c -o snowtools-RealignTool.o `test -f 'RealignTool.cpp' || echo '$(srcdir)/'`RealignTool.cpp; \
+	then mv -f "$(DEPDIR)/snowtools-RealignTool.Tpo" "$(DEPDIR)/snowtools-RealignTool.Po"; else rm -f "$(DEPDIR)/snowtools-RealignTool.Tpo"; exit 1; fi
+#	source='RealignTool.cpp' object='snowtools-RealignTool.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-RealignTool.o `test -f 'RealignTool.cpp' || echo '$(srcdir)/'`RealignTool.cpp
+
+snowtools-RealignTool.obj: RealignTool.cpp
+	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-RealignTool.obj -MD -MP -MF "$(DEPDIR)/snowtools-RealignTool.Tpo" -c -o snowtools-RealignTool.obj `if test -f 'RealignTool.cpp'; then $(CYGPATH_W) 'RealignTool.cpp'; else $(CYGPATH_W) '$(srcdir)/RealignTool.cpp'; fi`; \
+	then mv -f "$(DEPDIR)/snowtools-RealignTool.Tpo" "$(DEPDIR)/snowtools-RealignTool.Po"; else rm -f "$(DEPDIR)/snowtools-RealignTool.Tpo"; exit 1; fi
+#	source='RealignTool.cpp' object='snowtools-RealignTool.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-RealignTool.obj `if test -f 'RealignTool.cpp'; then $(CYGPATH_W) 'RealignTool.cpp'; else $(CYGPATH_W) '$(srcdir)/RealignTool.cpp'; fi`
 
 .c.o:
 	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -856,9 +945,12 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(LIBRARIES)
+all-am: Makefile $(LIBRARIES) $(PROGRAMS)
 installdirs: installdirs-recursive
 installdirs-am:
+	for dir in "$(DESTDIR)$(bindir)"; do \
+	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
+	done
 install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
@@ -885,7 +977,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -906,7 +999,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am:
+install-exec-am: install-binPROGRAMS
 
 install-info: install-info-recursive
 
@@ -933,24 +1026,26 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-info-am
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am am--refresh check \
-	check-am clean clean-generic clean-noinstLIBRARIES \
-	clean-recursive ctags ctags-recursive dist dist-all dist-bzip2 \
-	dist-gzip dist-shar dist-tarZ dist-zip distcheck distclean \
-	distclean-compile distclean-generic distclean-recursive \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
+	check-am clean clean-binPROGRAMS clean-generic \
+	clean-noinstLIBRARIES clean-recursive ctags ctags-recursive \
+	dist dist-all dist-bzip2 dist-gzip dist-shar dist-tarZ \
+	dist-zip distcheck distclean distclean-compile \
+	distclean-generic distclean-recursive distclean-tags \
+	distcleancheck distdir distuninstallcheck dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
 	install-data install-data-am install-exec install-exec-am \
 	install-info install-info-am install-man install-strip \
 	installcheck installcheck-am installdirs installdirs-am \
 	maintainer-clean maintainer-clean-generic \
 	maintainer-clean-recursive mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am uninstall-info-am
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

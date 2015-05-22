@@ -2,11 +2,16 @@
 #define SNOWTOOLS_READ_H__
 
 #include <cstdint>
+#include <vector>
+#include <iostream>
+#include <memory>
+#include <sstream>
 
 #include "SnowTools/HTSTools.h"
-#include <iostream>
 
 namespace SnowTools {
+
+enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
 
 /** Class to store and interact with an HTSLib bam1_t read.
  *
@@ -18,15 +23,16 @@ namespace SnowTools {
  */
 class BamRead {
 
+  friend class BWAWrapper;
+
  public:
   
   /** Construct an empty BamRead by calling bam_init1() 
    */
-  BamRead();
+  void init();
 
-  /** Destory a BamRead by calling bam_destroy1(b)
-   */
-  ~BamRead();
+  /** Make a BamRead with no memory allocated and a null header */
+  BamRead() : m_hdr(nullptr) {}
 
   /** BamRead is aligned on reverse strand */
   inline bool ReverseFlag() const { return (b->core.flag&BAM_FREVERSE) != 0; }
@@ -89,11 +95,10 @@ class BamRead {
   /** Get the sequence of this read as a string */
   inline std::string Sequence() const { 
     uint8_t * p = bam_get_seq(b);
-    char c[b->core.l_qseq+1]; // need +1 for \0 at end
-    for (int32_t i = 0; i < b->core.l_qseq; ++i)
-      c[i] = BASES[bam_seqi(p, i)];
-    c[b->core.l_qseq] = '\0'; // null terminate for proper std::string construciton
-    return std::string(c);
+    std::stringstream ss;
+    for (int32_t i = 0; i < b->core.l_qseq; ++i) 
+      ss << BASES[bam_seqi(p, i)];
+    return ss.str();
   }
   
   /** Get the number of soft clipped bases */
@@ -121,11 +126,50 @@ class BamRead {
    * @return The value stored in the tag. Returns empty string if it does not exist.
    */
   inline std::string GetZTag(const std::string& tag) const {
-    uint8_t* p = bam_aux_get(b,tag.c_str());
+    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
       return "";
     return std::string(bam_aux2Z(p));
-    
+  }
+
+  /** Add a string (Z) tag
+   * @param tag Name of the tag. e.g. "XP"
+   * @param val Value for the tag
+   */
+  inline void AddZTag(std::string tag, std::string val) {
+    bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
+  }
+
+  /** Add an int (i) tag
+   * @param tag Name of the tag. e.g. "XP"
+   * @param val Value for the tag
+   */
+  inline void AddIntTag(std::string tag, int32_t val) {
+    bam_aux_append(b.get(), tag.data(), 'i', 4, (uint8_t*)&val);
+  }
+
+  /** Set the chr id number 
+   * @param id Chromosome id. Typically is 0 for chr1, etc
+   */
+  inline void SetID(int32_t id) {
+    b->core.tid = id;
+  }
+  
+  /** Set the alignment start position
+   * @param pos Alignment start position
+   */
+  inline void SetPosition(int32_t pos) {
+    b->core.pos = pos;
+  }
+
+  /** Convert CIGAR to a string
+   */
+  inline std::string CigarString() const {
+    std::stringstream cig;
+    uint32_t* c = bam_get_cigar(b);
+    for (int k = 0; k < b->core.n_cigar; ++k)
+      cig << bam_cigar_oplen(c[k]) << "MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK];
+    return cig.str();
   }
   
   //std::string toSam(bam_hdr_t* h) const;
@@ -133,10 +177,12 @@ class BamRead {
   private:
 
   //bam_hdr_h *hdr;
-  bam1_t * b;
-  
-
+  //bam1_t * b;
+  std::shared_ptr<bam1_t> b;
+  std::shared_ptr<bam_hdr_t> m_hdr;
 };
+
+ typedef std::vector<BamRead> BamReadVector; 
 
 }
 #endif
