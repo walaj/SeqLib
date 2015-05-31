@@ -181,12 +181,12 @@ void BamWalker::SetMiniRulesCollection(const std::string& rules)
   }
 }
 
-void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const Read &r) const {
+void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) const {
 
   char buffer[100];
-  std::string posstring = SnowTools::AddCommas<int>(r_pos(r));
+  std::string posstring = SnowTools::AddCommas<int>(r.Position());
   sprintf (buffer, "Reading read %11s at position %2s:%-11s. Kept %11s (%2d%%) [running count across whole BAM]",  
-	   rc_main.totalString().c_str(), GenomicRegion::chrToString(r_id(r)).c_str(), posstring.c_str(),  
+	   rc_main.totalString().c_str(), r.ChrName().c_str(), posstring.c_str(),  
 	   rc_main.keepString().c_str(), rc_main.percent());
   printf ("%s | ",buffer);
   SnowTools::displayRuntime(start);
@@ -194,7 +194,7 @@ void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const Read &r) con
   
 }
 
-bool BamWalker::GetNextRead(Read& r, bool& rule)
+bool BamWalker::GetNextRead(BamRead& r, bool& rule)
 {
   
   void* dum = 0;
@@ -243,7 +243,7 @@ bool BamWalker::GetNextRead(Read& r, bool& rule)
     } while (valid <= 0); // keep trying regions until works
   }
   
-  r = std::shared_ptr<bam1_t> (b, free_delete());
+  r.assign(b); // = std::shared_ptr<bam1_t> (b, free_delete());
 
   // check if it passed the rules
   rule = m_mr.isValid(r);
@@ -251,14 +251,16 @@ bool BamWalker::GetNextRead(Read& r, bool& rule)
   return true;
 }
 
-void BamWalker::WriteAlignment(Read &r)
+void BamWalker::WriteAlignment(BamRead &r)
 {
+
   if (m_strip_all_tags)
-    removeAllTags(r);
+    r.RemoveAllTags();
+
   for (auto& i : m_tag_list)
-    r_remove_tag(r,i.c_str());
+    r.RemoveTag(i.c_str());
     
-  sam_write1(fop, br, r.get());
+  sam_write1(fop, br, r.raw());
 }
 
 std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)

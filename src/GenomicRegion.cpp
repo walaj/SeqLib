@@ -88,7 +88,7 @@ std::string GenomicRegion::toString() const {
   std::stringstream out;
   //out << chrToString(chr)  << ":" << SnowUtils::AddCommas<int>(pos1) << "-" << SnowUtils::AddCommas<int>(pos2) << "(" << strand << ")"; 
   out << chrToString(chr)  << ":" << SnowTools::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
-    (strand ? "+" : "-") << ")"; 
+    strand << ")"; 
   return out.str();
 }
 
@@ -162,7 +162,7 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
 */
 
 // constructor to take a pair of coordinates to define the genomic interval
-GenomicRegion::GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, bool t_strand) {
+GenomicRegion::GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, char t_strand) {
   chr = t_chr;
   pos1 = t_pos1;
   pos2 = t_pos2;

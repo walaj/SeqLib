@@ -9,6 +9,7 @@
 
 #include "SnowTools/HTSTools.h"
 #include "SnowTools/SnowUtils.h"
+#include "SnowTools/BamRead.h"
 
 // Phred score transformations
 inline int char2phred(char b) {
@@ -112,7 +113,7 @@ class BamWalker {
    * Prints a message about all of the reads that have been visited, and informaiton
    * about the current read
    */
-  void printRuntimeMessage(const ReadCount &rc_main, const Read &r) const;
+  void printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) const;
 
   /** Print out some basic info about this walker, 
    * including Minz0iRules
@@ -147,12 +148,12 @@ class BamWalker {
    * rule bool identifying if this read passed the rules
    * @return true if the next read is available
    */
-  bool GetNextRead(Read &r, bool& rule);
+  bool GetNextRead(BamRead &r, bool& rule);
 
   /** Write an alignment to the output BAM file 
    * @param r The BamRead to save
    */
-  void WriteAlignment(Read &r);
+  void WriteAlignment(BamRead &r);
 
   /** Return the MiniRulesCollection object used by this BamWalker
    */

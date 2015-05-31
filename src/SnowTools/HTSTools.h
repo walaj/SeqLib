@@ -11,7 +11,9 @@
 #include "htslib/sam.h"
 #include "htslib/bgzf.h"
 #include "htslib/kstring.h"
+#include "htslib/faidx.h"
 
+#include "SnowTools/GenomicRegion.h"
 
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
@@ -67,19 +69,23 @@ typedef std::vector<Read> ReadVec;
 
 #define r_get_trimmed_seq(b, s) do { int32_t ts, tl; r_get_int32_tag(b, "TS", ts);  r_get_int32_tag(b, "TL", tl); r_seq(b, s); if (tl != 0 && tl != r_length(b))  s = s.substr(ts, tl); } while (0) 
 
-  namespace SnowTools {
+namespace SnowTools {
 
-    int32_t qualityTrimRead(int qualTrim, int32_t &startpoint, Read &r);
-
-    std::vector<std::string> GetStringTag(const Read& a, const std::string tag);
-    
-    void SmartAddTag(Read &a, const std::string tag, const std::string val);
-    
-    std::vector<int> GetIntTag(const Read& a, const std::string tag);
-
-    void rcomplement(std::string& a);
-
-    void removeAllTags(Read& a);
-  }
+  class GenomicRegion;
+  
+  int32_t qualityTrimRead(int qualTrim, int32_t &startpoint, Read &r);
+  
+  std::vector<std::string> GetStringTag(const Read& a, const std::string tag);
+  
+  void SmartAddTag(Read &a, const std::string tag, const std::string val);
+  
+  std::vector<int> GetIntTag(const Read& a, const std::string tag);
+  
+  //void rcomplement(std::string& a);
+  
+  void removeAllTags(Read& a);
+  
+  std::string getRefSequence(const GenomicRegion &gr, faidx_t *fi);
+}
 
 #endif

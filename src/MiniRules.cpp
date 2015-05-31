@@ -45,7 +45,7 @@ static const std::unordered_map<std::string,bool> valid =
 };
 
 
-bool MiniRules::isValid(Read &r) {
+bool MiniRules::isValid(BamRead &r) {
 
   for (auto& it : m_abstract_rules)
     if (it.isValid(r)) 
@@ -57,7 +57,7 @@ bool MiniRules::isValid(Read &r) {
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
 // contained in these rules
-bool MiniRules::isReadOverlappingRegion(Read &r) {
+bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 
   // if this is a whole genome rule, it overlaps
   if (m_whole_genome)
@@ -65,13 +65,13 @@ bool MiniRules::isReadOverlappingRegion(Read &r) {
 
   assert(!m_grv.empty());
 
-  if (m_grv.findOverlapping(GenomicRegion(r_id(r), r_pos(r), r_endpos(r))))
+  if (m_grv.findOverlapping(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd())))
     return true;
   
   if (!m_applies_to_mate)
     return false;
   
-  if (m_grv.findOverlapping(GenomicRegion(r_mid(r), r_mpos(r), r_mpos(r) + r_length(r))))
+  if (m_grv.findOverlapping(GenomicRegion(r.MateChrID(), r.MatePosition(), r.MatePosition() + r.Length())))
     return true;
 
   return false;
@@ -79,7 +79,7 @@ bool MiniRules::isReadOverlappingRegion(Read &r) {
 
 // checks which rule a read applies to (using the hiearchy stored in m_regions).
 // if a read does not satisfy a rule it is excluded.
-bool MiniRulesCollection::isValid(Read &r) {
+  bool MiniRulesCollection::isValid(BamRead &r) {
 
   ++m_count_seen;
 
@@ -552,7 +552,7 @@ void Range::parseRuleLine(std::string line) {
 }
 
 // main function for determining if a read is valid
-bool AbstractRule::isValid(Read &r) {
+  bool AbstractRule::isValid(BamRead &r) {
 
   // check if its keep all or none
   if (isEvery())
@@ -560,7 +560,7 @@ bool AbstractRule::isValid(Read &r) {
 
   // check if it is a subsample
   if (subsam_frac < 1) {
-    uint32_t k = __ac_Wang_hash(__ac_X31_hash_string(bam_get_qname(r.get())) ^ subsam_seed);
+    uint32_t k = __ac_Wang_hash(__ac_X31_hash_string(r.QnameChar()) ^ subsam_seed);
     if ((double)(k&0xffffff) / 0x1000000 >= subsam_frac) 
       return false;
   }
@@ -569,9 +569,9 @@ bool AbstractRule::isValid(Read &r) {
     if (subsample < randn)
       return false;
       }*/
-
+  
   // check if is discordant
-  bool isize_pass = isize.isValid(abs(r_isize(r)));
+  bool isize_pass = isize.isValid(abs(r.InsertSize()));
 
   if (!isize_pass) {
     return false;
@@ -579,7 +579,7 @@ bool AbstractRule::isValid(Read &r) {
 
   // check for valid mapping quality
   if (!mapq.isEvery())
-    if (!mapq.isValid(r_mapq(r))) 
+    if (!mapq.isValid(r.MapQuality())) 
       return false;
 
   // check for valid flags
@@ -588,20 +588,9 @@ bool AbstractRule::isValid(Read &r) {
 
   // check the CIGAR
   if (!ins.isEvery() || !del.isEvery()) {
-
-    uint32_t imax = 0;
-    uint32_t dmax = 0;
-
-    for (size_t i = 0; i < r_cig_size(r); i++) {
-      if (r_cig_type(r, i) == 'I')
-	imax = std::max(r_cig_len(r, i), imax);
-      else if (r_cig_type(r, i) == 'D')
-	dmax = std::max(r_cig_len(r, i), dmax);	
-    }
-
-    if (!ins.isValid(imax))
+    if (!ins.isValid(r.MaxInsertionBases()))
       return false;
-    if (!del.isValid(dmax))
+    if (!del.isValid(r.MaxDeletionBases()))
       return false;
   }
   
@@ -613,15 +602,14 @@ bool AbstractRule::isValid(Read &r) {
   // now check if we need to build char if all we want is clip
   unsigned clipnum = 0;
   if (!clip.isEvery()) {
-    r_get_clip(r, clipnum);
+    clipnum = r.NumClip();
     if (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) // if clip fails, its not going to get better by trimming. kill it now before building teh char data
       return false;
   }
 
   // check for valid NM
   if (!nm.isEvery()) {
-    int32_t nm_val;
-    r_get_int32_tag(r, "NM", nm_val);
+    int32_t nm_val = r.GetIntTag("NM");
     if (!nm.isValid(nm_val))
       return false;
   }
@@ -629,36 +617,37 @@ bool AbstractRule::isValid(Read &r) {
   // trim the read, then check length
   int32_t new_len, new_clipnum; 
   if (phred.isEvery()) {
-    new_len = r_length(r); //a.QueryBases.length();
+    new_len = r.Length(); //a.QueryBases.length();
     new_clipnum = clipnum;
   }
 
-
-
   if (!phred.isEvery()) {
 
-    int32_t start;
-    r_get_int32_tag(r, "TS", start);
-    r_get_int32_tag(r, "TL", new_len);
-    if (start == 0 && new_len == 0) { // tag not already added. Trim
-      new_len = qualityTrimRead(phred.min, start, r);
+    //int32_t start = r.GetIntTag("TS");
+    //new_len = r.GetIntTag("TL");
+    //r_get_int32_tag(r, "TS", start);
+    //r_get_int32_tag(r, "TL", new_len);
+    //if (start == 0 && new_len == 0) { // tag not already added. Trim
+    int32_t start = 0;
+    new_len = r.QualityTrimmedSequence(phred.min, start).length();
       // add the tags
-      r_add_int32_tag(r, "TS", start);
-      r_add_int32_tag(r, "TL", new_len);
-    }
+      //r_add_int32_tag(r, "TS", start);
+      //r_add_int32_tag(r, "TL", new_len);
+      // }
 
     // all the bases are trimmed away 
     if (new_len == 0)
       return false;
 
-    new_clipnum = std::max(0, static_cast<int>(clipnum - (r_length(r) - new_len)));
+    new_clipnum = std::max(0, static_cast<int>(clipnum - (r.Length() - new_len)));
 
     // check the N
     if (!nbases.isEvery()) {
 
       size_t n = 0;
-      assert((new_len + start - 1) < r_length(r)); //debug
-      r_count_sub_nbases(r, n, start, new_len + start); // TODO factor in trimming
+      //assert((new_len + start - 1) < r.Length()); //debug
+      //r_count_sub_nbases(r, n, start, new_len + start); // TODO factor in trimming
+      n = r.CountNBases();
       if (!nbases.isValid(n))
     	return false;
     }
@@ -667,8 +656,7 @@ bool AbstractRule::isValid(Read &r) {
 
   // check the N if we didn't do phred trimming
   if (!nbases.isEvery() && phred.isEvery()) {
-    size_t n = 0;
-    r_count_nbases(r, n);
+    size_t n = r.CountNBases();
     if (!nbases.isValid(n))
       return false;
   }
@@ -682,28 +670,9 @@ bool AbstractRule::isValid(Read &r) {
     return false;
 
   // check for secondary alignments
-  if (!xp.isEvery()) {
-
-    int xp_count = 0;
-
-    // xa tag
-    std::string xar_s;
-    r_get_Z_tag(r, "XA", xar_s);
-    if (xar_s.length()) {
-      xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
-    }
-
-    // xp tag
-    std::string xpr_s;
-    r_get_Z_tag(r, "XP", xpr_s);
-    if (xpr_s.length()) {
-      xp_count += std::count(xpr_s.begin(), xpr_s.end(), ';');
-    }
-
-    if (!xp.isValid(xp_count))
+  if (!xp.isEvery()) 
+    if (!xp.isValid(r.CountSecondaryAlignments()))
       return false;
-  }
-
 
   //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifndef __APPLE__
@@ -717,36 +686,31 @@ bool AbstractRule::isValid(Read &r) {
   return true;
 }
 
-bool FlagRule::isValid(Read &r) {
+  bool FlagRule::isValid(BamRead &r) {
   
   if (isEvery())
     return true;
 
   if (!dup.isNA()) 
-    if ((dup.isOff() && r_is_dup(r)) || (dup.isOn() && !r_is_dup(r)))
+    if ((dup.isOff() && r.DuplicateFlag()) || (dup.isOn() && !r.DuplicateFlag()))
       return false;
   if (!supp.isNA()) 
-    if ((supp.isOff() && !r_is_primary(r)) || (supp.isOn() && r_is_primary(r)))
+    if ((supp.isOff() && r.SecondaryFlag()) || (supp.isOn() && !r.SecondaryFlag()))
       return false;
   if (!qcfail.isNA())
-    if ((qcfail.isOff() && r_is_qc_fail(r)) || (qcfail.isOn() && !r_is_qc_fail(r)))
+    if ((qcfail.isOff() && r.QCFailFlag()) || (qcfail.isOn() && !r.QCFailFlag()))
       return false;
   if (!mapped.isNA())
-    if ( (mapped.isOff() && r_is_mapped(r)) || (mapped.isOn() && !r_is_mapped(r)) )
+    if ( (mapped.isOff() && r.MappedFlag()) || (mapped.isOn() && !r.MappedFlag()))
       return false;
   if (!mate_mapped.isNA())
-    if ( (mate_mapped.isOff() && r_is_mmapped(r)) || (mate_mapped.isOn() && !r_is_mmapped(r)) )
+    if ( (mate_mapped.isOff() && r.MateMappedFlag()) || (mate_mapped.isOn() && !r.MateMappedFlag()) )
       return false;
+
   // check for hard clips
   if (!hardclip.isNA())  {// check that we want to chuck hard clip
-    if (r_cig_size(r) > 1) {
-      //if (a.CigarData.size() > 1) { // check that its not simple
-      bool ishclipped = false;
-      for (size_t i = 0; i < r_cig_size(r); i++) //auto& cig : a.CigarData)
-	if (r_cig_type(r, i) == 'H') {
-	  ishclipped = true;
-	  break;
-	}
+    if (r.CigarSize() > 1) {
+      bool ishclipped = r.NumHardClip() > 0;
       if ( (ishclipped && hardclip.isOff()) || (!ishclipped && hardclip.isOn()) )
 	return false;
     }
@@ -757,18 +721,18 @@ bool FlagRule::isValid(Read &r) {
   bool ocheck = !ff.isNA() || !fr.isNA() || !rf.isNA() || !rr.isNA() || !ic.isNA();
 
   // now its an orientation pair check. If not both mapped, chuck
-  if (!r_is_pmapped(r) && ocheck)
+  if (!r.PairMappedFlag() && ocheck)
     return false;
 
   if ( ocheck ) {
 
-    bool first = r_pos(r) < r_mpos(r);
-    bool bfr = (first && (!r_is_rstrand(r) && r_is_mrstrand(r))) || (!first &&  r_is_rstrand(r) && !r_is_mrstrand(r));
-    bool brr = r_is_rstrand(r) && r_is_mrstrand(r);
-    bool brf = (first &&  (r_is_rstrand(r) && !r_is_mrstrand(r))) || (!first && !r_is_rstrand(r) &&  r_is_mrstrand(r));
-    bool bff = !r_is_rstrand(r) && !r_is_mrstrand(r);
+    bool first = r.Position() < r.MatePosition();
+    bool bfr = (first && (!r.ReverseFlag() && r.MateReverseFlag())) || (!first &&  r.ReverseFlag() && !r.MateReverseFlag());
+    bool brr = r.ReverseFlag() && r.MateReverseFlag();
+    bool brf = (first &&  (r.ReverseFlag() && !r.MateReverseFlag())) || (!first && !r.ReverseFlag() &&  r.MateReverseFlag());
+    bool bff = !r.ReverseFlag() && !r.MateReverseFlag();
       
-    bool bic = r_mid(r) != r_id(r);
+    bool bic = r.Interchromosomal();
 
     // its FR and it CANT be FR (off) or its !FR and it MUST be FR (ON)
     // orienation not defined for inter-chrom, so exclude these with !ic
@@ -961,11 +925,10 @@ bool Flag::parseRuleLine(std::string &val, std::regex &reg) {
 #ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 //bool AbstractRule::ahomatch(const string& seq) {
-bool AbstractRule::ahomatch(Read &r) {
+bool AbstractRule::ahomatch(BamRead &r) {
 
   // make into Ac strcut
-  std::string seq;
-  r_seq(r, seq);
+  std::string seq = r.Sequence();
   AC_TEXT_t tmp_text = {seq.c_str(), static_cast<unsigned>(seq.length())};
   ac_automata_settext (atm, &tmp_text, 0);
 

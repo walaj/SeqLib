@@ -12,7 +12,9 @@ libsnowtools_a_LIBADD = $(top_srcdir)/bwa/libbwa.a $(top_srcdir)/htslib/libhts.a
 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
-			gChain.cpp HTSTools.cpp BamRead.cpp gzstream.C BWAWrapper.cpp \
+			gChain.cpp HTSTools.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
+			AlignedContig.cpp \
+			BreakPoint.cpp DiscordantCluster.cpp \
 			bwa/is.c bwa/bwtindex.c \
 			bwa/bwt_gen.c bwa/QSufSort.c bwa/bwt.c bwa/bwamem_extra.c \
 			multifast-v1.4.2/ahocorasick/ahocorasick.c \

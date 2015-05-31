@@ -1,5 +1,7 @@
 #include "SnowTools/BamRead.h"
 
+#include <cassert>
+
 namespace SnowTools {
 
   struct free_delete {
@@ -10,6 +12,33 @@ namespace SnowTools {
     bam1_t* f = bam_init1();
     b = std::shared_ptr<bam1_t>(f, free_delete());
   }
+
+  void BamRead::assign(bam1_t* a) { 
+    b = std::shared_ptr<bam1_t>(a, free_delete()); 
+  }
+
+  void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
+  {
+    // get the old tag
+    std::string tmp = GetZTag(tag);
+
+    if (!tmp.length()) 
+      {
+	AddZTag(tag, val);
+	return;
+      }
+    
+    // append the tag
+    tmp += "x"  + val;
+    
+    // remove the old tag
+    RemoveTag(tag.c_str());
+    
+    // add the new one
+    AddZTag(tag, tmp);
+    
+  }
+
   
   void BamRead::SetQname(std::string n)
   {
@@ -68,5 +97,130 @@ namespace SnowTools {
       
     
   }
+
+  int32_t BamRead::CountSecondaryAlignments() const 
+  {
+    int xp_count = 0;
+    
+    // xa tag
+    std::string xar_s = GetZTag("XA");
+    //r_get_Z_tag(r, "XA", xar_s);
+    if (xar_s.length()) {
+      xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
+    }
+    
+    // xp tag
+    std::string xpr_s = GetZTag("XP");
+    //r_get_Z_tag(r, "XP", xpr_s);
+    if (xpr_s.length()) {
+      xp_count += std::count(xpr_s.begin(), xpr_s.end(), ';');
+    }
+
+    return xp_count;
+    
+  }
+
+  int32_t BamRead::CountNBases() const {
+    uint8_t* p = bam_get_seq(b); 
+    int32_t n = 0;
+    for (int ww = 0; ww < b->core.l_qseq; ww++)
+      if (bam_seqi(p,ww) == 15) 
+	++n; 
+    return n;
+  }
+
+  std::string BamRead::QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint) const {
+
+    int endpoint = -1; //seq.length();
+    startpoint = 0;
+    int i = 0; 
+    
+    uint8_t * qual = bam_get_qual(b.get());
+
+    // get the start point (loop forward)
+    while(i < b->core.l_qseq) {
+      int ps = qual[i];
+      if (ps >= qualTrim) {
+          startpoint = i;
+          break;
+	}
+	++i;
+    }
+
+    // get the end point (loop backwards)
+    i = b->core.l_qseq - 1; //seq.length() - 1;
+    while(i >= 0) {
+
+      int ps = qual[i];
+      
+      if (ps >= qualTrim) { //ps >= qualTrim) {
+	endpoint = i + 1; // endpoint is one past edge
+	break;
+      }
+      --i;
+    }
+
+    // check that they aren't all bad
+    if (startpoint == 0 && endpoint == -1) 
+      return "";
+    
+    std::string output = "";
+    try { 
+      output = Sequence().substr(startpoint, endpoint - startpoint);
+    } catch (...) {
+      std::cerr << "Trying to subset string in BamRead::QualityTrimRead out of bounds. String: " << Sequence() << " start " << startpoint << " length " << (endpoint - startpoint) << std::endl;
+    }
+
+    return output;
+
+  }
+  
+  // get a string tag that might be separted by "x"
+  std::vector<std::string> BamRead::GetSmartStringTag(const std::string& tag) const {
+    
+    std::vector<std::string> out;
+    std::string tmp = GetZTag(tag);
+    assert(tmp.length());
+    
+    if (tmp.find("x") != std::string::npos) {
+      std::istringstream iss(tmp);
+      std::string line;
+      while (std::getline(iss, line, 'x')) {
+	out.push_back(line);
+      }
+    } else {
+      out.push_back(tmp);
+    }
+    
+    assert(out.size());
+    return out;
+    
+  }
+  
+  
+  std::vector<int> BamRead::GetSmartIntTag(const std::string& tag) const {
+    
+    std::vector<int> out;
+    std::string tmp;
+    
+    tmp = GetZTag(tag);
+    //r_get_Z_tag(a, tag.c_str(), tmp);
+    assert(tmp.length());
+    
+    if (tmp.find("x") != std::string::npos) {
+      std::istringstream iss(tmp);
+      std::string line;
+      while (std::getline(iss, line, 'x')) {
+	try { out.push_back(stoi(line)); } catch (...) { std::cerr << "Failed to read parsed int tag " << tag << " for value " << tmp << " with line " << line << std::endl; std::exit(EXIT_FAILURE); }
+      }
+    } else {
+      try { out.push_back(stoi(tmp)); } catch (...) { std::cerr << "Failed to read int tag " << tag << " for value " << tmp << std::endl; std::exit(EXIT_FAILURE); }
+    }
+    
+    assert(out.size());
+    return out;
+    
+  }
+  
   
 }
