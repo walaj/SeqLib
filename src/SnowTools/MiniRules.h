@@ -9,7 +9,7 @@
 #include "SnowTools/GenomicRegion.h"
 #include "SnowTools/GenomicRegionCollection.h"
 #include "SnowTools/SnowUtils.h"
-#include "SnowTools/HTSTools.h"
+#include "SnowTools/BamRead.h"
 
 //#define HAVE_AHOCORASICK_AHOCORASICK_H 1
 //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
@@ -184,7 +184,7 @@ struct FlagRule {
   void parseRuleLine(std::string line);
   
   // ask whether a read passes the rule
-  bool isValid(Read &r);
+  bool isValid(BamRead &r);
 
   friend std::ostream& operator<<(std::ostream &out, const FlagRule &fr);
 
@@ -280,7 +280,7 @@ class AbstractRule {
 
   FlagRule fr;
 
-  bool isValid(Read &r);
+  bool isValid(BamRead &r);
 
   void parseRuleLine(std::string line);
 
@@ -288,7 +288,7 @@ class AbstractRule {
 
   //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifndef __APPLE__
-  bool ahomatch(Read &r);
+  bool ahomatch(BamRead &r);
 
   bool ahomatch(const char * seq, unsigned len);
 #endif
@@ -369,11 +369,11 @@ class MiniRules {
 
   std::string id;
     
-  bool isValid(Read &r);
+  bool isValid(BamRead &r);
    
   void setRegionFromFile(const std::string& file);
 
-  bool isReadOverlappingRegion(Read &r);
+  bool isReadOverlappingRegion(BamRead &r);
 
   friend std::ostream& operator<<(std::ostream& out, const MiniRules &mr);
  
@@ -423,7 +423,7 @@ class MiniRulesCollection {
 
   MiniRulesCollection(const std::string& file);
 
-  bool isValid(Read &r);
+  bool isValid(BamRead &r);
   
   friend std::ostream& operator<<(std::ostream& out, const MiniRulesCollection &mr);
   

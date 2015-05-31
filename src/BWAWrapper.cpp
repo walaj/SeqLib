@@ -87,6 +87,9 @@ namespace SnowTools {
     //std::cout << __print_bns() << std::endl;
 #endif    
 
+
+    bool first_is_rev = false;
+
     // loop through the hits
     for (size_t i = 0; i < ar.n; ++i) {
 
@@ -97,6 +100,9 @@ namespace SnowTools {
       // get forward-strand position and CIGAR
       a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
 
+      if (i == 0 && a.is_rev)
+	first_is_rev = true;
+
       // instantiate the read
       BamRead b;
       b.init();
@@ -106,6 +112,15 @@ namespace SnowTools {
       b.b->core.qual = a.mapq;
       b.b->core.flag = a.flag;
       b.b->core.n_cigar = a.n_cigar;
+      
+      // set dumy mate
+      b.b->core.mtid = -1;
+      b.b->core.mpos = -1;
+      b.b->core.isize = 0;
+
+      // if alignment is reverse, set it
+      if (a.is_rev) 
+	b.b->core.flag |= BAM_FREVERSE;
 
       // allocate all the data
       b.b->core.l_qname = name.length() + 1;
@@ -116,14 +131,43 @@ namespace SnowTools {
       // allocate the qname
       memcpy(b.b->data, name.c_str(), name.length() + 1);
 
-      // allocate the cigar
+      // allocate the cigar. Reverse if aligned to neg strand, since mem_aln_t stores
+      // cigars relative to referemce string oreiatnion, not forward alignment
       memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a.cigar, a.n_cigar<<2);
+      //std::cerr << "ORIGINAL CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
+
+      if (a.is_rev != first_is_rev) {
+	uint32_t temp;
+	int start = 0; 
+	int end = a.n_cigar - 1;
+	uint32_t* arr = bam_get_cigar(b.b);
+	while(start < end) {
+	    temp = arr[start];   
+	    arr[start] = arr[end];
+	    arr[end] = temp;
+	    ++start;
+	    --end;
+	  }  
+      }
+
+      //std::cerr << "NEW CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
+      
+      // convert N to S
+      uint32_t * cigr = bam_get_cigar(b.b);
+      for (int k = 0; k < b.b->core.n_cigar; ++k) {
+	if ( (cigr[k] & BAM_CIGAR_MASK) == BAM_CREF_SKIP) {
+	  cigr[k] &= ~BAM_CIGAR_MASK;
+	  cigr[k] |= BAM_CSOFT_CLIP;
+	}
+      }
+	
 
       // allocate the sequence
       uint8_t* m_bases = b.b->data + b.b->core.l_qname + (b.b->core.n_cigar<<2);
 
-      // move this out of bigger loop
-      for (int i = 0; i < seq.length(); ++i) {
+      // TODO move this out of bigger loop
+      int slen = seq.length();
+      for (int i = 0; i < slen; ++i) {
 
 	// bad idea but works for now
 	uint8_t base = 15;
@@ -140,8 +184,9 @@ namespace SnowTools {
 	m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
       }
 
-      // allocate the quality
-      
+      // allocate the quality to NULL
+      uint8_t* s = bam_get_qual(b.b);
+      s[0] = 0xff;
 
       //b.SetQname(name);
       //b.SetSequence(seq);
@@ -362,13 +407,13 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   {
 
     if (idx) {
-      std::cout << "...clearing old index" << std::endl;
+      std::cerr << "...clearing old index" << std::endl;
       bwa_idx_destroy(idx);
       idx = 0;
     }
     
     // read in the bwa index
-    std::cout << "...loading in the index for BWA from location: " << file << std::endl;
+    std::cerr << "...loading in the index for BWA from location: " << file << std::endl;
     idx = bwa_idx_load(file.c_str(), BWA_IDX_ALL);
     if (idx == NULL) {
       std::cerr << "Could not load the reference: " << file << std::endl;

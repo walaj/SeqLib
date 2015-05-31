@@ -14,6 +14,7 @@
 /** 
  */
 namespace SnowTools {
+
 class GenomicRegion {
 
   template<typename T> friend class GenomicRegionCollection;
@@ -30,7 +31,7 @@ class GenomicRegion {
    * @param t_pos2 End position
    * @param strand true for positive, false for negative
   */
-  GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, bool t_strand = true);
+  GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, char t_strand = true);
 
   /** Construct a GenomicRegion from a string
    */
@@ -48,9 +49,8 @@ class GenomicRegion {
   GenomicRegion(const std::string& reg, bam_hdr_t* h);
 
   static int32_t chrToNumber(std::string ref);
-  static std::string chrToString(int32_t ref);
 
-  static uint32_t posToBigPos(int32_t refid, uint32_t pos);
+  static std::string chrToString(int32_t ref);
 
   /** Randomize the position of this GenomicRegion on the genome
    * 
@@ -82,7 +82,9 @@ class GenomicRegion {
   int getOverlap(const GenomicRegion gr) const;
 
   friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr);
+
   std::string toString() const;
+
   void pad(int32_t pad);
   
   int width() const;
@@ -90,7 +92,7 @@ class GenomicRegion {
   int32_t chr = 0;
   int32_t pos1 = 0;
   int32_t pos2 = 0;
-  bool strand = true; // true = pos, false = neg
+  char strand = '*';
 
  private:
 

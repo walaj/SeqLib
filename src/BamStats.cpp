@@ -18,38 +18,38 @@ BamReadGroup::BamReadGroup(const std::string& name) : reads(0), supp(0), unmap(0
 
 }
 
-void BamReadGroup::addRead(Read &r)
+void BamReadGroup::addRead(BamRead &r)
 {
-  int mapqr = r_mapq(r);
+  int mapqr = r.MapQuality();
   if (mapqr >=0 && mapqr <= 100)
     mapq.addElem(mapqr);
   
-  int32_t this_nm;
-  r_get_int32_tag(r, "NM", this_nm);
+  int32_t this_nm = r.GetIntTag("NM");;
+  //r_get_int32_tag(r, "NM", this_nm);
   if (this_nm <= 100)
     nm.addElem(this_nm);
   
   int32_t isizer = -1;
-  if (!r_is_pmapped(r))
+  if (!r.PairMappedFlag())
     isizer = -2;
-  else if (r_id(r) == r_mid(r))
-    isizer = std::abs(r_isize(r));
+  else if (!r.Interchromosomal())
+    isizer = std::abs(r.InsertSize());
   isize.addElem(isizer);
 
-  int32_t c;
-  r_get_clip(r,c);
+  int32_t c = r.NumClip();
+  //r_get_clip(r,c);
   clip.addElem(c);
   
-  len.addElem(r_length(r));
+  len.addElem(r.Length());
 
 }
 
-void BamStats::addRead(Read &r)
+void BamStats::addRead(BamRead &r)
 {
 
   // get the read group
-  std::string rg;
-  r_get_Z_tag(r, "RG", rg);
+  std::string rg = r.GetZTag("RG");
+  //r_get_Z_tag(r, "RG", rg);
 
 #ifdef DEBUG_STATS
   std::cout << "got read group tag " << rg << std::endl;

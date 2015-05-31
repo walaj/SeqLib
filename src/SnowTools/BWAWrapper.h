@@ -25,8 +25,6 @@ extern "C" {
 
 KSEQ_DECLARE(gzFile)
 
-using SnowTools::BamRead;
-
 namespace SnowTools {
 
   /** Structure to hold unaligned sequence (name and bases)

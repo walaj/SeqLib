@@ -1,39 +1,46 @@
-#include "AlignedContig.h"
+#include "SnowTools/AlignedContig.h"
+#include "SnowTools/BamWalker.h"
+
 #include <regex>
 #include <unordered_map>
-#include "SeqanTools.h"
 
-using namespace std;
+namespace SnowTools {
 
-/* HENG LI CODE FROM SAMTOOLS -> BAM_IMPORT.C  */
-//#ifndef kroundup32
-//#define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
-//#endif
-
-/* HENG LI CODE FROM SAMTOOLS -> BAM_IMPORT.C  */
-/*static inline uint8_t *alloc_data(bam1_t *b, int size)
-{
-  if (b->m_data < size) {
-    b->m_data = size;
-    kroundup32(b->m_data);
-    b->data = (uint8_t*)realloc(b->data, b->m_data);
-  }
-  return b->data;
-  }*/
-
-void AlignedContig::addAlignment(const BamRead &align)
+  void AlignedContig::addAlignment(const BamRead &align) {
 
   AlignmentFragment tal(align); 
-  m_align.push_back(tal);
+  m_frag_v.push_back(tal);
   
-  if (m_align.size() > 1)
-    sort(m_align.begin(), m_align.end());
+  if (m_frag_v.size() > 1)
+  sort(m_frag_v.begin(), m_frag_v.end());
 
 }
+  AlignedContig::AlignedContig(const BamReadVector& bav) 
+  {
+    if (!bav.size())
+      return;
+    
+    // set the sequence
+    m_seq = bav.begin()->Sequence();
+    if (bav.begin()->ReverseFlag())
+      SnowTools::rcomplement(m_seq);
+    
+    // make the individual alignments and add
+    for (auto& i : bav) {
+      m_frag_v.push_back(AlignmentFragment(i));
+    }
+
+    // sort fragments by order on fwd-strand contig
+    if (m_frag_v.size() > 1)
+      std::sort(m_frag_v.begin(), m_frag_v.end());
+
+    // get breaks out of it
+    setMultiMapBreakPairs();
+  }
 
 void AlignedContig::printContigFasta(std::ofstream& os) const {
-  os << ">" << getContigName() << endl;
-  os << getSequence() << endl;
+  os << ">" << getContigName() << std::endl;
+  os << getSequence() << std::endl;
 }
 
 void AlignedContig::blacklist(GRC &grv) {
@@ -42,8 +49,8 @@ void AlignedContig::blacklist(GRC &grv) {
     return;
 
  // loop through the indel breaks and blacklist
- for (auto& i : m_align) 
-   for (auto& j : i.indel_breaks) 
+ for (auto& i : m_frag_v) 
+   for (auto& j : i.m_indel_breaks) 
      j.checkBlacklist(grv);
 
 }
@@ -56,103 +63,112 @@ void AlignedContig::splitCoverage() {
   // require that alignReadsToContig already ran
   assert(m_tried_align_reads);
   
-  for (auto& i : m_align) {
-    for (auto& j : i.indel_breaks) {
-      //cout << "calling indel split coverage " << endl;
+  for (auto& i : m_frag_v) {
+    for (auto& j : i.m_indel_breaks) {
+      //std::cout << "calling indel split coverage " << std::endl;
       j.splitCoverage(m_bamreads);
     }
   }
   
   for (auto& i : m_local_breaks) {
-    //cout << "calling local split coverage " << endl;
+    //std::cout << "calling local split coverage " << std::endl;
     i.splitCoverage(m_bamreads);
   }
 
   if (!m_global_bp.isEmpty()) {
-    //cout << "calling global split coverage " << endl;
+    //std::cout << "calling global split coverage " << std::endl;
     m_global_bp.splitCoverage(m_bamreads);
   }
 
 }
 
-ostream& operator<<(ostream& out, const AlignedContig &ac) {
+std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
 
   // print the global breakpoint
   if (!ac.m_global_bp.isEmpty())
-    out << "Global BP: " << ac.m_global_bp << " contig " << ac.getContigName() << endl;       
+    out << "Global BP: " << ac.m_global_bp << std::endl;       
 
   // print the multi-map breakpoints
   for (auto& i : ac.m_local_breaks)
     if (!i.isEmpty())
-      out << "Multi-map BP: " << i << " contig " << ac.getContigName() << endl;       
+      out << "Multi-map BP: " << i << " -- " << ac.getContigName() << std::endl;       
 
   // print the indel breakpoints
-  for (auto& i : ac.m_align)
-    for (auto& j : i.indel_breaks) 
+  for (auto& i : ac.m_frag_v)
+    for (auto& j : i.getIndelBreaks()) 
       if (!j.isEmpty())
-	out << "Indel: " << j << " contig " << ac.getContigName() << endl;       
+	out << "Indel: " << j << " -- " << ac.getContigName() << std::endl;       
 
   // print the AlignmentFragments alignments
-  for (auto& i : ac.m_align) 
-    out << i << " Discordant: " << ac.printDiscordantClusters() << " contig " << ac.getContigName() << endl;
+  for (auto& i : ac.m_frag_v) 
+    out << i << " Disc: " << ac.printDiscordantClusters() << " -- " << ac.getContigName() << std::endl;
 
   // print the break locations for indel deletions
-  for (auto& i : ac.m_align) {
-    for (auto& j : i.indel_breaks) {
+  for (auto& i : ac.m_frag_v) {
+    for (auto& j : i.getIndelBreaks()) {
       if (j.isindel && j.insertion == "") // deletion
-	out << string(j.cpos1, ' ') << "|" << string(j.cpos2-j.cpos1-1, ' ') << '|' << endl;	
+	out << std::string(j.cpos1, ' ') << "|" << std::string(j.cpos2-j.cpos1-1, ' ') << '|' << std::endl;	
     }
   }
-    
+
    // print the contig base-pairs
-  out << ac.getSequence() << "    " << ac.getContigName() << endl; 
+  out << ac.getSequence() << "    " << ac.getContigName() << std::endl; 
    
    PlottedReadVector plot_vec;
 
    // print out the individual reads
    for (auto& i : ac.m_bamreads) {
 
-     string seq ="", sr ="";
-     int pos =-1, sw = -1;
-
-     r_get_trimmed_seq(i, seq);
-     r_get_Z_tag(i, "SR", sr);
+     int pos = -1;
+     int aln = -1;
+     int dum= 0;
+     std::string seq = i.QualityTrimmedSequence(4, dum);
+     std::string sr = i.GetZTag("SR");
 
      // reverse complement if need be
-     int32_t rc;
-     r_get_int32_tag(i, "RC", rc);
+     int32_t rc = i.GetIntTag("RC");
      if (rc)
        SnowTools::rcomplement(seq);
 
      // get the more complex tags (since there can be multiple annotations per tag)
-     vector<int> posvec = SnowTools::GetIntTag(i, "AL");
-     vector<int> swvec = SnowTools::GetIntTag(i, "SW");
-     vector<string> cnvec = SnowTools::GetStringTag(i, "CN");
-     assert(posvec.size() == swvec.size());
+     std::vector<int> posvec = i.GetSmartIntTag("SL"); // start positions ON CONTIG
+     std::vector<int> alnvec = i.GetSmartIntTag("TS"); // start positions ON READ
+     std::vector<std::string> cnvec = i.GetSmartStringTag("CN");
      assert(cnvec.size() == posvec.size());
      size_t kk = 0;
      for (; kk < cnvec.size(); kk++) 
        if (cnvec[kk] == ac.getContigName()) {
 	 pos = posvec[kk];
-	 sw = swvec[kk];
+	 aln = alnvec[kk];
 	 break;
        }
+
+     // trim the sequence if it hangs off the end
+     //if (i.GetZTag("SR") == "t147_D0BK6ACXX111110:6:2101:5352:156091") {
+     //  std::cerr << "i.PositionEnd() " << i.PositionEnd() << " i.Position " << i.Position() << " len " << ac.getSequence().length() << std::endl;
+     //  exit(1);
+     //	 }
+     if (aln > 0)
+       seq = seq.substr(aln, seq.length() - aln);
+
+     if ( (pos + seq.length() ) > ac.getSequence().length()) 
+       seq = seq.substr(0, ac.getSequence().length() - pos);
+
 
      assert(kk != cnvec.size()); // assure that we found something
      pos = abs(pos);
      int padlen = ac.getSequence().size() - pos - seq.size() + 5;
-     padlen = max(5, padlen);
+     padlen = std::max(5, padlen);
 
-     stringstream rstream;
+     std::stringstream rstream;
      assert(pos < 1e4 && padlen < 1e4); // bug, need to check
-     rstream << sr << "--" << (r_id(i)+1) << ":" << r_pos(i)  << " SW: " << sw;
+     rstream << sr << "--" << (i.ChrID()+1) << ":" << i.Position();
 
      plot_vec.push_back({pos, seq, rstream.str()});
-
    }
 
-   sort(plot_vec.begin(), plot_vec.end());
-  
+   std::sort(plot_vec.begin(), plot_vec.end());
+
    PlottedReadLineVector line_vec;
    
    // plot the reads from the ReadPlot vector
@@ -175,7 +191,7 @@ ostream& operator<<(ostream& out, const AlignedContig &ac) {
 
    // plot the lines
    for (auto& i : line_vec) 
-     out << i << " contig " << ac.getContigName() << endl;
+     out << i << " contig " << ac.getContigName() << std::endl;
    
    return out;
 }
@@ -186,28 +202,29 @@ void AlignedContig::setMultiMapBreakPairs() {
     return;
 
   // if single mapped contig, nothing to do here
-  if (m_align.size() == 1)
+  if (m_frag_v.size() == 1)
     return;
 
   // initialize the breakpoint, fill with basic info
   BreakPoint bp;
   bp.seq = getSequence();
-  bp.num_align = m_align.size();
+
+  //bp.num_frag_v = m_frag_v.size();
   bp.cname = getContigName(); 
   assert(bp.cname.length());
   
   // set the discovar support if it's there
-  parseDiscovarName(bp.disco_norm, bp.disco_tum);
+  //parseDiscovarName(bp.disco_norm, bp.disco_tum);
 
   // walk along the ordered contig list and make the breakpoint pairs  
-  for (auto it = m_align.begin(); it != m_align.end() - 1; it++) {
+  for (auto it = m_frag_v.begin(); it != m_frag_v.end() - 1; it++) {
     
-    bp.gr1 = SnowTools::GenomicRegion(r_id(it->align), it->gbreak2, it->gbreak2);
-    bp.gr2 = SnowTools::GenomicRegion(r_id((it+1)->align), (it+1)->gbreak1, (it+1)->gbreak1);
+    bp.gr1 = SnowTools::GenomicRegion(it->m_align.ChrID(), it->gbreak2, it->gbreak2);
+    bp.gr2 = SnowTools::GenomicRegion((it+1)->m_align.ChrID(), (it+1)->gbreak1, (it+1)->gbreak1);
     //bp.gr1.strand = it->align.IsReverseStrand() ? '-' : '+';
     //bp.gr2.strand = (it+1)->align.IsReverseStrand() ? '+' : '-';
-    bp.gr1.strand = !r_is_rev(it->align); 
-    bp.gr2.strand = r_is_rev((it+1)->align);
+    bp.gr1.strand = !it->m_align.ReverseFlag() ? '+' : '-'; 
+    bp.gr2.strand = (it+1)->m_align.ReverseFlag() ? '+' : '-';
 
     bp.cpos1 = it->break2; // take the right-most breakpoint as the first
     bp.cpos2 = (it+1)->break1;  // take the left-most of the next one
@@ -216,8 +233,8 @@ void AlignedContig::setMultiMapBreakPairs() {
     assert(bp.cpos2 < 10000);
 
     // set the mapq
-    bp.mapq1 = r_mapq(it->align);
-    bp.mapq2 = r_mapq((it+1)->align);
+    bp.mapq1 = it->m_align.MapQuality();
+    bp.mapq2 = (it+1)->m_align.MapQuality();
     
     assert(bp.mapq1 < 1000 && bp.mapq2 < 1000);
     
@@ -255,8 +272,8 @@ void AlignedContig::setMultiMapBreakPairs() {
 	bp.homology = "";
     } catch (...) {
       unsigned hom = abs(bp.cpos1 - bp.cpos2);
-      cout << "Caught error with contig on fine-getBreakPairs: " << r_qname(it->align) << endl; 
-      cout << "m_seq length: " << m_seq.length() << " bp.cpos1: " << bp.cpos1 << " bp.cpos2: " << bp.cpos2 << " bp.cpos1-bp.cpos2: " << hom << " m_seq: " << m_seq << endl;
+      std::cout << "Caught error with contig on fine-getBreakPairs: " << it->m_align.Qname() << std::endl; 
+      std::cout << "m_seq length: " << m_seq.length() << " bp.cpos1: " << bp.cpos1 << " bp.cpos2: " << bp.cpos2 << " bp.cpos1-bp.cpos2: " << hom << " m_seq: " << m_seq << std::endl;
     }
 
     m_local_breaks.push_back(bp);
@@ -264,7 +281,7 @@ void AlignedContig::setMultiMapBreakPairs() {
   }
   
   // if this is a double mapping, we are done
-  if (m_align.size() == 2) {
+  if (m_frag_v.size() == 2) {
     m_global_bp = bp;
     m_local_breaks.clear();
     return;
@@ -272,60 +289,60 @@ void AlignedContig::setMultiMapBreakPairs() {
   
   // go through alignments and find start and end that reach mapq 
   size_t bstart = 1000; //1000 is a dummy
-  size_t bend = m_align.size() - 1;
-  for (size_t i = 0; i < m_align.size(); i++)
-    if (r_mapq(m_align[i].align) >= 60) {
+  size_t bend = m_frag_v.size() - 1;
+  for (size_t i = 0; i < m_frag_v.size(); i++)
+    if (m_frag_v[i].m_align.MapQuality() >= 60) {
       bend = i;
       if (bstart == 1000)
 	bstart = i;
     }
   if (bstart == bend || bstart==1000) {
     bstart = 0;
-    bend = m_align.size() -1 ;
+    bend = m_frag_v.size() -1 ;
   }
-  assert(bend <= m_align.size());
-  assert(bstart <= m_align.size());
+  assert(bend <= m_frag_v.size());
+  assert(bstart <= m_frag_v.size());
   assert(bstart != 1000);
   
   // there are 3+ mappings
   m_global_bp = bp;
-  m_global_bp.cpos1 = m_align[bstart].break2; // first mapping
-  m_global_bp.gr1.pos1 = m_align[bstart].gbreak2;
+  m_global_bp.cpos1 = m_frag_v[bstart].break2; // first mapping
+  m_global_bp.gr1.pos1 = m_frag_v[bstart].gbreak2;
   m_global_bp.gr1.pos2 = m_global_bp.gr1.pos1;
-  m_global_bp.gr2.pos1 = m_align[bend].gbreak1;
+  m_global_bp.gr2.pos1 = m_frag_v[bend].gbreak1;
   m_global_bp.gr2.pos2 = m_global_bp.gr2.pos1;
-  m_global_bp.gr1.chr = r_id(m_align[bstart].align);
-  m_global_bp.gr2.chr = r_id(m_align[bend].align);
-  //m_global_bp.pos1  = m_align[bstart].gbreak2;
-  m_global_bp.cpos2 = m_align[bend].break1; // last mapping
-   //m_global_bp.pos2  = m_align[bend].gbreak1;
-   //m_global_bp.refID1 = m_align[bstart].align.RefID; 
-   //m_global_bp.refID2 = m_align[bend].align.RefID; 
+  m_global_bp.gr1.chr = m_frag_v[bstart].m_align.ChrID();
+  m_global_bp.gr2.chr = m_frag_v[bend].m_align.ChrID();
+  //m_global_bp.pos1  = m_frag_v[bstart].gbreak2;
+  m_global_bp.cpos2 = m_frag_v[bend].break1; // last mapping
+   //m_global_bp.pos2  = m_frag_v[bend].gbreak1;
+   //m_global_bp.refID1 = m_frag_v[bstart].align.RefID; 
+   //m_global_bp.refID2 = m_frag_v[bend].align.RefID; 
 
    // set the strands
-   //m_global_bp.gr1.strand = m_align[bstart].align.IsReverseStrand() ? '-' : '+';
-   //m_global_bp.gr2.strand = m_align[bend].align.IsReverseStrand()   ? '+' : '-';
-  m_global_bp.gr1.strand = !r_is_rev(m_align[bstart].align);
-  m_global_bp.gr2.strand = r_is_rev(m_align[bend].align);
+   //m_global_bp.gr1.strand = m_frag_v[bstart].align.IsReverseStrand() ? '-' : '+';
+   //m_global_bp.gr2.strand = m_frag_v[bend].align.IsReverseStrand()   ? '+' : '-';
+  m_global_bp.gr1.strand = !m_frag_v[bstart].m_align.ReverseFlag() ? '+' : '-';
+  m_global_bp.gr2.strand = m_frag_v[bend].m_align.ReverseFlag() ? '+' : '-';
 
 
    // set the splits
-   //m_global_bp.nsplit1 = m_align[bstart].nsplit2;
-   //m_global_bp.tsplit1 = m_align[bstart].tsplit2;
-   //m_global_bp.nsplit2 = m_align[bend].nsplit1;
-   //m_global_bp.tsplit2 = m_align[bend].tsplit1;
+   //m_global_bp.nsplit1 = m_frag_v[bstart].nsplit2;
+   //m_global_bp.tsplit1 = m_frag_v[bstart].tsplit2;
+   //m_global_bp.nsplit2 = m_frag_v[bend].nsplit1;
+   //m_global_bp.tsplit2 = m_frag_v[bend].tsplit1;
 
-   //m_global_bp.nsplit = min(m_global_bp.nsplit1, m_global_bp.nsplit2);
-   //m_global_bp.tsplit = min(m_global_bp.tsplit1, m_global_bp.tsplit2);
+   //m_global_bp.nsplit = std::min(m_global_bp.nsplit1, m_global_bp.nsplit2);
+   //m_global_bp.tsplit = std::min(m_global_bp.tsplit1, m_global_bp.tsplit2);
 
    // set the mapping quality
-  m_global_bp.mapq1 = r_mapq(m_align[bstart].align);
-  m_global_bp.mapq2 = r_mapq(m_align[bend].align);
+  m_global_bp.mapq1 = m_frag_v[bstart].m_align.MapQuality();
+  m_global_bp.mapq2 = m_frag_v[bend].m_align.MapQuality();
 
    if (m_global_bp.mapq1 > 60 || m_global_bp.mapq2 > 60) {
-     cerr << "bad mapq GLOBAL" << endl;
-     cerr << m_global_bp.toString() << endl;
-     cerr << " m_align size " << m_align.size() << " bstart " << bstart << " bend " << bend << endl;
+     std::cerr << "bad mapq GLOBAL" << std::endl;
+     std::cerr << m_global_bp.toString() << std::endl;
+     std::cerr << " m_frag_v size " << m_frag_v.size() << " bstart " << bstart << " bend " << bend << std::endl;
      exit(EXIT_FAILURE); 
    }
 
@@ -341,18 +358,61 @@ void AlignedContig::setMultiMapBreakPairs() {
        m_global_bp.homology = "N";
      m_global_bp.order();
    } catch (...) {
-     cout << "Caught error with contig on global-getBreakPairs: " << getContigName() << endl;
+     std::cout << "Caught error with contig on global-getBreakPairs: " << getContigName() << std::endl;
    }
 
 }
+
+  void AlignedContig::alignReads(BamReadVector& bav)
+  {
+    
+    // construc the index
+    SnowTools::BWAWrapper bw;
+    SnowTools::USeqVector v = {{getContigName(), getSequence()}};
+    bw.constructIndex(v);
+    
+    // debug
+    SnowTools::BamWalker walk("/seq/picard_aggregation/G14856/TCGA-05-4432-01A-01D-1931-08/v2/TCGA-05-4432-01A-01D-1931-08.bam");
+    walk.setStdout();
+    
+    // align the reads
+    for (auto& i : bav)
+      {
+	BamReadVector brv;
+	int dum = 0;
+	bw.alignSingleSequence(i.QualityTrimmedSequence(4, dum), i.Qname(), brv, false);
+
+	if (brv.size() > 1) {
+	  continue;
+	  //std::cerr << "Mulitple alignments for " << brv[0].Qname() << std::endl;
+	}
+	
+	if (brv.size() == 0)
+	  continue;
+
+	// store read2contig alignment info in this read
+	if ( (brv[0].PositionEnd() - brv[0].Position()) > 80 && brv[0].MapQuality() == 60 && brv[0].MaxInsertionBases() == 0 && brv[0].MaxDeletionBases() == 0)
+	  {
+	    if (brv[0].ReverseFlag())
+	      i.AddIntTag("RC",1);
+	    i.SmartAddTag("SL", std::to_string(brv[0].Position()));
+	    i.SmartAddTag("TS", std::to_string(brv[0].AlignmentPosition()));
+	    i.SmartAddTag("CN", getContigName());
+	    
+	    m_bamreads.push_back(i);
+	  }
+      }
+    
+
+  }
  
-string AlignedContig::printDiscordantClusters() const {
+std::string AlignedContig::printDiscordantClusters() const {
 
-  stringstream out;
+  std::stringstream out;
   if (m_dc.size() == 0)
-    return "No Discordant Clusters";
+    return "none";
 
-  for (vector<DiscordantCluster>::const_iterator it = m_dc.begin(); it != m_dc.end(); it++)
+  for (std::vector<DiscordantCluster>::const_iterator it = m_dc.begin(); it != m_dc.end(); it++)
     out << *it << " ";
   return out.str();
 
@@ -360,47 +420,48 @@ string AlignedContig::printDiscordantClusters() const {
 
   // reject if not at last partially in window
   m_skip = true;
-  for (auto& ca : m_align)
+  for (auto& ca : m_frag_v)
     if (ca.local)
       m_skip = false;
 
   // set break pairs for multi mapped reads
   setMultiMapBreakPairs();
 
-  // set the min alignment end length
-  //if (m_align.size() > 1) {
-  //  m_min_align_len = min(m_align[0].align.Length, m_align.back().align.Length);
+  // set the std::min alignment end length
+  //if (m_frag_v.size() > 1) {
+  //  m_std::min_align_len = std::min(m_frag_v[0].align.Length, m_frag_v.back().align.Length);
   //}
 
 }
 */
 
-AlignmentFragment::AlignmentFragment(const Read &talign) {
+AlignmentFragment::AlignmentFragment(const BamRead &talign) {
   
-  align = talign;
-
-  // orient cigar
-  
+  m_align = talign;
 
   // orient cigar so it is on the contig orientation. 
   // need to do this to get the right ordering of the contig fragments below
-  if (talign.IsReverseStrand())
-    BamToolsUtils::flipCigar(cigar);
+  if (m_align.ReverseFlag()) {
+    m_cigar = m_align.GetReverseCigar();
+  } else { 
+    m_cigar = m_align.GetCigar();
+  }
 
   // find the start position of alignment ON CONTIG
   start = 0; 
-  for (auto& i : cigar) {
+  for (auto& i : m_align.GetCigar()) {
     if (i.Type != 'M')
       start += i.Length;
     else
       break;
   }
-
+  
+  //std::cout << "start alignemnt " << start << " for " << m_align.ChrID() << std::endl;
   // set the left-right breaks
   unsigned currlen  = 0; 
 
   // cigar is oriented to as is from aligner
-  for (auto& i : cigar /*align.CigarData*/) { //CigarOpVec::const_iterator j = align.cigar.begin(); j != align.cigar.end(); j++) {
+  for (auto& i : m_align.GetCigar() /*align.CigarData*/) { //CigarOpVec::const_iterator j = align.cigar.begin(); j != align.cigar.end(); j++) {
     
     // SET THE CONTIG BREAK (treats deletions and leading S differently)
     // the first M gets the break1, pos on the left
@@ -413,13 +474,17 @@ AlignmentFragment::AlignmentFragment(const Read &talign) {
     
   }
   
-  gbreak1 = align.Position;
-  gbreak2 = align.GetEndPosition() - 1;
-    
+  gbreak1 = m_align.Position() + 1;
+  gbreak2 = m_align.PositionEnd();
+  
+  //std::cout << "gbreak1 " << gbreak1 << " for " << m_align.ChrID() << std::endl;
+  //std::cout << "gbreak2 " << gbreak2 << " for " << m_align.ChrID() << std::endl;
+  
   assert(break1 < 10000);
   assert(break2 < 10000);
-  if (break1 < 0)
-    cout << "break " << break1 << " cigar "  << BamToolsUtils::cigarToString(cigar) << " frag " << *this << endl;
+
+  //if (break1 < 0)
+  //  cout << "break " << break1 << " cigar "  << BamToolsUtils::cigarToString(cigar) << " frag " << *this << endl;
   assert(break1 >= 0);
   assert(break2 >= 0);
   
@@ -427,38 +492,42 @@ AlignmentFragment::AlignmentFragment(const Read &talign) {
   BreakPoint bp;
   size_t fail_safe_count = 0;
   while (parseIndelBreak(bp) && fail_safe_count++ < 100) 
-    indel_breaks.push_back(bp);
+    m_indel_breaks.push_back(bp);
 
   assert(fail_safe_count != 100);
 
   // set the cigar matches
-  indelCigarMatches(nmap, tmap);
+  //indelCigarMatches(nmap, tmap);
   
 }
 
-ostream& operator<<(ostream &out, const AlignmentFragment &c) {
+std::ostream& operator<<(std::ostream &out, const AlignmentFragment &c) {
   
   // sets the direction to print
   char jsign = '>'; 
-  if (c.align.IsReverseStrand())
+  if (c.m_align.ReverseFlag())
     jsign = '<';
   
   // print the cigar value per base
-  for (auto& j : c.cigar) { //c.align.CigarData) { // print releative to forward strand
+  for (auto& j : c.m_align.GetCigar() /*m_cigar*/) { //c.align.CigarData) { // print releative to forward strand
     if (j.Type == 'M')
-      out << string(j.Length, jsign);
+      out << std::string(j.Length, jsign);
     else if (j.Type == 'I') 
-      out << string(j.Length, 'I');
+      out << std::string(j.Length, 'I');
     else if (j.Type == 'S' || j.Type == 'H')
-      out << string(j.Length, '.');
+      out << std::string(j.Length, '.');
   }
   
+  // print contig and genome breaks
+  out << " C[" << c.break1 << "," << c.break2 << "] G[" << c.gbreak1 << "," << c.gbreak2 << "]";
+  
   // print the info
-  out << "    " << c.align.RefID + 1 << ":" << c.align.Position 
+  /*  out << "    " << c.m_align.RefID + 1 << ":" << c.align.Position 
       << " MAPQ: " << c.align.MapQuality << " OrientedCigar: " << BamToolsUtils::cigarToString(c.align.CigarData)
 	  << " Start: " << c.start
 	  << " Breaks: " << c.break1 << " " << c.break2 
       << " GenomeBreaks: " << c.gbreak1 << " " << c.gbreak2 << " cname " << c.m_name;
+  */
     //	  << " Tsplits: " << c.tsplit1 << " " << c.tsplit2 
     //    << " Nsplits: " << c.nsplit1 << " " << c.nsplit2;
   
@@ -468,17 +537,17 @@ ostream& operator<<(ostream &out, const AlignmentFragment &c) {
 
 void AlignmentFragment::indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap) { 
 
-  for (auto& i : indel_breaks) {
+  for (auto& i : m_indel_breaks) {
 
     assert(i.isindel);
     if (i.getSpan() <= 0) {
-      cerr << "weird span detected " << i.getSpan();
-      cerr << i << endl;
-      cerr << *this << endl;
+      std::cerr << "weird span detected " << i.getSpan();
+      std::cerr << i << std::endl;
+      std::cerr << *this << std::endl;
     }
     //assert(i.getSpan() > 0);
     
-    string st = i.getHashString();
+    std::string st = i.getHashString();
 
     CigarMap::const_iterator ffn = nmap.find(st);
     CigarMap::const_iterator fft = tmap.find(st);
@@ -494,8 +563,8 @@ void AlignmentFragment::indelCigarMatches(const CigarMap &nmap, const CigarMap &
 bool AlignedContig::isWorse(const AlignedContig &ac) const {
 
   // TODO.  right now is TRUE if any more than 1 bp per contig
-  vector<const BreakPoint*> bpv1 = getAllBreakPointPointers();
-  vector<const BreakPoint*> bpv2 = ac.getAllBreakPointPointers();
+  std::vector<const BreakPoint*> bpv1 = getAllBreakPointPointers();
+  std::vector<const BreakPoint*> bpv2 = ac.getAllBreakPointPointers();
   if (bpv1.size() != 1 || bpv2.size() != 1)
     return false;
   
@@ -503,8 +572,8 @@ bool AlignedContig::isWorse(const AlignedContig &ac) const {
   if (!same)
     return false;
     
-  int mapq_this = max(bpv1.back()->mapq1, bpv1.back()->mapq2);
-  int mapq_that = max(bpv2.back()->mapq1, bpv2.back()->mapq2);
+  int mapq_this = std::max(bpv1.back()->mapq1, bpv1.back()->mapq2);
+  int mapq_that = std::max(bpv2.back()->mapq1, bpv2.back()->mapq2);
 
   if (mapq_this < mapq_that) {
     return true;
@@ -525,19 +594,19 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   if (!local)
     return false;
 
-  //cout << "parsing indel break" << endl;
+  //cout << "parsing indel break" << std::endl;
 
-  assert(cigar.size());
+  assert(m_cigar.size());
 
   // reject if it has small matches, could get confused. Fix later
-  for (auto& i : cigar) 
+  for (auto& i : m_cigar) 
     if (i.Type == 'M' && i.Length < 5)
       return false;
 
   // reject if first alignment is I or D
-  for (auto& i : cigar) {
+  for (auto& i : m_cigar) {
     if (i.Type == 'D' || i.Type == 'I') {
-      cerr << "rejcting cigar for starting in I or D" << endl;
+      std::cerr << "rejcting cigar for starting in I or D" << std::endl;
       return false;
     }
     if (i.Type == 'M')
@@ -545,25 +614,25 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   }
 
   // reject if last alignment is I or D
-  CigarOpVec tmpcig = cigar;
-  BamToolsUtils::flipCigar(tmpcig);
+  /*  Cigar tmpcig = m_cigar;
+  //BamToolsUtils::flipCigar(tmpcig);
   for (auto& i : tmpcig) {
     if (i.Type == 'D' || i.Type == 'I') {
-      cerr << "rejcting cigar for ending in I or D" << endl;
+      cerr << "rejcting cigar for ending in I or D" << std::endl;
       return false;
     }
     if (i.Type == 'M')
       break;
-  }
+      }*/
 
   // use next available largest D / I
   size_t loc = 0; // keep track of which cigar field
-  for (auto& i : cigar) {
+  for (auto& i : m_cigar) {
     loc++;
     if (i.Type == 'D' || i.Type == 'I') {
       
       // if it starts / stop with I, D, reject
-      if (loc == 1 || loc == cigar.size()) 
+      if (loc == 1 || loc == m_cigar.size()) 
 	return false;
       if (loc > idx) {
 	idx = loc;
@@ -578,14 +647,14 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   //  return false;
 
   // we made it to the end, no more indels to report
-  if (loc == cigar.size())
+  if (loc == m_cigar.size())
     return false;
 
   // clear out the old bp just in case
   bp.insertion = "";
   bp.homology = "";
 
-  bp.seq = m_seq;
+  //bp.seq = m_seq;
   bp.isindel = true;
 
   int curr = 0;
@@ -595,23 +664,23 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   bp.gr1.pos2 = -1;
   bp.gr2.pos1 = -1;
   bp.gr2.pos2 = -1;
-  bp.gr1.chr = align.RefID;
-  bp.gr2.chr = align.RefID;
+  bp.gr1.chr = m_align.ChrID();
+  bp.gr2.chr = m_align.ChrID();
 
   bp.cpos1 = -1;
   bp.cpos2 = -1;
-  bp.num_align = 1;
-  bp.cname = m_name;
-  bp.mapq1 = align.MapQuality;
-  bp.mapq2 = align.MapQuality;
-  bp.gr1.strand = true;
-  bp.gr2.strand = false;
+  //bp.num_frag_v = 1;
+  //bp.cname = m_name;
+  bp.mapq1 = m_align.MapQuality();
+  bp.mapq2 = m_align.MapQuality();
+  bp.gr1.strand = '+';
+  bp.gr2.strand = '-';
 
   assert(bp.cname.length());
 
   size_t count = 0; // count to make sure we are reporting the right indel
 
-  for (auto& i : cigar) { // want breaks in CONTIG coordaintes, so use oriented cigar
+  for (auto& i : m_cigar) { // want breaks in CONTIG coordaintes, so use oriented cigar
     count++;
 
     // set the contig breakpoint
@@ -619,39 +688,32 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
       curr += i.Length;
     if (i.Type == 'D' && bp.cpos1 == -1 && count == idx) {
 
-      if (m_name == "c_1_8456000_8462000_45")
-	cout << "Deletion found of " << i.Length << i.Type << " and insertion " << bp.insertion << endl;
-	
       bp.cpos1 = curr-1;
       bp.cpos2 = curr;
     } 
     if (i.Type == 'I' && bp.cpos1 == -1 && count == idx) {
       bp.cpos1 = curr - i.Length - 1;
       bp.cpos2 = curr - 1;
-      bp.insertion = align.QueryBases.substr(curr, i.Length);
-
-      if (m_name == "c_1_8456000_8462000_45")
-	cout << "Insertion found of " << i.Length << i.Type << endl;
-
+      bp.insertion = m_align.Sequence().substr(curr, i.Length);
     }
 
     // set the genome breakpoint
     if (bp.cpos1 > 0) {
       if (i.Type == 'D') {
-	if (!align.IsReverseStrand()) {
-	  bp.gr1.pos1 =  align.Position + gcurrlen; // dont count this one//bp.cpos1 + align.Position; //gcurrlen + align.Position;
+	if (!m_align.ReverseFlag()) {
+	  bp.gr1.pos1 =  m_align.Position() + gcurrlen; // dont count this one//bp.cpos1 + align.Position; //gcurrlen + align.Position;
 	  bp.gr2.pos1 =  bp.gr1.pos1 + i.Length + 1;
 	} else {
-	  bp.gr2.pos1 =  (align.GetEndPosition()-1) - gcurrlen; //bp.cpos1 + align.Position; //gcurrlen + align.Position;
+	  bp.gr2.pos1 =  (m_align.PositionEnd()-1) - gcurrlen; //bp.cpos1 + align.Position; //gcurrlen + align.Position;
 	  bp.gr1.pos1 =  bp.gr2.pos1 - i.Length - 1;
 	}
       } else if (i.Type == 'I') {
-	if (!align.IsReverseStrand()) {
-	  bp.gr1.pos1 = align.Position + gcurrlen; //gcurrlen + align.Position;
+	if (!m_align.ReverseFlag()) {
+	  bp.gr1.pos1 = m_align.Position() + gcurrlen; //gcurrlen + align.Position;
 	  bp.gr2.pos1 = bp.gr1.pos1 + 1;	
 	} else {
 	  // GetEndPosition is 1 too high
-	  bp.gr2.pos1 = (align.GetEndPosition()-1) - gcurrlen; //gcurrlen + align.Position;
+	  bp.gr2.pos1 = (m_align.PositionEnd()-1) - gcurrlen; //gcurrlen + align.Position;
 	  bp.gr1.pos1 = bp.gr2.pos1 - 1;	
 	}
       }
@@ -671,30 +733,27 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   bp.gr2.pos2 = bp.gr2.pos1;
 
   // error check the length
-  int seq_len = m_seq.length();
-  if (bp.cpos1 > seq_len || bp.cpos2 > seq_len) {
-    cerr << "bp " << bp << endl;
-    cerr << "CA " << *this << endl;
-    cerr << "seq len " << seq_len << endl;
-  }
-  assert(bp.cpos1 <= seq_len);
-  assert(bp.cpos2 <= seq_len);
+  //int seq_len = m_seq.length();
+  /*  if (bp.cpos1 > seq_len || bp.cpos2 > seq_len) {
+    cerr << "bp " << bp << std::endl;
+    cerr << "CA " << *this << std::endl;
+    cerr << "seq len " << seq_len << std::endl;
+    }*/
+  //assert(bp.cpos1 <= seq_len);
+  //assert(bp.cpos2 <= seq_len);
 
   bp.order();
-
-  if (m_name == "c_1_8456000_8462000_45")
-    cout << "FINAL found of " <<  bp.insertion << endl;
   
   return true;
 }
 
-bool AlignedContig::parseDiscovarName(size_t &tumor, size_t &normal) {
-
-  string s;
-  bool valid = m_align[0].align.GetTag("TN", s);
+  //bool AlignedContig::parseDiscovarName(size_t &tumor, size_t &normal) {
+  /*
+  std::string s = "";
+  bool valid = m_frag_v[0].m_align.GetZTag("TN", s);
   if (!valid)
     return false;
-  
+
   // set the tumor support
   std::regex reg("^t([0-9]+)_*");
   std::smatch match;
@@ -709,13 +768,14 @@ bool AlignedContig::parseDiscovarName(size_t &tumor, size_t &normal) {
     normal = std::stoi(match2[1].str());
   
   return false;
-}
+  */
+  //}
 
-vector<const BreakPoint*> AlignedContig::getAllBreakPointPointers() const  {
+std::vector<const BreakPoint*> AlignedContig::getAllBreakPointPointers() const  {
 
-  vector<const BreakPoint*> out;
-  for (auto& i : m_align) {
-    for (auto& k : i.indel_breaks)
+  std::vector<const BreakPoint*> out;
+  for (auto& i : m_frag_v) {
+    for (auto& k : i.m_indel_breaks)
       out.push_back(&k);
   }
   
@@ -725,11 +785,11 @@ vector<const BreakPoint*> AlignedContig::getAllBreakPointPointers() const  {
   return out;
 }
 
-vector<BreakPoint> AlignedContig::getAllBreakPoints() const {
+std::vector<BreakPoint> AlignedContig::getAllBreakPoints() const {
 
-  vector<BreakPoint> out;
-  for (auto& i : m_align) {
-    for (auto& k : i.indel_breaks)
+  std::vector<BreakPoint> out;
+  for (auto& i : m_frag_v) {
+    for (auto& k : i.m_indel_breaks)
       out.push_back(k);
   }
   
@@ -745,10 +805,12 @@ bool AlignedContig::hasVariant() const {
   if (!m_global_bp.isEmpty())
     return true;
 
-  for (auto& i : m_align)
-    if (i.indel_breaks.size())
+  for (auto& i : m_frag_v)
+    if (i.m_indel_breaks.size())
       return true;
 
   return false;
   
+}
+
 }

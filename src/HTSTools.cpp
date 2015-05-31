@@ -3,8 +3,10 @@
 #include <sstream>
 #include <iostream>
 
+namespace SnowTools {
+
 // Trim the sequence by removing low quality bases from either end
-int32_t SnowTools::qualityTrimRead(int qualTrim, int32_t &startpoint, Read &r) {
+int32_t qualityTrimRead(int qualTrim, int32_t &startpoint, Read &r) {
 
     int endpoint = -1; //seq.length();
     startpoint = 0;
@@ -44,7 +46,7 @@ int32_t SnowTools::qualityTrimRead(int qualTrim, int32_t &startpoint, Read &r) {
 
 }
 
-void SnowTools::removeAllTags(Read& a) 
+void removeAllTags(Read& a) 
 {
   size_t keep = (a->core.n_cigar<<2) + a->core.l_qname + ((a->core.l_qseq + 1)>>1) + a->core.l_qseq;
   a->data = (uint8_t*)realloc(a->data, keep); // free the end, which has aux data
@@ -52,7 +54,7 @@ void SnowTools::removeAllTags(Read& a)
 }
 
 // get a string tag that might be separted by "x"
-std::vector<std::string> SnowTools::GetStringTag(const Read& a, const std::string tag) {
+std::vector<std::string> GetStringTag(const Read& a, const std::string tag) {
   
   std::vector<std::string> out;
   std::string tmp;
@@ -76,7 +78,7 @@ std::vector<std::string> SnowTools::GetStringTag(const Read& a, const std::strin
 }
 
 // add a tag that might already be there, separete by 'x'
-void SnowTools::SmartAddTag(Read &a, const std::string tag, const std::string val) {
+void SmartAddTag(Read &a, const std::string tag, const std::string val) {
   
   std::string tmp;
   r_get_Z_tag(a, tag.c_str(), tmp);
@@ -92,7 +94,7 @@ void SnowTools::SmartAddTag(Read &a, const std::string tag, const std::string va
 }
 
 // get an integer tag that might be separted by "x"
-std::vector<int> SnowTools::GetIntTag(const Read& a, const std::string tag) {
+std::vector<int> GetIntTag(const Read& a, const std::string tag) {
   
   std::vector<int> out;
   std::string tmp;
@@ -115,18 +117,22 @@ std::vector<int> SnowTools::GetIntTag(const Read& a, const std::string tag) {
   
 }
 
-void SnowTools::rcomplement(std::string &a) {
+// return a sequence from the reference
+std::string getRefSequence(const GenomicRegion &gr, faidx_t * fi) {
 
-  std::reverse(&a[0], &a[a.size()]);
-  std::string::iterator it = a.begin();
-  for (; it != a.end(); it++)
-    if (*it == 'A')
-      *it = 'T';
-    else if (*it == 'T')
-      *it = 'A';
-    else if (*it == 'C')
-      *it = 'G';
-    else
-      *it = 'C';
+  int len;
+  std::string chrstring = GenomicRegion::chrToString(gr.chr);
+  char * seq = faidx_fetch_seq(fi, const_cast<char*>(chrstring.c_str()), gr.pos1-1, gr.pos2-1, &len);
+  
+  if (seq) {
+    return std::string(seq);
+  } else {
+    //cout << "Failed to get reference sequence at " << gr << endl;
+    return "LOAD_FAIL";
+  }
+
+}
+
+
 }
 
