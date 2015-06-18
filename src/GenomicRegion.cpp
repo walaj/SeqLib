@@ -145,9 +145,9 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
   }
 
   chr = tid;
-  pos1 = beg;
+  pos1 = beg+1;
   pos2 = end;
-  
+
 }
 
 // constructor for SnowTools::GenomicRegion that takes strings. Assumes chr string is in 
