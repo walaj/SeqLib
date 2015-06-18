@@ -16,9 +16,9 @@
 
 namespace SnowTools {
 
-typedef Interval<size_t> GenomicInterval;
+typedef Interval<int32_t> GenomicInterval;
 typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
-typedef IntervalTree<size_t> GenomicIntervalTree;
+typedef IntervalTree<int32_t> GenomicIntervalTree;
 typedef std::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
 typedef std::vector<GenomicInterval> GenomicIntervalVector;
 
@@ -132,7 +132,11 @@ class GenomicRegionCollection {
 
  size_t countContained(const T &gr);
  
- GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<GenomicRegion> &subject, std::vector<size_t>& query_id, std::vector<size_t>& subject_id, bool ignore_strand = false);
+ GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<GenomicRegion> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand = false);
+
+ /** The total amount spanned by this collection
+  */
+ int width() const { int wid = 0; for (auto& i : m_grv) wid += i.width(); return wid; }
 
  /** Increase the left and right ends of each contained GenomicRegion by 
   * the pad value.
@@ -181,6 +185,8 @@ class GenomicRegionCollection {
   GenomicIntervalTreeMap m_tree;
  
  GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
+
+ GenomicRegionCollection<GenomicRegion> complement(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
 
   std::vector<T> m_grv;
   

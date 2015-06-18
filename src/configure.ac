@@ -20,6 +20,16 @@ AC_CHECK_HEADER([zlib.h])
 AC_SEARCH_LIBS([gzopen],[z],,[AC_MSG_ERROR([libz not found, please install zlib (http://www.zlib.net/)])])
 AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [clock_getttime found])], )
 
+AC_ARG_WITH(boost, AS_HELP_STRING([--with-boost=PATH],
+	[specify directory containing the bamtools library (http://github.com/pezmaster31/bamtools)]))
+if test "$with_boost" -a -d "$with_boost"; then
+    boost_include="-I$with_boost"
+else
+    boostr=/xchip/gistic/Jeremiah/boost_1_58_0
+    boost_include="-I$boostr"
+fi
+
+
 # Check for the bamtools library pathz
 # Bamtools has two different path formats
 # If it is built in place the files will be in {path}/lib/ and {path}/include/
@@ -73,11 +83,12 @@ if test "$enable_development"; then
 fi
 
 # Set compiler flags.
-AC_SUBST(AM_CXXFLAGS, "-g -Wall -Wextra $fail_on_warning -Wno-unknown-pragmas -std=c++11")
+##AC_SUBST(AM_CXXFLAGS, "-g -Wall -Wextra $fail_on_warning -Wno-unknown-pragmas -std=c++11")
+AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "-O3")
 AC_SUBST(CFLAGS, "-O3")
 #AC_SUBST(CPPFLAGS, "$CPPFLAGS $htslib_include $aho_include")
-AC_SUBST(CPPFLAGS, "$CPPFLAGS ")
+AC_SUBST(CPPFLAGS, "$CPPFLAGS $boost_include")
 AC_SUBST(CPPFLAGS, "$CPPFLAGS") 
 AC_SUBST(LDFLAGS, "$LDFLAGS")
 

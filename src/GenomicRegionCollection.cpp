@@ -4,6 +4,9 @@
 #include <sstream>
 #include <cassert>
 #include "SnowTools/gzstream.h"
+#include <set>
+  
+#include <boost/icl/interval_set.hpp>
 
 //#define DEBUG_OVERLAPS 1
 
@@ -259,8 +262,8 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
   // undefined otherwise
   assert(width > ovlp);
 
-  uint32_t start = gr.pos1;
-  uint32_t end = gr.pos1 + width;
+  int32_t start = gr.pos1;
+  int32_t end = gr.pos1 + width;
 
   // region is smaller than width
   if ( end >= gr.pos2 ) {
@@ -347,7 +350,7 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
 }
 
 template<class T>
-GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(GenomicRegionCollection<GenomicRegion>& subject, std::vector<size_t>& query_id, std::vector<size_t>& subject_id, bool ignore_strand)
+GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(GenomicRegionCollection<GenomicRegion>& subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand)
 {  
 
   GenomicRegionCollection<GenomicRegion> output;
@@ -355,13 +358,10 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
   // loop through the query GRanges (this) and overlap with subject
   for (size_t i = 0; i < m_grv.size(); ++i) 
     {
-     
-      //debug
-      if (m_grv[i].chr != 0)
-	continue;
+      // which chr (if any) are common between query and subject
+      GenomicIntervalTreeMap::iterator ff = subject.m_tree.find(m_grv[i].chr);
 
       GenomicIntervalVector giv;
-      GenomicIntervalTreeMap::iterator ff = subject.m_tree.find(m_grv[i].chr);
 
 #ifdef DEBUG_OVERLAPS
       std::cerr << "TRYING OVERLAP ON QUERY " << m_grv[i] << std::endl;
@@ -373,7 +373,6 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
 	  ff->second.findOverlapping(m_grv[i].pos1, m_grv[i].pos2, giv);
 
 #ifdef DEBUG_OVERLAPS
-	  //debug
 	  std::cerr << "ff->second.intervals.size() " << ff->second.intervals.size() << std::endl;
 	  for (auto& k : ff->second.intervals)
 	    std::cerr << " intervals " << k.start << " to " << k.stop << " value " << k.value << std::endl;
@@ -388,7 +387,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
 #ifdef DEBUG_OVERLAPS
 		std::cerr << "find overlaps hit " << j.start << " " << j.stop << " -- " << j.value << std::endl;
 #endif
-		output.add(T(m_grv[i].chr, std::max(j.start, m_grv[i].pos1), std::min(j.stop, m_grv[i].pos2)));
+		output.add(T(m_grv[i].chr, std::max(static_cast<int32_t>(j.start), m_grv[i].pos1), std::min(static_cast<int32_t>(j.stop), m_grv[i].pos2)));
 	      }
 	  }
 	}
@@ -410,6 +409,56 @@ GRC GenomicRegionCollection<T>::intersection(GRC& subject, bool ignore_strand /*
   std::vector<size_t> sub, que;
   GRC out = this->findOverlaps(subject, que, sub, ignore_strand);
   return out;
+}
+
+template<class T>
+GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
+{
+  
+  GRC out;
+  // get this - that
+
+  using namespace boost::icl;
+  typedef interval_set<int> TIntervalSet; 
+
+  // flatten each
+  subject.mergeOverlappingIntervals();
+  this->mergeOverlappingIntervals();
+
+  // get list of THAT chr to go through
+  std::set<int> chr;
+  for (auto& i : subject)
+    if (!chr.count(i.chr))
+      chr.insert(i.chr);
+
+  // the THIS events that have chr not in THAT, automatically get added
+  for (auto& i : m_grv)
+    if (!chr.count(i.chr))
+      out.add(i);
+
+  // loop through the chromosomes of THAT to subtract
+  for (auto& c : chr) 
+    {
+      TIntervalSet intSetA;
+      TIntervalSet intSetB;
+  
+      // build up the intervals for THIS
+      for (auto& i : m_grv)
+	if (i.chr == c)
+	  intSetA += discrete_interval<int>::closed(i.pos1, i.pos2);
+      // build up the intervals for THAT
+      for (auto& i : subject)
+	if (i.chr == c)
+	  intSetB += discrete_interval<int>::closed(i.pos1, i.pos2);
+      
+      TIntervalSet intSetD = intSetA - intSetB;
+
+      for (auto& i : intSetD)
+	out.add(GenomicRegion(c, first(i), upper(i)));
+    }
+
+  return out;
+
 }
 
 template<class T>

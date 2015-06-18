@@ -3,9 +3,10 @@
 #include <getopt.h>
 
 #include "SnowTools/gzstream.h"
+//#include "SnowTools/HTSTools.h"
 //#include "SnowTools/SnowToolsCommon.h"
 
-#define SPLIT_BUFF 12
+#define SPLIT_BUFF 8
 
 namespace opt {
 
@@ -105,7 +106,7 @@ namespace SnowTools {
     // set the evidence string
     bool isdisc = (dc.tcount + dc.ncount) != 0;
     //bool issplit = (tsplit + nsplit) != 0;
-    bool issplit = dc.contig != ""; 
+    bool issplit = (tsplit + nsplit) != 0;//dc.m_contig != ""; 
     //if (discovar)
     //  evidence = "DSCVR";
     if (num_align == 1)
@@ -118,6 +119,9 @@ namespace SnowTools {
       evidence = "ASSMB";
     else if (num_align > 2)
       evidence = "COMPL";
+    
+    if (!evidence.length())
+      std::cerr << "num_align " << num_align << " isdisc " << isdisc << " issplit " << issplit << std::endl;
     assert(evidence.length());
     
     confidence = "";
@@ -270,26 +274,29 @@ namespace SnowTools {
   }
 
   // make a breakpoint from a discordant cluster 
-  BreakPoint::BreakPoint(DiscordantCluster tdc) {
+  BreakPoint::BreakPoint(const DiscordantCluster& tdc) {
     
+    num_align = 0;
     dc = tdc;
-    gr1.pos1 = (tdc.reg1.strand) ? tdc.reg1.pos2 : tdc.reg1.pos1;
-    gr1.pos2 = gr1.pos1;
-    gr2.pos1 = (tdc.reg2.strand) ? tdc.reg2.pos2 : tdc.reg2.pos1;
-    gr2.pos2 = gr2.pos1;
-    gr1.chr = tdc.reg1.chr;
-    gr2.chr = tdc.reg2.chr;
-    cname = tdc.cluster;
-    gr1.strand = tdc.reg1.strand;
-    gr2.strand = tdc.reg2.strand;
-    
-  mapq1 = tdc.getMeanMapq(false); 
-  mapq2 = tdc.getMeanMapq(true); // mate
 
+    gr1.pos1 = (tdc.m_reg1.strand) ? tdc.m_reg1.pos2 : tdc.m_reg1.pos1;
+    gr1.pos2 = gr1.pos1;
+    gr2.pos1 = (tdc.m_reg2.strand) ? tdc.m_reg2.pos2 : tdc.m_reg2.pos1;
+    gr2.pos2 = gr2.pos1;
+    gr1.chr = tdc.m_reg1.chr;
+    gr2.chr = tdc.m_reg2.chr;
+    gr1.strand = tdc.m_reg1.strand;
+    gr2.strand = tdc.m_reg2.strand;
+    
+    mapq1 = tdc.getMeanMapq(false); 
+    mapq2 = tdc.getMeanMapq(true); // mate
+
+    cname = tdc.toRegionString();
+    
   }
 
   bool BreakPoint::hasDiscordant() const {
-    return !dc.reg1.isEmpty();
+    return !dc.m_reg1.isEmpty();
   }
   
   
@@ -309,7 +316,7 @@ namespace SnowTools {
   
   bool BreakPoint::operator==(const BreakPoint &bp) const {
     
-    return (gr1.chr == bp.gr1.chr && gr1.pos1 == bp.gr1.pos1 && gr2.pos1 == bp.gr2.pos1);
+    return (gr1 == bp.gr1 && gr2 == bp.gr2); //gr1.chr == bp.gr1.chr && gr1.pos1 == bp.gr1.pos1 && gr2.pos1 == bp.gr2.pos1);
     
   }
   
@@ -393,7 +400,17 @@ namespace SnowTools {
       if (bp.gr1.chr < 24) {
 	GenomicRegion gr = bp.gr1;
 	gr.pad(20);
-	std::string seqr = getRefSequence(gr, findex);
+
+	// get the reference seqeuence for this piece
+	int len;
+	std::string chrstring = GenomicRegion::chrToString(gr.chr);
+	char * seq = faidx_fetch_seq(findex, const_cast<char*>(chrstring.c_str()), gr.pos1-1, gr.pos2-1, &len);
+	if (!seq) {
+	  std::cerr <<  "faidx_fetch_seq fail" << std::endl;
+	}
+	std::string seqr = std::string(seq);
+	
+	// define repeats
 	std::vector<std::string> repr = {"AAAAAAAA", "TTTTTTTT", "CCCCCCCC", "GGGGGGGG", 
 					 "TATATATATATATATA", "ATATATATATATATAT", 
 					 "GCGCGCGCGCGCGCGC", "CGCGCGCGCGCGCGCG", 
@@ -536,7 +553,6 @@ namespace SnowTools {
     for (auto& j : bav) {
       
       std::string sr = j.GetZTag("SR");
-      //r_get_Z_tag(j, "SR", sr);
       assert(sr.at(0) == 't' || sr.at(0) == 'n');
       
       bool tumor_read = (sr.at(0) == 't');
@@ -545,16 +561,20 @@ namespace SnowTools {
       //r_get_trimmed_seq(j, seq);
       assert(seq.length() > 0);
       
-      std::string qname = j.GetZTag("CN"); //GetStringTag(j, "CN").back();
-      int pos = j.GetSmartIntTag("AL").back();
+      std::string qname = j.GetSmartStringTag("CN").back(); //GetStringTag(j, "CN").back();
+      int pos = j.GetSmartIntTag("SL").back();
+      int te = 0;
+      try {
+	te = j.GetSmartIntTag("SE").back();
+      } catch (...) {
+	std::cerr << "error grabbing SE tag for tag " << j.GetZTag("SE") << std::endl;
+      }
       
       if (qname != cname)
 	std::cerr << "qname " << qname << "cname " << cname << std::endl;
       
-      assert(qname == cname);
-      
       if (qname == cname) { // make sure we're comparing the right alignment
-	int rightend = pos + seq.length();
+	int rightend = te; //seq.length();
 	int leftend  = pos;
 	bool issplit1 = (leftend <= leftbreak1) && (rightend >= rightbreak1);
 	bool issplit2 = (leftend <= leftbreak2) && (rightend >= rightbreak2);
@@ -711,7 +731,7 @@ namespace SnowTools {
 	 << " T/N split: " << tsplit << "/" << nsplit << " T/N cigar: " 
 	 << tcigar << "/" << ncigar << " T/N AF " << af_t << "/" << af_n;
     else
-      ss << ">>>> Somatic STRUCTURAL VAR  at " << gr1 << " to " << gr2 << " contig " << cname 
+      ss << ">>>> Somatic STRUCTURAL VAR  at " << gr1.pointString() << " to " << gr2.pointString() << " SPAN " << getSpan() << " contig " << cname 
 	 << " T/N split: " << tsplit << "/" << nsplit << " T/N discordant: " 
 	 << dc.tcount << "/" << dc.ncount << " evidence " << evidence;
     
@@ -729,4 +749,44 @@ namespace SnowTools {
       blacklist = true;
     
   }
+
+  void BreakPoint::__combine_with_discordant_cluster(DiscordantClusterMap& dmap)
+  {
+    int PAD = 400;
+    GenomicRegion bp1 = gr1;
+    GenomicRegion bp2 = gr2;
+    bp1.pad(PAD);
+    bp2.pad(PAD);
+    
+
+    for (auto& d : dmap)
+      {
+	bool bp1reg1 = bp1.getOverlap(d.second.m_reg1) > 0;
+	bool bp2reg2 = bp2.getOverlap(d.second.m_reg2) > 0;
+	
+	//debug
+	bool bp1reg2 = bp1.getOverlap(d.second.m_reg2) != 0;
+	bool bp2reg1 = bp2.getOverlap(d.second.m_reg1) != 0;
+	
+	bool pass = bp1reg1 && bp2reg2;
+
+	//debug
+	if (cname=="c_1_6524299_6527299_3")
+	  std::cerr << " HERE " << d.first << " " << d.second << " pass " << pass << std::endl;
+	
+	if (pass)
+	  {
+	    // check that we haven't already added a cluster to this breakpoint
+	    // if so, chose the one with more tumor support
+	    if (dc.isEmpty()) {
+	      dc = d.second;
+	    } else if (dc.tcount < d.second.tcount) {
+	      dc = d.second;
+	    }
+	    
+	  }
+      }
+    
+  }
+
 }

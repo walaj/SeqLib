@@ -4,6 +4,22 @@
 
 using namespace SnowTools;
 
+struct idx_delete {
+  void operator()(void* x) { hts_idx_destroy((hts_idx_t*)x); }
+};
+
+struct hts_itr_delete {
+  void operator()(void* x) { hts_itr_destroy((hts_itr_t*)x); }
+};
+
+struct bgzf_delete {
+  void operator()(void* x) { bgzf_close((BGZF*)x); }
+};
+
+struct bam_hdr_delete {
+  void operator()(void* x) { bam_hdr_destroy((bam_hdr_t*)x); }
+};
+
 // set the bam region
 bool BamWalker::__set_region(const GenomicRegion& gp) {
 
@@ -14,13 +30,10 @@ bool BamWalker::__set_region(const GenomicRegion& gp) {
 #endif
 
   //HTS set region
-  if (!idx) {
-    idx = hts_idx_load(m_in.c_str(), HTS_FMT_BAI);
-#ifdef DEBUG_WALKER
-    std::cerr << "loading the index for "<< m_in << " and has value " << idx << std::endl;
-#endif
-  }
-  hts_itr = sam_itr_queryi(idx, gp.chr, gp.pos1, gp.pos2);
+  if (!idx) 
+    idx = std::shared_ptr<hts_idx_t>(hts_idx_load(m_in.c_str(), HTS_FMT_BAI), idx_delete());
+  hts_itr = std::shared_ptr<hts_itr_t>(sam_itr_queryi(idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
+
   if (!hts_itr) {
     std::cerr << "Error: Failed to set region: " << gp << std::endl; 
     return false;
@@ -34,21 +47,32 @@ void BamWalker::setBamWalkerRegion(const GenomicRegion& g)
   m_region.clear();
   m_region.push_back(g);
   m_region_idx = 0; // rewind it
-  __set_region(g);
+  __check_regions_blacklist(); // sets m_region
+  if (m_region.size())
+    __set_region(m_region[0]);
+  else
+    m_region.push_back(GenomicRegion(-1,-1,-1));
 }
 
 void BamWalker::setBamWalkerRegions(const GenomicRegionVector& grv) 
 {
-  assert(grv.size());
+  if (grv.size() == 0)
+    {
+      std::cerr << "Warning: Trying to set an empty bam region"  << std::endl;
+      return;
+    }
   m_region = grv;
   m_region_idx = 0; // rewind it
-  //m_region.rewind();
-  __set_region(grv[0]);
+  __check_regions_blacklist(); // sets m_region
+  if (m_region.size())
+    __set_region(m_region[0]);
+  else
+    m_region.push_back(GenomicRegion(-1,-1,-1));
 }
 
 void BamWalker::__close_read_bam() {
 
-  if (fp)
+  /*  if (fp)
     bgzf_close(fp);
   if (br)
     bam_hdr_destroy(br);
@@ -61,11 +85,12 @@ void BamWalker::__close_read_bam() {
   br = NULL;
   hts_itr = NULL;
   idx = NULL;
-
+  */
 }
 
 void BamWalker::__close_write_bam() 
 {
+  
   if (fop)
     sam_close(fop);
   fop = NULL;
@@ -101,7 +126,6 @@ BamWalker::BamWalker(const std::string& in) : m_in(in)
   // open for reading
   if (!__open_BAM_for_reading())
     throw 20;
-
 }
 
 bool BamWalker::__open_BAM_for_reading()
@@ -110,19 +134,18 @@ bool BamWalker::__open_BAM_for_reading()
   assert(m_in.length());
   
   // HTS open the reader
-  const char rflag = 'r';
-  fp = bgzf_open(m_in.c_str(), &rflag); 
+  fp = std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
   
   if (!fp) {
     std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
     exit(EXIT_FAILURE);
-  }
-  br = bam_hdr_read(fp);
+  } 
+
+  br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete());
   
   if (!br) {
     std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
     return false;
-    //exit(EXIT_FAILURE);
   }
   
   return true;
@@ -146,7 +169,7 @@ bool BamWalker::__open_BAM_for_writing()
 
   // hts write the header
   if (m_print_header)
-    sam_hdr_write(fop, br);
+    sam_hdr_write(fop, br.get());
 
   return true;
 
@@ -172,7 +195,7 @@ void BamWalker::SetMiniRulesCollection(const std::string& rules)
 {
 
   // construct the minirules
-  m_mr = MiniRulesCollection(rules, br);
+  m_mr = MiniRulesCollection(rules, br.get());
 
   // check that it worked
   if (!m_mr.size()) {
@@ -201,7 +224,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
   bam1_t* b = bam_init1(); 
 
   if (hts_itr == 0) { 
-    if (bam_read1(fp, b) < 0) { 
+    if (bam_read1(fp.get(), b) < 0) { 
 
 #ifdef DEBUG_WALKER
       std::cerr << "ended reading on null hts_itr" << std::endl;
@@ -213,12 +236,9 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
 
   int32_t valid;
   if (hts_itr == 0) {
-    //std::cerr << "debug snowtools intialized read FROM WHOLE " << std::endl;
-    valid = bam_read1(fp, b);
+    valid = bam_read1(fp.get(), b);
   } else {
-    //std::cerr << "debug snowtools intialized read FROM HTS_ITR_NEXT. fp " << fp << " hts_itr " << hts_itr << " b " << b << std::endl;
-    valid = hts_itr_next(fp, hts_itr, b, dum);
-    //std::cerr << "debug snowtools DONE intialized read FROM HTS_ITR_NEXT" << std::endl;
+    valid = hts_itr_next(fp.get(), hts_itr.get(), b, dum);
   }
 
   if (valid <= 0) { // read not found
@@ -239,7 +259,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
       }
       // next region exists, try it
       __set_region(m_region[m_region_idx]);
-      valid = hts_itr_next(fp, hts_itr, b, dum);
+      valid = hts_itr_next(fp.get(), hts_itr.get(), b, dum);
     } while (valid <= 0); // keep trying regions until works
   }
   
@@ -247,6 +267,17 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
 
   // check if it passed the rules
   rule = m_mr.isValid(r);
+
+  ++m_num_reads_seen;
+  if (rule)
+    ++m_num_reads_kept;
+
+  // hit the limit, no more raeding
+  if (m_limit >= 0 && m_num_reads_seen > m_limit)
+    return false;
+  if (m_keep_limit >= 0 && m_num_reads_kept > m_keep_limit)
+    return false;
+
 
   return true;
 }
@@ -260,7 +291,7 @@ void BamWalker::WriteAlignment(BamRead &r)
   for (auto& i : m_tag_list)
     r.RemoveTag(i.c_str());
     
-  sam_write1(fop, br, r.raw());
+  sam_write1(fop, br.get(), r.raw());
 }
 
 std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
@@ -306,3 +337,33 @@ std::string BamWalker::displayMiniRulesCollection() const
   ss << m_mr;
   return ss.str();
 }
+
+void BamWalker::__check_regions_blacklist() 
+{
+
+  //std::cerr << "BLACKLIST size " << blacklist.size() << std::endl;
+
+  // check if it overlaps with blacklist
+  if (blacklist.size()) 
+    {
+      GRC regs;
+      for (auto& i : m_region)
+	regs.add(i);
+      //std::cerr << "regs " << std::endl;
+      //for (auto& i : regs)
+      //std::cerr << "REG " << i << std::endl;
+      GRC out = regs.complement(blacklist);
+      //for (auto& i : blacklist)
+      //std::cerr << "BL: " << i << std::endl;
+      m_region = out.asGenomicRegionVector();
+      //for (auto& i : m_region)
+      //std::cerr << "TRIMMED REGION " << i << std::endl;
+    }
+
+}
+
+void BamWalker::addBlacklist(GRC& bl) 
+{
+  blacklist = bl;
+}
+

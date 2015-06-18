@@ -3,8 +3,6 @@
 #include <string>
 #include <iostream>
 
-#include "SnowTools/BWAWrapper.h"
-#include "SnowTools/BamRead.h"
 #include "SnowTools/AlignedContig.h"
 #include "SnowTools/BamWalker.h"
 
@@ -31,15 +29,17 @@ void runRealign(int argc, char** argv)
   };
 
   SnowTools::BWAWrapper w;
-  w.constructIndex(v);
+  //w.constructIndex(v);
   w.retrieveIndex(opt::refgenome);
 
-  std::string test_seq = v[0].seq + v[1].seq;
-
+  //std::string test_seq = v[0].seq + v[1].seq;
+  std::string test_seq = "CTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCAACCCTA";
+  
   std::string name = "TP53_MYC";
 
   SnowTools::BamReadVector brv;
   w.alignSingleSequence(test_seq, name, brv, false);
+  return;
 
   SnowTools::AlignedContig ac(brv);
   

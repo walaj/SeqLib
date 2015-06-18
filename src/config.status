@@ -499,7 +499,7 @@ s,@am__untar@,${AMTAR} xf -,;t t
 s,@CXX@,g++,;t t
 s,@CXXFLAGS@,-O3,;t t
 s,@LDFLAGS@,,;t t
-s,@CPPFLAGS@, ,;t t
+s,@CPPFLAGS@, -I/xchip/gistic/Jeremiah/boost_1_58_0,;t t
 s,@ac_ct_CXX@,g++,;t t
 s,@EXEEXT@,,;t t
 s,@OBJEXT@,o,;t t
@@ -522,7 +522,7 @@ s,@RANLIB@,ranlib,;t t
 s,@ac_ct_RANLIB@,ranlib,;t t
 s,@CXXCPP@,g++ -E,;t t
 s,@EGREP@,grep -E,;t t
-s,@AM_CXXFLAGS@,-g -Wall -Wextra  -Wno-unknown-pragmas -std=c++11,;t t
+s,@AM_CXXFLAGS@,-g  -Wno-unknown-pragmas -std=c++11,;t t
 s,@LIBOBJS@,,;t t
 s,@LTLIBOBJS@,,;t t
 CEOF

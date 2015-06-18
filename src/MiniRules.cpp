@@ -682,12 +682,12 @@ void Range::parseRuleLine(std::string line) {
       return false;
   }
 #endif
-
+  
   return true;
 }
 
-  bool FlagRule::isValid(BamRead &r) {
-  
+bool FlagRule::isValid(BamRead &r) {
+    
   if (isEvery())
     return true;
 

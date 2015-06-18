@@ -6,9 +6,7 @@
 #include <unordered_map>
 #include <regex>
 
-#include "SnowTools/GenomicRegion.h"
 #include "SnowTools/GenomicRegionCollection.h"
-#include "SnowTools/SnowUtils.h"
 #include "SnowTools/BamRead.h"
 
 //#define HAVE_AHOCORASICK_AHOCORASICK_H 1

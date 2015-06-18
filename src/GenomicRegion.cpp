@@ -92,6 +92,12 @@ std::string GenomicRegion::toString() const {
   return out.str();
 }
 
+  std::string GenomicRegion::pointString() const {
+    std::stringstream out;
+    out << chrToString(chr) << ":" << SnowTools::AddCommas<int>(pos1) << "(" << strand << ")";
+    return out.str();
+  }
+
 void GenomicRegion::pad(int32_t pad) {
   if (pad > pos1)
     pos1 = 1;
@@ -213,7 +219,7 @@ std::string GenomicRegion::chrToString(int32_t ref) {
 
 // checks whether a GenomicRegion is empty
 bool GenomicRegion::isEmpty() const {
-  return chr == 0 && pos1 == 0 && pos2 == 0;
+  return chr == -1 && pos1 == 0 && pos2 == 0;
 }
 
 
@@ -298,9 +304,9 @@ void GenomicRegion::random() {
 	    break;
 	  }
 
-      if (!found) 
-	std::cerr << "GenomicRegion: error, could not find matching chr in header for chr string " << tchr << std::endl;
+      //debug turn this back on
+      //if (!found) 
+      //	std::cerr << "GenomicRegion: error, could not find matching chr in header for chr string " << tchr << std::endl;
 
   }
-
 }
