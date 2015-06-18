@@ -6,10 +6,12 @@
 #include <cstdint>
 #include <utility>
 #include <list>
+#include <cstring>
 
 #include "SnowTools/SnowUtils.h"
 #include "SnowTools/SnowToolsCommon.h"
-#include "SnowTools/HTSTools.h"
+
+#include "htslib/sam.h"
 
 /** 
  */
@@ -47,6 +49,10 @@ class GenomicRegion {
    * to convert the text representation of the chr to the id number.
    */
   GenomicRegion(const std::string& reg, bam_hdr_t* h);
+
+  /** Return a string representation of just the first base-pair 
+   */
+  std::string pointString() const;
 
   static int32_t chrToNumber(std::string ref);
 

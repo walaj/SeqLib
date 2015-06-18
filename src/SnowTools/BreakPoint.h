@@ -31,7 +31,7 @@ void runRefilterBreakpoints(int argc, char** argv);
  *
  */
 void parseBreakOptions(int argc, char** argv);
-
+ 
 struct BreakPoint {
 
   static std::string header() { 
@@ -131,7 +131,7 @@ struct BreakPoint {
 
   /** Construct a breakpoint from a cluster of discordant reads
    */
-  BreakPoint(DiscordantCluster tdc);
+  BreakPoint(const DiscordantCluster& tdc);
 
   
   BreakPoint() {
@@ -153,6 +153,8 @@ struct BreakPoint {
   std::string toPrintString() const;
   
   static void readPON(std::string &file, std::unique_ptr<PON> &pmap);
+
+  void __combine_with_discordant_cluster(DiscordantClusterMap& dmap);
   
   /*! @function determine if the breakpoint has split read support
    * @param reference to a vector of read smart pointers that have been aligned to a contig
@@ -236,7 +238,11 @@ struct BreakPoint {
 
   // define how to sort these 
   bool operator < (const BreakPoint& bp) const { 
-    return (gr1 < bp.gr1); // || (gr1 == gr2 && nsplit1 > bp.nsplit1)
+    return (gr1 < bp.gr1) || (gr1 == bp.gr1 && gr2 < bp.gr2) || 
+      (gr1 == bp.gr1 && gr2 == bp.gr2 && nsplit > bp.nsplit) || // more read support should go first, do to property of std::unique
+      (gr1 == bp.gr1 && gr2 == bp.gr2 && tsplit > bp.tsplit) || 
+      (gr1 == bp.gr1 && gr2 == bp.gr2 && dc.ncount > bp.dc.ncount) || 
+      (gr1 == bp.gr1 && gr2 == bp.gr2 && dc.tcount > bp.dc.tcount);
     //(bp.gr1.ref == refID1 && bp.pos1 > pos1) || // low pos is first
       //  (bp.refID1 == refID1 && bp.pos1 == pos1 && bp.pos2 == pos2 && nsplit1 > bp.nsplit1) || // if same, check nsplit
       // (bp.refID1 == refID1 && bp.pos1 == pos1 && bp.pos2 == pos2 && nsplit1 == bp.nsplit1 && tsplit1 > bp.tsplit1); // if also same, check tsplit

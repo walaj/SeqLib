@@ -6,8 +6,21 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <unordered_map>
+#include <algorithm>
 
-#include "SnowTools/HTSTools.h"
+#include "htslib/hts.h"
+#include "htslib/sam.h"
+#include "htslib/bgzf.h"
+#include "htslib/kstring.h"
+#include "htslib/faidx.h"
+
+static const char BASES[16] = {' ', 'A', 'C', ' ',
+                               'G', ' ', ' ', ' ', 
+                               'T', ' ', ' ', ' ', 
+                               ' ', ' ', ' ', 'N'};
+
+//#include "SnowTools/HTSTools.h"
 
 namespace SnowTools {
 
@@ -81,7 +94,7 @@ class BamRead {
   inline bool MateMappedFlag() const { return (b->core.flag&BAM_FMUNMAP) == 0; }
 
   /** BamRead mate is mapped */
-  inline bool PairMappedFlag() const { return ((!b->core.flag&BAM_FMUNMAP) && (!b->core.flag&BAM_FUNMAP)); }
+  inline bool PairMappedFlag() const { return !(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP); }
 
   /** Count the total number of N bases in this sequence */
   int32_t CountNBases() const;
@@ -199,7 +212,7 @@ class BamRead {
     uint32_t* c = bam_get_cigar(b);
     int32_t p = 0;
     for (int32_t i = 0; i < b->core.n_cigar; ++i) {
-      if ( (c[i] & BAM_CSOFT_CLIP) || (c[i] & BAM_CHARD_CLIP))
+      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
 	p += bam_cigar_oplen(c[i]);
       else // not a clip, so stop counting
 	break;
@@ -207,12 +220,26 @@ class BamRead {
     return p;
   }
   
+  /** Get the end of the alignment on the read, by removing soft-clips
+   */
+  inline int32_t AlignmentEndPosition() const {
+    uint32_t* c = bam_get_cigar(b);
+    int32_t p = 0;
+    for (int32_t i = b->core.n_cigar - 1; i >= 0; --i) { // loop from the end
+      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
+	p += bam_cigar_oplen(c[i]);
+      else // not a clip, so stop counting
+	break;
+    }
+    return (b->core.l_qseq - p);
+  }
+
   /** Get the number of soft clipped bases */
   inline int32_t NumSoftClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
       for (int32_t i = 0; i < b->core.n_cigar; ++i)
-	if (c[i] & BAM_CSOFT_CLIP)
+	if (bam_cigar_opchr(c[i]) == 'S')
 	  p += bam_cigar_oplen(c[i]);
       return p;
     }
@@ -221,8 +248,8 @@ class BamRead {
   inline int32_t NumHardClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
-      for (int32_t i = 0; i < b->core.n_cigar; ++i)
-	if (c[i] & BAM_CHARD_CLIP)
+      for (int32_t i = 0; i < b->core.n_cigar; ++i) 
+	if (bam_cigar_opchr(c[i]) == 'H')
 	  p += bam_cigar_oplen(c[i]);
       return p;
     }
@@ -233,7 +260,7 @@ class BamRead {
     int32_t p = 0;
     uint32_t* c = bam_get_cigar(b);
     for (int32_t i = 0; i < b->core.n_cigar; ++i)
-      if ( (c[i] & BAM_CSOFT_CLIP) || (c[i] & BAM_CHARD_CLIP) )
+      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H') )
 	p += bam_cigar_oplen(c[i]);
     return p;
   }
@@ -364,6 +391,28 @@ class BamRead {
 };
 
  typedef std::vector<BamRead> BamReadVector; 
+ 
+ typedef std::vector<BamReadVector> BamReadClusterVector;
+
+ namespace BamReadSort {
+
+   // sort by read position
+   struct ByReadPosition
+   {
+     bool operator()( const BamRead& lx, const BamRead& rx ) const {
+       return (lx.ChrID() < rx.ChrID()) || (lx.ChrID() == rx.ChrID() && lx.Position() < rx.Position());
+     }
+   };
+
+   // sort by read mate position
+   struct ByMatePosition
+   {
+     bool operator()( const BamRead& lx, const BamRead& rx ) const {
+       return (lx.MateChrID() < rx.MateChrID()) || (lx.MateChrID() == rx.MateChrID() && lx.MatePosition() < rx.MatePosition());
+     }
+   };
+
+}
 
 }
 #endif

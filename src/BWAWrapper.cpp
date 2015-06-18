@@ -81,7 +81,7 @@ namespace SnowTools {
     
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
-    
+
 #ifdef DEBUG_BWATOOLS
     std::cout << "num hits: " << ar.n << std::endl;
     //std::cout << __print_bns() << std::endl;

@@ -3,11 +3,9 @@
 
 #include <algorithm>
 
-#include "SnowTools/GenomicRegion.h"
-#include "SnowTools/GenomicRegionCollection.h"
-#include "SnowTools/SnowUtils.h"
 #include "SnowTools/BamRead.h"
 #include "SnowTools/BreakPoint.h"
+#include "SnowTools/DiscordantCluster.h"
 #include "SnowTools/BWAWrapper.h"
 
 namespace SnowTools {
@@ -50,6 +48,12 @@ namespace SnowTools {
      * @param const CigarMap reference containing hash with key=chr_breakpos_indeltype, val=normal count
      */
     void indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap);  
+
+    /** Check whether the alignment fragement overlaps with the given windows
+     * 
+     * This function is used to 
+     */
+    bool checkLocal(const GenomicRegion& window);
     
     const BPVec& getIndelBreaks() const { return m_indel_breaks; } 
     
@@ -73,7 +77,8 @@ namespace SnowTools {
     bool local = false; /**< boolean to note whether this fragment aligns to same location is was assembled from */
     
     AlignedContig * c; // link to the parent aligned contigs
-    
+
+    int num_align = 0;
   };
   
   //! vector of AlignmentFragment objects
@@ -106,6 +111,10 @@ namespace SnowTools {
      * @param const reference to another AlignedContig
      * @return bool bool returning true iff this contig has identical info has better MAPQ, or equal MAPQ but longer */
     bool isWorse(const AlignedContig &ac) const;
+
+    /*! @function Loop through all the alignment framgents and their indel breaks and check against cigar database
+     */
+    void checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap);
     
     /*! @function
       @abstract  Get whether the query is on the reverse strand
@@ -114,8 +123,8 @@ namespace SnowTools {
     */
     void addAlignment(const BamRead &align);
     
-    //! add a discordant cluster that maps to same regions as this contig
-    void addDiscordantCluster(DiscordantCluster dc) { m_dc.push_back(dc); } 
+    //! Loop through fragments and check if they overlap with window (and set local flag). Return TRUE if local found
+    bool checkLocal(const GenomicRegion& window);
     
     /*! @function loop through the vector of DiscordantCluster objects
      * associated with this contig and print
@@ -185,13 +194,6 @@ namespace SnowTools {
    */
   void alignReads(BamReadVector &bav);
 
-  /*! @function align reads to contig and modify their tags to show contig mapping
-   * Currently this function will attempt a SmithWaterman alignment for all reads
-   * that don't have an exact mapping to the contig.
-   * @param bav Vector of read smart pointers to align. Modifies their SW tag
-   */
-  void alignReadsToContigs(ReadVec &bav);
-
   //! return the contig sequence as it came off the assembler
   std::string getSequence() const { assert(m_seq.length()); return m_seq; }
 
@@ -208,6 +210,8 @@ namespace SnowTools {
    */
   bool hasVariant() const;
 
+  bool hasLocal() const { for (auto& i : m_frag_v) if (i.local) return true; return false; }
+
   /*! @function retrieves all of the breakpoints by combining indels with global mutli-map break
    * @return vector of ind
    */
@@ -215,6 +219,10 @@ namespace SnowTools {
 
   std::vector<const BreakPoint*> getAllBreakPointPointers() const ;
 
+  void addDiscordantCluster(DiscordantClusterMap& dmap);
+  
+  int insertion_against_contig_read_count = 0;
+  int deletion_against_contig_read_count = 0;
 
  private:
 
@@ -233,8 +241,6 @@ namespace SnowTools {
   GenomicRegion m_window; /**< reference window from where this contig was assembled */
 
   bool m_hasvariant = false; // flag to specify whether this alignment has some potential varaint (eg indel)
-
-  bool m_tried_align_reads = false; // flag to specify whether we tried to align reads.
 
   std::string m_seq = ""; // sequence of contig as it came off of assembler
 

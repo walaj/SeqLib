@@ -1,84 +1,105 @@
-#ifndef DISCORDANT_CLUSTER_H
-#define DISCORDANT_CLUSTER_H
+#ifndef DISCORDANT_CLUSTER_H__
+#define DISCORDANT_CLUSTER_H__
 
 #include <string>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <cassert>
 
 #include "SnowTools/GenomicRegion.h"
 #include "SnowTools/BamRead.h"
 
 namespace SnowTools 
 {
+
+  //class DiscordantCluster;
   
   /** Class to hold clusters of discordant reads */
   class DiscordantCluster 
   {
+
+    friend class BreakPoint;
     
   public:
 
     /** Create an empty cluster */
-    DiscordantCluster() {}
+    DiscordantCluster() { m_reg1 = GenomicRegion(); m_reg2 = GenomicRegion(); assert(m_reg1.isEmpty()); }
 
-    DiscordantCluster(BamReadVector &this_reads, BamReadVector &all_reads);
-    DiscordantCluster(std::string tcluster);
-    DiscordantCluster(std::string tcluster, SnowTools::GenomicRegion gr1, SnowTools::GenomicRegion gr2) 
-      {
-	cluster = tcluster;
-	reg1 = gr1;
-	reg2 = gr2;
-      }
+    /** Make a cluster from a set of reads (pre-clustered) and look up a larger set to find 
+     * their mates 
+     * @param this_reads Pre-clustered set of discordant reads (but not their mates)
+     * @param all_reads A pile of reads to search for mates
+     */
+    DiscordantCluster(const BamReadVector& this_reads, const BamReadVector& all_reads);
     
-    
-    std::string cluster;
-    std::string id;
-    size_t tcount = 0;
-    size_t ncount = 0; 
-    std::unordered_map<std::string, bool> qnames; // TODO get rid of it
-    std::unordered_map<std::string, BamRead> reads;
-    std::unordered_map<std::string, BamRead> mates;
-    
-    double reads_mapq; 
-    double mates_mapq;
-    std::vector<int> mapq; // TODO remoe
-    std::string contig = "";
-    
+    /** Is this discordant cluster empty? */
+    bool isEmpty() const { assert(m_reg1.isEmpty() == m_reg2.isEmpty()); return m_reg1.isEmpty(); }
+
     /** Return a string representing the output file header */
     static std::string header() { 
       return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\ttcount\tncount\tmapq1\tmapq2\treads"; 
     }
     
-    GenomicRegion reg1;
-    GenomicRegion reg2;
-    
-    void addMateReads(BamReadVector &bav);
+    void addMateReads(const BamReadVector& bav);
     
     // return the mean mapping quality for this cluster
     double getMeanMapq(bool mate) const;
     
     double getMeanMapq() const;
+
+    /** Return the discordant cluster as a string with just coordinates */
     std::string toRegionString() const;
     
-    // add the read names supporting this cluster
+    /** Add the read names supporting this cluster */
     void addRead(std::string name);
     
-    // define how to print this to stdout
+    /** Print this with region string and read counts and mapq */
     friend std::ostream& operator<<(std::ostream& out, const DiscordantCluster& dc);
     
-    // define how to print to file
+    /** Return as a string for writing to a file */
     std::string toFileString(bool with_read_names = false) const;
     
-    // define how these are to be sorted
+    /** Sort by coordinate */
     bool operator < (const DiscordantCluster& b) const;
+
+    /** Has associated assembly contig */
+    bool hasAssociatedAssemblyContig() const { return m_contig.length(); } 
+
+    static std::unordered_map<std::string, DiscordantCluster> clusterReads(const BamReadVector& bav, const GenomicRegion& interval);
+
+    static bool __add_read_to_cluster(BamReadClusterVector &cvec, BamReadVector &clust, const BamRead &a, bool mate);
+
+    static void __cluster_reads(const BamReadVector& brv, BamReadClusterVector& fwd, BamReadClusterVector& rev);
+
+    static void __cluster_mate_reads(BamReadClusterVector& brcv, BamReadClusterVector& fwd, BamReadClusterVector& rev);
+
+    static void __convertToDiscordantCluster(std::unordered_map<std::string, DiscordantCluster> &dd, const BamReadClusterVector& cvec, const BamReadVector& bav);
+
+
+    size_t tcount = 0;
+    size_t ncount = 0; 
+
+  private:
+
+    GenomicRegion m_reg1;
+    GenomicRegion m_reg2;
     
-    
+    std::string m_id;
+
+    std::unordered_map<std::string, bool> qnames; // TODO get rid of it
+    std::unordered_map<std::string, BamRead> reads;
+    std::unordered_map<std::string, BamRead> mates;
+
+    std::string m_contig = "";
   };
   
   //! vector of AlignmentFragment objects
-  typedef std::unordered_map<std::string, DiscordantCluster> DMap;
-  //! vector of AlignmentFragment objects
-  typedef std::vector<DiscordantCluster> DVec;
+  typedef std::vector<DiscordantCluster> DiscordantClusterVector;
+  
+  //! Store a set of DiscordantCluster objects, indexed by the "id" field
+  typedef std::unordered_map<std::string, DiscordantCluster> DiscordantClusterMap;
+
   
 }
 

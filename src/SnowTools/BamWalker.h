@@ -2,14 +2,9 @@
 #define SNOWTOOLS_BAM_WALKER_H__
 
 #include <cassert>
+#include <memory>
 
 #include "SnowTools/MiniRules.h"
-#include "SnowTools/GenomicRegion.h"
-#include "SnowTools/GenomicRegionCollection.h"
-
-#include "SnowTools/HTSTools.h"
-#include "SnowTools/SnowUtils.h"
-#include "SnowTools/BamRead.h"
 
 // Phred score transformations
 inline int char2phred(char b) {
@@ -83,8 +78,8 @@ class BamWalker {
    * calls required within HTSlib to close a BAM or SAM file. 
    */
   ~BamWalker() {
-    __close_read_bam();
-    __close_write_bam();
+    __close_read_bam(); 
+    __close_write_bam(); 
   }
 
   /** Set a part of the BAM to walk.
@@ -130,7 +125,7 @@ class BamWalker {
 
   /** Pass a MiniRules script to the BAM.
    * 
-4   * This will call the constructor of MiniRulesCollection, and 
+   * This will call the constructor of MiniRulesCollection, and 
    * parse the provides rules and add it as a rule set to this BamWalker.
    * @param rules A string of rules, or a file pointing to a rules script
    */
@@ -149,6 +144,10 @@ class BamWalker {
    * @return true if the next read is available
    */
   bool GetNextRead(BamRead &r, bool& rule);
+
+  /** Set regions to not be read from
+   */
+  void addBlacklist(GRC& bl);
 
   /** Write an alignment to the output BAM file 
    * @param r The BamRead to save
@@ -213,12 +212,24 @@ class BamWalker {
   std::string displayMiniRulesCollection() const;
 
   /** Return a pointer to the BAM header */
-  bam_hdr_t * header() const { return br; };
+  bam_hdr_t * header() const { return br.get(); };
 
+  /** Set the limit for total number of reads seen */
+  void setReadLimit(int lim) { m_limit = lim; m_num_reads_seen = 0; }
+
+  /** Set the limit for total number of reads kept */
+  void setReadKeepLimit(int lim) { m_keep_limit = lim; m_num_reads_kept = 0; }
+  
  protected:
 
   // for stdout mode, print header?
   bool m_print_header = false;
+
+  // limit to number of reads to be read in
+  int m_limit = -1;
+  int m_keep_limit = -1;
+  
+  void __check_regions_blacklist();
 
   // point index to this region of bam
   bool __set_region(const GenomicRegion& gp);
@@ -242,18 +253,30 @@ class BamWalker {
   bool m_strip_all_tags = false;
 
   // hts
-  BGZF * fp = 0;
-  hts_idx_t * idx = 0; // hts_idx_load(bamfile.c_str(), HTS_FMT_BAI);
-  hts_itr_t * hts_itr = 0; // sam_itr_queryi(idx, 3, 60000, 80000);
-  bam_hdr_t * br = 0;
+  std::shared_ptr<BGZF> fp;
+  //BGZF * fp = 0;
+  //hts_idx_t * idx = 0; // hts_idx_load(bamfile.c_str(), HTS_FMT_BAI);
+  std::shared_ptr<hts_idx_t> idx;
+  std::shared_ptr<hts_itr_t> hts_itr;
+  //hts_itr_t * hts_itr = 0; // sam_itr_queryi(idx, 3, 60000, 80000);
+  std::shared_ptr<bam_hdr_t> br;
+  //bam_hdr_t * br = 0;
 
+  //std::shared_ptr<htsFile> fop;
   htsFile* fop = 0;
 
   // which tags to strip
   std::vector<std::string> m_tag_list;
 
+  // blacklist
+  GRC blacklist;
+
   // 
   bool m_verbose = false;
+
+  // read counter
+  int m_num_reads_seen = 0;
+  int m_num_reads_kept = 0;
 };
 
 

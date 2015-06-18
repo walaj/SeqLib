@@ -62,7 +62,6 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-gzstream.$(OBJEXT) \
 	libsnowtools_a-SnowUtils.$(OBJEXT) \
 	libsnowtools_a-gChain.$(OBJEXT) \
-	libsnowtools_a-HTSTools.$(OBJEXT) \
 	libsnowtools_a-BamRead.$(OBJEXT) \
 	libsnowtools_a-gzstream.$(OBJEXT) \
 	libsnowtools_a-BWAWrapper.$(OBJEXT) \
@@ -201,7 +200,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib 
+SUBDIRS = bwa htslib
 noinst_LIBRARIES = libsnowtools.a
 libsnowtools_a_CPPFLAGS = \
 	-I$(top_srcdir)/htslib \
@@ -210,7 +209,7 @@ libsnowtools_a_CPPFLAGS = \
 libsnowtools_a_LIBADD = $(top_srcdir)/bwa/libbwa.a $(top_srcdir)/htslib/libhts.a 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
-			gChain.cpp HTSTools.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
+			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
 			AlignedContig.cpp \
 			BreakPoint.cpp DiscordantCluster.cpp \
 			bwa/is.c bwa/bwtindex.c \
@@ -310,7 +309,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BreakPoint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-DiscordantCluster.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-GenomicRegion.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-HTSTools.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-Histogram.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-MiniRules.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-QSufSort.Po@am__quote@
@@ -453,20 +451,6 @@ libsnowtools_a-gChain.obj: gChain.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='gChain.cpp' object='libsnowtools_a-gChain.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-gChain.obj `if test -f 'gChain.cpp'; then $(CYGPATH_W) 'gChain.cpp'; else $(CYGPATH_W) '$(srcdir)/gChain.cpp'; fi`
-
-libsnowtools_a-HTSTools.o: HTSTools.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-HTSTools.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-HTSTools.Tpo" -c -o libsnowtools_a-HTSTools.o `test -f 'HTSTools.cpp' || echo '$(srcdir)/'`HTSTools.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libsnowtools_a-HTSTools.Tpo" "$(DEPDIR)/libsnowtools_a-HTSTools.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-HTSTools.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='HTSTools.cpp' object='libsnowtools_a-HTSTools.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-HTSTools.o `test -f 'HTSTools.cpp' || echo '$(srcdir)/'`HTSTools.cpp
-
-libsnowtools_a-HTSTools.obj: HTSTools.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-HTSTools.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-HTSTools.Tpo" -c -o libsnowtools_a-HTSTools.obj `if test -f 'HTSTools.cpp'; then $(CYGPATH_W) 'HTSTools.cpp'; else $(CYGPATH_W) '$(srcdir)/HTSTools.cpp'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libsnowtools_a-HTSTools.Tpo" "$(DEPDIR)/libsnowtools_a-HTSTools.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-HTSTools.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='HTSTools.cpp' object='libsnowtools_a-HTSTools.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-HTSTools.obj `if test -f 'HTSTools.cpp'; then $(CYGPATH_W) 'HTSTools.cpp'; else $(CYGPATH_W) '$(srcdir)/HTSTools.cpp'; fi`
 
 libsnowtools_a-BamRead.o: BamRead.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamRead.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BamRead.Tpo" -c -o libsnowtools_a-BamRead.o `test -f 'BamRead.cpp' || echo '$(srcdir)/'`BamRead.cpp; \

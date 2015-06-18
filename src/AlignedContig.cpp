@@ -6,7 +6,7 @@
 
 namespace SnowTools {
 
-  void AlignedContig::addAlignment(const BamRead &align) {
+  /*void AlignedContig::addAlignment(const BamRead &align) {
 
   AlignmentFragment tal(align); 
   m_frag_v.push_back(tal);
@@ -14,7 +14,8 @@ namespace SnowTools {
   if (m_frag_v.size() > 1)
   sort(m_frag_v.begin(), m_frag_v.end());
 
-}
+  }*/
+
   AlignedContig::AlignedContig(const BamReadVector& bav) 
   {
     if (!bav.size())
@@ -28,6 +29,7 @@ namespace SnowTools {
     // make the individual alignments and add
     for (auto& i : bav) {
       m_frag_v.push_back(AlignmentFragment(i));
+      m_frag_v.back().num_align = bav.size();
     }
 
     // sort fragments by order on fwd-strand contig
@@ -45,8 +47,8 @@ void AlignedContig::printContigFasta(std::ofstream& os) const {
 
 void AlignedContig::blacklist(GRC &grv) {
 
- if (m_skip)
-    return;
+  //if (m_skip)
+  //  return;
 
  // loop through the indel breaks and blacklist
  for (auto& i : m_frag_v) 
@@ -57,11 +59,8 @@ void AlignedContig::blacklist(GRC &grv) {
 
 void AlignedContig::splitCoverage() { 
   
-  if (m_skip)
-    return;
-
-  // require that alignReadsToContig already ran
-  assert(m_tried_align_reads);
+  //if (m_skip)
+  //  return;
   
   for (auto& i : m_frag_v) {
     for (auto& j : i.m_indel_breaks) {
@@ -86,7 +85,9 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
 
   // print the global breakpoint
   if (!ac.m_global_bp.isEmpty())
-    out << "Global BP: " << ac.m_global_bp << std::endl;       
+    out << "Global BP: " << ac.m_global_bp << 
+      " ins_aginst_contig " << ac.insertion_against_contig_read_count << 
+      " del_against_contig " << ac.deletion_against_contig_read_count  << std::endl;       
 
   // print the multi-map breakpoints
   for (auto& i : ac.m_local_breaks)
@@ -97,7 +98,8 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
   for (auto& i : ac.m_frag_v)
     for (auto& j : i.getIndelBreaks()) 
       if (!j.isEmpty())
-	out << "Indel: " << j << " -- " << ac.getContigName() << std::endl;       
+	out << "Indel: " << j << " -- " << ac.getContigName() << " ins_a_contig " << ac.insertion_against_contig_read_count << 
+	  " del_a_contig " << ac.deletion_against_contig_read_count << std::endl;       
 
   // print the AlignmentFragments alignments
   for (auto& i : ac.m_frag_v) 
@@ -111,58 +113,69 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
     }
   }
 
-   // print the contig base-pairs
+  // print the contig base-pairs
   out << ac.getSequence() << "    " << ac.getContigName() << std::endl; 
-   
-   PlottedReadVector plot_vec;
+  
+  PlottedReadVector plot_vec;
 
-   // print out the individual reads
-   for (auto& i : ac.m_bamreads) {
+  // print out the individual reads
+  for (auto& i : ac.m_bamreads) {
+    
+    int pos = -1;
+    int aln = -1;
+    int rc = 0;
+    int dum= 0;
+    std::string this_cig;
+    std::string seq = i.QualityTrimmedSequence(4, dum);
+    std::string sr = i.GetZTag("SR");
 
-     int pos = -1;
-     int aln = -1;
-     int dum= 0;
-     std::string seq = i.QualityTrimmedSequence(4, dum);
-     std::string sr = i.GetZTag("SR");
+    // reverse complement if need be
+    //int32_t rc = i.GetIntTag("RC");
+    //if (rc/* && false*/)
+    //  SnowTools::rcomplement(seq);
+    
+    // get the more complex tags (since there can be multiple annotations per tag)
+    std::vector<int> posvec = i.GetSmartIntTag("SL"); // start positions ON CONTIG
+    std::vector<int> alnvec = i.GetSmartIntTag("TS"); // start positions ON READ
+    std::vector<int> rcvec = i.GetSmartIntTag("RC"); // read reverse complmented relative to contig
+    std::vector<std::string> cigvec = i.GetSmartStringTag("SC"); // read against contig CIGAR
+    std::vector<std::string> cnvec = i.GetSmartStringTag("CN");
 
-     // reverse complement if need be
-     int32_t rc = i.GetIntTag("RC");
-     if (rc)
-       SnowTools::rcomplement(seq);
-
-     // get the more complex tags (since there can be multiple annotations per tag)
-     std::vector<int> posvec = i.GetSmartIntTag("SL"); // start positions ON CONTIG
-     std::vector<int> alnvec = i.GetSmartIntTag("TS"); // start positions ON READ
-     std::vector<std::string> cnvec = i.GetSmartStringTag("CN");
-     assert(cnvec.size() == posvec.size());
-     size_t kk = 0;
-     for (; kk < cnvec.size(); kk++) 
-       if (cnvec[kk] == ac.getContigName()) {
-	 pos = posvec[kk];
-	 aln = alnvec[kk];
-	 break;
-       }
-
-     // trim the sequence if it hangs off the end
-     //if (i.GetZTag("SR") == "t147_D0BK6ACXX111110:6:2101:5352:156091") {
-     //  std::cerr << "i.PositionEnd() " << i.PositionEnd() << " i.Position " << i.Position() << " len " << ac.getSequence().length() << std::endl;
-     //  exit(1);
-     //	 }
-     if (aln > 0)
-       seq = seq.substr(aln, seq.length() - aln);
-
-     if ( (pos + seq.length() ) > ac.getSequence().length()) 
-       seq = seq.substr(0, ac.getSequence().length() - pos);
-
-
-     assert(kk != cnvec.size()); // assure that we found something
-     pos = abs(pos);
-     int padlen = ac.getSequence().size() - pos - seq.size() + 5;
-     padlen = std::max(5, padlen);
+    assert(cnvec.size() == posvec.size());
+    size_t kk = 0;
+    for (; kk < cnvec.size(); kk++) 
+      if (cnvec[kk] == ac.getContigName()) {
+	pos = posvec[kk];
+	aln = alnvec[kk];
+        rc = rcvec[kk];
+	this_cig = cigvec[kk];
+	break;
+      }
+    
+    // reverse complement if need be
+    if (rc)
+      SnowTools::rcomplement(seq);      
+    
+    // trim the sequence if it hangs off the end
+    //if (i.GetZTag("SR") == "t147_D0BK6ACXX111110:6:2101:5352:156091") {
+    //  std::cerr << "i.PositionEnd() " << i.PositionEnd() << " i.Position " << i.Position() << " len " << ac.getSequence().length() << std::endl;
+    //  exit(1);
+    //	 }
+    if (aln > 0)
+      seq = seq.substr(aln, seq.length() - aln);
+    
+    if ( (pos + seq.length() ) > ac.getSequence().length()) 
+      seq = seq.substr(0, ac.getSequence().length() - pos);
+    
+    
+    assert(kk != cnvec.size()); // assure that we found something
+    pos = abs(pos);
+    int padlen = ac.getSequence().size() - pos - seq.size() + 5;
+    padlen = std::max(5, padlen);
 
      std::stringstream rstream;
      assert(pos < 1e4 && padlen < 1e4); // bug, need to check
-     rstream << sr << "--" << (i.ChrID()+1) << ":" << i.Position();
+     rstream << sr << "--" << (i.ChrID()+1) << ":" << i.Position() << " r2c CIGAR: " << this_cig;
 
      plot_vec.push_back({pos, seq, rstream.str()});
    }
@@ -198,8 +211,8 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
 
 void AlignedContig::setMultiMapBreakPairs() {
    
-  if (m_skip)
-    return;
+  //if (m_skip)
+  //  return;
 
   // if single mapped contig, nothing to do here
   if (m_frag_v.size() == 1)
@@ -208,6 +221,8 @@ void AlignedContig::setMultiMapBreakPairs() {
   // initialize the breakpoint, fill with basic info
   BreakPoint bp;
   bp.seq = getSequence();
+  bp.num_align = m_frag_v.size();
+  assert(bp.num_align > 0);
 
   //bp.num_frag_v = m_frag_v.size();
   bp.cname = getContigName(); 
@@ -371,10 +386,6 @@ void AlignedContig::setMultiMapBreakPairs() {
     SnowTools::USeqVector v = {{getContigName(), getSequence()}};
     bw.constructIndex(v);
     
-    // debug
-    SnowTools::BamWalker walk("/seq/picard_aggregation/G14856/TCGA-05-4432-01A-01D-1931-08/v2/TCGA-05-4432-01A-01D-1931-08.bam");
-    walk.setStdout();
-    
     // align the reads
     for (auto& i : bav)
       {
@@ -389,18 +400,32 @@ void AlignedContig::setMultiMapBreakPairs() {
 	
 	if (brv.size() == 0)
 	  continue;
-
+	
+	bool length_pass = (brv[0].PositionEnd() - brv[0].Position()) >= 40;
+	bool mapq_pass = brv[0].MapQuality();
+	int ins_bases = brv[0].MaxInsertionBases();
+	int del_bases = brv[0].MaxDeletionBases();
+	
 	// store read2contig alignment info in this read
-	if ( (brv[0].PositionEnd() - brv[0].Position()) > 80 && brv[0].MapQuality() == 60 && brv[0].MaxInsertionBases() == 0 && brv[0].MaxDeletionBases() == 0)
+	if ( length_pass && mapq_pass && ins_bases == 0 && del_bases == 0)
 	  {
 	    if (brv[0].ReverseFlag())
-	      i.AddIntTag("RC",1);
+	      i.SmartAddTag("RC","1");
+	    else 
+	      i.SmartAddTag("RC","0");
 	    i.SmartAddTag("SL", std::to_string(brv[0].Position()));
+	    i.SmartAddTag("SE", std::to_string(brv[0].PositionEnd()));
 	    i.SmartAddTag("TS", std::to_string(brv[0].AlignmentPosition()));
+	    i.SmartAddTag("TE", std::to_string(brv[0].AlignmentEndPosition()));
+	    i.SmartAddTag("SC", brv[0].CigarString());
 	    i.SmartAddTag("CN", getContigName());
 	    
 	    m_bamreads.push_back(i);
 	  }
+	else if (ins_bases && mapq_pass && length_pass)
+	  ++insertion_against_contig_read_count;
+	else if (del_bases && mapq_pass && length_pass)
+	  ++deletion_against_contig_read_count;
       }
     
 
@@ -435,7 +460,30 @@ std::string AlignedContig::printDiscordantClusters() const {
 }
 */
 
-AlignmentFragment::AlignmentFragment(const BamRead &talign) {
+  bool AlignedContig::checkLocal(const GenomicRegion& window)
+  {
+    bool has_loc = false;
+    for (auto& i : m_frag_v) 
+      if (i.checkLocal(window))
+	has_loc = true;
+    return has_loc;
+
+  }
+
+  bool AlignmentFragment::checkLocal(const GenomicRegion& window)
+  {
+    // make a regino for this frag
+    GenomicRegion gfrag(m_align.ChrID(), m_align.Position(), m_align.PositionEnd());
+    
+    if (window.getOverlap(gfrag)) {
+      local = true;
+      return true;
+    }
+      
+    return false;
+  }
+
+  AlignmentFragment::AlignmentFragment(const BamRead &talign) {
   
   m_align = talign;
 
@@ -491,8 +539,10 @@ AlignmentFragment::AlignmentFragment(const BamRead &talign) {
   // parse right away to see if there are indels on this alignment
   BreakPoint bp;
   size_t fail_safe_count = 0;
-  while (parseIndelBreak(bp) && fail_safe_count++ < 100) 
+  while (parseIndelBreak(bp) && fail_safe_count++ < 100) {
     m_indel_breaks.push_back(bp);
+    assert(bp.num_align == 1);
+  }
 
   assert(fail_safe_count != 100);
 
@@ -517,10 +567,30 @@ std::ostream& operator<<(std::ostream &out, const AlignmentFragment &c) {
     else if (j.Type == 'S' || j.Type == 'H')
       out << std::string(j.Length, '.');
   }
-  
+
   // print contig and genome breaks
-  out << " C[" << c.break1 << "," << c.break2 << "] G[" << c.gbreak1 << "," << c.gbreak2 << "]";
+  out << "\tC[" << c.break1 << "," << c.break2 << "] G[" << c.gbreak1 << "," << c.gbreak2 << "]";
   
+  // add local info
+  out << "\tLocal: " << c.local << "\tAligned to: " << (c.m_align.ChrID()+1) << ":" << c.m_align.Position() << "(" << (c.m_align.ReverseFlag() ? "-" : "+") << ") CIG: " << c.m_align.CigarString() << " MAPQ: " << c.m_align.MapQuality();
+
+  // print the del if there is one TODO
+  /*  std::string del_string = std::string(c.m_align.Length(), ' ');
+  int dpos = 0;
+  bool has_del = false;
+  for (auto& i : c.m_align.GetCigar()) {
+    if (i.Type != 'D')
+      dpos += i.Length;
+    if (i.Type == 'D' && dpos != 0) {
+      del_string[dpos-1] = '|';
+      del_string[dpos] = '|';
+      has_del = true;
+    }
+  }
+  if (has_del)
+    out << del_string << std::endl;
+  */
+
   // print the info
   /*  out << "    " << c.m_align.RefID + 1 << ":" << c.align.Position 
       << " MAPQ: " << c.align.MapQuality << " OrientedCigar: " << BamToolsUtils::cigarToString(c.align.CigarData)
@@ -535,23 +605,33 @@ std::ostream& operator<<(std::ostream &out, const AlignmentFragment &c) {
 }
 
 
+  void AlignedContig::checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap) {
+    
+    for (auto& i : m_frag_v)
+      i.indelCigarMatches(nmap, tmap);
+    
+  }
+
 void AlignmentFragment::indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap) { 
 
+  // loop through the indel breakpoints
   for (auto& i : m_indel_breaks) {
 
-    assert(i.isindel);
+    assert(i.isindel); // make sure we only call on indels
     if (i.getSpan() <= 0) {
       std::cerr << "weird span detected " << i.getSpan();
       std::cerr << i << std::endl;
       std::cerr << *this << std::endl;
     }
-    //assert(i.getSpan() > 0);
-    
+
+    // get the hash string in same formate as cigar map (eg. pos_3D)
     std::string st = i.getHashString();
 
+    // check if this breakpoint from assembly is in the cigarmap
     CigarMap::const_iterator ffn = nmap.find(st);
     CigarMap::const_iterator fft = tmap.find(st);
 
+    // if it is, add it
     if (ffn != nmap.end())
       i.ncigar = ffn->second;
     if (fft != tmap.end())
@@ -589,14 +669,12 @@ bool AlignedContig::isWorse(const AlignedContig &ac) const {
 }
 
 bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
-  
-  // reject out of hand if not in interval
-  if (!local)
+
+  // make sure we have a non-zero cigar
+  if (m_cigar.size() == 0) {
+    std::cerr << "CIGAR of length 0 on " << *this << std::endl;
     return false;
-
-  //cout << "parsing indel break" << std::endl;
-
-  assert(m_cigar.size());
+  }
 
   // reject if it has small matches, could get confused. Fix later
   for (auto& i : m_cigar) 
@@ -604,26 +682,10 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
       return false;
 
   // reject if first alignment is I or D
-  for (auto& i : m_cigar) {
-    if (i.Type == 'D' || i.Type == 'I') {
-      std::cerr << "rejcting cigar for starting in I or D" << std::endl;
-      return false;
-    }
-    if (i.Type == 'M')
-      break;
+  if (m_cigar[0].Type == 'I' || m_cigar[0].Type == 'D' || m_cigar[m_cigar.size()-1].Type == 'D' || m_cigar[m_cigar.size()-1].Type == 'I') {
+    std::cerr << "rejcting cigar for starting in I or D" << std::endl;
+    return false;
   }
-
-  // reject if last alignment is I or D
-  /*  Cigar tmpcig = m_cigar;
-  //BamToolsUtils::flipCigar(tmpcig);
-  for (auto& i : tmpcig) {
-    if (i.Type == 'D' || i.Type == 'I') {
-      cerr << "rejcting cigar for ending in I or D" << std::endl;
-      return false;
-    }
-    if (i.Type == 'M')
-      break;
-      }*/
 
   // use next available largest D / I
   size_t loc = 0; // keep track of which cigar field
@@ -643,19 +705,18 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   }
 
   // we made it to the end, no more indels to report
-  //if (idx == align.CigarData.size())
-  //  return false;
-
-  // we made it to the end, no more indels to report
   if (loc == m_cigar.size())
     return false;
 
   // clear out the old bp just in case
-  bp.insertion = "";
-  bp.homology = "";
-
-  //bp.seq = m_seq;
+  bp = BreakPoint();
   bp.isindel = true;
+
+  // set the number of alignments for this bp
+  bp.num_align = 1;
+
+  //bp.insertion = "";
+  //bp.homology = "";
 
   int curr = 0;
   int gcurrlen = -1;
@@ -669,8 +730,8 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
 
   bp.cpos1 = -1;
   bp.cpos2 = -1;
-  //bp.num_frag_v = 1;
-  //bp.cname = m_name;
+
+  bp.cname = m_align.Qname();
   bp.mapq1 = m_align.MapQuality();
   bp.mapq2 = m_align.MapQuality();
   bp.gr1.strand = '+';
@@ -806,11 +867,22 @@ bool AlignedContig::hasVariant() const {
     return true;
 
   for (auto& i : m_frag_v)
-    if (i.m_indel_breaks.size())
+    if (i.local && i.m_indel_breaks.size())
       return true;
 
   return false;
   
 }
 
+  void AlignedContig::addDiscordantCluster(DiscordantClusterMap& dmap)
+  {
+    
+    // loop through the breaks and compare with the map
+    for (auto& i : m_local_breaks)
+      i.__combine_with_discordant_cluster(dmap);
+    m_global_bp.__combine_with_discordant_cluster(dmap);
+
+  }
+
+  
 }

@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib 
+SUBDIRS = bwa htslib
 
 noinst_LIBRARIES = libsnowtools.a
 
@@ -12,7 +12,7 @@ libsnowtools_a_LIBADD = $(top_srcdir)/bwa/libbwa.a $(top_srcdir)/htslib/libhts.a
 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
-			gChain.cpp HTSTools.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
+			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
 			AlignedContig.cpp \
 			BreakPoint.cpp DiscordantCluster.cpp \
 			bwa/is.c bwa/bwtindex.c \
