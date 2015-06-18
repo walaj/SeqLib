@@ -272,6 +272,7 @@ _CSEOF
 echo "on `(hostname || uname -n) 2>/dev/null | sed 1q`" >&5
 echo >&5
 config_files=" Makefile"
+config_headers=" config.h"
 config_commands=" depfiles"
 
 ac_cs_usage="\
@@ -287,9 +288,14 @@ Usage: $0 [OPTIONS] [FILE]...
       --recheck    update $as_me by reconfiguring in the same conditions
   --file=FILE[:TEMPLATE]
 		   instantiate the configuration file FILE
+  --header=FILE[:TEMPLATE]
+		   instantiate the configuration header FILE
 
 Configuration files:
 $config_files
+
+Configuration headers:
+$config_headers
 
 Configuration commands:
 $config_commands
@@ -393,6 +399,7 @@ do
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
+  "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -405,6 +412,7 @@ done
 # bizarre bug on SunOS 4.1.3.
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
+  test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
   test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
@@ -469,7 +477,7 @@ s,@mandir@,${prefix}/man,;t t
 s,@build_alias@,,;t t
 s,@host_alias@,,;t t
 s,@target_alias@,,;t t
-s,@DEFS@,-DPACKAGE_NAME=\"snowtools\" -DPACKAGE_TARNAME=\"snowtools\" -DPACKAGE_VERSION=\"1.0\" -DPACKAGE_STRING=\"snowtools\ 1.0\" -DPACKAGE_BUGREPORT=\"jwala@broadinstitute.org\" -DPACKAGE=\"snowtools\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_CLOCK_GETTIME=1 ,;t t
+s,@DEFS@,-DHAVE_CONFIG_H,;t t
 s,@ECHO_C@,,;t t
 s,@ECHO_N@,-n,;t t
 s,@ECHO_T@,,;t t
@@ -499,7 +507,7 @@ s,@am__untar@,${AMTAR} xf -,;t t
 s,@CXX@,g++,;t t
 s,@CXXFLAGS@,-O3,;t t
 s,@LDFLAGS@,,;t t
-s,@CPPFLAGS@, -I/xchip/gistic/Jeremiah/boost_1_58_0,;t t
+s,@CPPFLAGS@, -I/xchip/gistic/Jeremiah/boost_1_58_0DUMY,;t t
 s,@ac_ct_CXX@,g++,;t t
 s,@EXEEXT@,,;t t
 s,@OBJEXT@,o,;t t
@@ -759,6 +767,215 @@ s,@INSTALL@,$ac_INSTALL,;t t
     rm -f $tmp/out
   fi
 
+done
+
+#
+# CONFIG_HEADER section.
+#
+
+# These sed commands are passed to sed as "A NAME B NAME C VALUE D", where
+# NAME is the cpp macro being defined and VALUE is the value it is being given.
+#
+# ac_d sets the value in "#define NAME VALUE" lines.
+ac_dA='s,^\([	 ]*\)#\([	 ]*define[	 ][	 ]*\)'
+ac_dB='[	 ].*$,\1#\2'
+ac_dC=' '
+ac_dD=',;t'
+# ac_u turns "#undef NAME" without trailing blanks into "#define NAME VALUE".
+ac_uA='s,^\([	 ]*\)#\([	 ]*\)undef\([	 ][	 ]*\)'
+ac_uB='$,\1#\2define\3'
+ac_uC=' '
+ac_uD=',;t'
+
+for ac_file in : $CONFIG_HEADERS; do test "x$ac_file" = x: && continue
+  # Support "outfile[:infile[:infile...]]", defaulting infile="outfile.in".
+  case $ac_file in
+  - | *:- | *:-:* ) # input from stdin
+	cat >$tmp/stdin
+	ac_file_in=`echo "$ac_file" | sed 's,[^:]*:,,'`
+	ac_file=`echo "$ac_file" | sed 's,:.*,,'` ;;
+  *:* ) ac_file_in=`echo "$ac_file" | sed 's,[^:]*:,,'`
+	ac_file=`echo "$ac_file" | sed 's,:.*,,'` ;;
+  * )   ac_file_in=$ac_file.in ;;
+  esac
+
+  test x"$ac_file" != x- && { echo "$as_me:$LINENO: creating $ac_file" >&5
+echo "$as_me: creating $ac_file" >&6;}
+
+  # First look for the input files in the build tree, otherwise in the
+  # src tree.
+  ac_file_inputs=`IFS=:
+    for f in $ac_file_in; do
+      case $f in
+      -) echo $tmp/stdin ;;
+      [\\/$]*)
+	 # Absolute (can't be DOS-style, as IFS=:)
+	 test -f "$f" || { { echo "$as_me:$LINENO: error: cannot find input file: $f" >&5
+echo "$as_me: error: cannot find input file: $f" >&2;}
+   { (exit 1); exit 1; }; }
+	 # Do quote $f, to prevent DOS paths from being IFS'd.
+	 echo "$f";;
+      *) # Relative
+	 if test -f "$f"; then
+	   # Build tree
+	   echo "$f"
+	 elif test -f "$srcdir/$f"; then
+	   # Source tree
+	   echo "$srcdir/$f"
+	 else
+	   # /dev/null tree
+	   { { echo "$as_me:$LINENO: error: cannot find input file: $f" >&5
+echo "$as_me: error: cannot find input file: $f" >&2;}
+   { (exit 1); exit 1; }; }
+	 fi;;
+      esac
+    done` || { (exit 1); exit 1; }
+  # Remove the trailing spaces.
+  sed 's/[	 ]*$//' $ac_file_inputs >$tmp/in
+
+  # Handle all the #define templates only if necessary.
+  if grep "^[	 ]*#[	 ]*define" $tmp/in >/dev/null; then
+  # If there are no defines, we may have an empty if/fi
+  :
+  cat >$tmp/defines.sed <<CEOF
+/^[	 ]*#[	 ]*define/!b
+t clr
+: clr
+${ac_dA}PACKAGE_NAME${ac_dB}PACKAGE_NAME${ac_dC}"snowtools"${ac_dD}
+${ac_dA}PACKAGE_TARNAME${ac_dB}PACKAGE_TARNAME${ac_dC}"snowtools"${ac_dD}
+${ac_dA}PACKAGE_VERSION${ac_dB}PACKAGE_VERSION${ac_dC}"1.0"${ac_dD}
+${ac_dA}PACKAGE_STRING${ac_dB}PACKAGE_STRING${ac_dC}"snowtools 1.0"${ac_dD}
+${ac_dA}PACKAGE_BUGREPORT${ac_dB}PACKAGE_BUGREPORT${ac_dC}"jwala@broadinstitute.org"${ac_dD}
+${ac_dA}PACKAGE${ac_dB}PACKAGE${ac_dC}"snowtools"${ac_dD}
+${ac_dA}VERSION${ac_dB}VERSION${ac_dC}"1.0"${ac_dD}
+${ac_dA}STDC_HEADERS${ac_dB}STDC_HEADERS${ac_dC}1${ac_dD}
+${ac_dA}HAVE_SYS_TYPES_H${ac_dB}HAVE_SYS_TYPES_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_SYS_STAT_H${ac_dB}HAVE_SYS_STAT_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_STDLIB_H${ac_dB}HAVE_STDLIB_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_STRING_H${ac_dB}HAVE_STRING_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_MEMORY_H${ac_dB}HAVE_MEMORY_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_STRINGS_H${ac_dB}HAVE_STRINGS_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_INTTYPES_H${ac_dB}HAVE_INTTYPES_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_STDINT_H${ac_dB}HAVE_STDINT_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_UNISTD_H${ac_dB}HAVE_UNISTD_H${ac_dC}1${ac_dD}
+${ac_dA}HAVE_CLOCK_GETTIME${ac_dB}HAVE_CLOCK_GETTIME${ac_dC}1${ac_dD}
+CEOF
+  sed -f $tmp/defines.sed $tmp/in >$tmp/out
+  rm -f $tmp/in
+  mv $tmp/out $tmp/in
+
+  fi # grep
+
+  # Handle all the #undef templates
+  cat >$tmp/undefs.sed <<CEOF
+/^[	 ]*#[	 ]*undef/!b
+t clr
+: clr
+${ac_uA}PACKAGE_NAME${ac_uB}PACKAGE_NAME${ac_uC}"snowtools"${ac_uD}
+${ac_uA}PACKAGE_TARNAME${ac_uB}PACKAGE_TARNAME${ac_uC}"snowtools"${ac_uD}
+${ac_uA}PACKAGE_VERSION${ac_uB}PACKAGE_VERSION${ac_uC}"1.0"${ac_uD}
+${ac_uA}PACKAGE_STRING${ac_uB}PACKAGE_STRING${ac_uC}"snowtools 1.0"${ac_uD}
+${ac_uA}PACKAGE_BUGREPORT${ac_uB}PACKAGE_BUGREPORT${ac_uC}"jwala@broadinstitute.org"${ac_uD}
+${ac_uA}PACKAGE${ac_uB}PACKAGE${ac_uC}"snowtools"${ac_uD}
+${ac_uA}VERSION${ac_uB}VERSION${ac_uC}"1.0"${ac_uD}
+${ac_uA}STDC_HEADERS${ac_uB}STDC_HEADERS${ac_uC}1${ac_uD}
+${ac_uA}HAVE_SYS_TYPES_H${ac_uB}HAVE_SYS_TYPES_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_SYS_STAT_H${ac_uB}HAVE_SYS_STAT_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_STDLIB_H${ac_uB}HAVE_STDLIB_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_STRING_H${ac_uB}HAVE_STRING_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_MEMORY_H${ac_uB}HAVE_MEMORY_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_STRINGS_H${ac_uB}HAVE_STRINGS_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_INTTYPES_H${ac_uB}HAVE_INTTYPES_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_STDINT_H${ac_uB}HAVE_STDINT_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_UNISTD_H${ac_uB}HAVE_UNISTD_H${ac_uC}1${ac_uD}
+${ac_uA}HAVE_CLOCK_GETTIME${ac_uB}HAVE_CLOCK_GETTIME${ac_uC}1${ac_uD}
+s,^[	 ]*#[	 ]*undef[	 ][	 ]*[a-zA-Z_][a-zA-Z_0-9]*,/* & */,
+CEOF
+  sed -f $tmp/undefs.sed $tmp/in >$tmp/out
+  rm -f $tmp/in
+  mv $tmp/out $tmp/in
+
+  # Let's still pretend it is `configure' which instantiates (i.e., don't
+  # use $as_me), people would be surprised to read:
+  #    /* config.h.  Generated by config.status.  */
+  if test x"$ac_file" = x-; then
+    echo "/* Generated by configure.  */" >$tmp/config.h
+  else
+    echo "/* $ac_file.  Generated by configure.  */" >$tmp/config.h
+  fi
+  cat $tmp/in >>$tmp/config.h
+  rm -f $tmp/in
+  if test x"$ac_file" != x-; then
+    if diff $ac_file $tmp/config.h >/dev/null 2>&1; then
+      { echo "$as_me:$LINENO: $ac_file is unchanged" >&5
+echo "$as_me: $ac_file is unchanged" >&6;}
+    else
+      ac_dir=`(dirname "$ac_file") 2>/dev/null ||
+$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$ac_file" : 'X\(//\)[^/]' \| \
+	 X"$ac_file" : 'X\(//\)$' \| \
+	 X"$ac_file" : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X"$ac_file" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+      { if $as_mkdir_p; then
+    mkdir -p "$ac_dir"
+  else
+    as_dir="$ac_dir"
+    as_dirs=
+    while test ! -d "$as_dir"; do
+      as_dirs="$as_dir $as_dirs"
+      as_dir=`(dirname "$as_dir") 2>/dev/null ||
+$as_expr X"$as_dir" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$as_dir" : 'X\(//\)[^/]' \| \
+	 X"$as_dir" : 'X\(//\)$' \| \
+	 X"$as_dir" : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X"$as_dir" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+    done
+    test ! -n "$as_dirs" || mkdir $as_dirs
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory \"$ac_dir\"" >&5
+echo "$as_me: error: cannot create directory \"$ac_dir\"" >&2;}
+   { (exit 1); exit 1; }; }; }
+
+      rm -f $ac_file
+      mv $tmp/config.h $ac_file
+    fi
+  else
+    cat $tmp/config.h
+    rm -f $tmp/config.h
+  fi
+# Compute $ac_file's index in $config_headers.
+_am_stamp_count=1
+for _am_header in $config_headers :; do
+  case $_am_header in
+    $ac_file | $ac_file:* )
+      break ;;
+    * )
+      _am_stamp_count=`expr $_am_stamp_count + 1` ;;
+  esac
+done
+echo "timestamp for $ac_file" >`(dirname $ac_file) 2>/dev/null ||
+$as_expr X$ac_file : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X$ac_file : 'X\(//\)[^/]' \| \
+	 X$ac_file : 'X\(//\)$' \| \
+	 X$ac_file : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X$ac_file |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`/stamp-h$_am_stamp_count
 done
 
 #

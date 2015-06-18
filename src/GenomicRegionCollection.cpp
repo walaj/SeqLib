@@ -1,12 +1,14 @@
-//#include "SnowTools/GenomicRegionCollection.h"
+#include "SnowTools/GenomicRegionCollection.h"
 
 #include <iostream>
 #include <sstream>
 #include <cassert>
 #include "SnowTools/gzstream.h"
 #include <set>
-  
+
+#ifdef HAVE_BOOST_ICL_INTERVAL_SET_HPP  
 #include <boost/icl/interval_set.hpp>
+#endif
 
 //#define DEBUG_OVERLAPS 1
 
@@ -414,12 +416,11 @@ GRC GenomicRegionCollection<T>::intersection(GRC& subject, bool ignore_strand /*
 template<class T>
 GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
 {
-  
-#ifdef BOOST_CONFIG_HPP
 
   GRC out;
   // get this - that
 
+#ifdef BOOST_CONFIG_HPP
   using namespace boost::icl;
   typedef interval_set<int> TIntervalSet; 
 
@@ -462,8 +463,8 @@ GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
   return out;
 
 #else
-  std::cerr << "No Boost library detected. GenomicRegionCollection::complement will not function. Returning Empty GRC"
-    return GRC();
+  std::cerr << "No Boost library detected. GenomicRegionCollection::complement will not function. Returning Empty GRC" << std::endl;
+  return out;
 #endif
 
 }
