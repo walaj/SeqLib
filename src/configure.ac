@@ -21,11 +21,11 @@ AC_SEARCH_LIBS([gzopen],[z],,[AC_MSG_ERROR([libz not found, please install zlib 
 AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [clock_getttime found])], )
 
 AC_ARG_WITH(boost, AS_HELP_STRING([--with-boost=PATH],
-	[specify directory containing the bamtools library (http://github.com/pezmaster31/bamtools)]))
+	[specify directory containing the boost library)]))
 if test "$with_boost" -a -d "$with_boost"; then
     boost_include="-I$with_boost"
 else
-    boostr=/xchip/gistic/Jeremiah/boost_1_58_0
+    boostr=/xchip/gistic/Jeremiah/boost_1_58_0DUMY
     boost_include="-I$boostr"
 fi
 

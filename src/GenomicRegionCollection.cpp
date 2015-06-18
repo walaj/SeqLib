@@ -415,6 +415,8 @@ template<class T>
 GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
 {
   
+#ifdef BOOST_CONFIG_HPP
+
   GRC out;
   // get this - that
 
@@ -458,6 +460,11 @@ GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
     }
 
   return out;
+
+#else
+  std::cerr << "No Boost library detected. GenomicRegionCollection::complement will not function. Returning Empty GRC"
+    return GRC();
+#endif
 
 }
 

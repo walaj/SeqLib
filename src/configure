@@ -865,8 +865,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-boost=PATH       specify directory containing the bamtools library
-                          (http://github.com/pezmaster31/bamtools)
+  --with-boost=PATH       specify directory containing the boost library)
 
 Some influential environment variables:
   CXX         C++ compiler command
