@@ -6,7 +6,7 @@
 namespace SnowTools {
 
 BamReadGroup::BamReadGroup(const std::string& name) : reads(0), supp(0), unmap(0), qcfail(0), 
-						      duplicate(0), m_name(name)
+						      duplicate(0), mate_unmap(0), m_name(name)
 {
 
   mapq = Histogram(0,100,1);
@@ -18,8 +18,44 @@ BamReadGroup::BamReadGroup(const std::string& name) : reads(0), supp(0), unmap(0
 
 }
 
+  std::ostream& operator<<(std::ostream& out, const BamStats& qc) {
+    out << "ReadGroup\tReadCount\tSupplementary\tUnmapped\tMateUnmapped\tQCFailed\tDuplicate\tMappingQuality\tNM\tInsertSize\tClippedBases\tMeanPhredScore\tReadLength" << std::endl;
+    for (auto& i : qc.m_group_map)
+      out << i.second << std::endl;
+  }
+
+  std::ostream& operator<<(std::ostream& out, const BamReadGroup& qc) {
+    std::string sep = "\t";
+    out << qc.m_name << sep << qc.reads << sep <<
+      qc.supp << sep << 
+      qc.unmap << sep <<
+      qc.mate_unmap << sep <<
+      qc.qcfail << sep <<
+      qc.duplicate << sep << 
+      qc.mapq.toFileString() << sep << 
+      qc.nm.toFileString() << sep <<
+      qc.isize.toFileString() << sep <<
+      qc.clip.toFileString() <<  sep << 
+      qc.phred.toFileString() << sep <<
+      qc.len.toFileString();
+    return out;
+  }
+
 void BamReadGroup::addRead(BamRead &r)
 {
+  
+  ++reads;
+  if (r.SecondaryFlag())
+    ++supp;
+  if (r.QCFailFlag())
+    ++qcfail;
+  if (r.DuplicateFlag())
+    ++duplicate;
+  if (!r.MappedFlag())
+    ++unmap;
+  if (!r.MateMappedFlag())
+    ++mate_unmap;
+
   int mapqr = r.MapQuality();
   if (mapqr >=0 && mapqr <= 100)
     mapq.addElem(mapqr);

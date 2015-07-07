@@ -236,10 +236,17 @@ void AlignedContig::setMultiMapBreakPairs() {
     
     bp.gr1 = SnowTools::GenomicRegion(it->m_align.ChrID(), it->gbreak2, it->gbreak2);
     bp.gr2 = SnowTools::GenomicRegion((it+1)->m_align.ChrID(), (it+1)->gbreak1, (it+1)->gbreak1);
+    
+    //debug
+    if (getContigName() == "c_19_15644356_15645003_48")
+      std::cerr << "Frag 1: "  << (*it) << " Frag 2: "  << (*(it+1)) << std::endl;
+    
     //bp.gr1.strand = it->align.IsReverseStrand() ? '-' : '+';
     //bp.gr2.strand = (it+1)->align.IsReverseStrand() ? '+' : '-';
-    bp.gr1.strand = !it->m_align.ReverseFlag() ? '+' : '-'; 
+
+    bp.gr1.strand = it->m_align.ReverseFlag() ? '-' : '+'; 
     bp.gr2.strand = (it+1)->m_align.ReverseFlag() ? '+' : '-';
+
 
     bp.cpos1 = it->break2; // take the right-most breakpoint as the first
     bp.cpos2 = (it+1)->break1;  // take the left-most of the next one

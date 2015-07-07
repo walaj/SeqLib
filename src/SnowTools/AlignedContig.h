@@ -7,6 +7,7 @@
 #include "SnowTools/BreakPoint.h"
 #include "SnowTools/DiscordantCluster.h"
 #include "SnowTools/BWAWrapper.h"
+#include "SnowTools/BamWalker.h"
 
 namespace SnowTools {
 
@@ -55,8 +56,15 @@ namespace SnowTools {
      */
     bool checkLocal(const GenomicRegion& window);
     
-    const BPVec& getIndelBreaks() const { return m_indel_breaks; } 
+    const BPVec& getIndelBreaks() const { return m_indel_breaks; }
     
+    /*! Write the alignment record to a BAM file
+     */
+    void writeToBAM(BamWalker& bw) { 
+      bw.WriteAlignment(m_align); 
+    } 
+
+
     private:
     
     BPVec m_indel_breaks; /**< indel variants on this alignment */
@@ -209,6 +217,25 @@ namespace SnowTools {
    * @return true if there is multimapping or an indel
    */
   bool hasVariant() const;
+
+  /*! Write all of the alignment records to a BAM file
+   * @param bw BamWalker opened with OpenWriteBam
+   */
+  void writeToBAM(BamWalker& bw) { 
+    for (auto& i : m_frag_v) {
+      std::cerr << "write to bam  " << i << std::endl;
+      i.writeToBAM(bw);
+    }
+  } 
+
+  /*! Write all of the sequencing reads as aligned to contig to a BAM file
+   * @param bw BamWalker opened with OpenWriteBam
+   */
+  void writeAlignedReadsToBAM(BamWalker& bw) { 
+    for (auto& i : m_bamreads)
+      bw.WriteAlignment(i);
+  } 
+
 
   bool hasLocal() const { for (auto& i : m_frag_v) if (i.local) return true; return false; }
 

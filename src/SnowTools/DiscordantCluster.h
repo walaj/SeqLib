@@ -44,9 +44,7 @@ namespace SnowTools
     void addMateReads(const BamReadVector& bav);
     
     // return the mean mapping quality for this cluster
-    double getMeanMapq(bool mate) const;
-    
-    double getMeanMapq() const;
+    double getMeanMapq(bool mate = false) const;
 
     /** Return the discordant cluster as a string with just coordinates */
     std::string toRegionString() const;
