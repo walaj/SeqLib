@@ -251,8 +251,8 @@ namespace SnowTools {
   }
 
   // TODO convert chr to string with treader
-  ss << gr1.chr+1 << sep << gr1.pos1 << sep << (gr1.strand ? '+' : '-') << sep 
-     << gr2.chr+1 << sep << gr2.pos1 << sep << (gr2.strand ? '+' : '-') << sep 
+  ss << gr1.chr+1 << sep << gr1.pos1 << sep << gr1.strand << sep 
+     << gr2.chr+1 << sep << gr2.pos1 << sep << gr2.strand << sep 
      << getSpan() << sep
      << mapq1 <<  sep << mapq2 << sep 
      << nsplit << sep << tsplit << sep
@@ -279,9 +279,9 @@ namespace SnowTools {
     num_align = 0;
     dc = tdc;
 
-    gr1.pos1 = (tdc.m_reg1.strand) ? tdc.m_reg1.pos2 : tdc.m_reg1.pos1;
+    gr1.pos1 = (tdc.m_reg1.strand == '+') ? tdc.m_reg1.pos2 : tdc.m_reg1.pos1;
     gr1.pos2 = gr1.pos1;
-    gr2.pos1 = (tdc.m_reg2.strand) ? tdc.m_reg2.pos2 : tdc.m_reg2.pos1;
+    gr2.pos1 = (tdc.m_reg2.strand == '+') ? tdc.m_reg2.pos2 : tdc.m_reg2.pos1;
     gr2.pos2 = gr2.pos1;
     gr1.chr = tdc.m_reg1.chr;
     gr2.chr = tdc.m_reg2.chr;
@@ -454,10 +454,10 @@ namespace SnowTools {
 	switch(++count) {
 	case 1: gr1.chr = stoi(val) - 1; break;
 	case 2: gr1.pos1 = stoi(val); gr1.pos2 = gr1.pos1; break;
-	case 3: gr1.strand = val.at(0)=='+'; break;
+	case 3: gr1.strand = val.at(0); break;
 	case 4: gr2.chr = stoi(val) - 1; break;
 	case 5: gr2.pos1 = stoi(val); gr2.pos2 = gr2.pos1; break;
-	case 6: gr2.strand = val.at(0)=='+'; break;
+	case 6: gr2.strand = val.at(0); break;
 	  //case 7: span = stoi(val); break;
 	case 8: mapq1 = stoi(val); break;
 	case 9: mapq2 = stoi(val); break;
@@ -757,7 +757,6 @@ namespace SnowTools {
     GenomicRegion bp2 = gr2;
     bp1.pad(PAD);
     bp2.pad(PAD);
-    
 
     for (auto& d : dmap)
       {
@@ -770,9 +769,10 @@ namespace SnowTools {
 	
 	bool pass = bp1reg1 && bp2reg2;
 
-	//debug
-	if (cname=="c_1_6524299_6527299_3")
-	  std::cerr << " HERE " << d.first << " " << d.second << " pass " << pass << std::endl;
+	if (cname=="c_19_15644356_15645003_48")
+	  std::cerr << " HERE " << d.first << " " << d.second << " pass " << pass << std::endl << 
+	    "BREAKPOINT " << (*this) << "   d.second.m_reg1 "  << d.second.m_reg1 << " d.second.m_reg2 " << d.second.m_reg2 << 
+	    " bp1 " << bp1 << " bp2 " << bp2 << std::endl; 
 	
 	if (pass)
 	  {

@@ -43,6 +43,7 @@ class BamReadGroup {
   size_t unmap;  
   size_t qcfail;
   size_t duplicate;
+  size_t mate_unmap;
 
   Histogram mapq;
   Histogram nm;

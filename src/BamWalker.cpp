@@ -291,7 +291,10 @@ void BamWalker::WriteAlignment(BamRead &r)
   for (auto& i : m_tag_list)
     r.RemoveTag(i.c_str());
     
-  sam_write1(fop, br.get(), r.raw());
+  if (!fop)
+    std::cerr << "BamWalker ERROR in writeAlignment. Did you forget to open the Bam for writing (OpenWriteBam)? Skipping write"  << std::endl;
+  else
+    sam_write1(fop, br.get(), r.raw());
 }
 
 std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
@@ -307,6 +310,9 @@ std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
     out << "CRAM" << std::endl;
   else if (b.fop->format.format == text_format)
     out << "SAM" << std::endl;
+  else if (b.fop == 0)
+    out << "NONE" << std::endl;
+       
 
   out << b.m_mr << std::endl;
   if (b.m_region.size()) {

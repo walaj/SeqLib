@@ -180,20 +180,6 @@ namespace SnowTools {
     return mean;
   }
   
-  double DiscordantCluster::getMeanMapq() const 
-  {
-    double mean = 0;
-    std::vector<int> tmapq;
-    for (auto& i : mates)
-      tmapq.push_back(i.second.MapQuality());
-    for (auto& i : reads)
-      tmapq.push_back(i.second.MapQuality());
-    
-    if (tmapq.size() > 0)
-      mean = accumulate(tmapq.begin(), tmapq.end(), 0.0) / tmapq.size();
-    return mean;
-  }
-  
   std::string DiscordantCluster::toRegionString() const 
   {
     int pos1 = (m_reg1.strand == '+') ? m_reg1.pos2 : m_reg1.pos1;

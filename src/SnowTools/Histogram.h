@@ -104,6 +104,8 @@ class Histogram {
    */
   Histogram(const int32_t& start, const int32_t& end, const uint32_t& width);
 
+  std::string toFileString() const;
+
   friend std::ostream& operator<<(std::ostream &out, const Histogram &h) {
     for (auto& i : h.m_bins)
       out << i << std::endl;

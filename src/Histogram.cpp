@@ -48,9 +48,11 @@ v * 7. MISCELLANEOUS
  */
 
 #include "SnowTools/Histogram.h"
+#include "SnowTools/SnowUtils.h"
 #include <fstream>
 #include <cmath>
 #include <algorithm>
+#include <sstream>
 
 #define BINARY_SEARCH 1
 
@@ -105,6 +107,15 @@ void Histogram::removeElem(const int32_t& elem) {
 
 void Histogram::addElem(const int32_t& elem) {
   ++m_bins[retrieveBinID(elem)];
+}
+
+std::string Histogram::toFileString() const {
+  std::stringstream ss;
+  for (auto& i : m_bins)
+    if (i.m_count)
+      ss << i.bounds.first << "_" << i.bounds.second << "_" << i.m_count << ",";
+  return(cutLastChar(ss.str())); // trim off last comma
+  
 }
 
 size_t Histogram::retrieveBinID(const int32_t& elem) const {
