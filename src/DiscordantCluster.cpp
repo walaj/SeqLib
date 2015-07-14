@@ -145,6 +145,19 @@ namespace SnowTools {
 	if (endpos > m_reg2.pos2)
 	  m_reg2.pos2 = endpos;
       }
+
+
+    // orient them correctly so that left end is first
+    if (m_reg2 < m_reg1) {
+      GenomicRegion tmp_reg = m_reg1;
+      m_reg1 = m_reg2;
+      m_reg2 = tmp_reg;
+
+      std::unordered_map<std::string, BamRead> tmp_reads = reads;
+      reads = mates;
+      mates = tmp_reads;
+    }
+
     
   }
   

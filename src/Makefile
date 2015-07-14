@@ -14,7 +14,6 @@
 
 
 
-
 srcdir = .
 top_srcdir = .
 
@@ -35,7 +34,6 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = snowtools$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
@@ -53,39 +51,17 @@ LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
 libsnowtools_a_AR = $(AR) $(ARFLAGS)
-libsnowtools_a_DEPENDENCIES = $(top_srcdir)/bwa/libbwa.a \
-	$(top_srcdir)/htslib/libhts.a
-am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
-	libsnowtools_a-Histogram.$(OBJEXT) \
-	libsnowtools_a-BamWalker.$(OBJEXT) \
-	libsnowtools_a-BamStats.$(OBJEXT) \
-	libsnowtools_a-MiniRules.$(OBJEXT) \
-	libsnowtools_a-gzstream.$(OBJEXT) \
-	libsnowtools_a-SnowUtils.$(OBJEXT) \
-	libsnowtools_a-gChain.$(OBJEXT) \
-	libsnowtools_a-BamRead.$(OBJEXT) \
-	libsnowtools_a-gzstream.$(OBJEXT) \
-	libsnowtools_a-BWAWrapper.$(OBJEXT) \
-	libsnowtools_a-BamRead.$(OBJEXT) \
-	libsnowtools_a-AlignedContig.$(OBJEXT) \
-	libsnowtools_a-BreakPoint.$(OBJEXT) \
-	libsnowtools_a-DiscordantCluster.$(OBJEXT) \
-	libsnowtools_a-is.$(OBJEXT) libsnowtools_a-bwtindex.$(OBJEXT) \
-	libsnowtools_a-bwt_gen.$(OBJEXT) \
-	libsnowtools_a-QSufSort.$(OBJEXT) libsnowtools_a-bwt.$(OBJEXT) \
-	libsnowtools_a-bwamem_extra.$(OBJEXT) \
-	libsnowtools_a-ahocorasick.$(OBJEXT) \
-	libsnowtools_a-node.$(OBJEXT)
+libsnowtools_a_LIBADD =
+am_libsnowtools_a_OBJECTS = GenomicRegion.$(OBJEXT) \
+	Histogram.$(OBJEXT) BamWalker.$(OBJEXT) BamStats.$(OBJEXT) \
+	MiniRules.$(OBJEXT) gzstream.$(OBJEXT) SnowUtils.$(OBJEXT) \
+	gChain.$(OBJEXT) BamRead.$(OBJEXT) gzstream.$(OBJEXT) \
+	BWAWrapper.$(OBJEXT) BamRead.$(OBJEXT) AlignedContig.$(OBJEXT) \
+	STCoverage.$(OBJEXT) BreakPoint.$(OBJEXT) \
+	DiscordantCluster.$(OBJEXT) is.$(OBJEXT) bwtindex.$(OBJEXT) \
+	bwt_gen.$(OBJEXT) QSufSort.$(OBJEXT) bwt.$(OBJEXT) \
+	bwamem_extra.$(OBJEXT) ahocorasick.$(OBJEXT) node.$(OBJEXT)
 libsnowtools_a_OBJECTS = $(am_libsnowtools_a_OBJECTS)
-am__installdirs = "$(DESTDIR)$(bindir)"
-binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(bin_PROGRAMS)
-am_snowtools_OBJECTS = snowtools-SnowTools.$(OBJEXT) \
-	snowtools-CoverageTool.$(OBJEXT) \
-	snowtools-RealignTool.$(OBJEXT)
-snowtools_OBJECTS = $(am_snowtools_OBJECTS)
-snowtools_DEPENDENCIES = $(top_builddir)/libsnowtools.a \
-	$(top_builddir)/bwa/libbwa.a $(top_builddir)/htslib/libhts.a
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -98,8 +74,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libsnowtools_a_SOURCES) $(snowtools_SOURCES)
-DIST_SOURCES = $(libsnowtools_a_SOURCES) $(snowtools_SOURCES)
+SOURCES = $(libsnowtools_a_SOURCES)
+DIST_SOURCES = $(libsnowtools_a_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -132,7 +108,7 @@ AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -O3
-CPPFLAGS =  -I/xchip/gistic/Jeremiah/boost_1_58_0DUMY
+CPPFLAGS =  -I. -I ./htslib -I ./multifast-v1.4.2 -I/xchip/gistic/Jeremiah/boost_1_58_0
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -149,9 +125,9 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
-LDFLAGS = 
+LDFLAGS =  -L./bwa -Wl,-rpath,./htslib -L./htslib -L ./multifast-v1.4.2/ahocorasick/build
 LIBOBJS = 
-LIBS = -lrt -lz 
+LIBS = -lrt -lz  -lhts -lahocorasick -lbwa
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run makeinfo
 OBJEXT = o
@@ -203,28 +179,16 @@ target_alias =
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = bwa htslib
 noinst_LIBRARIES = libsnowtools.a
-libsnowtools_a_CPPFLAGS = \
-	-I$(top_srcdir)/htslib \
-	-I$(top_srcdir)/multifast-v1.4.2 
-
-libsnowtools_a_LIBADD = $(top_srcdir)/bwa/libbwa.a $(top_srcdir)/htslib/libhts.a 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
-			AlignedContig.cpp \
+			AlignedContig.cpp STCoverage.cpp \
 			BreakPoint.cpp DiscordantCluster.cpp \
 			bwa/is.c bwa/bwtindex.c \
 			bwa/bwt_gen.c bwa/QSufSort.c bwa/bwt.c bwa/bwamem_extra.c \
 			multifast-v1.4.2/ahocorasick/ahocorasick.c \
 			multifast-v1.4.2/ahocorasick/node.c 
 
-snowtools_CPPFLAGS = \
-	-I$(top_srcdir)/htslib \
-	-I$(top_srcdir)/multifast-v1.4.2 
-
-snowtools_LDADD = $(top_builddir)/libsnowtools.a $(top_builddir)/bwa/libbwa.a $(top_builddir)/htslib/libhts.a 
-snowtools_LDFLAGS = -pthread -std=c++11
-snowtools_SOURCES = SnowTools.cpp CoverageTool.cpp RealignTool.cpp
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -287,32 +251,6 @@ libsnowtools.a: $(libsnowtools_a_OBJECTS) $(libsnowtools_a_DEPENDENCIES)
 	-rm -f libsnowtools.a
 	$(libsnowtools_a_AR) libsnowtools.a $(libsnowtools_a_OBJECTS) $(libsnowtools_a_LIBADD)
 	$(RANLIB) libsnowtools.a
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
-	  else :; fi; \
-	done
-
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
-	done
-
-clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-snowtools$(EXEEXT): $(snowtools_OBJECTS) $(snowtools_DEPENDENCIES) 
-	@rm -f snowtools$(EXEEXT)
-	$(CXXLINK) $(snowtools_LDFLAGS) $(snowtools_OBJECTS) $(snowtools_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -320,30 +258,28 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/libsnowtools_a-AlignedContig.Po
-include ./$(DEPDIR)/libsnowtools_a-BWAWrapper.Po
-include ./$(DEPDIR)/libsnowtools_a-BamRead.Po
-include ./$(DEPDIR)/libsnowtools_a-BamStats.Po
-include ./$(DEPDIR)/libsnowtools_a-BamWalker.Po
-include ./$(DEPDIR)/libsnowtools_a-BreakPoint.Po
-include ./$(DEPDIR)/libsnowtools_a-DiscordantCluster.Po
-include ./$(DEPDIR)/libsnowtools_a-GenomicRegion.Po
-include ./$(DEPDIR)/libsnowtools_a-Histogram.Po
-include ./$(DEPDIR)/libsnowtools_a-MiniRules.Po
-include ./$(DEPDIR)/libsnowtools_a-QSufSort.Po
-include ./$(DEPDIR)/libsnowtools_a-SnowUtils.Po
-include ./$(DEPDIR)/libsnowtools_a-ahocorasick.Po
-include ./$(DEPDIR)/libsnowtools_a-bwamem_extra.Po
-include ./$(DEPDIR)/libsnowtools_a-bwt.Po
-include ./$(DEPDIR)/libsnowtools_a-bwt_gen.Po
-include ./$(DEPDIR)/libsnowtools_a-bwtindex.Po
-include ./$(DEPDIR)/libsnowtools_a-gChain.Po
-include ./$(DEPDIR)/libsnowtools_a-gzstream.Po
-include ./$(DEPDIR)/libsnowtools_a-is.Po
-include ./$(DEPDIR)/libsnowtools_a-node.Po
-include ./$(DEPDIR)/snowtools-CoverageTool.Po
-include ./$(DEPDIR)/snowtools-RealignTool.Po
-include ./$(DEPDIR)/snowtools-SnowTools.Po
+include ./$(DEPDIR)/AlignedContig.Po
+include ./$(DEPDIR)/BWAWrapper.Po
+include ./$(DEPDIR)/BamRead.Po
+include ./$(DEPDIR)/BamStats.Po
+include ./$(DEPDIR)/BamWalker.Po
+include ./$(DEPDIR)/BreakPoint.Po
+include ./$(DEPDIR)/DiscordantCluster.Po
+include ./$(DEPDIR)/GenomicRegion.Po
+include ./$(DEPDIR)/Histogram.Po
+include ./$(DEPDIR)/MiniRules.Po
+include ./$(DEPDIR)/QSufSort.Po
+include ./$(DEPDIR)/STCoverage.Po
+include ./$(DEPDIR)/SnowUtils.Po
+include ./$(DEPDIR)/ahocorasick.Po
+include ./$(DEPDIR)/bwamem_extra.Po
+include ./$(DEPDIR)/bwt.Po
+include ./$(DEPDIR)/bwt_gen.Po
+include ./$(DEPDIR)/bwtindex.Po
+include ./$(DEPDIR)/gChain.Po
+include ./$(DEPDIR)/gzstream.Po
+include ./$(DEPDIR)/is.Po
+include ./$(DEPDIR)/node.Po
 
 .C.o:
 	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -359,230 +295,6 @@ include ./$(DEPDIR)/snowtools-SnowTools.Po
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-libsnowtools_a-GenomicRegion.o: GenomicRegion.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-GenomicRegion.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-GenomicRegion.Tpo" -c -o libsnowtools_a-GenomicRegion.o `test -f 'GenomicRegion.cpp' || echo '$(srcdir)/'`GenomicRegion.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-GenomicRegion.Tpo" "$(DEPDIR)/libsnowtools_a-GenomicRegion.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-GenomicRegion.Tpo"; exit 1; fi
-#	source='GenomicRegion.cpp' object='libsnowtools_a-GenomicRegion.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-GenomicRegion.o `test -f 'GenomicRegion.cpp' || echo '$(srcdir)/'`GenomicRegion.cpp
-
-libsnowtools_a-GenomicRegion.obj: GenomicRegion.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-GenomicRegion.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-GenomicRegion.Tpo" -c -o libsnowtools_a-GenomicRegion.obj `if test -f 'GenomicRegion.cpp'; then $(CYGPATH_W) 'GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/GenomicRegion.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-GenomicRegion.Tpo" "$(DEPDIR)/libsnowtools_a-GenomicRegion.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-GenomicRegion.Tpo"; exit 1; fi
-#	source='GenomicRegion.cpp' object='libsnowtools_a-GenomicRegion.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-GenomicRegion.obj `if test -f 'GenomicRegion.cpp'; then $(CYGPATH_W) 'GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/GenomicRegion.cpp'; fi`
-
-libsnowtools_a-Histogram.o: Histogram.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-Histogram.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-Histogram.Tpo" -c -o libsnowtools_a-Histogram.o `test -f 'Histogram.cpp' || echo '$(srcdir)/'`Histogram.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-Histogram.Tpo" "$(DEPDIR)/libsnowtools_a-Histogram.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-Histogram.Tpo"; exit 1; fi
-#	source='Histogram.cpp' object='libsnowtools_a-Histogram.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-Histogram.o `test -f 'Histogram.cpp' || echo '$(srcdir)/'`Histogram.cpp
-
-libsnowtools_a-Histogram.obj: Histogram.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-Histogram.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-Histogram.Tpo" -c -o libsnowtools_a-Histogram.obj `if test -f 'Histogram.cpp'; then $(CYGPATH_W) 'Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/Histogram.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-Histogram.Tpo" "$(DEPDIR)/libsnowtools_a-Histogram.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-Histogram.Tpo"; exit 1; fi
-#	source='Histogram.cpp' object='libsnowtools_a-Histogram.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-Histogram.obj `if test -f 'Histogram.cpp'; then $(CYGPATH_W) 'Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/Histogram.cpp'; fi`
-
-libsnowtools_a-BamWalker.o: BamWalker.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamWalker.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BamWalker.Tpo" -c -o libsnowtools_a-BamWalker.o `test -f 'BamWalker.cpp' || echo '$(srcdir)/'`BamWalker.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BamWalker.Tpo" "$(DEPDIR)/libsnowtools_a-BamWalker.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BamWalker.Tpo"; exit 1; fi
-#	source='BamWalker.cpp' object='libsnowtools_a-BamWalker.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamWalker.o `test -f 'BamWalker.cpp' || echo '$(srcdir)/'`BamWalker.cpp
-
-libsnowtools_a-BamWalker.obj: BamWalker.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamWalker.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BamWalker.Tpo" -c -o libsnowtools_a-BamWalker.obj `if test -f 'BamWalker.cpp'; then $(CYGPATH_W) 'BamWalker.cpp'; else $(CYGPATH_W) '$(srcdir)/BamWalker.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BamWalker.Tpo" "$(DEPDIR)/libsnowtools_a-BamWalker.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BamWalker.Tpo"; exit 1; fi
-#	source='BamWalker.cpp' object='libsnowtools_a-BamWalker.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamWalker.obj `if test -f 'BamWalker.cpp'; then $(CYGPATH_W) 'BamWalker.cpp'; else $(CYGPATH_W) '$(srcdir)/BamWalker.cpp'; fi`
-
-libsnowtools_a-BamStats.o: BamStats.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamStats.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BamStats.Tpo" -c -o libsnowtools_a-BamStats.o `test -f 'BamStats.cpp' || echo '$(srcdir)/'`BamStats.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BamStats.Tpo" "$(DEPDIR)/libsnowtools_a-BamStats.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BamStats.Tpo"; exit 1; fi
-#	source='BamStats.cpp' object='libsnowtools_a-BamStats.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamStats.o `test -f 'BamStats.cpp' || echo '$(srcdir)/'`BamStats.cpp
-
-libsnowtools_a-BamStats.obj: BamStats.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamStats.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BamStats.Tpo" -c -o libsnowtools_a-BamStats.obj `if test -f 'BamStats.cpp'; then $(CYGPATH_W) 'BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/BamStats.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BamStats.Tpo" "$(DEPDIR)/libsnowtools_a-BamStats.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BamStats.Tpo"; exit 1; fi
-#	source='BamStats.cpp' object='libsnowtools_a-BamStats.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamStats.obj `if test -f 'BamStats.cpp'; then $(CYGPATH_W) 'BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/BamStats.cpp'; fi`
-
-libsnowtools_a-MiniRules.o: MiniRules.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-MiniRules.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-MiniRules.Tpo" -c -o libsnowtools_a-MiniRules.o `test -f 'MiniRules.cpp' || echo '$(srcdir)/'`MiniRules.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-MiniRules.Tpo" "$(DEPDIR)/libsnowtools_a-MiniRules.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-MiniRules.Tpo"; exit 1; fi
-#	source='MiniRules.cpp' object='libsnowtools_a-MiniRules.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-MiniRules.o `test -f 'MiniRules.cpp' || echo '$(srcdir)/'`MiniRules.cpp
-
-libsnowtools_a-MiniRules.obj: MiniRules.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-MiniRules.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-MiniRules.Tpo" -c -o libsnowtools_a-MiniRules.obj `if test -f 'MiniRules.cpp'; then $(CYGPATH_W) 'MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/MiniRules.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-MiniRules.Tpo" "$(DEPDIR)/libsnowtools_a-MiniRules.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-MiniRules.Tpo"; exit 1; fi
-#	source='MiniRules.cpp' object='libsnowtools_a-MiniRules.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-MiniRules.obj `if test -f 'MiniRules.cpp'; then $(CYGPATH_W) 'MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/MiniRules.cpp'; fi`
-
-libsnowtools_a-gzstream.o: gzstream.C
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-gzstream.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-gzstream.Tpo" -c -o libsnowtools_a-gzstream.o `test -f 'gzstream.C' || echo '$(srcdir)/'`gzstream.C; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-gzstream.Tpo" "$(DEPDIR)/libsnowtools_a-gzstream.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-gzstream.Tpo"; exit 1; fi
-#	source='gzstream.C' object='libsnowtools_a-gzstream.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-gzstream.o `test -f 'gzstream.C' || echo '$(srcdir)/'`gzstream.C
-
-libsnowtools_a-gzstream.obj: gzstream.C
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-gzstream.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-gzstream.Tpo" -c -o libsnowtools_a-gzstream.obj `if test -f 'gzstream.C'; then $(CYGPATH_W) 'gzstream.C'; else $(CYGPATH_W) '$(srcdir)/gzstream.C'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-gzstream.Tpo" "$(DEPDIR)/libsnowtools_a-gzstream.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-gzstream.Tpo"; exit 1; fi
-#	source='gzstream.C' object='libsnowtools_a-gzstream.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-gzstream.obj `if test -f 'gzstream.C'; then $(CYGPATH_W) 'gzstream.C'; else $(CYGPATH_W) '$(srcdir)/gzstream.C'; fi`
-
-libsnowtools_a-SnowUtils.o: SnowUtils.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-SnowUtils.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-SnowUtils.Tpo" -c -o libsnowtools_a-SnowUtils.o `test -f 'SnowUtils.cpp' || echo '$(srcdir)/'`SnowUtils.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-SnowUtils.Tpo" "$(DEPDIR)/libsnowtools_a-SnowUtils.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-SnowUtils.Tpo"; exit 1; fi
-#	source='SnowUtils.cpp' object='libsnowtools_a-SnowUtils.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-SnowUtils.o `test -f 'SnowUtils.cpp' || echo '$(srcdir)/'`SnowUtils.cpp
-
-libsnowtools_a-SnowUtils.obj: SnowUtils.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-SnowUtils.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-SnowUtils.Tpo" -c -o libsnowtools_a-SnowUtils.obj `if test -f 'SnowUtils.cpp'; then $(CYGPATH_W) 'SnowUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/SnowUtils.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-SnowUtils.Tpo" "$(DEPDIR)/libsnowtools_a-SnowUtils.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-SnowUtils.Tpo"; exit 1; fi
-#	source='SnowUtils.cpp' object='libsnowtools_a-SnowUtils.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-SnowUtils.obj `if test -f 'SnowUtils.cpp'; then $(CYGPATH_W) 'SnowUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/SnowUtils.cpp'; fi`
-
-libsnowtools_a-gChain.o: gChain.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-gChain.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-gChain.Tpo" -c -o libsnowtools_a-gChain.o `test -f 'gChain.cpp' || echo '$(srcdir)/'`gChain.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-gChain.Tpo" "$(DEPDIR)/libsnowtools_a-gChain.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-gChain.Tpo"; exit 1; fi
-#	source='gChain.cpp' object='libsnowtools_a-gChain.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-gChain.o `test -f 'gChain.cpp' || echo '$(srcdir)/'`gChain.cpp
-
-libsnowtools_a-gChain.obj: gChain.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-gChain.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-gChain.Tpo" -c -o libsnowtools_a-gChain.obj `if test -f 'gChain.cpp'; then $(CYGPATH_W) 'gChain.cpp'; else $(CYGPATH_W) '$(srcdir)/gChain.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-gChain.Tpo" "$(DEPDIR)/libsnowtools_a-gChain.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-gChain.Tpo"; exit 1; fi
-#	source='gChain.cpp' object='libsnowtools_a-gChain.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-gChain.obj `if test -f 'gChain.cpp'; then $(CYGPATH_W) 'gChain.cpp'; else $(CYGPATH_W) '$(srcdir)/gChain.cpp'; fi`
-
-libsnowtools_a-BamRead.o: BamRead.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamRead.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BamRead.Tpo" -c -o libsnowtools_a-BamRead.o `test -f 'BamRead.cpp' || echo '$(srcdir)/'`BamRead.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BamRead.Tpo" "$(DEPDIR)/libsnowtools_a-BamRead.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BamRead.Tpo"; exit 1; fi
-#	source='BamRead.cpp' object='libsnowtools_a-BamRead.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamRead.o `test -f 'BamRead.cpp' || echo '$(srcdir)/'`BamRead.cpp
-
-libsnowtools_a-BamRead.obj: BamRead.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamRead.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BamRead.Tpo" -c -o libsnowtools_a-BamRead.obj `if test -f 'BamRead.cpp'; then $(CYGPATH_W) 'BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/BamRead.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BamRead.Tpo" "$(DEPDIR)/libsnowtools_a-BamRead.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BamRead.Tpo"; exit 1; fi
-#	source='BamRead.cpp' object='libsnowtools_a-BamRead.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamRead.obj `if test -f 'BamRead.cpp'; then $(CYGPATH_W) 'BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/BamRead.cpp'; fi`
-
-libsnowtools_a-BWAWrapper.o: BWAWrapper.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BWAWrapper.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo" -c -o libsnowtools_a-BWAWrapper.o `test -f 'BWAWrapper.cpp' || echo '$(srcdir)/'`BWAWrapper.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo" "$(DEPDIR)/libsnowtools_a-BWAWrapper.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo"; exit 1; fi
-#	source='BWAWrapper.cpp' object='libsnowtools_a-BWAWrapper.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BWAWrapper.o `test -f 'BWAWrapper.cpp' || echo '$(srcdir)/'`BWAWrapper.cpp
-
-libsnowtools_a-BWAWrapper.obj: BWAWrapper.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BWAWrapper.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo" -c -o libsnowtools_a-BWAWrapper.obj `if test -f 'BWAWrapper.cpp'; then $(CYGPATH_W) 'BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BWAWrapper.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo" "$(DEPDIR)/libsnowtools_a-BWAWrapper.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo"; exit 1; fi
-#	source='BWAWrapper.cpp' object='libsnowtools_a-BWAWrapper.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BWAWrapper.obj `if test -f 'BWAWrapper.cpp'; then $(CYGPATH_W) 'BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BWAWrapper.cpp'; fi`
-
-libsnowtools_a-AlignedContig.o: AlignedContig.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-AlignedContig.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-AlignedContig.Tpo" -c -o libsnowtools_a-AlignedContig.o `test -f 'AlignedContig.cpp' || echo '$(srcdir)/'`AlignedContig.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-AlignedContig.Tpo" "$(DEPDIR)/libsnowtools_a-AlignedContig.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-AlignedContig.Tpo"; exit 1; fi
-#	source='AlignedContig.cpp' object='libsnowtools_a-AlignedContig.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-AlignedContig.o `test -f 'AlignedContig.cpp' || echo '$(srcdir)/'`AlignedContig.cpp
-
-libsnowtools_a-AlignedContig.obj: AlignedContig.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-AlignedContig.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-AlignedContig.Tpo" -c -o libsnowtools_a-AlignedContig.obj `if test -f 'AlignedContig.cpp'; then $(CYGPATH_W) 'AlignedContig.cpp'; else $(CYGPATH_W) '$(srcdir)/AlignedContig.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-AlignedContig.Tpo" "$(DEPDIR)/libsnowtools_a-AlignedContig.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-AlignedContig.Tpo"; exit 1; fi
-#	source='AlignedContig.cpp' object='libsnowtools_a-AlignedContig.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-AlignedContig.obj `if test -f 'AlignedContig.cpp'; then $(CYGPATH_W) 'AlignedContig.cpp'; else $(CYGPATH_W) '$(srcdir)/AlignedContig.cpp'; fi`
-
-libsnowtools_a-BreakPoint.o: BreakPoint.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BreakPoint.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BreakPoint.Tpo" -c -o libsnowtools_a-BreakPoint.o `test -f 'BreakPoint.cpp' || echo '$(srcdir)/'`BreakPoint.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BreakPoint.Tpo" "$(DEPDIR)/libsnowtools_a-BreakPoint.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BreakPoint.Tpo"; exit 1; fi
-#	source='BreakPoint.cpp' object='libsnowtools_a-BreakPoint.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BreakPoint.o `test -f 'BreakPoint.cpp' || echo '$(srcdir)/'`BreakPoint.cpp
-
-libsnowtools_a-BreakPoint.obj: BreakPoint.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BreakPoint.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-BreakPoint.Tpo" -c -o libsnowtools_a-BreakPoint.obj `if test -f 'BreakPoint.cpp'; then $(CYGPATH_W) 'BreakPoint.cpp'; else $(CYGPATH_W) '$(srcdir)/BreakPoint.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-BreakPoint.Tpo" "$(DEPDIR)/libsnowtools_a-BreakPoint.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-BreakPoint.Tpo"; exit 1; fi
-#	source='BreakPoint.cpp' object='libsnowtools_a-BreakPoint.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BreakPoint.obj `if test -f 'BreakPoint.cpp'; then $(CYGPATH_W) 'BreakPoint.cpp'; else $(CYGPATH_W) '$(srcdir)/BreakPoint.cpp'; fi`
-
-libsnowtools_a-DiscordantCluster.o: DiscordantCluster.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-DiscordantCluster.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Tpo" -c -o libsnowtools_a-DiscordantCluster.o `test -f 'DiscordantCluster.cpp' || echo '$(srcdir)/'`DiscordantCluster.cpp; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Tpo" "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Tpo"; exit 1; fi
-#	source='DiscordantCluster.cpp' object='libsnowtools_a-DiscordantCluster.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-DiscordantCluster.o `test -f 'DiscordantCluster.cpp' || echo '$(srcdir)/'`DiscordantCluster.cpp
-
-libsnowtools_a-DiscordantCluster.obj: DiscordantCluster.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-DiscordantCluster.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Tpo" -c -o libsnowtools_a-DiscordantCluster.obj `if test -f 'DiscordantCluster.cpp'; then $(CYGPATH_W) 'DiscordantCluster.cpp'; else $(CYGPATH_W) '$(srcdir)/DiscordantCluster.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Tpo" "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-DiscordantCluster.Tpo"; exit 1; fi
-#	source='DiscordantCluster.cpp' object='libsnowtools_a-DiscordantCluster.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-DiscordantCluster.obj `if test -f 'DiscordantCluster.cpp'; then $(CYGPATH_W) 'DiscordantCluster.cpp'; else $(CYGPATH_W) '$(srcdir)/DiscordantCluster.cpp'; fi`
-
-snowtools-SnowTools.o: SnowTools.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-SnowTools.o -MD -MP -MF "$(DEPDIR)/snowtools-SnowTools.Tpo" -c -o snowtools-SnowTools.o `test -f 'SnowTools.cpp' || echo '$(srcdir)/'`SnowTools.cpp; \
-	then mv -f "$(DEPDIR)/snowtools-SnowTools.Tpo" "$(DEPDIR)/snowtools-SnowTools.Po"; else rm -f "$(DEPDIR)/snowtools-SnowTools.Tpo"; exit 1; fi
-#	source='SnowTools.cpp' object='snowtools-SnowTools.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-SnowTools.o `test -f 'SnowTools.cpp' || echo '$(srcdir)/'`SnowTools.cpp
-
-snowtools-SnowTools.obj: SnowTools.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-SnowTools.obj -MD -MP -MF "$(DEPDIR)/snowtools-SnowTools.Tpo" -c -o snowtools-SnowTools.obj `if test -f 'SnowTools.cpp'; then $(CYGPATH_W) 'SnowTools.cpp'; else $(CYGPATH_W) '$(srcdir)/SnowTools.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/snowtools-SnowTools.Tpo" "$(DEPDIR)/snowtools-SnowTools.Po"; else rm -f "$(DEPDIR)/snowtools-SnowTools.Tpo"; exit 1; fi
-#	source='SnowTools.cpp' object='snowtools-SnowTools.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-SnowTools.obj `if test -f 'SnowTools.cpp'; then $(CYGPATH_W) 'SnowTools.cpp'; else $(CYGPATH_W) '$(srcdir)/SnowTools.cpp'; fi`
-
-snowtools-CoverageTool.o: CoverageTool.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-CoverageTool.o -MD -MP -MF "$(DEPDIR)/snowtools-CoverageTool.Tpo" -c -o snowtools-CoverageTool.o `test -f 'CoverageTool.cpp' || echo '$(srcdir)/'`CoverageTool.cpp; \
-	then mv -f "$(DEPDIR)/snowtools-CoverageTool.Tpo" "$(DEPDIR)/snowtools-CoverageTool.Po"; else rm -f "$(DEPDIR)/snowtools-CoverageTool.Tpo"; exit 1; fi
-#	source='CoverageTool.cpp' object='snowtools-CoverageTool.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-CoverageTool.o `test -f 'CoverageTool.cpp' || echo '$(srcdir)/'`CoverageTool.cpp
-
-snowtools-CoverageTool.obj: CoverageTool.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-CoverageTool.obj -MD -MP -MF "$(DEPDIR)/snowtools-CoverageTool.Tpo" -c -o snowtools-CoverageTool.obj `if test -f 'CoverageTool.cpp'; then $(CYGPATH_W) 'CoverageTool.cpp'; else $(CYGPATH_W) '$(srcdir)/CoverageTool.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/snowtools-CoverageTool.Tpo" "$(DEPDIR)/snowtools-CoverageTool.Po"; else rm -f "$(DEPDIR)/snowtools-CoverageTool.Tpo"; exit 1; fi
-#	source='CoverageTool.cpp' object='snowtools-CoverageTool.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-CoverageTool.obj `if test -f 'CoverageTool.cpp'; then $(CYGPATH_W) 'CoverageTool.cpp'; else $(CYGPATH_W) '$(srcdir)/CoverageTool.cpp'; fi`
-
-snowtools-RealignTool.o: RealignTool.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-RealignTool.o -MD -MP -MF "$(DEPDIR)/snowtools-RealignTool.Tpo" -c -o snowtools-RealignTool.o `test -f 'RealignTool.cpp' || echo '$(srcdir)/'`RealignTool.cpp; \
-	then mv -f "$(DEPDIR)/snowtools-RealignTool.Tpo" "$(DEPDIR)/snowtools-RealignTool.Po"; else rm -f "$(DEPDIR)/snowtools-RealignTool.Tpo"; exit 1; fi
-#	source='RealignTool.cpp' object='snowtools-RealignTool.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-RealignTool.o `test -f 'RealignTool.cpp' || echo '$(srcdir)/'`RealignTool.cpp
-
-snowtools-RealignTool.obj: RealignTool.cpp
-	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snowtools-RealignTool.obj -MD -MP -MF "$(DEPDIR)/snowtools-RealignTool.Tpo" -c -o snowtools-RealignTool.obj `if test -f 'RealignTool.cpp'; then $(CYGPATH_W) 'RealignTool.cpp'; else $(CYGPATH_W) '$(srcdir)/RealignTool.cpp'; fi`; \
-	then mv -f "$(DEPDIR)/snowtools-RealignTool.Tpo" "$(DEPDIR)/snowtools-RealignTool.Po"; else rm -f "$(DEPDIR)/snowtools-RealignTool.Tpo"; exit 1; fi
-#	source='RealignTool.cpp' object='snowtools-RealignTool.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snowtools_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snowtools-RealignTool.obj `if test -f 'RealignTool.cpp'; then $(CYGPATH_W) 'RealignTool.cpp'; else $(CYGPATH_W) '$(srcdir)/RealignTool.cpp'; fi`
-
 .c.o:
 	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
 	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
@@ -597,117 +309,117 @@ snowtools-RealignTool.obj: RealignTool.cpp
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-libsnowtools_a-is.o: bwa/is.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-is.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-is.Tpo" -c -o libsnowtools_a-is.o `test -f 'bwa/is.c' || echo '$(srcdir)/'`bwa/is.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-is.Tpo" "$(DEPDIR)/libsnowtools_a-is.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-is.Tpo"; exit 1; fi
-#	source='bwa/is.c' object='libsnowtools_a-is.o' libtool=no \
+is.o: bwa/is.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT is.o -MD -MP -MF "$(DEPDIR)/is.Tpo" -c -o is.o `test -f 'bwa/is.c' || echo '$(srcdir)/'`bwa/is.c; \
+	then mv -f "$(DEPDIR)/is.Tpo" "$(DEPDIR)/is.Po"; else rm -f "$(DEPDIR)/is.Tpo"; exit 1; fi
+#	source='bwa/is.c' object='is.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-is.o `test -f 'bwa/is.c' || echo '$(srcdir)/'`bwa/is.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o is.o `test -f 'bwa/is.c' || echo '$(srcdir)/'`bwa/is.c
 
-libsnowtools_a-is.obj: bwa/is.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-is.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-is.Tpo" -c -o libsnowtools_a-is.obj `if test -f 'bwa/is.c'; then $(CYGPATH_W) 'bwa/is.c'; else $(CYGPATH_W) '$(srcdir)/bwa/is.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-is.Tpo" "$(DEPDIR)/libsnowtools_a-is.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-is.Tpo"; exit 1; fi
-#	source='bwa/is.c' object='libsnowtools_a-is.obj' libtool=no \
+is.obj: bwa/is.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT is.obj -MD -MP -MF "$(DEPDIR)/is.Tpo" -c -o is.obj `if test -f 'bwa/is.c'; then $(CYGPATH_W) 'bwa/is.c'; else $(CYGPATH_W) '$(srcdir)/bwa/is.c'; fi`; \
+	then mv -f "$(DEPDIR)/is.Tpo" "$(DEPDIR)/is.Po"; else rm -f "$(DEPDIR)/is.Tpo"; exit 1; fi
+#	source='bwa/is.c' object='is.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-is.obj `if test -f 'bwa/is.c'; then $(CYGPATH_W) 'bwa/is.c'; else $(CYGPATH_W) '$(srcdir)/bwa/is.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o is.obj `if test -f 'bwa/is.c'; then $(CYGPATH_W) 'bwa/is.c'; else $(CYGPATH_W) '$(srcdir)/bwa/is.c'; fi`
 
-libsnowtools_a-bwtindex.o: bwa/bwtindex.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwtindex.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwtindex.Tpo" -c -o libsnowtools_a-bwtindex.o `test -f 'bwa/bwtindex.c' || echo '$(srcdir)/'`bwa/bwtindex.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwtindex.Tpo" "$(DEPDIR)/libsnowtools_a-bwtindex.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwtindex.Tpo"; exit 1; fi
-#	source='bwa/bwtindex.c' object='libsnowtools_a-bwtindex.o' libtool=no \
+bwtindex.o: bwa/bwtindex.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwtindex.o -MD -MP -MF "$(DEPDIR)/bwtindex.Tpo" -c -o bwtindex.o `test -f 'bwa/bwtindex.c' || echo '$(srcdir)/'`bwa/bwtindex.c; \
+	then mv -f "$(DEPDIR)/bwtindex.Tpo" "$(DEPDIR)/bwtindex.Po"; else rm -f "$(DEPDIR)/bwtindex.Tpo"; exit 1; fi
+#	source='bwa/bwtindex.c' object='bwtindex.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwtindex.o `test -f 'bwa/bwtindex.c' || echo '$(srcdir)/'`bwa/bwtindex.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwtindex.o `test -f 'bwa/bwtindex.c' || echo '$(srcdir)/'`bwa/bwtindex.c
 
-libsnowtools_a-bwtindex.obj: bwa/bwtindex.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwtindex.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwtindex.Tpo" -c -o libsnowtools_a-bwtindex.obj `if test -f 'bwa/bwtindex.c'; then $(CYGPATH_W) 'bwa/bwtindex.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwtindex.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwtindex.Tpo" "$(DEPDIR)/libsnowtools_a-bwtindex.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwtindex.Tpo"; exit 1; fi
-#	source='bwa/bwtindex.c' object='libsnowtools_a-bwtindex.obj' libtool=no \
+bwtindex.obj: bwa/bwtindex.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwtindex.obj -MD -MP -MF "$(DEPDIR)/bwtindex.Tpo" -c -o bwtindex.obj `if test -f 'bwa/bwtindex.c'; then $(CYGPATH_W) 'bwa/bwtindex.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwtindex.c'; fi`; \
+	then mv -f "$(DEPDIR)/bwtindex.Tpo" "$(DEPDIR)/bwtindex.Po"; else rm -f "$(DEPDIR)/bwtindex.Tpo"; exit 1; fi
+#	source='bwa/bwtindex.c' object='bwtindex.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwtindex.obj `if test -f 'bwa/bwtindex.c'; then $(CYGPATH_W) 'bwa/bwtindex.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwtindex.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwtindex.obj `if test -f 'bwa/bwtindex.c'; then $(CYGPATH_W) 'bwa/bwtindex.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwtindex.c'; fi`
 
-libsnowtools_a-bwt_gen.o: bwa/bwt_gen.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwt_gen.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwt_gen.Tpo" -c -o libsnowtools_a-bwt_gen.o `test -f 'bwa/bwt_gen.c' || echo '$(srcdir)/'`bwa/bwt_gen.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwt_gen.Tpo" "$(DEPDIR)/libsnowtools_a-bwt_gen.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwt_gen.Tpo"; exit 1; fi
-#	source='bwa/bwt_gen.c' object='libsnowtools_a-bwt_gen.o' libtool=no \
+bwt_gen.o: bwa/bwt_gen.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwt_gen.o -MD -MP -MF "$(DEPDIR)/bwt_gen.Tpo" -c -o bwt_gen.o `test -f 'bwa/bwt_gen.c' || echo '$(srcdir)/'`bwa/bwt_gen.c; \
+	then mv -f "$(DEPDIR)/bwt_gen.Tpo" "$(DEPDIR)/bwt_gen.Po"; else rm -f "$(DEPDIR)/bwt_gen.Tpo"; exit 1; fi
+#	source='bwa/bwt_gen.c' object='bwt_gen.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwt_gen.o `test -f 'bwa/bwt_gen.c' || echo '$(srcdir)/'`bwa/bwt_gen.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwt_gen.o `test -f 'bwa/bwt_gen.c' || echo '$(srcdir)/'`bwa/bwt_gen.c
 
-libsnowtools_a-bwt_gen.obj: bwa/bwt_gen.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwt_gen.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwt_gen.Tpo" -c -o libsnowtools_a-bwt_gen.obj `if test -f 'bwa/bwt_gen.c'; then $(CYGPATH_W) 'bwa/bwt_gen.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt_gen.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwt_gen.Tpo" "$(DEPDIR)/libsnowtools_a-bwt_gen.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwt_gen.Tpo"; exit 1; fi
-#	source='bwa/bwt_gen.c' object='libsnowtools_a-bwt_gen.obj' libtool=no \
+bwt_gen.obj: bwa/bwt_gen.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwt_gen.obj -MD -MP -MF "$(DEPDIR)/bwt_gen.Tpo" -c -o bwt_gen.obj `if test -f 'bwa/bwt_gen.c'; then $(CYGPATH_W) 'bwa/bwt_gen.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt_gen.c'; fi`; \
+	then mv -f "$(DEPDIR)/bwt_gen.Tpo" "$(DEPDIR)/bwt_gen.Po"; else rm -f "$(DEPDIR)/bwt_gen.Tpo"; exit 1; fi
+#	source='bwa/bwt_gen.c' object='bwt_gen.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwt_gen.obj `if test -f 'bwa/bwt_gen.c'; then $(CYGPATH_W) 'bwa/bwt_gen.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt_gen.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwt_gen.obj `if test -f 'bwa/bwt_gen.c'; then $(CYGPATH_W) 'bwa/bwt_gen.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt_gen.c'; fi`
 
-libsnowtools_a-QSufSort.o: bwa/QSufSort.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-QSufSort.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-QSufSort.Tpo" -c -o libsnowtools_a-QSufSort.o `test -f 'bwa/QSufSort.c' || echo '$(srcdir)/'`bwa/QSufSort.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-QSufSort.Tpo" "$(DEPDIR)/libsnowtools_a-QSufSort.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-QSufSort.Tpo"; exit 1; fi
-#	source='bwa/QSufSort.c' object='libsnowtools_a-QSufSort.o' libtool=no \
+QSufSort.o: bwa/QSufSort.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT QSufSort.o -MD -MP -MF "$(DEPDIR)/QSufSort.Tpo" -c -o QSufSort.o `test -f 'bwa/QSufSort.c' || echo '$(srcdir)/'`bwa/QSufSort.c; \
+	then mv -f "$(DEPDIR)/QSufSort.Tpo" "$(DEPDIR)/QSufSort.Po"; else rm -f "$(DEPDIR)/QSufSort.Tpo"; exit 1; fi
+#	source='bwa/QSufSort.c' object='QSufSort.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-QSufSort.o `test -f 'bwa/QSufSort.c' || echo '$(srcdir)/'`bwa/QSufSort.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o QSufSort.o `test -f 'bwa/QSufSort.c' || echo '$(srcdir)/'`bwa/QSufSort.c
 
-libsnowtools_a-QSufSort.obj: bwa/QSufSort.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-QSufSort.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-QSufSort.Tpo" -c -o libsnowtools_a-QSufSort.obj `if test -f 'bwa/QSufSort.c'; then $(CYGPATH_W) 'bwa/QSufSort.c'; else $(CYGPATH_W) '$(srcdir)/bwa/QSufSort.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-QSufSort.Tpo" "$(DEPDIR)/libsnowtools_a-QSufSort.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-QSufSort.Tpo"; exit 1; fi
-#	source='bwa/QSufSort.c' object='libsnowtools_a-QSufSort.obj' libtool=no \
+QSufSort.obj: bwa/QSufSort.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT QSufSort.obj -MD -MP -MF "$(DEPDIR)/QSufSort.Tpo" -c -o QSufSort.obj `if test -f 'bwa/QSufSort.c'; then $(CYGPATH_W) 'bwa/QSufSort.c'; else $(CYGPATH_W) '$(srcdir)/bwa/QSufSort.c'; fi`; \
+	then mv -f "$(DEPDIR)/QSufSort.Tpo" "$(DEPDIR)/QSufSort.Po"; else rm -f "$(DEPDIR)/QSufSort.Tpo"; exit 1; fi
+#	source='bwa/QSufSort.c' object='QSufSort.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-QSufSort.obj `if test -f 'bwa/QSufSort.c'; then $(CYGPATH_W) 'bwa/QSufSort.c'; else $(CYGPATH_W) '$(srcdir)/bwa/QSufSort.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o QSufSort.obj `if test -f 'bwa/QSufSort.c'; then $(CYGPATH_W) 'bwa/QSufSort.c'; else $(CYGPATH_W) '$(srcdir)/bwa/QSufSort.c'; fi`
 
-libsnowtools_a-bwt.o: bwa/bwt.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwt.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwt.Tpo" -c -o libsnowtools_a-bwt.o `test -f 'bwa/bwt.c' || echo '$(srcdir)/'`bwa/bwt.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwt.Tpo" "$(DEPDIR)/libsnowtools_a-bwt.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwt.Tpo"; exit 1; fi
-#	source='bwa/bwt.c' object='libsnowtools_a-bwt.o' libtool=no \
+bwt.o: bwa/bwt.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwt.o -MD -MP -MF "$(DEPDIR)/bwt.Tpo" -c -o bwt.o `test -f 'bwa/bwt.c' || echo '$(srcdir)/'`bwa/bwt.c; \
+	then mv -f "$(DEPDIR)/bwt.Tpo" "$(DEPDIR)/bwt.Po"; else rm -f "$(DEPDIR)/bwt.Tpo"; exit 1; fi
+#	source='bwa/bwt.c' object='bwt.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwt.o `test -f 'bwa/bwt.c' || echo '$(srcdir)/'`bwa/bwt.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwt.o `test -f 'bwa/bwt.c' || echo '$(srcdir)/'`bwa/bwt.c
 
-libsnowtools_a-bwt.obj: bwa/bwt.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwt.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwt.Tpo" -c -o libsnowtools_a-bwt.obj `if test -f 'bwa/bwt.c'; then $(CYGPATH_W) 'bwa/bwt.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwt.Tpo" "$(DEPDIR)/libsnowtools_a-bwt.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwt.Tpo"; exit 1; fi
-#	source='bwa/bwt.c' object='libsnowtools_a-bwt.obj' libtool=no \
+bwt.obj: bwa/bwt.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwt.obj -MD -MP -MF "$(DEPDIR)/bwt.Tpo" -c -o bwt.obj `if test -f 'bwa/bwt.c'; then $(CYGPATH_W) 'bwa/bwt.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt.c'; fi`; \
+	then mv -f "$(DEPDIR)/bwt.Tpo" "$(DEPDIR)/bwt.Po"; else rm -f "$(DEPDIR)/bwt.Tpo"; exit 1; fi
+#	source='bwa/bwt.c' object='bwt.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwt.obj `if test -f 'bwa/bwt.c'; then $(CYGPATH_W) 'bwa/bwt.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwt.obj `if test -f 'bwa/bwt.c'; then $(CYGPATH_W) 'bwa/bwt.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwt.c'; fi`
 
-libsnowtools_a-bwamem_extra.o: bwa/bwamem_extra.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwamem_extra.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwamem_extra.Tpo" -c -o libsnowtools_a-bwamem_extra.o `test -f 'bwa/bwamem_extra.c' || echo '$(srcdir)/'`bwa/bwamem_extra.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwamem_extra.Tpo" "$(DEPDIR)/libsnowtools_a-bwamem_extra.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwamem_extra.Tpo"; exit 1; fi
-#	source='bwa/bwamem_extra.c' object='libsnowtools_a-bwamem_extra.o' libtool=no \
+bwamem_extra.o: bwa/bwamem_extra.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwamem_extra.o -MD -MP -MF "$(DEPDIR)/bwamem_extra.Tpo" -c -o bwamem_extra.o `test -f 'bwa/bwamem_extra.c' || echo '$(srcdir)/'`bwa/bwamem_extra.c; \
+	then mv -f "$(DEPDIR)/bwamem_extra.Tpo" "$(DEPDIR)/bwamem_extra.Po"; else rm -f "$(DEPDIR)/bwamem_extra.Tpo"; exit 1; fi
+#	source='bwa/bwamem_extra.c' object='bwamem_extra.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwamem_extra.o `test -f 'bwa/bwamem_extra.c' || echo '$(srcdir)/'`bwa/bwamem_extra.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwamem_extra.o `test -f 'bwa/bwamem_extra.c' || echo '$(srcdir)/'`bwa/bwamem_extra.c
 
-libsnowtools_a-bwamem_extra.obj: bwa/bwamem_extra.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-bwamem_extra.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-bwamem_extra.Tpo" -c -o libsnowtools_a-bwamem_extra.obj `if test -f 'bwa/bwamem_extra.c'; then $(CYGPATH_W) 'bwa/bwamem_extra.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwamem_extra.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-bwamem_extra.Tpo" "$(DEPDIR)/libsnowtools_a-bwamem_extra.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-bwamem_extra.Tpo"; exit 1; fi
-#	source='bwa/bwamem_extra.c' object='libsnowtools_a-bwamem_extra.obj' libtool=no \
+bwamem_extra.obj: bwa/bwamem_extra.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bwamem_extra.obj -MD -MP -MF "$(DEPDIR)/bwamem_extra.Tpo" -c -o bwamem_extra.obj `if test -f 'bwa/bwamem_extra.c'; then $(CYGPATH_W) 'bwa/bwamem_extra.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwamem_extra.c'; fi`; \
+	then mv -f "$(DEPDIR)/bwamem_extra.Tpo" "$(DEPDIR)/bwamem_extra.Po"; else rm -f "$(DEPDIR)/bwamem_extra.Tpo"; exit 1; fi
+#	source='bwa/bwamem_extra.c' object='bwamem_extra.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-bwamem_extra.obj `if test -f 'bwa/bwamem_extra.c'; then $(CYGPATH_W) 'bwa/bwamem_extra.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwamem_extra.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bwamem_extra.obj `if test -f 'bwa/bwamem_extra.c'; then $(CYGPATH_W) 'bwa/bwamem_extra.c'; else $(CYGPATH_W) '$(srcdir)/bwa/bwamem_extra.c'; fi`
 
-libsnowtools_a-ahocorasick.o: multifast-v1.4.2/ahocorasick/ahocorasick.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-ahocorasick.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" -c -o libsnowtools_a-ahocorasick.o `test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/ahocorasick.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" "$(DEPDIR)/libsnowtools_a-ahocorasick.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo"; exit 1; fi
-#	source='multifast-v1.4.2/ahocorasick/ahocorasick.c' object='libsnowtools_a-ahocorasick.o' libtool=no \
+ahocorasick.o: multifast-v1.4.2/ahocorasick/ahocorasick.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ahocorasick.o -MD -MP -MF "$(DEPDIR)/ahocorasick.Tpo" -c -o ahocorasick.o `test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/ahocorasick.c; \
+	then mv -f "$(DEPDIR)/ahocorasick.Tpo" "$(DEPDIR)/ahocorasick.Po"; else rm -f "$(DEPDIR)/ahocorasick.Tpo"; exit 1; fi
+#	source='multifast-v1.4.2/ahocorasick/ahocorasick.c' object='ahocorasick.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-ahocorasick.o `test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/ahocorasick.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ahocorasick.o `test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/ahocorasick.c
 
-libsnowtools_a-ahocorasick.obj: multifast-v1.4.2/ahocorasick/ahocorasick.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-ahocorasick.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" -c -o libsnowtools_a-ahocorasick.obj `if test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/ahocorasick.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo" "$(DEPDIR)/libsnowtools_a-ahocorasick.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-ahocorasick.Tpo"; exit 1; fi
-#	source='multifast-v1.4.2/ahocorasick/ahocorasick.c' object='libsnowtools_a-ahocorasick.obj' libtool=no \
+ahocorasick.obj: multifast-v1.4.2/ahocorasick/ahocorasick.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ahocorasick.obj -MD -MP -MF "$(DEPDIR)/ahocorasick.Tpo" -c -o ahocorasick.obj `if test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/ahocorasick.c'; fi`; \
+	then mv -f "$(DEPDIR)/ahocorasick.Tpo" "$(DEPDIR)/ahocorasick.Po"; else rm -f "$(DEPDIR)/ahocorasick.Tpo"; exit 1; fi
+#	source='multifast-v1.4.2/ahocorasick/ahocorasick.c' object='ahocorasick.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-ahocorasick.obj `if test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/ahocorasick.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ahocorasick.obj `if test -f 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/ahocorasick.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/ahocorasick.c'; fi`
 
-libsnowtools_a-node.o: multifast-v1.4.2/ahocorasick/node.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-node.o -MD -MP -MF "$(DEPDIR)/libsnowtools_a-node.Tpo" -c -o libsnowtools_a-node.o `test -f 'multifast-v1.4.2/ahocorasick/node.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/node.c; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-node.Tpo" "$(DEPDIR)/libsnowtools_a-node.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-node.Tpo"; exit 1; fi
-#	source='multifast-v1.4.2/ahocorasick/node.c' object='libsnowtools_a-node.o' libtool=no \
+node.o: multifast-v1.4.2/ahocorasick/node.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT node.o -MD -MP -MF "$(DEPDIR)/node.Tpo" -c -o node.o `test -f 'multifast-v1.4.2/ahocorasick/node.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/node.c; \
+	then mv -f "$(DEPDIR)/node.Tpo" "$(DEPDIR)/node.Po"; else rm -f "$(DEPDIR)/node.Tpo"; exit 1; fi
+#	source='multifast-v1.4.2/ahocorasick/node.c' object='node.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-node.o `test -f 'multifast-v1.4.2/ahocorasick/node.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/node.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o node.o `test -f 'multifast-v1.4.2/ahocorasick/node.c' || echo '$(srcdir)/'`multifast-v1.4.2/ahocorasick/node.c
 
-libsnowtools_a-node.obj: multifast-v1.4.2/ahocorasick/node.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-node.obj -MD -MP -MF "$(DEPDIR)/libsnowtools_a-node.Tpo" -c -o libsnowtools_a-node.obj `if test -f 'multifast-v1.4.2/ahocorasick/node.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/node.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/node.c'; fi`; \
-	then mv -f "$(DEPDIR)/libsnowtools_a-node.Tpo" "$(DEPDIR)/libsnowtools_a-node.Po"; else rm -f "$(DEPDIR)/libsnowtools_a-node.Tpo"; exit 1; fi
-#	source='multifast-v1.4.2/ahocorasick/node.c' object='libsnowtools_a-node.obj' libtool=no \
+node.obj: multifast-v1.4.2/ahocorasick/node.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT node.obj -MD -MP -MF "$(DEPDIR)/node.Tpo" -c -o node.obj `if test -f 'multifast-v1.4.2/ahocorasick/node.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/node.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/node.c'; fi`; \
+	then mv -f "$(DEPDIR)/node.Tpo" "$(DEPDIR)/node.Po"; else rm -f "$(DEPDIR)/node.Tpo"; exit 1; fi
+#	source='multifast-v1.4.2/ahocorasick/node.c' object='node.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-node.obj `if test -f 'multifast-v1.4.2/ahocorasick/node.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/node.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/node.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o node.obj `if test -f 'multifast-v1.4.2/ahocorasick/node.c'; then $(CYGPATH_W) 'multifast-v1.4.2/ahocorasick/node.c'; else $(CYGPATH_W) '$(srcdir)/multifast-v1.4.2/ahocorasick/node.c'; fi`
 
 .cpp.o:
 	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -999,12 +711,9 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(LIBRARIES) $(PROGRAMS) config.h
+all-am: Makefile $(LIBRARIES) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(bindir)"; do \
-	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
-	done
 install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
@@ -1031,8 +740,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1053,7 +761,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am:
 
 install-info: install-info-recursive
 
@@ -1080,27 +788,29 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am
+uninstall-am: uninstall-info-am
 
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am am--refresh check \
-	check-am clean clean-binPROGRAMS clean-generic \
-	clean-noinstLIBRARIES clean-recursive ctags ctags-recursive \
-	dist dist-all dist-bzip2 dist-gzip dist-shar dist-tarZ \
-	dist-zip distcheck distclean distclean-compile \
-	distclean-generic distclean-hdr distclean-recursive \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-exec \
+	check-am clean clean-generic clean-noinstLIBRARIES \
+	clean-recursive ctags ctags-recursive dist dist-all dist-bzip2 \
+	dist-gzip dist-shar dist-tarZ dist-zip distcheck distclean \
+	distclean-compile distclean-generic distclean-hdr \
+	distclean-recursive distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-exec \
 	install-exec-am install-info install-info-am install-man \
 	install-strip installcheck installcheck-am installdirs \
 	installdirs-am maintainer-clean maintainer-clean-generic \
 	maintainer-clean-recursive mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-info-am
+	tags tags-recursive uninstall uninstall-am uninstall-info-am
 
+
+#snowtools_LDADD = $(top_builddir)/libsnowtools.a 
+#snowtools_LDFLAGS = -pthread -std=c++11
+#snowtools_SOURCES = SnowTools.cpp CoverageTool.cpp RealignTool.cpp
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -263,6 +263,10 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
 
   // undefined otherwise
   assert(width > ovlp);
+  if (width >= gr.width()) {
+    m_grv.push_back(gr);
+    return;
+  }
 
   int32_t start = gr.pos1;
   int32_t end = gr.pos1 + width;
@@ -324,7 +328,7 @@ std::string GenomicRegionCollection<T>::sendToBED() const {
 template<class T>
 void GenomicRegionCollection<T>::concat(const GenomicRegionCollection<T>& g)
 {
-  m_grv.insert(m_grv.begin(), g.m_grv.begin(), g.m_grv.end());
+  m_grv.insert(m_grv.end(), g.m_grv.begin(), g.m_grv.end());
 }
 
 template<class T>

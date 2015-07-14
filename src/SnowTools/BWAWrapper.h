@@ -8,11 +8,13 @@
 #include <memory>
 
 #include "SnowTools/BamRead.h"
+#include "htslib/sam.h"
 
 #define MEM_F_SOFTCLIP  0x200
 
 extern "C" {
   #include "bwa/bwa.h"
+  #include "bwa/bwt.h"
   #include "bwa/bntseq.h"
   #include "bwa/kseq.h"
   #include <stdlib.h>
@@ -60,8 +62,17 @@ class BWAWrapper {
       free(memopt);
   }
 
+  /** Create a bam_hdr_t from the loaded index files */
+  bam_hdr_t * HeaderFromIndex() const;
+
+  /** Convert a bns to a header string */
+  std::string bwa_print_sam_hdr2(const bntseq_t *bns, const char *hdr_line) const;
+
+  /** Construct a bam_hdr_t from a header string */
+  bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;
+
   void alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
-			   bool keep_seconary);
+			   bool keep_secondary);
 
   /** Construct a new bwa index for this object. 
    */
@@ -74,6 +85,9 @@ class BWAWrapper {
   /** Dump the stored index to files 
    */
   void writeIndexToFiles(const std::string& index_name);
+
+  /** Return the index */
+  bwaidx_t* getIndex() const { return idx; }
 
  private:
 

@@ -20,6 +20,15 @@ struct bam_hdr_delete {
   void operator()(void* x) { bam_hdr_destroy((bam_hdr_t*)x); }
 };
 
+struct sam_write_delete {
+  void operator()(void* x) { sam_close((htsFile*)x); }
+};
+
+
+void BamWalker::SetWriteHeader(bam_hdr_t* hdr) { 
+  hdr_write = std::shared_ptr<bam_hdr_t>(hdr, bam_hdr_delete()); 
+};
+
 // set the bam region
 bool BamWalker::__set_region(const GenomicRegion& gp) {
 
@@ -90,10 +99,10 @@ void BamWalker::__close_read_bam() {
 
 void BamWalker::__close_write_bam() 
 {
-  
-  if (fop)
-    sam_close(fop);
-  fop = NULL;
+
+  //if (fop)
+  //  sam_close(fop.get());
+  //fop = nullptr;
   
 }
 // closes the BamWriter and makes an index file
@@ -136,12 +145,15 @@ bool BamWalker::__open_BAM_for_reading()
   // HTS open the reader
   fp = std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
   
+  std::cerr << "fp "  << fp.get() << std::endl;
   if (!fp) {
     std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
     exit(EXIT_FAILURE);
   } 
 
+
   br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete());
+  std::cerr << "br "  << br.get() << std::endl;
   
   if (!br) {
     std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
@@ -158,18 +170,23 @@ bool BamWalker::__open_BAM_for_writing()
   // hts open the writer
   if (!fop) { // default is bam. if already set by flag, don't reopen
     assert(m_out.length());
-    fop = sam_open(m_out.c_str(), "wb");
+    fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), "wb"), sam_write_delete());
     m_print_header = true;
   }
+
   if (!fop) {
     std::cerr << "Error: Cannot open BAM for writing " << m_out << std::endl;
     return false;
-    //exit(EXIT_FAILURE);
   }
 
+  // if no write header, set as read
+  if (!hdr_write)
+    hdr_write = br;
+
   // hts write the header
-  if (m_print_header)
-    sam_hdr_write(fop, br.get());
+  if (m_print_header) {
+    sam_hdr_write(fop.get(), hdr_write.get());      
+  }
 
   return true;
 
@@ -245,7 +262,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
     do {
 
 #ifdef DEBUG_WALKER
-      std::cerr << "Failed read, trying next region. FP: "  << fp << " hts_itr " << 
+      std::cerr << "Failed read, trying next region. Moving counter to " << m_region_idx << " of " << m_region.size() << " FP: "  << fp << " hts_itr " << std::endl;
 #endif
 
       // try next region, return if no others to try
@@ -294,7 +311,7 @@ void BamWalker::WriteAlignment(BamRead &r)
   if (!fop)
     std::cerr << "BamWalker ERROR in writeAlignment. Did you forget to open the Bam for writing (OpenWriteBam)? Skipping write"  << std::endl;
   else
-    sam_write1(fop, br.get(), r.raw());
+    sam_write1(fop.get(), hdr_write.get(), r.raw());
 }
 
 std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
@@ -310,9 +327,6 @@ std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
     out << "CRAM" << std::endl;
   else if (b.fop->format.format == text_format)
     out << "SAM" << std::endl;
-  else if (b.fop == 0)
-    out << "NONE" << std::endl;
-       
 
   out << b.m_mr << std::endl;
   if (b.m_region.size()) {
@@ -373,3 +387,26 @@ void BamWalker::addBlacklist(GRC& bl)
   blacklist = bl;
 }
 
+void BamWalker::setCram(const std::string& out, const std::string& ref) {
+  m_out = out;
+  fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), "wc"), sam_write_delete()); 
+  if (!fop) {
+    std::cerr << "!!!\n!!!\n!!!\nCannot open CRAM file for writing. Will try BAM next. File: " <<  m_out << std::endl;
+    return;
+  }
+  
+  // need to open reference for CRAM writing 
+  char* fn_list = samfaipath(ref.c_str());
+  if (fn_list) {
+    if (hts_set_fai_filename(fop.get(), fn_list) != 0) {
+      fprintf(stderr, "Failed to use reference \"%s\".\n", fn_list);
+    }
+  } else {
+    std::cerr << "Failed to get the reference for CRAM compression" << std::endl;
+  }
+  m_print_header = true; 
+}
+
+void BamWalker::setStdout() {
+  fop = std::shared_ptr<htsFile>(sam_open("-", "w"), sam_write_delete()); 
+}

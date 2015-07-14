@@ -7,6 +7,7 @@
 #include <utility>
 #include <list>
 #include <cstring>
+#include <memory>
 
 #include "SnowTools/SnowUtils.h"
 #include "SnowTools/SnowToolsCommon.h"
@@ -91,6 +92,8 @@ class GenomicRegion {
 
   std::string toString() const;
 
+  std::string ChrName(const bam_hdr_t* h) const;
+
   void pad(int32_t pad);
   
   int width() const;
@@ -100,8 +103,9 @@ class GenomicRegion {
   int32_t pos2 = 0;
   char strand = '*';
 
- private:
+  //  bam_hdr_t * m_hdr = nullptr;
 
+ private:
 
   //char strand = '*';
   //std::string id;

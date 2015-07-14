@@ -1,4 +1,4 @@
-#                                               -*- Autoconf -*-
+s#                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59) ## specificy version of autoconf
 AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
@@ -25,54 +25,53 @@ AC_ARG_WITH(boost, AS_HELP_STRING([--with-boost=PATH],
 if test "$with_boost" -a -d "$with_boost"; then
     boost_include="-I$with_boost"
 else
-    boostr=/xchip/gistic/Jeremiah/boost_1_58_0DUMY
+    boostr=/xchip/gistic/Jeremiah/boost_1_58_0
     boost_include="-I$boostr"
 fi
 
-
-# Check for the bamtools library pathz
-# Bamtools has two different path formats
-# If it is built in place the files will be in {path}/lib/ and {path}/include/
-# If it is installed (with make install) it will be in {path}/include/bamtools
-# and {path}/lib/bamtools. Both variants are handled here
-##AC_ARG_WITH(bamtools, AS_HELP_STRING([--with-bamtools=PATH],
-##	[specify directory containing the bamtools library (http://github.com/pezmaster31/bamtools)]))
-
-##if test "$with_bamtools" -a -d "$with_bamtools"; then
-##    bamtools_ldflags="-Wl,-rpath,$with_bamtools/lib -L$with_bamtools/lib -Wl,-rpath,$with_bamtools/lib/bamtools -L$with_bamtools/lib/bamtools"
-##    bamtools_include="-I$with_bamtools/include -I$with_bamtools/include/bamtools"
-##else
-##    bamt=/broad/software/free/Linux/redhat_5_x86_64/pkgs/pezmaster31_bamtools-6708a21
-##    bamtools_ldflags="-Wl,-rpath,$bamt/lib -L$bamt/lib -Wl,-rpath,$bamt/lib/bamtools -L$bamt/lib/bamtools"
-##    bamtools_include="-I$bamt/include -I$bamt/include/bamtools"
-##fi
-
 # Check for the hts library paths
-#AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
-#	[specify directory containing the Heng Li's HTSlib)]))
+AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
+	[specify directory containing the Heng Li's HTSlib)]))
 
-#if test "$with_htslib" -a -d "$with_htslib"; then
-#    htslib_include="-I$with_htslib"
-#    htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
+if test "$with_htslib" -a -d "$with_htslib"; then
+    htslib_include="-I$with_htslib"
+    #htslib_ldflags="-L $htslibr"
+    htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
+else
+    with_htslib="./htslib"
+    htslib_include="-I $with_htslib"
+    #htslib_ldflags="-L $htslibr"
+    htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
+fi
+htslib_lib="-lhts"
+
+# Check for the bwa library paths
+#AC_ARG_WITH(bwa, AS_HELP_STRING([--with-bwa=PATH],
+#	[dsf]))
+
+#if test "$with_bwa" -a -d "$with_bwa"; then
+    #bwa_include="-I$with_bwa"
+    #bwa_ldflags="L$with_bwa"
 #else
-#    htslibr=	
-#    htslib_include="-I$htslibr"
-#    htslib_ldflags="-Wl,-rpath,$htslibr -L$htslibr"
+    ##bwa_include="-I $bwar"
+#    bwa_ldflags="-L ./bwa"
 #fi
+
 
 # Check for the aho library paths
-#AC_ARG_WITH(aho, AS_HELP_STRING([--with-aho=PATH],
-#	[specify directory containing the AhoCorasick string matching algorithm C code)]))
+AC_ARG_WITH(aho, AS_HELP_STRING([--with-aho=PATH],
+	[specify directory containing the AhoCorasick string matching algorithm C code)]))
 
-#if test "$with_aho" -a -d "$with_aho"; then
-#    aho_include="-I$with_aho"
-#    aho_ldflags="-L$with_aho/ahocorasick/build"
-#    aho_libs="-lahocorasick"
-#else
-#    aho=/xchip/gistic/Jeremiah/GIT/isva/ThirdParty/multifast-v1.4.2
-#    aho_include="-I$aho"
-#    aho_ldflags="-L$aho/ahocorasick"
-#fi
+if test "$with_aho" -a -d "$with_aho"; then
+    aho_include="-I$with_aho"
+    aho_ldflags="-L$with_aho/ahocorasick/build"
+    aho_libs="-lahocorasick"
+else
+    with_aho="./multifast-v1.4.2"
+    aho_include="-I $with_aho"
+    aho_ldflags="-L $with_aho/ahocorasick/build"
+    aho_libs="-lahocorasick"
+fi
 
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -87,23 +86,23 @@ fi
 AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "-O3")
 AC_SUBST(CFLAGS, "-O3")
-#AC_SUBST(CPPFLAGS, "$CPPFLAGS $htslib_include $aho_include")
-AC_SUBST(CPPFLAGS, "$CPPFLAGS $boost_include")
-AC_SUBST(CPPFLAGS, "$CPPFLAGS") 
-AC_SUBST(LDFLAGS, "$LDFLAGS")
+AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $htslib_include $aho_include $boost_include")
+AC_SUBST(LDFLAGS, "$LDFLAGS -L./bwa $htslib_ldflags $aho_ldflags")
 
 # We always need to specify to link in bamtools
-#AC_SUBST(LIBS, "$LIBS -lhts $aho_libs")
-AC_SUBST(LIBS, "$LIBS")
+AC_SUBST(LIBS, "$LIBS $htslib_lib -lahocorasick -lbwa")
 
 # Make sure the bamtools headers can be found
 ##AC_CHECK_HEADERS([api/BamReader.h],,[AC_MSG_ERROR([The bamtools library must be installed (http://github.com/pezmaster31/bamtools). You can specify its path with the --with-bamtools=PATH option])])
 
 # Make sure the ahocorasick headers can be found
-#AC_CHECK_HEADERS([ahocorasick/ahocorasick.h],,[AC_MSG_WARN([The Aho-Corasick library must be installed (http://sourceforge.net/projects/multifast/). You can specify its path with the --with-aho=PATH option])])
+AC_CHECK_HEADERS([ahocorasick/ahocorasick.h],,[AC_MSG_WARN([The Aho-Corasick library must be installed (http://sourceforge.net/projects/multifast/). You can specify its path with the --with-aho=PATH option])])
 
 # Make sure the HTSlib headers can be found
-#AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
+AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
+
+# Make sure the HTSlib headers can be found
+AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
 
 # Make sure the bamtools headers can be found
 AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])

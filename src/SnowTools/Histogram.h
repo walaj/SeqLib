@@ -12,7 +12,7 @@
 
 class Bin;
 
-typedef Interval<Bin> BinInterval;
+typedef TInterval<Bin> BinInterval;
 typedef IntervalTree<Bin> BinIntervalTree;
 typedef std::vector<BinInterval> BinIntervalVector;
 

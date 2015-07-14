@@ -171,29 +171,11 @@ class BamWalker {
 
   /** Set a flag to say if we should print reads to stdout
    */
-  void setStdout() { fop = sam_open("-", "w"); }
+  void setStdout();
 
   /** Set a flag to say if we should print reads to CRAM format
    */
-  void setCram(const std::string& out, const std::string& ref) { 
-    m_out = out;
-    fop = sam_open(m_out.c_str(), "wc"); 
-    if (!fop) {
-      std::cerr << "!!!\n!!!\n!!!\nCannot open CRAM file for writing. Will try BAM next. File: " <<  m_out << std::endl;
-      return;
-    }
-
-    // need to open reference for CRAM writing 
-    char* fn_list = samfaipath(ref.c_str());
-    if (fn_list) {
-      if (hts_set_fai_filename(fop, fn_list) != 0) {
-	fprintf(stderr, "Failed to use reference \"%s\".\n", fn_list);
-      }
-    } else {
-      std::cerr << "Failed to get the reference for CRAM compression" << std::endl;
-    }
-    m_print_header = true; 
-  }
+  void setCram(const std::string& out, const std::string& ref);
 
   void setPrintHeader() { 
     m_print_header = true;
@@ -213,6 +195,9 @@ class BamWalker {
 
   /** Return a pointer to the BAM header */
   bam_hdr_t * header() const { return br.get(); };
+
+  /** Explicitly provide the output BAM a header */
+  void SetWriteHeader(bam_hdr_t* hdr);
 
   /** Set the limit for total number of reads seen */
   void setReadLimit(int lim) { m_limit = lim; m_num_reads_seen = 0; }
@@ -260,10 +245,11 @@ class BamWalker {
   std::shared_ptr<hts_itr_t> hts_itr;
   //hts_itr_t * hts_itr = 0; // sam_itr_queryi(idx, 3, 60000, 80000);
   std::shared_ptr<bam_hdr_t> br;
+  std::shared_ptr<bam_hdr_t> hdr_write;
   //bam_hdr_t * br = 0;
 
-  //std::shared_ptr<htsFile> fop;
-  htsFile* fop = 0;
+  std::shared_ptr<htsFile> fop;
+  //htsFile* fop = nullptr;
 
   // which tags to strip
   std::vector<std::string> m_tag_list;

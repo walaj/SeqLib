@@ -34,6 +34,8 @@ struct CigarField {
   uint32_t Length; /**< The associated length */
 
   CigarField(char t, uint32_t l) : Type(t), Length(l) {}
+
+  friend std::ostream& operator<<(std::ostream& out, const CigarField& c) { out << c.Type << c.Length; return out; }
   
 };
 
@@ -151,10 +153,10 @@ class BamRead {
   void SetMapQuality(int32_t m) { b->core.qual = m; } 
 
   /** Set the query name */
-  void SetQname(std::string n);
+  void SetQname(const std::string& n);
 
   /** Set the sequence name */
-  void SetSequence(std::string s);
+  void SetSequence(const std::string& seq);
 
   friend std::ostream& operator<<(std::ostream& out, const BamRead &r);
   
@@ -177,6 +179,17 @@ class BamRead {
 	dmax = std::max(bam_cigar_oplen(c[i]), dmax);
     return dmax;
   }
+
+  /** Get the max deletion size on this cigar */
+  inline uint32_t NumMatchBases() const {
+    uint32_t* c = bam_get_cigar(b);
+    uint32_t dmax = 0;
+    for (size_t i = 0; i < b->core.n_cigar; i++) 
+      if (bam_cigar_opchr(c[i]) == 'M')
+	dmax += bam_cigar_oplen(c[i]);
+    return dmax;
+  }
+
 
   /** Retrieve the CIGAR as a more managable Cigar structure */
   Cigar GetCigar() const {

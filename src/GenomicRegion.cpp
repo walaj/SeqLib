@@ -83,11 +83,25 @@ int GenomicRegion::getOverlap(const GenomicRegion gr) const {
 
 }
 
+
+  std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
+    std::string cc;
+    if (h) {
+      if (chr >= h->n_targets)
+	std::cerr << "chr " << chr << " is bigger than provided targets of " << h->n_targets << std::endl;
+      else
+	cc = std::string(h->target_name[chr]);
+    } else {
+      cc = chrToString(chr);
+    }
+    return cc;
+  }
+  
 // write genomic region to a string
 std::string GenomicRegion::toString() const {
   std::stringstream out;
   //out << chrToString(chr)  << ":" << SnowUtils::AddCommas<int>(pos1) << "-" << SnowUtils::AddCommas<int>(pos2) << "(" << strand << ")"; 
-  out << chrToString(chr)  << ":" << SnowTools::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
+  out << chrToString(chr) << ":" << SnowTools::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
     strand << ")"; 
   return out.str();
 }
