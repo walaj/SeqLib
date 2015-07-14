@@ -286,7 +286,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
   assert(m_grv.size() > 0);
   
   // finish the last one
-  start = m_grv.back().pos2 - width;
+  start = m_grv.back().pos2 - ovlp; //width;
   end = gr.pos2;
   m_grv.push_back(T(gr.chr, start, end));
 
