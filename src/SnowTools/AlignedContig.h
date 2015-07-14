@@ -223,7 +223,7 @@ namespace SnowTools {
    */
   void writeToBAM(BamWalker& bw) { 
     for (auto& i : m_frag_v) {
-      std::cerr << "write to bam  " << i << std::endl;
+      //std::cerr << "write to bam  " << i << std::endl;
       i.writeToBAM(bw);
     }
   } 

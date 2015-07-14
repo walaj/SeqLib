@@ -237,16 +237,8 @@ void AlignedContig::setMultiMapBreakPairs() {
     bp.gr1 = SnowTools::GenomicRegion(it->m_align.ChrID(), it->gbreak2, it->gbreak2);
     bp.gr2 = SnowTools::GenomicRegion((it+1)->m_align.ChrID(), (it+1)->gbreak1, (it+1)->gbreak1);
     
-    //debug
-    if (getContigName() == "c_19_15644356_15645003_48")
-      std::cerr << "Frag 1: "  << (*it) << " Frag 2: "  << (*(it+1)) << std::endl;
-    
-    //bp.gr1.strand = it->align.IsReverseStrand() ? '-' : '+';
-    //bp.gr2.strand = (it+1)->align.IsReverseStrand() ? '+' : '-';
-
     bp.gr1.strand = it->m_align.ReverseFlag() ? '-' : '+'; 
     bp.gr2.strand = (it+1)->m_align.ReverseFlag() ? '+' : '-';
-
 
     bp.cpos1 = it->break2; // take the right-most breakpoint as the first
     bp.cpos2 = (it+1)->break1;  // take the left-most of the next one
@@ -390,7 +382,7 @@ void AlignedContig::setMultiMapBreakPairs() {
     
     // construc the index
     SnowTools::BWAWrapper bw;
-    SnowTools::USeqVector v = {{getContigName(), getSequence()}};
+    SnowTools::USeqVector v = {   {getContigName(), getSequence()}   };
     bw.constructIndex(v);
     
     // align the reads
@@ -398,7 +390,8 @@ void AlignedContig::setMultiMapBreakPairs() {
       {
 	BamReadVector brv;
 	int dum = 0;
-	bw.alignSingleSequence(i.QualityTrimmedSequence(4, dum), i.Qname(), brv, false);
+	std::string seqr = i.QualityTrimmedSequence(4, dum);
+	bw.alignSingleSequence(seqr, i.Qname(), brv, false);
 
 	if (brv.size() > 1) {
 	  continue;
@@ -408,7 +401,7 @@ void AlignedContig::setMultiMapBreakPairs() {
 	if (brv.size() == 0)
 	  continue;
 	
-	bool length_pass = (brv[0].PositionEnd() - brv[0].Position()) >= 40;
+	bool length_pass = (brv[0].PositionEnd() - brv[0].Position()) >= (seqr.length() * 0.95);
 	bool mapq_pass = brv[0].MapQuality();
 	int ins_bases = brv[0].MaxInsertionBases();
 	int del_bases = brv[0].MaxDeletionBases();
@@ -491,71 +484,71 @@ std::string AlignedContig::printDiscordantClusters() const {
   }
 
   AlignmentFragment::AlignmentFragment(const BamRead &talign) {
-  
-  m_align = talign;
-
-  // orient cigar so it is on the contig orientation. 
-  // need to do this to get the right ordering of the contig fragments below
-  if (m_align.ReverseFlag()) {
-    m_cigar = m_align.GetReverseCigar();
-  } else { 
-    m_cigar = m_align.GetCigar();
-  }
-
-  // find the start position of alignment ON CONTIG
-  start = 0; 
-  for (auto& i : m_align.GetCigar()) {
-    if (i.Type != 'M')
-      start += i.Length;
-    else
-      break;
-  }
-  
-  //std::cout << "start alignemnt " << start << " for " << m_align.ChrID() << std::endl;
-  // set the left-right breaks
-  unsigned currlen  = 0; 
-
-  // cigar is oriented to as is from aligner
-  for (auto& i : m_align.GetCigar() /*align.CigarData*/) { //CigarOpVec::const_iterator j = align.cigar.begin(); j != align.cigar.end(); j++) {
     
-    // SET THE CONTIG BREAK (treats deletions and leading S differently)
-    // the first M gets the break1, pos on the left
-    if (i.Type == 'M' && break1 == -1)
-      break1 = currlen;
-    if (i.Type != 'D') // m_skip deletions but not leading S, but otherwise update
-      currlen += i.Length;
-    if (i.Type == 'M') // keeps triggering every M, with pos at the right
-      break2 = currlen;
+    m_align = talign;
     
-  }
-  
-  gbreak1 = m_align.Position() + 1;
-  gbreak2 = m_align.PositionEnd();
-  
-  //std::cout << "gbreak1 " << gbreak1 << " for " << m_align.ChrID() << std::endl;
-  //std::cout << "gbreak2 " << gbreak2 << " for " << m_align.ChrID() << std::endl;
-  
-  assert(break1 < 10000);
-  assert(break2 < 10000);
+    // orient cigar so it is on the contig orientation. 
+    // need to do this to get the right ordering of the contig fragments below
+    if (m_align.ReverseFlag()) {
+      m_cigar = m_align.GetReverseCigar();
+    } else { 
+      m_cigar = m_align.GetCigar();
+    }
+    
+    // find the start position of alignment ON CONTIG
+    start = 0; 
+    for (auto& i : /*m_align.GetCigar()*/ m_cigar) {
+      if (i.Type != 'M')
+	start += i.Length;
+      else
+	break;
+    }
+    
+    // set the left-right breaks
+    unsigned currlen  = 0; 
+    
+    // cigar is oriented to as is from aligner
+    for (auto& i : m_cigar/*m_align.GetCigar()*/ /*align.CigarData*/) { //CigarOpVec::const_iterator j = align.cigar.begin(); j != align.cigar.end(); j++) {
+      
+      // SET THE CONTIG BREAK (treats deletions and leading S differently)
+      // the first M gets the break1, pos on the left
+      if (i.Type == 'M' && break1 == -1)
+	break1 = currlen;
+      if (i.Type != 'D') // m_skip deletions but not leading S, but otherwise update
+	currlen += i.Length;
+      if (i.Type == 'M') // keeps triggering every M, with pos at the right
+	break2 = currlen;
+      
+    }
+    
+    // assign the genomic coordinates of the break
+    if (m_align.ReverseFlag()) {
+      gbreak2 = m_align.Position() + 1;
+      gbreak1 = m_align.PositionEnd();
+    } else {
+      gbreak1 = m_align.Position() + 1;
+      gbreak2 = m_align.PositionEnd();
+    }
 
-  //if (break1 < 0)
-  //  cout << "break " << break1 << " cigar "  << BamToolsUtils::cigarToString(cigar) << " frag " << *this << endl;
-  assert(break1 >= 0);
-  assert(break2 >= 0);
-  
-  // parse right away to see if there are indels on this alignment
-  BreakPoint bp;
-  size_t fail_safe_count = 0;
-  while (parseIndelBreak(bp) && fail_safe_count++ < 100) {
-    m_indel_breaks.push_back(bp);
-    assert(bp.num_align == 1);
-  }
+    assert(break1 < 10000);
+    assert(break2 < 10000);
 
-  assert(fail_safe_count != 100);
-
-  // set the cigar matches
-  //indelCigarMatches(nmap, tmap);
-  
+    assert(break1 >= 0);
+    assert(break2 >= 0);
+    
+    // parse right away to see if there are indels on this alignment
+    BreakPoint bp;
+    size_t fail_safe_count = 0;
+    while (parseIndelBreak(bp) && fail_safe_count++ < 100) {
+      m_indel_breaks.push_back(bp);
+      assert(bp.num_align == 1);
+    }
+    
+    assert(fail_safe_count != 100);
+    
+    // set the cigar matches
+    //indelCigarMatches(nmap, tmap);
+    
 }
 
 std::ostream& operator<<(std::ostream &out, const AlignmentFragment &c) {
@@ -566,7 +559,7 @@ std::ostream& operator<<(std::ostream &out, const AlignmentFragment &c) {
     jsign = '<';
   
   // print the cigar value per base
-  for (auto& j : c.m_align.GetCigar() /*m_cigar*/) { //c.align.CigarData) { // print releative to forward strand
+  for (auto& j : /*c.m_align.GetCigar()*/ c.m_cigar) { //c.align.CigarData) { // print releative to forward strand
     if (j.Type == 'M')
       out << std::string(j.Length, jsign);
     else if (j.Type == 'I') 

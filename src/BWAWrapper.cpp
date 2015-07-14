@@ -14,6 +14,80 @@ extern "C" {
 
 namespace SnowTools {
 
+  bam_hdr_t * BWAWrapper::HeaderFromIndex() const 
+  {
+    std::string my_hdr = bwa_print_sam_hdr2(idx->bns, "");
+    bam_hdr_t * hdr = bam_hdr_init();
+    hdr = sam_hdr_read2(my_hdr); 
+    return hdr;
+  }
+
+  std::string BWAWrapper::bwa_print_sam_hdr2(const bntseq_t *bns, const char *hdr_line) const
+  {
+    std::string out;
+    int i, n_SQ = 0;
+    //extern char *bwa_pg;
+    if (hdr_line) {
+      const char *p = hdr_line;
+      while ((p = strstr(p, "@SQ\t")) != 0) {
+	if (p == hdr_line || *(p-1) == '\n') ++n_SQ;
+	p += 4;
+      }
+    }
+    if (n_SQ == 0) {
+    char buffer[100];
+    for (i = 0; i < bns->n_seqs; ++i) {
+      //err_printf("@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
+      sprintf(buffer, "@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
+      out.append(buffer);
+    }
+    } else if (n_SQ != bns->n_seqs && bwa_verbose >= 2)
+      fprintf(stderr, "[W::%s] %d @SQ lines provided with -H; %d sequences in the index. Continue anyway.\n", __func__, n_SQ, bns->n_seqs);
+    
+    if (hdr_line) { char buffer[100]; sprintf(buffer, "%s\n", hdr_line); out.append(buffer); } //err_printf("%s\n", hdr_line);
+    //if (bwa_pg) { char buffer[100]; sprintf(buffer, "%s\n", bwa_pg); out.append(buffer); } // err_printf("%s\n", bwa_pg);
+    
+    return out;
+  }
+  
+  bam_hdr_t* BWAWrapper::sam_hdr_read2(const std::string& hdr) const {
+    kstring_t str;
+    bam_hdr_t *h;
+    int has_SQ = 0;
+    str.l = str.m = 0; str.s = 0;
+    
+    std::istringstream iss(hdr);
+    std::string line;
+    while (std::getline(iss, line, '\n')) {
+      //while (hts_getline(fp, KS_SEP_LINE, &fp->line) >= 0) {
+      if (line.length() == 0 || line.at(0) != '@') break;
+      
+      if (line.length() > 3 && line.substr(0,3) == "@SQ") has_SQ = 1;
+      //if (fp->line.l > 3 && strncmp(fp->line.s,"@SQ",3) == 0) has_SQ = 1;
+      //kputsn(fp->line.s, fp->line.l, &str);
+      kputsn(line.c_str(), line.length(), &str);
+      kputc('\n', &str);
+    }
+    /*
+      if (! has_SQ && fp->fn_aux) {
+      char line[2048];
+      FILE *f = fopen(fp->fn_aux, "r");
+      if (f == NULL) return NULL;
+      while (fgets(line, sizeof line, f)) {
+      const char *name = strtok(line, "\t");
+      const char *length = strtok(NULL, "\t");
+      ksprintf(&str, "@SQ\tSN:%s\tLN:%s\n", name, length);
+      }
+      fclose(f);
+      }
+    */
+    if (str.l == 0) kputsn("", 0, &str);
+    h = sam_hdr_parse(str.l, str.s);
+    h->l_text = str.l; h->text = str.s;
+    return h;
+  }
+  
+  
   void BWAWrapper::constructIndex(const USeqVector& v) {
 
     if (idx) {
@@ -136,7 +210,7 @@ namespace SnowTools {
       memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a.cigar, a.n_cigar<<2);
       //std::cerr << "ORIGINAL CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
 
-      if (a.is_rev != first_is_rev) {
+      /*      if (a.is_rev != first_is_rev) {
 	uint32_t temp;
 	int start = 0; 
 	int end = a.n_cigar - 1;
@@ -148,7 +222,7 @@ namespace SnowTools {
 	    ++start;
 	    --end;
 	  }  
-      }
+	  }*/
 
       //std::cerr << "NEW CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
       
@@ -161,27 +235,47 @@ namespace SnowTools {
 	}
       }
 	
-
       // allocate the sequence
       uint8_t* m_bases = b.b->data + b.b->core.l_qname + (b.b->core.n_cigar<<2);
 
       // TODO move this out of bigger loop
       int slen = seq.length();
-      for (int i = 0; i < slen; ++i) {
+      int j = 0;
+      if (a.is_rev && false) {
+	for (int i = slen-1; i <= 0; --i) {
+	  
+	  // bad idea but works for now
+	  uint8_t base = 15;
+	  if (seq.at(i) == 'A')
+	    base = 1;
+	  else if (seq.at(i) == 'C')
+	    base = 2;
+	  else if (seq.at(i) == 'G')
+	    base = 4;
+	  else if (seq.at(i) == 'T')
+	    base = 8;
 
+	  m_bases[j >> 1] &= ~(0xF << ((~j & 1) << 2));   ///< zero out previous 4-bit base encoding
+	  m_bases[j >> 1] |= base << ((~j & 1) << 2);  ///< insert new 4-bit base encoding
+	  ++j;
+	}
+      } else {
+	for (int i = 0; i < slen; ++i) {
 	// bad idea but works for now
-	uint8_t base = 15;
-	if (seq.at(i) == 'A')
-	  base = 1;
-	else if (seq.at(i) == 'C')
-	  base = 2;
-	else if (seq.at(i) == 'G')
-	  base = 4;
-	else if (seq.at(i) == 'T')
-	  base = 8;
+	  uint8_t base = 15;
+	  if (seq.at(i) == 'A')
+	    base = 1;
+	  else if (seq.at(i) == 'C')
+	    base = 2;
+	  else if (seq.at(i) == 'G')
+	    base = 4;
+	  else if (seq.at(i) == 'T')
+	    base = 8;
+	  
+	  m_bases[i >> 1] &= ~(0xF << ((~i & 1) << 2));   ///< zero out previous 4-bit base encoding
+	  m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
 
-	m_bases[i >> 1] &= ~(0xF << ((~i & 1) << 2));   ///< zero out previous 4-bit base encoding
-	m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
+	}
       }
 
       // allocate the quality to NULL

@@ -549,13 +549,14 @@ namespace SnowTools {
     int leftbreak1 = cpos1 - SPLIT_BUFF; // read must extend this far left break2
     int rightbreak2= cpos2 + SPLIT_BUFF;
     int leftbreak2 = cpos2 - SPLIT_BUFF;
-    
+
     for (auto& j : bav) {
       
       std::string sr = j.GetZTag("SR");
       assert(sr.at(0) == 't' || sr.at(0) == 'n');
       
       bool tumor_read = (sr.at(0) == 't');
+
       int startdum = 0;
       std::string seq = j.QualityTrimmedSequence(4, startdum);
       //r_get_trimmed_seq(j, seq);
@@ -572,7 +573,7 @@ namespace SnowTools {
       
       if (qname != cname)
 	std::cerr << "qname " << qname << "cname " << cname << std::endl;
-      
+
       if (qname == cname) { // make sure we're comparing the right alignment
 	int rightend = te; //seq.length();
 	int leftend  = pos;
@@ -582,7 +583,7 @@ namespace SnowTools {
 	// add the split reads for each end of the break
 	if (issplit1 || issplit2)
 	  reads.push_back(j);
-	
+
 	// update the counters for each end
 	if (issplit1 && tumor_read)
 	  tsplit1++;
@@ -764,16 +765,19 @@ namespace SnowTools {
 	bool bp2reg2 = bp2.getOverlap(d.second.m_reg2) > 0;
 	
 	//debug
-	bool bp1reg2 = bp1.getOverlap(d.second.m_reg2) != 0;
-	bool bp2reg1 = bp2.getOverlap(d.second.m_reg1) != 0;
+	bool bp1reg2 = bp1.getOverlap(d.second.m_reg2) > 0;
+	bool bp2reg1 = bp2.getOverlap(d.second.m_reg1) > 0;
 	
-	bool pass = bp1reg1 && bp2reg2;
+	bool pass = (bp1reg1 && bp2reg2) || (bp1reg2 && bp2reg1);
 
-	if (cname=="c_19_15644356_15645003_48")
-	  std::cerr << " HERE " << d.first << " " << d.second << " pass " << pass << std::endl << 
-	    "BREAKPOINT " << (*this) << "   d.second.m_reg1 "  << d.second.m_reg1 << " d.second.m_reg2 " << d.second.m_reg2 << 
-	    " bp1 " << bp1 << " bp2 " << bp2 << std::endl; 
-	
+	/*	std::cerr << " gr1 " << gr1 << " gr2 " << gr2 << std::endl << 
+	  " m_reg1 " << d.second.m_reg1 << " m_reg2 " << 
+	  d.second.m_reg2 << std::endl << " bp1 " << bp1 << 
+	  " bp2 " << bp2 << " pass " << pass << 
+	  " bp1reg1 " << bp1reg1 << " bp2reg2 " << bp2reg2 << std::endl << 
+	  " bp1reg2 " << bp1reg2 << " bp2reg1 " << bp2reg1 << std::endl;
+	*/
+
 	if (pass)
 	  {
 	    // check that we haven't already added a cluster to this breakpoint

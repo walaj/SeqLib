@@ -39,8 +39,62 @@ namespace SnowTools {
     
   }
 
+  void BamRead::SetSequence(const std::string& seq) {
+
+    int new_size = b->l_data - ((b->core.l_qseq+1)>>1) - b->core.l_qseq + ((seq.length()+1)>>1) + seq.length();    
+    int old_aux_spot = (b->core.n_cigar<<2) + b->core.l_qname + ((b->core.l_qseq + 1)>>1) + b->core.l_qseq;
+    std::cerr << "l_data " << b->l_data << " n_cigar len " << (b->core.n_cigar<<2) << " b->core.l_qname " << b->core.l_qname << 
+      " l_qseq " << b->core.l_qseq << " (l_qseq+1)>>1 " << ((b->core.l_qseq+1)>>1) << " added " << (b->core.n_cigar<<2 + b->core.l_qname + (b->core.l_qseq+1)>>1 + b->core.l_qseq) << " NEW SIZE " << 
+      new_size <<  std::endl;
+
+    // copy out all the old data
+    uint8_t* oldd = (uint8_t*)malloc(b->l_data);
+    memcpy(oldd, b->data, b->l_data);
+    
+    // clear out the old data and alloc the new amount
+    free(b->data);
+    b->data = (uint8_t*)calloc(new_size, sizeof(uint8_t)); 
+    
+    // add back the qname and cigar
+    memcpy(b->data, oldd, b->core.l_qname + (b->core.n_cigar<<2));
+    
+    // update the sizes
+    // >>1 shift is because only 4 bits needed per ATCGN base
+    b->l_data = b->l_data - ((b->core.l_qseq + 1)>>1) - b->core.l_qseq + ((seq.length()+1)>>1) + seq.length();
+    b->core.l_qseq = seq.length();
+    
+    // allocate the sequence
+    uint8_t* m_bases = b->data + b->core.l_qname + (b->core.n_cigar<<2);
+    int slen = seq.length();
+    int j = 0;
+    for (int i = slen-1; i <= 0; --i) {
+	
+      // bad idea but works for now
+      uint8_t base = 15;
+      if (seq.at(i) == 'A')
+	base = 1;
+      else if (seq.at(i) == 'C')
+	base = 2;
+      else if (seq.at(i) == 'G')
+	base = 4;
+      else if (seq.at(i) == 'T')
+	base = 8;
+      
+      m_bases[j >> 1] &= ~(0xF << ((~j & 1) << 2));   ///< zero out previous 4-bit base encoding
+      m_bases[j >> 1] |= base << ((~j & 1) << 2);  ///< insert new 4-bit base encoding
+      ++j;
+    }
+    
+    // add in a NULL qual
+    uint8_t* s = bam_get_qual(b);
+    s[0] = 0xff;
+
+    // add the aux data
+    uint8_t* t = bam_get_aux(b);
+    memcpy(t, oldd, old_aux_spot);
+  }
   
-  void BamRead::SetQname(std::string n)
+  void BamRead::SetQname(const std::string& n)
   {
     // copy out the non-qname data
     size_t nonq_len = b->l_data - b->core.l_qname;
@@ -51,7 +105,7 @@ namespace SnowTools {
     free(b->data);
     b->data = (uint8_t*)calloc(nonq_len + n.length() + 1, 1);
     
-    // add in the new qname
+    // add in the new qnamev
     memcpy(b->data, (uint8_t*)n.c_str(), n.length() + 1); // +1 for \0
 
     // update the sizes

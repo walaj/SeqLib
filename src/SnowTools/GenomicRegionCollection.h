@@ -16,7 +16,7 @@
 
 namespace SnowTools {
 
-typedef Interval<int32_t> GenomicInterval;
+typedef TInterval<int32_t> GenomicInterval;
 typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
 typedef IntervalTree<int32_t> GenomicIntervalTree;
 typedef std::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
@@ -103,7 +103,7 @@ class GenomicRegionCollection {
 
   /** Add a new GenomicRegion to end
    */
-  void add(const T& g) { m_grv.push_back(g); createTreeMap(); }
+ void add(const T& g) { m_grv.push_back(g); /*createTreeMap();*/ }
 
   /** Is this object empty?
    */

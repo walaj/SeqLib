@@ -6,12 +6,12 @@
 #include <iostream>
 
 template <class T, typename K = std::size_t>
-  class Interval {
+  class TInterval {
   public:
   K start;
   K stop;
   T value;
-  Interval(K s, K e, const T& v)
+  TInterval(K s, K e, const T& v)
   : start(s)
   , stop(e)
   , value(v)
@@ -19,25 +19,25 @@ template <class T, typename K = std::size_t>
 };
 
 template <class T, typename K>
-  K intervalStart(const Interval<T,K>& i) {
+  K intervalStart(const TInterval<T,K>& i) {
   return i.start;
 }
 
 template <class T, typename K>
-  K intervalStop(const Interval<T,K>& i) {
+  K intervalStop(const TInterval<T,K>& i) {
   return i.stop;
 }
 
 template <class T, typename K>
-  std::ostream& operator<<(std::ostream& out, Interval<T,K>& i) {
-  out << "Interval(" << i.start << ", " << i.stop << "): " << i.value;
+  std::ostream& operator<<(std::ostream& out, TInterval<T,K>& i) {
+  out << "TInterval(" << i.start << ", " << i.stop << "): " << i.value;
   return out;
 }
 
 template <class T, typename K = std::size_t>
   class IntervalStartSorter {
   public:
-  bool operator() (const Interval<T,K>& a, const Interval<T,K>& b) {
+  bool operator() (const TInterval<T,K>& a, const TInterval<T,K>& b) {
     return a.start < b.start;
   }
 };
@@ -46,7 +46,7 @@ template <class T, typename K = std::size_t>
   class IntervalTree {
 
   public:
-  typedef Interval<T,K> interval;
+  typedef TInterval<T,K> interval;
   typedef std::vector<interval> intervalVector;
   typedef IntervalTree<T,K> intervalTree;
     
