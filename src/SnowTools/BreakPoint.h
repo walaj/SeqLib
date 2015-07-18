@@ -12,9 +12,7 @@
 
 //#define GET_COVERAGE 4
 
-#ifdef GET_COVERAGE
-#include "SnowToolsCoverage.h"
-#endif
+#include "SnowTools/STCoverage.h"
 
 namespace SnowTools {
 
@@ -50,10 +48,15 @@ struct BreakPoint {
   
   // string of read names concatenated together
   std::string read_names;
-  
+
+  // total coverage at that position
   size_t tcov = 0;
   size_t ncov = 0;
-  
+
+  // total coverage supporting the variant at that position
+  size_t tcov_support = 0;
+  size_t ncov_support = 0;
+
   int mapq1 = 0;
   int mapq2 = 0;
   
@@ -184,9 +187,7 @@ struct BreakPoint {
    * @param t_cov Base-pair level Coverage object, with coverage for all reads from Tumor bam(s).
    * @param n_cov Base-pair level Coverage object, with coverage for all reads from Normal bam(s).
    */
-#ifdef GET_COVERAGE
-  void addAllelicFraction(SnowToolsCoverage * t_cov, SnowToolsCoverage * n_cov);
-#endif
+  void addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov);
   
   /*! @function get the span of the breakpoints (in bp). -1 for interchrom
    * @return int distance between breakpoints

@@ -272,7 +272,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
   int32_t end = gr.pos1 + width;
 
   // region is smaller than width
-  if ( end >= gr.pos2 ) {
+  if ( end > gr.pos2 ) {
     std::cerr << "GenomicRegionCollection constructor: GenomicRegion is smaller than bin width" << std::endl;
     return; 
   }
@@ -285,10 +285,12 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
   }
   assert(m_grv.size() > 0);
   
-  // finish the last one
-  start = m_grv.back().pos2 - ovlp; //width;
-  end = gr.pos2;
-  m_grv.push_back(T(gr.chr, start, end));
+  // finish the last one if we need to
+  if (m_grv.back().pos2 != gr.pos2) {
+    start = m_grv.back().pos2 - ovlp; //width;
+    end = gr.pos2;
+    m_grv.push_back(T(gr.chr, start, end));
+  }
 
 }
 

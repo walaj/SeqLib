@@ -64,7 +64,7 @@ namespace SnowTools {
       mapq1 << "/" << mapq2 << " HOM: " << 
       homology << " INS: " << insertion << " NS: " << 
       nsplit << " TS: " << tsplit << " TD: " << dc.tcount << " ND: " << dc.ncount 
-	<< " NC " << ncigar << " TC " << tcigar << " -- " << cname; // << " isBest: " << isBest;
+	<< " NC " << ncigar << " TC " << tcigar << " TCOV " << tcov << " NCOV " << ncov << " -- " << cname; // << " isBest: " << isBest;
     return out.str();
   }
   
@@ -166,7 +166,7 @@ namespace SnowTools {
     
     if ( (min_disc_mapq < 10 && min_assm_mapq < 30) || (max_assm_mapq < 40))
       confidence = "LOWMAPQ";
-    else if ( total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
+    else if ( std::max(tsplit, nsplit) < 2 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
       confidence = "WEAKASSEMBLY";
     else if ( total_count < 15 && germ && span == -1) // be super strict about germline interchrom
       confidence = "WEAKASSEMBLY";
@@ -198,13 +198,17 @@ namespace SnowTools {
       confidence="BLACKLIST";
     else if ( (max_count < 4 && max_af < 0.3) || (max_count < 3))
       confidence="WEAKASSEMBLY";
-    else if ( cigar_count < 3 && getSpan() < 6)
-      confidence="WEAKCIGARMATCH";
-    else if (mapq1 != 60)
+    //else if ( cigar_count < 3 && getSpan() < 6)
+    //  confidence="WEAKCIGARMATCH";
+    else if (std::min(mapq1, mapq2) < 40)
       confidence="LOWMAPQ";
     //else if (seq.find("AAAAAAAAAAA") != string::npos || seq.find("TTTTTTTTTTT") != string::npos || seq.find("TGTGTGTGTGTGTGTGTGTGTGTGTG") != string::npos)
-    else if (repeat_seq.length() > 1 && pon > 0)
+    else if (repeat_seq.length() > 1) // && pon > 0)
       confidence="REPEAT";
+    else if ( (max_af < 0.2 && nsplit > 0) || (max_af < 0.15 && nsplit == 0)) // more strict for germline bc purity is not issue
+      confidence = "LOWAF";
+    else if (ncov <= 5)
+      confidence = "LOWNORMCOV";
     else
       confidence="PASS";
   } 
@@ -266,7 +270,7 @@ namespace SnowTools {
      << confidence << sep << evidence << sep
      << pon << sep << (repeat_seq.length() ? repeat_seq : "x") << sep 
      << ncov << sep << tcov << sep << af_n << sep << af_t << sep
-     << blacklist << sep
+     << blacklist << sep 
      << (read_names.length() ? read_names : "x");
 
   return ss.str();
@@ -614,7 +618,11 @@ namespace SnowTools {
   
   std::string BreakPoint::getHashString() const {
     
-    std::string st = std::to_string(gr1.chr) + "_" + std::to_string(gr1.pos1) + "_" + std::to_string(this->getSpan()) + (insertion.length() ? "I" : "D");
+    int pos1 = gr1.pos1;
+    bool isdel = insertion.length() == 0;
+    if (isdel) // del breaks are stored as last non-deleted base. CigarMap stores as THE deleted base
+      pos1++;
+    std::string st = std::to_string(gr1.chr) + "_" + std::to_string(pos1) + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
     return st;
   }
   
@@ -705,14 +713,15 @@ namespace SnowTools {
     
   }
   
-  /*void BreakPoint::addAllelicFraction(SnowToolsCoverage * t_cov, SnowToolsCoverage * n_cov) {
+  void BreakPoint::addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov) {
     
-  if (t_cov)
-  tcov = t_cov->getCoverageAtPosition(gr1.pos1); 
-  if (n_cov)
-  ncov = n_cov->getCoverageAtPosition(gr1.pos1); 
-  
-  }*/
+    std::cerr << "getting cov at " << gr1 << std::endl;
+    if (t_cov)
+      tcov = t_cov->getCoverageAtPosition(gr1.chr, gr1.pos1); 
+    if (n_cov)
+      ncov = n_cov->getCoverageAtPosition(gr1.chr, gr1.pos1); 
+    std::cerr << "tcov " << tcov << " ncov " << ncov<< std::endl;    
+  }
   
   std::string BreakPoint::toPrintString() const {
     
@@ -721,18 +730,19 @@ namespace SnowTools {
     // set the allelic fraction
     double af_n = -1;
     double af_t = -1;
+    std::cerr << cname << " " << tcov_support << " " << ncov_support << std::endl;
     if (isindel && tcov > 0) 
-      af_t = static_cast<double>(std::max(tsplit, tcigar)) / static_cast<double>(tcov);
+      af_t = static_cast<double>(/*std::max(tsplit, tcigar)*/tcov_support) / static_cast<double>(tcov);
     if (isindel && ncov > 0) 
-      af_n = static_cast<double>(std::max(nsplit, ncigar)) / static_cast<double>(ncov);
+      af_n = static_cast<double>(/*std::max(nsplit, ncigar)*/ncov_support) / static_cast<double>(ncov);
     
     
     if (isindel)
-      ss << ">>>> Somatic " << (insertion.size() ? "INSERTION" : "DELETION") <<  " of length " << getSpan() << " at " << gr1 << " contig " << cname 
+      ss << ">>>> " << (insertion.size() ? "INSERTION" : "DELETION") <<  " of length " << getSpan() << " at " << gr1 << " contig " << cname 
 	 << " T/N split: " << tsplit << "/" << nsplit << " T/N cigar: " 
-	 << tcigar << "/" << ncigar << " T/N AF " << af_t << "/" << af_n;
+	 << tcigar << "/" << ncigar << " T/N AF " << af_t << "/" << af_n << " T/N Cov " << tcov << "/" << ncov;
     else
-      ss << ">>>> Somatic STRUCTURAL VAR  at " << gr1.pointString() << " to " << gr2.pointString() << " SPAN " << getSpan() << " contig " << cname 
+      ss << ">>>> STRUCTURAL VAR  at " << gr1.pointString() << " to " << gr2.pointString() << " SPAN " << getSpan() << " contig " << cname 
 	 << " T/N split: " << tsplit << "/" << nsplit << " T/N discordant: " 
 	 << dc.tcount << "/" << dc.ncount << " evidence " << evidence;
     
@@ -782,11 +792,10 @@ namespace SnowTools {
 	  {
 	    // check that we haven't already added a cluster to this breakpoint
 	    // if so, chose the one with more tumor support
-	    if (dc.isEmpty()) {
+	    if (dc.isEmpty() || dc.tcount < d.second.tcount) {
 	      dc = d.second;
-	    } else if (dc.tcount < d.second.tcount) {
-	      dc = d.second;
-	    }
+	      d.second.m_contig = cname;
+	    } 
 	    
 	  }
       }
