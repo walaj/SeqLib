@@ -74,10 +74,18 @@ namespace SnowTools
 
     static void __convertToDiscordantCluster(std::unordered_map<std::string, DiscordantCluster> &dd, const BamReadClusterVector& cvec, const BamReadVector& bav);
 
+    /** Query an interval against the two regions of the cluster. If the region overlaps
+     * with one region, return the other region. This is useful for finding the partner 
+     * region give a query region */
+    GenomicRegion GetMateRegionOfOverlap(const GenomicRegion& gr) const; 
 
     size_t tcount = 0;
     size_t ncount = 0; 
 
+    std::unordered_map<std::string, BamRead> reads;
+    std::unordered_map<std::string, BamRead> mates;
+
+    std::string m_contig = "";
   private:
 
     GenomicRegion m_reg1;
@@ -86,10 +94,6 @@ namespace SnowTools
     std::string m_id;
 
     std::unordered_map<std::string, bool> qnames; // TODO get rid of it
-    std::unordered_map<std::string, BamRead> reads;
-    std::unordered_map<std::string, BamRead> mates;
-
-    std::string m_contig = "";
   };
   
   //! vector of AlignmentFragment objects

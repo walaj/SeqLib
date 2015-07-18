@@ -250,8 +250,13 @@ namespace SnowTools {
   
   int insertion_against_contig_read_count = 0;
   int deletion_against_contig_read_count = 0;
+  
+  std::pair<int, int> getCoverageAtPosition(int pos) const;
 
  private:
+
+  std::vector<int> tum_cov;
+  std::vector<int> norm_cov;
 
   BamReadVector m_bamreads; // store all of the reads aligned to contig
 

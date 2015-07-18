@@ -26,6 +26,10 @@ namespace SnowTools {
     if (bav.begin()->ReverseFlag())
       SnowTools::rcomplement(m_seq);
     
+    // zero the coverage
+    tum_cov = std::vector<int>(m_seq.length(), 0);
+    norm_cov = std::vector<int>(m_seq.length(), 0);
+
     // make the individual alignments and add
     for (auto& i : bav) {
       m_frag_v.push_back(AlignmentFragment(i));
@@ -44,7 +48,7 @@ void AlignedContig::printContigFasta(std::ofstream& os) const {
   os << ">" << getContigName() << std::endl;
   os << getSequence() << std::endl;
 }
-
+  
 void AlignedContig::blacklist(GRC &grv) {
 
   //if (m_skip)
@@ -421,6 +425,16 @@ void AlignedContig::setMultiMapBreakPairs() {
 	    i.SmartAddTag("CN", getContigName());
 	    
 	    m_bamreads.push_back(i);
+
+	    // add the coverage
+	    int cc = brv[0].Position();
+	    if (i.GetZTag("SR").at(0) == 't')
+	      while (cc <= brv[0].PositionEnd() && cc < tum_cov.size())
+		++tum_cov[cc++];
+	    else 
+	      while (cc <= brv[0].PositionEnd() && cc < norm_cov.size())
+		++norm_cov[cc++];
+
 	  }
 	else if (ins_bases && mapq_pass && length_pass)
 	  ++insertion_against_contig_read_count;
@@ -428,21 +442,48 @@ void AlignedContig::setMultiMapBreakPairs() {
 	  ++deletion_against_contig_read_count;
       }
     
+    // go through the indel breaks and assign support coverage
+    for (auto& j : m_frag_v) {
+      for (auto& i : j.m_indel_breaks) {
+	std::pair<int,int> p1 = getCoverageAtPosition(i.cpos1);
+	std::pair<int,int> p2 = getCoverageAtPosition(i.cpos2);
+	i.tcov_support = std::min(p1.first, p2.first);
+	i.ncov_support = std::min(p1.second, p2.second);
+      }
+    }
+    // go through the SV breaks and assign support coverage
+    for (auto& i : m_local_breaks) {
+      std::pair<int,int> p1 = getCoverageAtPosition(i.cpos1);
+      std::pair<int,int> p2 = getCoverageAtPosition(i.cpos2);
+      i.tcov_support = std::min(p1.first, p2.first);
+      i.ncov_support = std::min(p1.second, p2.second);
+    }
 
+    std::pair<int,int> p1 = getCoverageAtPosition(m_global_bp.cpos1);
+    std::pair<int,int> p2 = getCoverageAtPosition(m_global_bp.cpos2);
+    m_global_bp.tcov_support = std::min(p1.first, p2.first);
+    m_global_bp.ncov_support = std::min(p1.second, p2.second);
+  }
+
+  std::pair<int,int> AlignedContig::getCoverageAtPosition(int pos) const {
+    if (pos <= 0 || pos >= tum_cov.size())
+      return std::pair<int,int>(0,0);
+    
+    return std::pair<int,int>(tum_cov[pos], norm_cov[pos]);
   }
  
-std::string AlignedContig::printDiscordantClusters() const {
-
-  std::stringstream out;
-  if (m_dc.size() == 0)
-    return "none";
-
-  for (std::vector<DiscordantCluster>::const_iterator it = m_dc.begin(); it != m_dc.end(); it++)
-    out << *it << " ";
-  return out.str();
-
-}/*
-
+  std::string AlignedContig::printDiscordantClusters() const {
+    
+    std::stringstream out;
+    if (m_dc.size() == 0)
+      return "none";
+    
+    for (std::vector<DiscordantCluster>::const_iterator it = m_dc.begin(); it != m_dc.end(); it++)
+      out << *it << " ";
+    return out.str();
+    
+  }/*
+     
   // reject if not at last partially in window
   m_skip = true;
   for (auto& ca : m_frag_v)

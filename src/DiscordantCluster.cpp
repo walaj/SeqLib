@@ -158,7 +158,6 @@ namespace SnowTools {
       mates = tmp_reads;
     }
 
-    
   }
   
   void DiscordantCluster::addMateReads(const BamReadVector& bav) 
@@ -249,7 +248,7 @@ namespace SnowTools {
 	<< m_reg2.chr+1 << sep << m_reg2.pos1 << sep << m_reg2.strand << sep 
 	<< tcount << sep << ncount << sep << getMeanMapq(false) << sep 
 	<< getMeanMapq(true) << sep << reads_string;
-    
+
     return (out.str());
     
   }
@@ -385,5 +384,15 @@ namespace SnowTools {
     }
   }
   
+  GenomicRegion DiscordantCluster::GetMateRegionOfOverlap(const GenomicRegion& gr) const {
+    
+    if (gr.getOverlap(m_reg1))
+      return m_reg2;
+    if (gr.getOverlap(m_reg2))
+      return m_reg1;
+    return GenomicRegion();
+
+  }
+
   
 }

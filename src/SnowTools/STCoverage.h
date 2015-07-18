@@ -17,22 +17,34 @@
 
 #include "SnowTools/BamRead.h"
 #include "SnowTools/GenomicRegion.h"
+#include "SnowTools/GenomicRegionCollection.h"
 
 typedef std::shared_ptr<std::vector<uint16_t>> uint16_sp;
+typedef std::unordered_map<int,int> CovMap;
+typedef std::unordered_map<int,CovMap> CovMapMap;
 
 namespace SnowTools {
 
+
+  
 /*! Class to hold base-pair or binned coverage across the genome
  */
 class STCoverage {
   
  private:
 
+  GRC m_grc;
   GenomicRegion m_gr;
+
+  CovMapMap m_map;
+
   uint16_sp v;
 
  public:
 
+  /** */
+  void settleCoverage();
+      
   /** Add a read to this coverage track */
   void addRead(const BamRead &r);
 
@@ -55,7 +67,7 @@ class STCoverage {
   friend std::ostream& operator<<(std::ostream &out, const STCoverage &c);
 
   /** Return the coverage count at a position */
-  uint16_t getCoverageAtPosition(size_t pos) const;
+  int getCoverageAtPosition(int chr, int pos);
   
 };
 

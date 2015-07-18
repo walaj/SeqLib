@@ -4,40 +4,61 @@
 
 namespace SnowTools {
 
+  void STCoverage::settleCoverage() {
+    GRC tmp = m_grc;
+    m_grc.mergeOverlappingIntervals();
+  }
+  
   STCoverage::STCoverage(const SnowTools::GenomicRegion& gr) {
-    std::cerr << "*********** making cov *************** " << std::endl;//debug
     m_gr = gr;
     v = uint16_sp(new std::vector<uint16_t>(gr.width(),0));
   }
-
+  
   void STCoverage::addRead(const BamRead &r) {
     
-    int p = r.Position() - m_gr.pos1;
-    int e = r.PositionEnd() - m_gr.pos1;
+    //m_settled = false;
+    //m_grc.add(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd()));
+    
+    // out of bounds
+    //if (r.Position() < m_gr.pos1 || r.PositionEnd() > m_gr.pos2 || r.ChrID() != m_gr.chr)
+    //  return;
+
+    //int p = std::min(r.Position() - m_gr.pos1, m_gr.pos2);
+    //int e = std::min(r.PositionEnd() - m_gr.pos1, m_gr.pos2);
+    int p = r.Position();
+    int e = r.PositionEnd();
+
     if (p < 0 || e < 0)
       return;
     
+    
+
     try {
       while (p <= e) {
-	if (v->at(p) < 60000) // 60000 is roughly int16 lim
-	  v->at(p)++;
+	//CovMap::iterator iter = m_map.find(p);
+	m_map[r.ChrID()][p]++;
 	++p;
+	//if (v->at(p) < 60000) // 60000 is roughly int16 lim
+	//  v->at(p)++;
+	//++p;
 	
       }
     } catch (std::out_of_range &oor) {
-      //std::cerr << "Position " << p << " on tid " << r.ChrID()
-      //      << " is greater than expected max of " << v->size() << " -- skipping" << std::endl;
+      std::cerr << "Position " << p << " on tid " << r.ChrID()
+		<< " is greater than expected max of " << v->size() << " -- skipping" << std::endl;
       
     }
     
   }
-
+  
   std::ostream& operator<<(std::ostream &out, const STCoverage &c) {
     out << "Region " << c.m_gr << " v.size() " << c.v->size() << std::endl;
     return out;
   }
 
   void STCoverage::ToBedgraph(ogzstream * o, const bam_hdr_t * h) const {
+
+    //settleCoverage();
 
     // unitialized so nothing to do
     if (m_gr.chr == -1 || v->size() == 0)
@@ -58,20 +79,32 @@ namespace SnowTools {
       (*o) << m_gr.ChrName(h) << "\t" << (curr_start + m_gr.pos1) << "\t" << (v->size()+m_gr.pos1-1) << "\t" << curr_val << std::endl;
   }
   
-  uint16_t STCoverage::getCoverageAtPosition(size_t pos) const {
+  int STCoverage::getCoverageAtPosition(int chr, int pos) {
 
-  if (pos < m_gr.pos1 || pos > m_gr.pos2) {
-    //std::cerr << "Coverage query out of bounds for location " << m_gr.chr << ":" << pos << std::endl;
-    return 0;
-  }
-  
-  size_t q = pos - m_gr.pos1;
-  if (q >= v->size()) {
-    std::cerr << "Coverage query out of bounds for location " << m_gr.chr << ":" << pos << " with pos-start of " << q << " attempt on v of size " << v->size() << std::endl;
-    return 0;
-  }
+    CovMapMap::iterator it = m_map.find(chr);
+    if (it == m_map.end())
+      return 0;
+    
+    //std::cerr << " MAP " << std::endl;
+    //for (auto& i : m_map)
+    //  std::cerr << i.first << " " << i.second << std::endl;
+    
+    //if (!m_settled)
+    //  settleCoverage();
 
-  return (v->at(q));
+    //if (pos < m_gr.pos1 || pos > m_gr.pos2) {
+      //std::cerr << "Coverage query out of bounds for location " << m_gr.chr << ":" << pos << std::endl;
+    //  return 0;
+    //}
+    
+    //size_t q = pos - m_gr.pos1;
+    //if (q >= v->size()) {
+    // std::cerr << "Coverage query out of bounds for location " << m_gr.chr << ":" << pos << " with pos-start of " << q << " attempt on v of size " << v->size() << std::endl;
+    //  return 0;
+    //}
+    return it->second[pos];
+
+    //return (v->at(q));
     
 
 }
