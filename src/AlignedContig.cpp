@@ -113,7 +113,7 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
   for (auto& i : ac.m_frag_v) {
     for (auto& j : i.getIndelBreaks()) {
       if (j.isindel && j.insertion == "") // deletion
-	out << std::string(j.cpos1, ' ') << "|" << std::string(j.cpos2-j.cpos1-1, ' ') << '|' << std::endl;	
+	out << std::string(j.cpos1, ' ') << "|" << std::string(j.cpos2-j.cpos1-1, ' ') << '|' << "   " << ac.getContigName() << std::endl;	
     }
   }
 
@@ -410,6 +410,8 @@ void AlignedContig::setMultiMapBreakPairs() {
 	int ins_bases = brv[0].MaxInsertionBases();
 	int del_bases = brv[0].MaxDeletionBases();
 	
+	//std::cerr << "just aligned " << brv[0] << " SR " << brv[0].GetZTag("SR") << " size " << bav.size() << std::endl;
+
 	// store read2contig alignment info in this read
 	if ( length_pass && mapq_pass && ins_bases == 0 && del_bases == 0)
 	  {
