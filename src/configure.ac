@@ -35,15 +35,15 @@ AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
 
 if test "$with_htslib" -a -d "$with_htslib"; then
     htslib_include="-I$with_htslib"
-    #htslib_ldflags="-L $htslibr"
-    htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
+    htslib_ldflags="-L $with_htslib"
+    ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
 else
     with_htslib="./htslib"
     htslib_include="-I $with_htslib"
-    #htslib_ldflags="-L $htslibr"
-    htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
+    htslib_ldflags="-L $with_htslib"
+    ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
 fi
-htslib_lib="libhts.a"
+htslib_lib="-lhts"
 
 # Check for the bwa library paths
 #AC_ARG_WITH(bwa, AS_HELP_STRING([--with-bwa=PATH],

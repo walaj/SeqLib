@@ -226,9 +226,9 @@ libhts.so: $(LIBHTS_OBJS:.o=.pico)
 # when run can find this uninstalled shared library (when $DYLD_LIBRARY_PATH
 # includes this project's build directory).
 
-libhts.dylib: $(LIBHTS_OBJS)
-	$(CC) -dynamiclib -install_name $(libdir)/libhts.$(LIBHTS_SOVERSION).dylib -current_version $(NUMERIC_VERSION) -compatibility_version $(LIBHTS_SOVERSION) $(LDFLAGS) -o $@ $(LIBHTS_OBJS) $(LDLIBS) -lz
-	ln -sf $@ libhts.$(LIBHTS_SOVERSION).dylib
+#libhts.dylib: $(LIBHTS_OBJS)
+#	$(CC) -dynamiclib -install_name $(libdir)/libhts.$(LIBHTS_SOVERSION).dylib -current_version $(NUMERIC_VERSION) -compatibility_version $(LIBHTS_SOVERSION) $(LDFLAGS) -o $@ $(LIBHTS_OBJS) $(LDLIBS) -lz
+#	ln -sf $@ libhts.$(LIBHTS_SOVERSION).dylib
 
 
 bgzf.o bgzf.pico: bgzf.c config.h $(htslib_hts_h) $(htslib_bgzf_h) $(htslib_hfile_h) $(htslib_khash_h)
@@ -341,10 +341,10 @@ install-so: libhts.so installdirs
 	ln -sf libhts.so.$(PACKAGE_VERSION) $(DESTDIR)$(libdir)/libhts.so
 	ln -sf libhts.so.$(PACKAGE_VERSION) $(DESTDIR)$(libdir)/libhts.so.$(LIBHTS_SOVERSION)
 
-install-dylib: libhts.dylib installdirs
-	$(INSTALL_PROGRAM) libhts.dylib $(DESTDIR)$(libdir)/libhts.$(PACKAGE_VERSION).dylib
-	ln -sf libhts.$(PACKAGE_VERSION).dylib $(DESTDIR)$(libdir)/libhts.dylib
-	ln -sf libhts.$(PACKAGE_VERSION).dylib $(DESTDIR)$(libdir)/libhts.$(LIBHTS_SOVERSION).dylib
+#install-dylib: libhts.dylib installdirs
+#	$(INSTALL_PROGRAM) libhts.dylib $(DESTDIR)$(libdir)/libhts.$(PACKAGE_VERSION).dylib
+#	ln -sf libhts.$(PACKAGE_VERSION).dylib $(DESTDIR)$(libdir)/libhts.dylib
+#	ln -sf libhts.$(PACKAGE_VERSION).dylib $(DESTDIR)$(libdir)/libhts.$(LIBHTS_SOVERSION).dylib
 
 # Substitute these pseudo-autoconf variables only at install time
 # so that "make install prefix=/prefix/path" etc continue to work.
