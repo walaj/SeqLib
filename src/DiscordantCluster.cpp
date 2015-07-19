@@ -188,7 +188,7 @@ namespace SnowTools {
     }
     
     if (tmapq.size() > 0)
-      mean = accumulate(tmapq.begin(), tmapq.end(), 0.0) / tmapq.size();
+      mean = std::accumulate(tmapq.begin(), tmapq.end(), 0.0) / tmapq.size();
     return mean;
   }
   

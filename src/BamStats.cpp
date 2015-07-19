@@ -22,6 +22,7 @@ BamReadGroup::BamReadGroup(const std::string& name) : reads(0), supp(0), unmap(0
     out << "ReadGroup\tReadCount\tSupplementary\tUnmapped\tMateUnmapped\tQCFailed\tDuplicate\tMappingQuality\tNM\tInsertSize\tClippedBases\tMeanPhredScore\tReadLength" << std::endl;
     for (auto& i : qc.m_group_map)
       out << i.second << std::endl;
+    return out;
   }
 
   std::ostream& operator<<(std::ostream& out, const BamReadGroup& qc) {

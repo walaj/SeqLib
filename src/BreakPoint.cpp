@@ -715,12 +715,10 @@ namespace SnowTools {
   
   void BreakPoint::addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov) {
     
-    std::cerr << "getting cov at " << gr1 << std::endl;
     if (t_cov)
       tcov = t_cov->getCoverageAtPosition(gr1.chr, gr1.pos1); 
     if (n_cov)
       ncov = n_cov->getCoverageAtPosition(gr1.chr, gr1.pos1); 
-    std::cerr << "tcov " << tcov << " ncov " << ncov<< std::endl;    
   }
   
   std::string BreakPoint::toPrintString() const {
