@@ -481,7 +481,7 @@ s,@DEFS@,-DHAVE_CONFIG_H,;t t
 s,@ECHO_C@,,;t t
 s,@ECHO_N@,-n,;t t
 s,@ECHO_T@,,;t t
-s,@LIBS@,-lrt -lz  libhts.a -lahocorasick -lbwa,;t t
+s,@LIBS@,-lrt -lz  -lhts -lahocorasick -lbwa,;t t
 s,@INSTALL_PROGRAM@,${INSTALL},;t t
 s,@INSTALL_SCRIPT@,${INSTALL},;t t
 s,@INSTALL_DATA@,${INSTALL} -m 644,;t t
@@ -506,7 +506,7 @@ s,@am__tar@,${AMTAR} chof - "$$tardir",;t t
 s,@am__untar@,${AMTAR} xf -,;t t
 s,@CXX@,g++,;t t
 s,@CXXFLAGS@,-O3,;t t
-s,@LDFLAGS@, -L./bwa -Wl,-rpath,./htslib -L./htslib -L ./multifast-v1.4.2/ahocorasick/build,;t t
+s,@LDFLAGS@, -L./bwa -L ./htslib -L ./multifast-v1.4.2/ahocorasick/build,;t t
 s,@CPPFLAGS@, -I. -I ./htslib -I ./multifast-v1.4.2 -I/xchip/gistic/Jeremiah/boost_1_58_0,;t t
 s,@ac_ct_CXX@,g++,;t t
 s,@EXEEXT@,,;t t
