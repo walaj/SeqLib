@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <set>
+#include <numeric>
 
 #define DISC_PAD 400
 #define MIN_PER_CLUST 2

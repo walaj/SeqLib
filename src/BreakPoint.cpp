@@ -720,7 +720,7 @@ namespace SnowTools {
     if (n_cov)
       ncov = n_cov->getCoverageAtPosition(gr1.chr, gr1.pos1); 
   }
-  
+ 
   std::string BreakPoint::toPrintString() const {
     
     std::stringstream ss;
