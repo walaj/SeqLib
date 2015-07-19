@@ -43,7 +43,7 @@ else
     #htslib_ldflags="-L $htslibr"
     htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
 fi
-htslib_lib="-lhts"
+htslib_lib="libhts.a"
 
 # Check for the bwa library paths
 #AC_ARG_WITH(bwa, AS_HELP_STRING([--with-bwa=PATH],
