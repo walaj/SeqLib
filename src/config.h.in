@@ -1,19 +1,10 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the <ahocorasick/ahocorasick.h> header file. */
-#undef HAVE_AHOCORASICK_AHOCORASICK_H
-
 /* Define to 1 if you have the <boost/icl/interval_set.hpp> header file. */
 #undef HAVE_BOOST_ICL_INTERVAL_SET_HPP
 
-/* Define to 1 if you have the <bwa/bwa.h> header file. */
-#undef HAVE_BWA_BWA_H
-
 /* clock_getttime found */
 #undef HAVE_CLOCK_GETTIME
-
-/* Define to 1 if you have the <htslib/hts.h> header file. */
-#undef HAVE_HTSLIB_HTS_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H

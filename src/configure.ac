@@ -30,20 +30,20 @@ else
 fi
 
 # Check for the hts library paths
-AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
-	[specify directory containing the Heng Li's HTSlib)]))
+##AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
+#	[specify directory containing the Heng Li's HTSlib)]))#
 
-if test "$with_htslib" -a -d "$with_htslib"; then
-    htslib_include="-I$with_htslib"
-    htslib_ldflags="-L $with_htslib"
+#if test "$with_htslib" -a -d "$with_htslib"; then
+#    htslib_include="-I$with_htslib"
+#    htslib_ldflags="-L $with_htslib"
     ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
-else
-    with_htslib="./htslib"
-    htslib_include="-I $with_htslib"
-    htslib_ldflags="-L $with_htslib"
+#else
+#    with_htslib="./htslib"
+#    htslib_include="-I $with_htslib"
+#    htslib_ldflags="-L $with_htslib"
     ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
-fi
-htslib_lib="libhts.a"
+#fi
+#htslib_lib="libhts.a"
 
 # Check for the bwa library paths
 #AC_ARG_WITH(bwa, AS_HELP_STRING([--with-bwa=PATH],
@@ -62,16 +62,16 @@ htslib_lib="libhts.a"
 AC_ARG_WITH(aho, AS_HELP_STRING([--with-aho=PATH],
 	[specify directory containing the AhoCorasick string matching algorithm C code)]))
 
-if test "$with_aho" -a -d "$with_aho"; then
-    aho_include="-I$with_aho"
-    aho_ldflags="-L$with_aho/ahocorasick/build"
-    aho_libs="-lahocorasick"
-else
-    with_aho="./multifast-v1.4.2"
-    aho_include="-I $with_aho"
-    aho_ldflags="-L $with_aho/ahocorasick/build"
-    aho_libs="-lahocorasick"
-fi
+#if test "$with_aho" -a -d "$with_aho"; then
+#    aho_include="-I$with_aho"
+#    aho_ldflags="-L$with_aho/ahocorasick/build"
+#    aho_libs="-lahocorasick"
+#else
+#    with_aho="./multifast-v1.4.2"
+#    aho_include="-I $with_aho"
+ #   aho_ldflags="-L $with_aho/ahocorasick/build"
+ #   aho_libs="-lahocorasick"
+#fi
 
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -86,25 +86,25 @@ fi
 AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "-O3")
 AC_SUBST(CFLAGS, "-O3")
-AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $htslib_include $aho_include $boost_include")
-AC_SUBST(LDFLAGS, "$LDFLAGS -L./bwa $htslib_ldflags $aho_ldflags")
+AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $boost_include")
+AC_SUBST(LDFLAGS, "$LDFLAGS")
 
 # We always need to specify to link in bamtools
-AC_SUBST(LIBS, "$LIBS $htslib_lib -lahocorasick -lbwa")
+AC_SUBST(LIBS, "$LIBS")
 
 # Make sure the bamtools headers can be found
 ##AC_CHECK_HEADERS([api/BamReader.h],,[AC_MSG_ERROR([The bamtools library must be installed (http://github.com/pezmaster31/bamtools). You can specify its path with the --with-bamtools=PATH option])])
 
 # Make sure the ahocorasick headers can be found
-AC_CHECK_HEADERS([ahocorasick/ahocorasick.h],,[AC_MSG_WARN([The Aho-Corasick library must be installed (http://sourceforge.net/projects/multifast/). You can specify its path with the --with-aho=PATH option])])
+##AC_CHECK_HEADERS([ahocorasick/ahocorasick.h],,[AC_MSG_WARN([The Aho-Corasick library must be installed (http://sourceforge.net/projects/multifast/). You can specify its path with the --with-aho=PATH option])])
 
 # Make sure the HTSlib headers can be found
-AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
+##AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
 
 # Make sure the HTSlib headers can be found
-AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
+##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
 
-# Make sure the bamtools headers can be found
+# Make sure the boost headers can be found
 AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile])
