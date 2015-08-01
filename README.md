@@ -1,10 +1,10 @@
 SnowTools
 =========
 
+<img src="https://raw.githubusercontent.com/jwalabroad/SnowTools/master/labels_st.png" width="150">
+
 C++ htslib/bwa-mem interface and command line tools for interrogating BAM and SAM files.
 
-# NOTE: SnowTools is under active development.  The code is available now as-is, but is undergoing continued development.
-	
 **License:** [GNU GPLv3][license]
 
 API Documentation
