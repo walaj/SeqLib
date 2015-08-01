@@ -57,10 +57,11 @@ am_libsnowtools_a_OBJECTS = GenomicRegion.$(OBJEXT) \
 	MiniRules.$(OBJEXT) gzstream.$(OBJEXT) SnowUtils.$(OBJEXT) \
 	gChain.$(OBJEXT) BamRead.$(OBJEXT) gzstream.$(OBJEXT) \
 	BWAWrapper.$(OBJEXT) BamRead.$(OBJEXT) AlignedContig.$(OBJEXT) \
-	STCoverage.$(OBJEXT) BreakPoint.$(OBJEXT) \
-	DiscordantCluster.$(OBJEXT) is.$(OBJEXT) bwtindex.$(OBJEXT) \
-	bwt_gen.$(OBJEXT) QSufSort.$(OBJEXT) bwt.$(OBJEXT) \
-	bwamem_extra.$(OBJEXT) ahocorasick.$(OBJEXT) node.$(OBJEXT)
+	STCoverage.$(OBJEXT) DBSnpFilter.$(OBJEXT) \
+	BreakPoint.$(OBJEXT) DiscordantCluster.$(OBJEXT) is.$(OBJEXT) \
+	bwtindex.$(OBJEXT) bwt_gen.$(OBJEXT) QSufSort.$(OBJEXT) \
+	bwt.$(OBJEXT) bwamem_extra.$(OBJEXT) ahocorasick.$(OBJEXT) \
+	node.$(OBJEXT)
 libsnowtools_a_OBJECTS = $(am_libsnowtools_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -127,7 +128,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
 LDFLAGS =  -L./bwa -L ./htslib -L ./multifast-v1.4.2/ahocorasick/build
 LIBOBJS = 
-LIBS = -lrt -lz  -lhts -lahocorasick -lbwa
+LIBS = -lrt -lz  libhts.a -lahocorasick -lbwa
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /xchip/gistic/Jeremiah/GIT/SnowTools/src/missing --run makeinfo
 OBJEXT = o
@@ -182,7 +183,7 @@ noinst_LIBRARIES = libsnowtools.a
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
-			AlignedContig.cpp STCoverage.cpp \
+			AlignedContig.cpp STCoverage.cpp DBSnpFilter.cpp \
 			BreakPoint.cpp DiscordantCluster.cpp \
 			bwa/is.c bwa/bwtindex.c \
 			bwa/bwt_gen.c bwa/QSufSort.c bwa/bwt.c bwa/bwamem_extra.c \
@@ -264,6 +265,7 @@ include ./$(DEPDIR)/BamRead.Po
 include ./$(DEPDIR)/BamStats.Po
 include ./$(DEPDIR)/BamWalker.Po
 include ./$(DEPDIR)/BreakPoint.Po
+include ./$(DEPDIR)/DBSnpFilter.Po
 include ./$(DEPDIR)/DiscordantCluster.Po
 include ./$(DEPDIR)/GenomicRegion.Po
 include ./$(DEPDIR)/Histogram.Po

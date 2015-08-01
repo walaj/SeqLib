@@ -5,7 +5,7 @@
 #define HAVE_AHOCORASICK_AHOCORASICK_H 1
 
 /* Define to 1 if you have the <boost/icl/interval_set.hpp> header file. */
-#define HAVE_BOOST_ICL_INTERVAL_SET_HPP 1
+/* #undef HAVE_BOOST_ICL_INTERVAL_SET_HPP */
 
 /* Define to 1 if you have the <bwa/bwa.h> header file. */
 #define HAVE_BWA_BWA_H 1

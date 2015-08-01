@@ -33,7 +33,7 @@ void parseBreakOptions(int argc, char** argv);
 struct BreakPoint {
 
   static std::string header() { 
-    return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tspan\tmapq1\tmapq2\tnsplit\ttsplit\tndisc\ttdisc\tncigar\ttcigar\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tpon_samples\trepeat_seq\tnormal_cov\ttumor_cov\tnormal_allelic_fraction\ttumor_allelic_fraction\tblacklist\treads"; 
+    return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tspan\tmapq1\tmapq2\tnsplit\ttsplit\tndisc\ttdisc\tncigar\ttcigar\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tpon_samples\trepeat_seq\tnormal_cov\ttumor_cov\tnormal_allelic_fraction\ttumor_allelic_fraction\tblacklist\tDBSNP\treads"; 
   }
   
   // reads spanning this breakpoint
@@ -56,6 +56,9 @@ struct BreakPoint {
   // total coverage supporting the variant at that position
   size_t tcov_support = 0;
   size_t ncov_support = 0;
+
+  // 
+  std::string rs = "";
 
   int mapq1 = 0;
   int mapq2 = 0;
@@ -156,6 +159,10 @@ struct BreakPoint {
   std::string toPrintString() const;
   
   static void readPON(std::string &file, std::unique_ptr<PON> &pmap);
+
+  /** Retrieve the reference sequence at a breakpoint and determine if 
+   * it lands on a repeat */
+  void repeatFilter(faidx_t * f);
 
   void __combine_with_discordant_cluster(DiscordantClusterMap& dmap);
   
