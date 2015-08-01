@@ -38,6 +38,9 @@ libbwa.a:$(LOBJS)
 clean:
 		rm -f gmon.out *.o a.out $(PROG) *~ *.a
 
+##JEREMIAH
+install: ;
+
 depend:
 	( LC_ALL=C ; export LC_ALL; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- *.c )
 
