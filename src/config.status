@@ -481,7 +481,7 @@ s,@DEFS@,-DHAVE_CONFIG_H,;t t
 s,@ECHO_C@,,;t t
 s,@ECHO_N@,-n,;t t
 s,@ECHO_T@,,;t t
-s,@LIBS@,-lrt -lz  -lhts -lahocorasick -lbwa,;t t
+s,@LIBS@,-lrt -lz  libhts.a -lahocorasick -lbwa,;t t
 s,@INSTALL_PROGRAM@,${INSTALL},;t t
 s,@INSTALL_SCRIPT@,${INSTALL},;t t
 s,@INSTALL_DATA@,${INSTALL} -m 644,;t t
@@ -862,7 +862,6 @@ ${ac_dA}HAVE_CLOCK_GETTIME${ac_dB}HAVE_CLOCK_GETTIME${ac_dC}1${ac_dD}
 ${ac_dA}HAVE_AHOCORASICK_AHOCORASICK_H${ac_dB}HAVE_AHOCORASICK_AHOCORASICK_H${ac_dC}1${ac_dD}
 ${ac_dA}HAVE_HTSLIB_HTS_H${ac_dB}HAVE_HTSLIB_HTS_H${ac_dC}1${ac_dD}
 ${ac_dA}HAVE_BWA_BWA_H${ac_dB}HAVE_BWA_BWA_H${ac_dC}1${ac_dD}
-${ac_dA}HAVE_BOOST_ICL_INTERVAL_SET_HPP${ac_dB}HAVE_BOOST_ICL_INTERVAL_SET_HPP${ac_dC}1${ac_dD}
 CEOF
   sed -f $tmp/defines.sed $tmp/in >$tmp/out
   rm -f $tmp/in
@@ -896,7 +895,6 @@ ${ac_uA}HAVE_CLOCK_GETTIME${ac_uB}HAVE_CLOCK_GETTIME${ac_uC}1${ac_uD}
 ${ac_uA}HAVE_AHOCORASICK_AHOCORASICK_H${ac_uB}HAVE_AHOCORASICK_AHOCORASICK_H${ac_uC}1${ac_uD}
 ${ac_uA}HAVE_HTSLIB_HTS_H${ac_uB}HAVE_HTSLIB_HTS_H${ac_uC}1${ac_uD}
 ${ac_uA}HAVE_BWA_BWA_H${ac_uB}HAVE_BWA_BWA_H${ac_uC}1${ac_uD}
-${ac_uA}HAVE_BOOST_ICL_INTERVAL_SET_HPP${ac_uB}HAVE_BOOST_ICL_INTERVAL_SET_HPP${ac_uC}1${ac_uD}
 s,^[	 ]*#[	 ]*undef[	 ][	 ]*[a-zA-Z_][a-zA-Z_0-9]*,/* & */,
 CEOF
   sed -f $tmp/undefs.sed $tmp/in >$tmp/out

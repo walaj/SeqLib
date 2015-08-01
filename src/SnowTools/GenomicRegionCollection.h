@@ -128,11 +128,12 @@ class GenomicRegionCollection {
    * @param gr Region to test
    * @return Number of overlapping elements in this GenomicRegionCollection
    */
- size_t findOverlapping(const T &gr);
+ size_t findOverlapping(const T &gr) const;
 
  size_t countContained(const T &gr);
  
- GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<GenomicRegion> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand = false);
+ template<class K>
+ GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand = false) const;
 
  /** The total amount spanned by this collection
   */
@@ -180,6 +181,7 @@ class GenomicRegionCollection {
   typename std::vector<T>::iterator begin() { return m_grv.begin(); } 
 
   typename std::vector<T>::iterator end() { return m_grv.end(); } 
+
 
   // always construct this object any time m_grv is modifed
   GenomicIntervalTreeMap m_tree;

@@ -295,7 +295,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
 }
 
 template<class T>
-size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) {
+size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) const {
 
   if (m_tree.size() == 0 && m_grv.size() != 0) 
     {
@@ -304,7 +304,7 @@ size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) {
     }
 
   GenomicIntervalVector giv;
-  GenomicIntervalTreeMap::iterator ff = m_tree.find(gr.chr);
+  GenomicIntervalTreeMap::const_iterator ff = m_tree.find(gr.chr);
   if (ff == m_tree.end())
     return 0;
   ff->second.findOverlapping(gr.pos1, gr.pos2, giv);
@@ -357,8 +357,10 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
   return m_grv[i]; 
 }
 
-template<class T>
-GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(GenomicRegionCollection<GenomicRegion>& subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand)
+  // this is query
+  template<class T>
+  template<class K>
+GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(GenomicRegionCollection<K>& subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const
 {  
 
   GenomicRegionCollection<GenomicRegion> output;
@@ -367,7 +369,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
   for (size_t i = 0; i < m_grv.size(); ++i) 
     {
       // which chr (if any) are common between query and subject
-      GenomicIntervalTreeMap::iterator ff = subject.m_tree.find(m_grv[i].chr);
+      GenomicIntervalTreeMap::const_iterator ff = subject.m_tree.find(m_grv[i].chr);
 
       GenomicIntervalVector giv;
 
@@ -388,14 +390,14 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
 #endif
 	  // loop through the hits and define the GenomicRegion
 	  for (auto& j : giv) { // giv points to positions on subject
-	    if (!ignore_strand || (subject.m_grv[j.value].strand == m_grv[i].strand) )
+	    if (ignore_strand || (subject.m_grv[j.value].strand == m_grv[i].strand) )
 	      {
 		query_id.push_back(i);
 		subject_id.push_back(j.value);
 #ifdef DEBUG_OVERLAPS
 		std::cerr << "find overlaps hit " << j.start << " " << j.stop << " -- " << j.value << std::endl;
 #endif
-		output.add(T(m_grv[i].chr, std::max(static_cast<int32_t>(j.start), m_grv[i].pos1), std::min(static_cast<int32_t>(j.stop), m_grv[i].pos2)));
+		output.add(GenomicRegion(m_grv[i].chr, std::max(static_cast<int32_t>(j.start), m_grv[i].pos1), std::min(static_cast<int32_t>(j.stop), m_grv[i].pos2)));
 	      }
 	  }
 	}

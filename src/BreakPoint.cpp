@@ -35,6 +35,16 @@ static const struct option longopts[] = {
   { NULL, 0, NULL, 0 }
 };
 
+// define repeats
+static std::vector<std::string> repr = {"AAAAAAAA", "TTTTTTTT", "CCCCCCCC", "GGGGGGGG", 
+				 "TATATATATATATATA", "ATATATATATATATAT", 
+				 "GCGCGCGCGCGCGCGC", "CGCGCGCGCGCGCGCG", 
+				 "TGTGTGTGTGTGTGTG", "GTGTGTGTGTGTGTGT", 
+				 "TCTCTCTCTCTCTCTC", "CTCTCTCTCTCTCTCT", 
+				 "CACACACACACACACA", "ACACACACACACACAC", 
+				 "GAGAGAGAGAGAGAGA", "AGAGAGAGAGAGAGAG"};
+
+
 static const char *BP_USAGE_MESSAGE =
 "Usage: snowman refilter [OPTION] -i bps.txt.gz -o bps.new.txt.gz\n\n"
 "  Description: \n"
@@ -178,6 +188,8 @@ namespace SnowTools {
 
     if (std::min(mapq1, mapq2) < 30 || std::max(mapq1, mapq2) <= 36) // mapq here is READ mapq (37 std::max)
       confidence = "LOWMAPQ";
+    else if (std::min(mapq1, mapq2) == 37 && disc_count >= 6)
+      confidence = "PASS";
     else if ( disc_count < 8 || (dc.ncount > 0 && disc_count < 12) )  // be stricter about germline disc only
       confidence = "WEAKDISC";
     else 
@@ -192,6 +204,8 @@ namespace SnowTools {
     bool blacklist_and_low_count = blacklist && (tsplit + nsplit) < 5 && (tcigar + ncigar) < 5;
     bool blacklist_and_low_AF = max_af < 0.3 && blacklist;
 
+    if (rs.length())
+      confidence="DBSNP";
     if (blacklist && pon > 0)
       confidence="BLACKLISTANDPON";
     else if (blacklist_and_low_count || blacklist_and_low_AF)
@@ -254,6 +268,7 @@ namespace SnowTools {
     read_names = "";
   }
 
+
   // TODO convert chr to string with treader
   ss << gr1.chr+1 << sep << gr1.pos1 << sep << gr1.strand << sep 
      << gr2.chr+1 << sep << gr2.pos1 << sep << gr2.strand << sep 
@@ -270,7 +285,7 @@ namespace SnowTools {
      << confidence << sep << evidence << sep
      << pon << sep << (repeat_seq.length() ? repeat_seq : "x") << sep 
      << ncov << sep << tcov << sep << af_n << sep << af_t << sep
-     << blacklist << sep 
+     << blacklist << sep << (rs.length() ? rs : "x") << sep 
      << (read_names.length() ? read_names : "x");
 
   return ss.str();
@@ -415,13 +430,13 @@ namespace SnowTools {
 	std::string seqr = std::string(seq);
 	
 	// define repeats
-	std::vector<std::string> repr = {"AAAAAAAA", "TTTTTTTT", "CCCCCCCC", "GGGGGGGG", 
-					 "TATATATATATATATA", "ATATATATATATATAT", 
-					 "GCGCGCGCGCGCGCGC", "CGCGCGCGCGCGCGCG", 
-					 "TGTGTGTGTGTGTGTG", "GTGTGTGTGTGTGTGT", 
-					 "TCTCTCTCTCTCTCTC", "CTCTCTCTCTCTCTCT", 
-					 "CACACACACACACACA", "ACACACACACACACAC", 
-					 "GAGAGAGAGAGAGAGA", "AGAGAGAGAGAGAGAG"};
+	//std::vector<std::string> repr = {"AAAAAAAA", "TTTTTTTT", "CCCCCCCC", "GGGGGGGG", 
+	//				 "TATATATATATATATA", "ATATATATATATATAT", 
+	//				 "GCGCGCGCGCGCGCGC", "CGCGCGCGCGCGCGCG", 
+	//				 "TGTGTGTGTGTGTGTG", "GTGTGTGTGTGTGTGT", 
+	//				 "TCTCTCTCTCTCTCTC", "CTCTCTCTCTCTCTCT", 
+	//				 "CACACACACACACACA", "ACACACACACACACAC", 
+	//				 "GAGAGAGAGAGAGAGA", "AGAGAGAGAGAGAGAG"};
 	//std::cout << "seq " << seqr << std::endl;
 	for (auto& i : repr)
 	  if (seqr.find(i) != std::string::npos)
@@ -448,6 +463,31 @@ namespace SnowTools {
     */
   }
   
+  void BreakPoint::repeatFilter(faidx_t * f) {
+
+    if (!f) {
+      std::cerr << "Need to open reference for reading. BreakPoint::repeatFilter" << std::endl;
+      return;
+    }
+   
+    if (gr1.chr >= 24)
+      return;
+
+
+    GenomicRegion gr = gr1;
+    gr.pad(40);
+
+    int len;    
+    std::string chrstring = GenomicRegion::chrToString(gr.chr);
+    char * seq = faidx_fetch_seq(f, const_cast<char*>(chrstring.c_str()), gr.pos1-1, gr.pos2-1, &len);
+    std::string seqr = std::string(seq);
+
+    for (auto& i : repr)
+      if (seqr.find(i) != std::string::npos)
+	repeat_seq = i;
+    
+  }
+
   BreakPoint::BreakPoint(std::string &line) {
     
     std::istringstream iss(line);
@@ -738,7 +778,7 @@ namespace SnowTools {
     if (isindel)
       ss << ">>>> " << (insertion.size() ? "INSERTION" : "DELETION") <<  " of length " << getSpan() << " at " << gr1 << " contig " << cname 
 	 << " T/N split: " << tsplit << "/" << nsplit << " T/N cigar: " 
-	 << tcigar << "/" << ncigar << " T/N AF " << af_t << "/" << af_n << " T/N Cov " << tcov << "/" << ncov;
+	 << tcigar << "/" << ncigar << " T/N AF " << af_t << "/" << af_n << " T/N Cov " << tcov << "/" << ncov << " DBSNP " << rs;
     else
       ss << ">>>> STRUCTURAL VAR  at " << gr1.pointString() << " to " << gr2.pointString() << " SPAN " << getSpan() << " contig " << cname 
 	 << " T/N split: " << tsplit << "/" << nsplit << " T/N discordant: " 

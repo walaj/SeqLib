@@ -83,7 +83,7 @@ namespace SnowTools {
   }
 
   // remove the last character from a string
-  inline std::string cutLastChar(std::string in) {
+  inline std::string cutLastChar(const std::string& in) {
     if (in.length() == 0)
       return in;
     else 
@@ -91,13 +91,18 @@ namespace SnowTools {
   }
   
   // remove substrings from a string
- inline std::string scrubString(std::string toscrub, std::string toremove) {
+ inline std::string scrubString(const std::string& toscrub, const std::string& toremove) {
+
    std::string::size_type i = toscrub.find(toremove);
+   if (i == std::string::npos)
+     return toscrub;
+
+   std::string ts = toscrub;
    while (i != std::string::npos) {
-     toscrub.erase(i, toremove.length());
-     i = toscrub.find(toremove);
+     ts.erase(i, toremove.length());
+     i = ts.find(toremove);
    }
-   return toscrub;
+   return ts;
  }
 
  void genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max);
