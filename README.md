@@ -1,7 +1,4 @@
-SnowTools
-=========
-
-<img src="https://raw.githubusercontent.com/jwalabroad/SnowTools/master/labels_st.png" width="150">
+<center><img src="https://raw.githubusercontent.com/jwalabroad/SnowTools/master/labels_st.png" width="250"></center>
 
 C++ htslib/bwa-mem interface and command line tools for interrogating BAM and SAM files.
 
