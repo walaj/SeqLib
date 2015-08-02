@@ -1,4 +1,6 @@
-<div style="text-align:center"><img src="https://raw.githubusercontent.com/jwalabroad/SnowTools/master/labels_st.png" width="250"></div>
+[![Build Status](https://travis-ci.org/jwalabroad/SnowTools.svg?branch=master)](https://travis-ci.org/jwalabroad/SnowTools)
+
+<div style="text-align:center"><img src="https://raw.githubusercontent.com/jwalabroad/SnowTools/master/figs/labels_st.png" width="250"></div>
 
 C++ htslib/bwa-mem interface and command line tools for interrogating BAM and SAM files.
 

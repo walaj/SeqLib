@@ -3,7 +3,7 @@ s#                                               -*- Autoconf -*-
 AC_PREREQ(2.59) ## specificy version of autoconf
 AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
 AM_INIT_AUTOMAKE(foreign)
-AC_CONFIG_SRCDIR([SnowTools.cpp])
+AC_CONFIG_SRCDIR([src/SnowTools.cpp])
 AC_CONFIG_HEADER([config.h])
 ##m4_include([m4/m4_ax_openmp.m4])
 
@@ -28,51 +28,6 @@ else
     boostr=/xchip/gistic/Jeremiah/boost_1_58_0
     boost_include="-I$boostr"
 fi
-
-# Check for the hts library paths
-##AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
-#	[specify directory containing the Heng Li's HTSlib)]))#
-
-#if test "$with_htslib" -a -d "$with_htslib"; then
-#    htslib_include="-I$with_htslib"
-#    htslib_ldflags="-L $with_htslib"
-    ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
-#else
-#    with_htslib="./htslib"
-#    htslib_include="-I $with_htslib"
-#    htslib_ldflags="-L $with_htslib"
-    ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
-#fi
-#htslib_lib="libhts.a"
-
-# Check for the bwa library paths
-#AC_ARG_WITH(bwa, AS_HELP_STRING([--with-bwa=PATH],
-#	[dsf]))
-
-#if test "$with_bwa" -a -d "$with_bwa"; then
-    #bwa_include="-I$with_bwa"
-    #bwa_ldflags="L$with_bwa"
-#else
-    ##bwa_include="-I $bwar"
-#    bwa_ldflags="-L ./bwa"
-#fi
-
-
-# Check for the aho library paths
-AC_ARG_WITH(aho, AS_HELP_STRING([--with-aho=PATH],
-	[specify directory containing the AhoCorasick string matching algorithm C code)]))
-
-#if test "$with_aho" -a -d "$with_aho"; then
-#    aho_include="-I$with_aho"
-#    aho_ldflags="-L$with_aho/ahocorasick/build"
-#    aho_libs="-lahocorasick"
-#else
-#    with_aho="./multifast-v1.4.2"
-#    aho_include="-I $with_aho"
- #   aho_ldflags="-L $with_aho/ahocorasick/build"
- #   aho_libs="-lahocorasick"
-#fi
-
 
 # Only fail on warnings when the --enable-development flag is passed into configure
 AC_ARG_ENABLE(development, AS_HELP_STRING([--enable-development],
@@ -107,6 +62,7 @@ AC_SUBST(LIBS, "$LIBS")
 # Make sure the boost headers can be found
 AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+	         src/Makefile])
 
 AC_OUTPUT

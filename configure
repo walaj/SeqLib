@@ -273,7 +273,7 @@ PACKAGE_VERSION='1.0'
 PACKAGE_STRING='snowtools 1.0'
 PACKAGE_BUGREPORT='jwala@broadinstitute.org'
 
-ac_unique_file="SnowTools.cpp"
+ac_unique_file="src/SnowTools.cpp"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -866,8 +866,6 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-boost=PATH       specify directory containing the boost library)
-  --with-aho=PATH         specify directory containing the AhoCorasick string
-                          matching algorithm C code)
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -4328,55 +4326,6 @@ else
     boost_include="-I$boostr"
 fi
 
-# Check for the hts library paths
-##AC_ARG_WITH(htslib, AS_HELP_STRING([--with-htslib=PATH],
-#	[specify directory containing the Heng Li's HTSlib)]))#
-
-#if test "$with_htslib" -a -d "$with_htslib"; then
-#    htslib_include="-I$with_htslib"
-#    htslib_ldflags="-L $with_htslib"
-    ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
-#else
-#    with_htslib="./htslib"
-#    htslib_include="-I $with_htslib"
-#    htslib_ldflags="-L $with_htslib"
-    ##htslib_ldflags="-Wl,-rpath,$with_htslib -L$with_htslib"
-#fi
-#htslib_lib="libhts.a"
-
-# Check for the bwa library paths
-#AC_ARG_WITH(bwa, AS_HELP_STRING([--with-bwa=PATH],
-#	[dsf]))
-
-#if test "$with_bwa" -a -d "$with_bwa"; then
-    #bwa_include="-I$with_bwa"
-    #bwa_ldflags="L$with_bwa"
-#else
-    ##bwa_include="-I $bwar"
-#    bwa_ldflags="-L ./bwa"
-#fi
-
-
-# Check for the aho library paths
-
-# Check whether --with-aho or --without-aho was given.
-if test "${with_aho+set}" = set; then
-  withval="$with_aho"
-
-fi;
-
-#if test "$with_aho" -a -d "$with_aho"; then
-#    aho_include="-I$with_aho"
-#    aho_ldflags="-L$with_aho/ahocorasick/build"
-#    aho_libs="-lahocorasick"
-#else
-#    with_aho="./multifast-v1.4.2"
-#    aho_include="-I $with_aho"
- #   aho_ldflags="-L $with_aho/ahocorasick/build"
- #   aho_libs="-lahocorasick"
-#fi
-
-
 # Only fail on warnings when the --enable-development flag is passed into configure
 # Check whether --enable-development or --disable-development was given.
 if test "${enable_development+set}" = set; then
@@ -4571,7 +4520,7 @@ fi
 done
 
 
-          ac_config_files="$ac_config_files Makefile"
+                    ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -5131,6 +5080,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+  "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
