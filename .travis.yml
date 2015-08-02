@@ -1,1 +1,4 @@
 language: cpp
+
+script:
+ - ./configure && make && make test
