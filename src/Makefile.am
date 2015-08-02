@@ -1,9 +1,8 @@
 noinst_LIBRARIES = libsnowtools.a
 
 libsnowtools_a_CPPFLAGS = \
-	-I../htslib \
 	-I../multifast-v1.4.2 \
-	-I../bwa
+        -I../htslib
 
 libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
 
