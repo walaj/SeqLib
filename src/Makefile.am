@@ -1,24 +1,21 @@
-AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib
-
 noinst_LIBRARIES = libsnowtools.a
 
 libsnowtools_a_CPPFLAGS = \
-	-I./htslib \
-	-I./multifast-v1.4.2 \
-	-I./bwa
+	-I../htslib \
+	-I../multifast-v1.4.2 \
+	-I../bwa
 
-libsnowtools_a_LIBADD = ./bwa/libbwa.a ./htslib/libhts.a 
+libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
 			AlignedContig.cpp STCoverage.cpp DBSnpFilter.cpp \
 			BreakPoint.cpp DiscordantCluster.cpp \
-			bwa/is.c bwa/bwtindex.c \
-			bwa/bwt_gen.c bwa/QSufSort.c bwa/bwt.c bwa/bwamem_extra.c \
-			multifast-v1.4.2/ahocorasick/ahocorasick.c \
-			multifast-v1.4.2/ahocorasick/node.c 
+			../bwa/is.c ../bwa/bwtindex.c \
+			../bwa/bwt_gen.c ../bwa/QSufSort.c ../bwa/bwt.c ../bwa/bwamem_extra.c \
+			../multifast-v1.4.2/ahocorasick/ahocorasick.c \
+			../multifast-v1.4.2/ahocorasick/node.c 
 
 ##bin_PROGRAMS = snowtools
 
