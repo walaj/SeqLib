@@ -1,4 +1,4 @@
 language: cpp
 
 script:
- - ./configure && make && make test
+ - pwd && ./configure && make && make test
