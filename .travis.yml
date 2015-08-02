@@ -1,4 +1,15 @@
 language: cpp
 
+compiler:
+ - clang
+ - gcc
+
+before_install:
+  - sudo pip install cpp-coveralls
+
+install:
+  - if [ "$CXX" == "g++"]; then .travis_scripts/gcc.sh; fi
+
 script:
- - pwd && ./configure && make && make test
+ - ./configure && make && make check
+
