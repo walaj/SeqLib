@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/jwalabroad/SnowTools.svg?branch=master)](https://travis-ci.org/jwalabroad/SnowTools)
+[![Coverage Status](https://coveralls.io/repos/jwalabroad/SnowTools/badge.svg?branch=master&service=github)](https://coveralls.io/github/jwalabroad/SnowTools?branch=master)
 
 <div style="text-align:center"><img src="https://raw.githubusercontent.com/jwalabroad/SnowTools/master/figs/labels_st.png" width="250"></div>
 
