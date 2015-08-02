@@ -29,6 +29,11 @@ all:libbwa.a
 bwa:libbwa.a $(AOBJS) main.o
 		$(CC) $(CFLAGS) $(DFLAGS) $(AOBJS) main.o -o $@ -L. -lbwa $(LIBS)
 
+## JEREMIAH
+test: ; 
+
+check: ;
+
 bwamem-lite:libbwa.a example.o
 		$(CC) $(CFLAGS) $(DFLAGS) example.o -o $@ -L. -lbwa $(LIBS)
 
