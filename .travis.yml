@@ -1,6 +1,1 @@
 language: cpp
-
-compiler:
-  - clang
-  - gcc
-
