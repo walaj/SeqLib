@@ -15,6 +15,8 @@
 
 namespace SnowTools {
 
+
+
   /** Check if a file is readable and exists
    * @param name Name of a file to test
    * @return File is readable and exists
@@ -105,9 +107,14 @@ namespace SnowTools {
    return ts;
  }
 
- void genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max);
+ /** Generate a weighed random value */
+ int weightedRandom(const std::vector<double>& cs);
 
- void genRandomValue(uint32_t &i, const uint32_t &max);
+ std::vector<double> getWeightedSum(const std::vector<double>& c);
+
+ void genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max, uint32_t seed = 0);
+
+ void genRandomValue(uint32_t &i, const uint32_t &max, uint32_t seed = 0);
 
  /*! @function Loops through a text file to count the number of lines.
   * @param file The file to count

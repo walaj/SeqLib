@@ -1,6 +1,6 @@
 #include "SnowTools/BamWalker.h"
 
-//#define DEBUG_WALKER 1
+#define DEBUG_WALKER 1
 
 using namespace SnowTools;
 
