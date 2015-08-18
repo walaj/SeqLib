@@ -112,9 +112,9 @@ namespace SnowTools {
 
  std::vector<double> getWeightedSum(const std::vector<double>& c);
 
- void genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max);
+ void genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max, uint32_t seed = 0);
 
- void genRandomValue(uint32_t &i, const uint32_t &max);
+ void genRandomValue(uint32_t &i, const uint32_t &max, uint32_t seed = 0);
 
  /*! @function Loops through a text file to count the number of lines.
   * @param file The file to count

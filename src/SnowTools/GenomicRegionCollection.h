@@ -41,7 +41,7 @@ class GenomicRegionCollection {
 
   /** Construct from a vector of reads
    */
- GenomicRegionCollection(const BamReadVector& brv);
+  GenomicRegionCollection(const BamReadVector& brv);
 
   /** Construct a GenomicRegionCollection with overlapping intervals
    * 
@@ -170,6 +170,16 @@ class GenomicRegionCollection {
    * @return false if add end of vector
    */
   bool getNextGenomicRegion(T& gr);
+
+  void gsort();
+
+ /** Expand all the elements so they are sorted and become adjacent by 
+     stretching them to the right up to max */
+  void SortAndStretchRight(int max);
+
+ /** Expand all the elements so they are sorted and become adjacent by 
+     stretching them to the left down to min */
+ void SortAndStretchLeft(int min);
 
   /** Rewind the element pointer to the first GenomicRegion
    */
