@@ -15,6 +15,62 @@
 namespace SnowTools {
 
 template<class T>
+GenomicRegionCollection<T>::GenomicRegionCollection(const BamReadVector& brv) {
+
+  for (auto& i : brv)
+    m_grv.push_back(GenomicRegion(i.ChrID(), i.Position(), i.PositionEnd()));
+}
+
+
+  template<class T>
+  void GenomicRegionCollection<T>::gsort() {
+    
+    std::sort(m_grv.begin(), m_grv.end());
+  }
+
+  template<class T>
+  void GenomicRegionCollection<T>::SortAndStretchRight(int max) {
+
+    if (!m_grv.size())
+      return;
+    
+    std::sort(m_grv.begin(), m_grv.end());
+
+    if (max < m_grv.back().pos2) {
+      std::cerr << "GenomicRegionCollection::SortAndStrech Can't stretch to max, as we are already past max. Max: " << max << " highest GRC " << m_grv.back() << std::endl;
+      exit(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < m_grv.size() - 1; ++i) {
+      m_grv[i].pos2 = m_grv[i+1].pos1 - 1;
+    }
+    m_grv.back().pos2 = max;
+    
+  }
+
+  template<class T>
+  void GenomicRegionCollection<T>::SortAndStretchLeft(int min) {
+
+    if (!m_grv.size())
+      return;
+
+    std::sort(m_grv.begin(), m_grv.end());
+
+    if (min < m_grv.begin()->pos1) {
+      std::cerr << "GenomicRegionCollection::SortAndStrechLeft Can't stretch to min, as we are already past max" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+
+    m_grv[0].pos1 = min;
+    for (size_t i = 1; i < m_grv.size(); ++i) {
+      m_grv[i].pos1 = m_grv[i-1].pos2 + 1;
+    }
+    
+  }
+
+
+
+template<class T>
 void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, bam_hdr_t* h) {
   
   assert(pad >= 0);
@@ -427,11 +483,11 @@ GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
 
   GRC out;
   // get this - that
-
+  
 #ifdef BOOST_CONFIG_HPP
   using namespace boost::icl;
   typedef interval_set<int> TIntervalSet; 
-
+  
   // flatten each
   subject.mergeOverlappingIntervals();
   this->mergeOverlappingIntervals();

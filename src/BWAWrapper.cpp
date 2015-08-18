@@ -53,7 +53,6 @@ namespace SnowTools {
   bam_hdr_t* BWAWrapper::sam_hdr_read2(const std::string& hdr) const {
     kstring_t str;
     bam_hdr_t *h;
-    int has_SQ = 0;
     str.l = str.m = 0; str.s = 0;
     
     std::istringstream iss(hdr);
@@ -62,7 +61,7 @@ namespace SnowTools {
       //while (hts_getline(fp, KS_SEP_LINE, &fp->line) >= 0) {
       if (line.length() == 0 || line.at(0) != '@') break;
       
-      if (line.length() > 3 && line.substr(0,3) == "@SQ") has_SQ = 1;
+      //if (line.length() > 3 && line.substr(0,3) == "@SQ") has_SQ = 1;
       //if (fp->line.l > 3 && strncmp(fp->line.s,"@SQ",3) == 0) has_SQ = 1;
       //kputsn(fp->line.s, fp->line.l, &str);
       kputsn(line.c_str(), line.length(), &str);
@@ -161,9 +160,6 @@ namespace SnowTools {
     //std::cout << __print_bns() << std::endl;
 #endif    
 
-
-    bool first_is_rev = false;
-
     // loop through the hits
     for (size_t i = 0; i < ar.n; ++i) {
 
@@ -174,8 +170,8 @@ namespace SnowTools {
       // get forward-strand position and CIGAR
       a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
 
-      if (i == 0 && a.is_rev)
-	first_is_rev = true;
+      //if (i == 0 && a.is_rev)
+      //first_is_rev = true;
 
       // instantiate the read
       BamRead b;
@@ -241,18 +237,19 @@ namespace SnowTools {
       // TODO move this out of bigger loop
       int slen = seq.length();
       int j = 0;
-      if (a.is_rev && false) {
-	for (int i = slen-1; i <= 0; --i) {
+      if (a.is_rev/* && false*/) {
+	for (int i = slen-1; i >= 0; --i) {
 	  
 	  // bad idea but works for now
+	  // this is REV COMP things
 	  uint8_t base = 15;
-	  if (seq.at(i) == 'A')
+	  if (seq.at(i) == 'T')
 	    base = 1;
-	  else if (seq.at(i) == 'C')
-	    base = 2;
 	  else if (seq.at(i) == 'G')
+	    base = 2;
+	  else if (seq.at(i) == 'C')
 	    base = 4;
-	  else if (seq.at(i) == 'T')
+	  else if (seq.at(i) == 'A')
 	    base = 8;
 
 	  m_bases[j >> 1] &= ~(0xF << ((~j & 1) << 2));   ///< zero out previous 4-bit base encoding

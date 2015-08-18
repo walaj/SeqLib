@@ -15,6 +15,8 @@
 #include "htslib/kstring.h"
 #include "htslib/faidx.h"
 
+#include "SnowTools/GenomicRegion.h"
+
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
                                'T', ' ', ' ', ' ', 
@@ -160,6 +162,9 @@ class BamRead {
 
   friend std::ostream& operator<<(std::ostream& out, const BamRead &r);
   
+  /** Return read as a GenomicRegion */
+  GenomicRegion asGenomicRegion() const;
+
   /** Get the max insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {
     uint32_t* c = bam_get_cigar(b);
@@ -209,6 +214,8 @@ class BamRead {
     return cig;
   }
 
+  /** Remove the sequence, quality and alignment tags */
+  void clearSeqQualAndTags();
 
   /** Get the sequence of this read as a string */
   inline std::string Sequence() const { 
@@ -218,6 +225,16 @@ class BamRead {
       ss << BASES[bam_seqi(p, i)];
     return ss.str();
   }
+
+  /** Get the quality scores of this read as a string */
+  inline std::string Qualities() const { 
+    uint8_t * p = bam_get_qual(b);
+    std::stringstream ss;
+    for (int32_t i = 0; i < b->core.l_qseq; ++i) 
+      ss << (char)(p[i]+ 33);
+    return ss.str();
+  }
+
 
   /** Get the start of the alignment on the read, by removing soft-clips
    */
@@ -373,10 +390,17 @@ class BamRead {
     
   }
 
+  /** Return a short description (chr:pos) of this read */
+  inline std::string Brief(bam_hdr_t * h = nullptr) const {
+    if (!h)
+      return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos));
+    else
+      return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos));      
+  }
+
   /** Strip a particular alignment tag 
    * @param tag Tag to remove
    */
-
   inline void RemoveTag(const char* tag) {
     uint8_t* p = bam_aux_get(b.get(), tag);
     if (p)

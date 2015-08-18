@@ -257,10 +257,10 @@ int GenomicRegion::distance(const GenomicRegion &gr) const {
 
 }
 
-void GenomicRegion::random() {
+void GenomicRegion::random(uint32_t seed) {
   
   uint32_t big;
-  SnowTools::genRandomValue(big, SnowTools::genome_size_XY);
+  SnowTools::genRandomValue(big, SnowTools::genome_size_XY, seed);
   
   for (size_t k = 0; k < 25; k++)
     if (big < SnowTools::CHR_CLEN[k]) {
@@ -309,12 +309,12 @@ void GenomicRegion::random() {
       }
 
       // TODO slow.
-      bool found = false;
+      //bool found = false;
       for (int i = 0; i < h->n_targets; ++i)
 	if (strcmp(tchr.c_str(), h->target_name[i]) == 0)
 	  {
 	    chr = i;
-	    found = true;
+	    //	    found = true;
 	    break;
 	  }
 

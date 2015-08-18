@@ -68,7 +68,7 @@ namespace SnowTools {
     // remove clusters that dont overlap with the window
     DiscordantClusterMap dd_clean;
     for (auto& i : dd) {
-      if (i.second.m_reg1.getOverlap(interval) > 0 || i.second.m_reg2.getOverlap(interval))
+      if (interval.isEmpty() /* whole genome */ || i.second.m_reg1.getOverlap(interval) > 0 || i.second.m_reg2.getOverlap(interval))
 	dd_clean[i.first] = i.second;
     }
     
@@ -115,11 +115,12 @@ namespace SnowTools {
 	else
 	  ++ncount;
       }
-    
+
     // loop through the big stack of reads and find the mates
     addMateReads(all_reads);
-    
-    assert(reads.size() == mates.size());
+    //std::cerr << reads.size() << " mates " << mates.size() << " this " << this_reads.size() << " all " << all_reads.size() << std::endl;
+
+    //assert(reads.size() == mates.size());
     assert(reads.size() > 0);
     
     // set the regions

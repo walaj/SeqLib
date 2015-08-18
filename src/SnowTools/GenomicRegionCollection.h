@@ -9,7 +9,7 @@
 
 #include "SnowTools/IntervalTree.h"
 #include "SnowTools/GenomicRegion.h"
-
+#include "SnowTools/BamRead.h"
 
 /** Class to store vector of intervals on the genome
  */
@@ -38,6 +38,11 @@ class GenomicRegionCollection {
   /** Construct from a single GenomicRegion
    */
   GenomicRegionCollection(const T& gr);
+
+  /** Construct from a vector of reads
+   */
+  GenomicRegionCollection(const BamReadVector& brv);
+
 
   /** Construct a GenomicRegionCollection with overlapping intervals
    * 
@@ -166,6 +171,16 @@ class GenomicRegionCollection {
    * @return false if add end of vector
    */
   bool getNextGenomicRegion(T& gr);
+
+  void gsort();
+
+ /** Expand all the elements so they are sorted and become adjacent by 
+     stretching them to the right up to max */
+  void SortAndStretchRight(int max);
+
+ /** Expand all the elements so they are sorted and become adjacent by 
+     stretching them to the left down to min */
+ void SortAndStretchLeft(int min);
 
   /** Rewind the element pointer to the first GenomicRegion
    */

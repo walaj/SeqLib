@@ -21,10 +21,11 @@ namespace SnowTools {
     if (!bav.size())
       return;
     
-    // set the sequence
+    // set the sequence. Convention is store as it came off assembler for first alignment
     m_seq = bav.begin()->Sequence();
-    if (bav.begin()->ReverseFlag())
+    if (bav.begin()->ReverseFlag()) {
       SnowTools::rcomplement(m_seq);
+    }
     
     // zero the coverage
     tum_cov = std::vector<int>(m_seq.length(), 0);
@@ -32,7 +33,8 @@ namespace SnowTools {
 
     // make the individual alignments and add
     for (auto& i : bav) {
-      m_frag_v.push_back(AlignmentFragment(i));
+      bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
+      m_frag_v.push_back(AlignmentFragment(i, flip));
       m_frag_v.back().num_align = bav.size();
     }
 
@@ -127,8 +129,8 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
     
     int pos = -1;
     int aln = -1;
-    int rc = 0;
     int dum= 0;
+    int rc;
     std::string this_cig;
     std::string seq = i.QualityTrimmedSequence(4, dum);
     std::string sr = i.GetZTag("SR");
@@ -402,15 +404,16 @@ void AlignedContig::setMultiMapBreakPairs() {
 	  //std::cerr << "Mulitple alignments for " << brv[0].Qname() << std::endl;
 	}
 	
-	if (brv.size() == 0)
+	if (brv.size() == 0) {
 	  continue;
+	}
 	
 	bool length_pass = (brv[0].PositionEnd() - brv[0].Position()) >= (seqr.length() * 0.95);
 	bool mapq_pass = brv[0].MapQuality();
 	int ins_bases = brv[0].MaxInsertionBases();
 	int del_bases = brv[0].MaxDeletionBases();
 	
-	//std::cerr << "just aligned " << brv[0] << " SR " << brv[0].GetZTag("SR") << " size " << bav.size() << std::endl;
+	//std::cerr << "just aligned " << brv[0] << " size " << bav.size() << std::endl;
 
 	// store read2contig alignment info in this read
 	if ( length_pass && mapq_pass && ins_bases == 0 && del_bases == 0)
@@ -430,13 +433,16 @@ void AlignedContig::setMultiMapBreakPairs() {
 
 	    // add the coverage
 	    int cc = brv[0].Position();
-	    if (i.GetZTag("SR").at(0) == 't')
-	      while (cc <= brv[0].PositionEnd() && cc < tum_cov.size())
-		++tum_cov[cc++];
-	    else 
-	      while (cc <= brv[0].PositionEnd() && cc < norm_cov.size())
-		++norm_cov[cc++];
-
+	    std::string srr = i.GetZTag("SR");
+	    if (srr.length()) {
+	      if (srr.at(0) == 't')
+		while (cc <= brv[0].PositionEnd() && cc < (int)tum_cov.size())
+		  ++tum_cov[cc++];
+	      else
+		while (cc <= brv[0].PositionEnd() && cc < (int)norm_cov.size())
+		  ++norm_cov[cc++];
+	    }
+	    
 	  }
 	else if (ins_bases && mapq_pass && length_pass)
 	  ++insertion_against_contig_read_count;
@@ -468,7 +474,7 @@ void AlignedContig::setMultiMapBreakPairs() {
   }
 
   std::pair<int,int> AlignedContig::getCoverageAtPosition(int pos) const {
-    if (pos <= 0 || pos >= tum_cov.size())
+    if (pos <= 0 || pos >= (int)tum_cov.size())
       return std::pair<int,int>(0,0);
     
     return std::pair<int,int>(tum_cov[pos], norm_cov[pos]);
@@ -526,13 +532,16 @@ void AlignedContig::setMultiMapBreakPairs() {
     return false;
   }
 
-  AlignmentFragment::AlignmentFragment(const BamRead &talign) {
+  AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip) {
     
     m_align = talign;
     
     // orient cigar so it is on the contig orientation. 
     // need to do this to get the right ordering of the contig fragments below
-    if (m_align.ReverseFlag()) {
+    // We only flip if we flipped the sequence, and that was determined
+    // by the convention set in AlignedContig::AlignedContig, so we need
+    // to pass that information explicitly
+    if (flip/*m_align.ReverseFlag()*/) {
       m_cigar = m_align.GetReverseCigar();
     } else { 
       m_cigar = m_align.GetCigar();

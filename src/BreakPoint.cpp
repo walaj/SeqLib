@@ -628,6 +628,9 @@ namespace SnowTools {
 	if (issplit1 || issplit2)
 	  reads.push_back(j);
 
+	if ( (issplit1 || issplit2) && (cname == "c_21_43243332_43245332_32"))
+	  std::cout << sr << " " << j << std::endl;
+
 	// update the counters for each end
 	if (issplit1 && tumor_read)
 	  tsplit1++;
