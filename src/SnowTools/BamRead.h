@@ -15,6 +15,8 @@
 #include "htslib/kstring.h"
 #include "htslib/faidx.h"
 
+#include "SnowTools/GenomicRegion.h"
+
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
                                'T', ' ', ' ', ' ', 
@@ -159,6 +161,9 @@ class BamRead {
   void SetSequence(const std::string& seq);
 
   friend std::ostream& operator<<(std::ostream& out, const BamRead &r);
+
+  /** Return read as a GenomicRegion */
+  GenomicRegion asGenomicRegion() const;
   
   /** Get the max insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {
