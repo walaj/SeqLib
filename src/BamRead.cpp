@@ -17,6 +17,10 @@ namespace SnowTools {
     b = std::shared_ptr<bam1_t>(a, free_delete()); 
   }
 
+  GenomicRegion BamRead::asGenomicRegion() const {
+    return gr(b->core.tid, b->core.pos, PositionEnd());
+  }
+
   void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
   {
     // get the old tag
