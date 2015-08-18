@@ -27,7 +27,7 @@ class GenomicRegion {
   /** Construct an "empty" GenomicRegion at (chr -1), pos 0, width = 1
    */
   GenomicRegion() : chr(-1), pos1(0), pos2(0) {};
-  
+
   /** Construct a GenomicRegion at a specific start and end location 
    * @param t_chr Chromosome id  (chr1 = 0, etc)
    * @param t_pos1 Start position
@@ -64,7 +64,7 @@ class GenomicRegion {
    * Creates a GenomicRegion with pos1 = pos2. Simulates a random value
    * with val <= genome_size_XY and then converts to GenomicRegion
    */
-  void random();
+  void random(uint32_t seed = 0);
 
   /** Does this GenomicRegion represent a valid region? */
   bool valid() const { return chr >= 0; }

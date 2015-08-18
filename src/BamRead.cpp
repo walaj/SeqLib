@@ -18,7 +18,7 @@ namespace SnowTools {
   }
 
   GenomicRegion BamRead::asGenomicRegion() const {
-    return gr(b->core.tid, b->core.pos, PositionEnd());
+    return GenomicRegion(b->core.tid, b->core.pos, PositionEnd());
   }
 
   void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
@@ -41,6 +41,14 @@ namespace SnowTools {
     // add the new one
     AddZTag(tag, tmp);
     
+  }
+
+  void BamRead::clearSeqQualAndTags() {
+
+    int new_size = b->core.l_qname + ((b)->core.n_cigar<<2);// + 1; ///* 0xff seq */ + 1 /* 0xff qual */;
+    b->data = (uint8_t*)realloc(b->data, new_size);
+    b->l_data = new_size;
+    b->core.l_qseq = 0;
   }
 
   void BamRead::SetSequence(const std::string& seq) {
@@ -193,7 +201,14 @@ namespace SnowTools {
     int i = 0; 
     
     uint8_t * qual = bam_get_qual(b.get());
+    
+    // if there is no quality score, return whole thing
+    if (qual[0] == 0xff) {
+      startpoint = 0;
+      return Sequence();
+    }
 
+    
     // get the start point (loop forward)
     while(i < b->core.l_qseq) {
       int ps = qual[i];
