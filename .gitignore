@@ -29,3 +29,4 @@ stamp-h1
 *.so*
 Makefile
 *.pico
+test*
