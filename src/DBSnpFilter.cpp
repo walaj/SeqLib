@@ -88,6 +88,7 @@ namespace SnowTools {
 
   std::ostream& operator<<(std::ostream& out, const DBSnpSite& d) {
     out << d.chr << ":" << d.pos1 << "-" << d.pos2 << "\t" << d.m_rs << " REF " << d.m_ref << " ALT " << d.m_alt;
+    return out;
   }
 
   bool DBSnpFilter::queryBreakpoint(BreakPoint& bp) {

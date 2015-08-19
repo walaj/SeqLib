@@ -76,7 +76,7 @@ namespace SnowTools {
     // allocate the sequence
     uint8_t* m_bases = b->data + b->core.l_qname + (b->core.n_cigar<<2);
     int slen = seq.length();
-    int j = 0;
+
     for (int i = 0; i < slen; ++i) {
 	
       // bad idea but works for now
@@ -102,6 +102,8 @@ namespace SnowTools {
     uint8_t* t = bam_get_aux(b);
     memcpy(t, oldd + old_aux_spot, old_aux_len);
 
+    // reset the max size
+    b->m_data = b->l_data;
     
   }
   
@@ -126,6 +128,9 @@ namespace SnowTools {
     // copy over the old data
     memcpy(b->data + b->core.l_qname, nonq, nonq_len);
     free(nonq);
+
+    // reset the max size
+    b->m_data = b->l_data;
   }
 
   /*void BamRead::SetSequence(std::string s)

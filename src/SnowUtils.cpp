@@ -1,7 +1,7 @@
 #include "SnowTools/SnowUtils.h"
 #include <random>
 
-std::vector<double> std::getWeightedSum(const std::vector<double>& c) {
+std::vector<double> SnowTools::getWeightedSum(const std::vector<double>& c) {
 
   double sum = 0;
   for (auto& i : c)
@@ -32,6 +32,8 @@ int SnowTools::weightedRandom(const std::vector<double>& cs) {
       return al;
     ++al;
   }
+  return al;
+}
 
 void SnowTools::genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max, uint32_t seed) {
 
@@ -53,8 +55,9 @@ void SnowTools::genRandomValue(uint32_t &i, const uint32_t &max, uint32_t seed) 
   if (seed == 0) {
     seed = rd();
   }
-
+  
   std::mt19937 eng(seed); // seed the generator
   std::uniform_int_distribution<uint32_t> distr(0, max); // define the range
   i = distr(eng);
 }
+ 

@@ -130,7 +130,7 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
     int pos = -1;
     int aln = -1;
     int dum= 0;
-    int rc;
+    int rc = 0;
     std::string this_cig;
     std::string seq = i.QualityTrimmedSequence(4, dum);
     std::string sr = i.GetZTag("SR");
@@ -444,33 +444,16 @@ void AlignedContig::setMultiMapBreakPairs() {
 	    }
 	    
 	  }
+
 	else if (ins_bases && mapq_pass && length_pass)
 	  ++insertion_against_contig_read_count;
 	else if (del_bases && mapq_pass && length_pass)
 	  ++deletion_against_contig_read_count;
       }
-    
-    // go through the indel breaks and assign support coverage
-    for (auto& j : m_frag_v) {
-      for (auto& i : j.m_indel_breaks) {
-	std::pair<int,int> p1 = getCoverageAtPosition(i.cpos1);
-	std::pair<int,int> p2 = getCoverageAtPosition(i.cpos2);
-	i.tcov_support = std::min(p1.first, p2.first);
-	i.ncov_support = std::min(p1.second, p2.second);
-      }
-    }
-    // go through the SV breaks and assign support coverage
-    for (auto& i : m_local_breaks) {
-      std::pair<int,int> p1 = getCoverageAtPosition(i.cpos1);
-      std::pair<int,int> p2 = getCoverageAtPosition(i.cpos2);
-      i.tcov_support = std::min(p1.first, p2.first);
-      i.ncov_support = std::min(p1.second, p2.second);
-    }
 
-    std::pair<int,int> p1 = getCoverageAtPosition(m_global_bp.cpos1);
-    std::pair<int,int> p2 = getCoverageAtPosition(m_global_bp.cpos2);
-    m_global_bp.tcov_support = std::min(p1.first, p2.first);
-    m_global_bp.ncov_support = std::min(p1.second, p2.second);
+
+    assignSupportCoverage();
+
   }
 
   std::pair<int,int> AlignedContig::getCoverageAtPosition(int pos) const {
@@ -936,5 +919,32 @@ bool AlignedContig::hasVariant() const {
 
   }
 
+  void AlignedContig::assignSupportCoverage() {
+    
+    // go through the indel breaks and assign support coverage
+    for (auto& j : m_frag_v) {
+      for (auto& i : j.m_indel_breaks) {
+	std::pair<int,int> p1 = getCoverageAtPosition(i.cpos1);
+	std::pair<int,int> p2 = getCoverageAtPosition(i.cpos2);
+	i.tcov_support = std::min(p1.first, p2.first);
+	i.ncov_support = std::min(p1.second, p2.second);
+      }
+    }
+    
+    // go through the SV breaks and assign support coverage
+    for (auto& i : m_local_breaks) {
+      std::pair<int,int> p1 = getCoverageAtPosition(i.cpos1);
+      std::pair<int,int> p2 = getCoverageAtPosition(i.cpos2);
+      i.tcov_support = std::min(p1.first, p2.first);
+      i.ncov_support = std::min(p1.second, p2.second);
+    }
+    
+    std::pair<int,int> p1 = getCoverageAtPosition(m_global_bp.cpos1);
+    std::pair<int,int> p2 = getCoverageAtPosition(m_global_bp.cpos2);
+    m_global_bp.tcov_support = std::min(p1.first, p2.first);
+    m_global_bp.ncov_support = std::min(p1.second, p2.second);
+
+  }
+  
   
 }

@@ -34,7 +34,7 @@ namespace SnowTools
     DiscordantCluster(const BamReadVector& this_reads, const BamReadVector& all_reads);
     
     /** Is this discordant cluster empty? */
-    bool isEmpty() const { assert(m_reg1.isEmpty() == m_reg2.isEmpty()); return m_reg1.isEmpty(); }
+    bool isEmpty() const;
 
     /** Return a string representing the output file header */
     static std::string header() { 
@@ -86,11 +86,12 @@ namespace SnowTools
     std::unordered_map<std::string, BamRead> mates;
 
     std::string m_contig = "";
-  private:
+
 
     GenomicRegion m_reg1;
     GenomicRegion m_reg2;
-    
+
+  private:    
     std::string m_id;
 
     std::unordered_map<std::string, bool> qnames; // TODO get rid of it

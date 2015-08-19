@@ -164,9 +164,6 @@ class BamRead {
 
   /** Return read as a GenomicRegion */
   GenomicRegion asGenomicRegion() const;
-  
-  /** Return read as a GenomicRegion */
-  GenomicRegion asGenomicRegion() const;
 
   /** Get the max insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {
@@ -396,10 +393,19 @@ class BamRead {
   /** Return a short description (chr:pos) of this read */
   inline std::string Brief(bam_hdr_t * h = nullptr) const {
     if (!h)
-      return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos));
+      return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");
     else
-      return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos));      
+      return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");      
   }
+
+  /** Return a short description (chr:pos) of this read's mate */
+  inline std::string BriefMate(bam_hdr_t * h = nullptr) const {
+    if (!h)
+      return(std::to_string(b->core.mtid + 1) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");
+    else
+      return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
+  }
+
 
   /** Strip a particular alignment tag 
    * @param tag Tag to remove
@@ -415,6 +421,7 @@ class BamRead {
     size_t keep = (b->core.n_cigar<<2) + b->core.l_qname + ((b->core.l_qseq + 1)>>1) + b->core.l_qseq;
     b->data = (uint8_t*)realloc(b->data, keep); // free the end, which has aux data
     b->l_data = keep;
+    b->m_data = b->l_data;
   }
 
   /** Return the raw pointer */
