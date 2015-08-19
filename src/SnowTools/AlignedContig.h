@@ -245,6 +245,8 @@ namespace SnowTools {
    */
   std::vector<BreakPoint> getAllBreakPoints() const;
 
+  void assignSupportCoverage();
+
   std::vector<const BreakPoint*> getAllBreakPointPointers() const ;
 
   void addDiscordantCluster(DiscordantClusterMap& dmap);
@@ -254,12 +256,12 @@ namespace SnowTools {
   
   std::pair<int, int> getCoverageAtPosition(int pos) const;
 
- private:
+  BamReadVector m_bamreads; // store all of the reads aligned to contig
 
   std::vector<int> tum_cov;
   std::vector<int> norm_cov;
 
-  BamReadVector m_bamreads; // store all of the reads aligned to contig
+ private:
 
   std::vector<BreakPoint> m_local_breaks; // store all of the multi-map BreakPoints for this contigs 
 

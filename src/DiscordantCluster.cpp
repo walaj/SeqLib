@@ -4,7 +4,7 @@
 #include <set>
 #include <numeric>
 
-#define DISC_PAD 400
+#define DISC_PAD 100
 #define MIN_PER_CLUST 2
 
 namespace SnowTools {
@@ -32,8 +32,8 @@ namespace SnowTools {
     for (auto& r : bav) {
 
       // is the read even discordant?
-      bool disc_r = (abs(r.InsertSize()) >= 600) || (r.MateChrID() != r.ChrID());
-      if (tmp_map[r.Qname()] == 2 && disc_r)
+      bool disc_r = (abs(r.InsertSize()) >= 1000) || (r.MateChrID() != r.ChrID());
+      if (tmp_map[r.Qname()] >= 2 && disc_r)
 	bav_dd.push_back(r);
 
     }
@@ -51,12 +51,12 @@ namespace SnowTools {
 
     // make the fwd and reverse READ clusters. dont consider mate yet
     __cluster_reads(bav_dd, fwd, rev);
-    
+
     // within the forward read clusters, cluster mates on fwd and rev
     __cluster_mate_reads(fwd, fwdfwd, fwdrev);
 
     // within the reverse read clusters, cluster mates on fwd and rev
-    __cluster_mate_reads(rev, revfwd, revrev);
+    __cluster_mate_reads(rev, revfwd, revrev); 
 
     // we have the reads in their clusters. Just convert to discordant reads clusters
     DiscordantClusterMap dd;
@@ -64,12 +64,13 @@ namespace SnowTools {
     __convertToDiscordantCluster(dd, fwdrev, bav_dd);
     __convertToDiscordantCluster(dd, revfwd, bav_dd);
     __convertToDiscordantCluster(dd, revrev, bav_dd);
-    
+
     // remove clusters that dont overlap with the window
     DiscordantClusterMap dd_clean;
     for (auto& i : dd) {
-      if (interval.isEmpty() /* whole genome */ || i.second.m_reg1.getOverlap(interval) > 0 || i.second.m_reg2.getOverlap(interval))
-	dd_clean[i.first] = i.second;
+      if (!i.second.isEmpty())
+	if (interval.isEmpty() /* whole genome */ || i.second.m_reg1.getOverlap(interval) > 0 || i.second.m_reg2.getOverlap(interval))
+	  dd_clean[i.first] = i.second;
     }
     
     return dd_clean;
@@ -91,10 +92,13 @@ namespace SnowTools {
     // the ID is just the first reads Qname
     m_id = this_reads[0].Qname();
     assert(m_id.length());
+
+    //debug
+    assert(this_reads.back().MatePosition() - this_reads[0].MatePosition() < 10000);
+    assert(this_reads.back().Position() - this_reads[0].Position() < 10000);
     
     for (auto& i : this_reads) 
       {
-	
 	// double check that we did the clustering correctly. All read orientations should be same
 	assert(rev == i.ReverseFlag() && mrev == i.MateReverseFlag()); 
 
@@ -122,7 +126,7 @@ namespace SnowTools {
 
     //assert(reads.size() == mates.size());
     assert(reads.size() > 0);
-    
+
     // set the regions
     m_reg1 = SnowTools::GenomicRegion(-1,500000000,-1); // read region
     for (auto& i : reads) 
@@ -134,8 +138,9 @@ namespace SnowTools {
 	int endpos = i.second.PositionEnd(); //r_endpos(i.second);
 	if (endpos > m_reg1.pos2)
 	  m_reg1.pos2 = endpos;
+	assert(m_reg1.width() < 2000);
       }
-    
+
     m_reg2 = SnowTools::GenomicRegion(-1,500000000,-1); // mate region
     for (auto& i : mates) 
       {
@@ -146,8 +151,8 @@ namespace SnowTools {
 	int endpos = i.second.PositionEnd();
 	if (endpos > m_reg2.pos2)
 	  m_reg2.pos2 = endpos;
+	assert(m_reg2.width() < 2000);
       }
-
 
     // orient them correctly so that left end is first
     if (m_reg2 < m_reg1) {
@@ -165,13 +170,28 @@ namespace SnowTools {
   void DiscordantCluster::addMateReads(const BamReadVector& bav) 
   { 
     
+    if (!reads.size())
+      return;
+    
+    // get region around one of the reads.
+    // OK, so this is necessary because...
+    // we are looping through and trying to fill mate reads by comparing
+    // against qname of reads. BUT this can be problematic if there are secondary 
+    // or supplementarty alignments. So use this region to check that mate ALSO agrees
+    // with mate regions
+    GenomicRegion g(reads.begin()->second.MateChrID(), reads.begin()->second.MatePosition(), reads.begin()->second.MatePosition()); 
+    bool st = reads.begin()->second.MateReverseFlag();
+    g.pad(DISC_PAD);
+    
     for (auto& i : bav) {
       std::string sr;
       if (qnames.count(i.Qname())) 
 	{
+
 	  std::string tmp = i.GetZTag("SR");
 	  if (reads.count(tmp) == 0) // only add if this is a mate read
-	    mates[tmp] = i;
+	    if (i.ReverseFlag() == st && g.getOverlap(i.asGenomicRegion())) // agrees with intiial mate orientation and position
+	      mates[tmp] = i;
 	}
     }
     
@@ -238,7 +258,6 @@ namespace SnowTools {
 	  reads_string += tmp + ",";
 	}
       
-      //debug
       if (reads_string.length() == 0)
 	reads_string = "x";
       else
@@ -295,9 +314,22 @@ namespace SnowTools {
       this_info = {a.MateChrID(), a.MatePosition()};
     else 
       this_info = {a.ChrID(), a.Position()};
+
+    // is this cluster too big? happens if too many discordant reads. Enforce a hard cutoff
+    bool too_big;
+    if (mate)
+      too_big = (clust.size() > 1 && (clust.back().MatePosition() - clust[0].MatePosition()) > 1500);
+    else
+      too_big = (clust.size() > 1 && (clust.back().Position() - clust[0].Position()) > 1500);      
     
+    // note to self. this rarely gets hit?
+    if (too_big) {
+      std::cerr << "Cluster too big at " << clust[0].Brief() << " to " << clust.back().Brief() << std::endl;
+    }
+
     // check if this read is close enough to the last
-    if ( (this_info.first == last_info.first) && (this_info.second - last_info.second) <= DISC_PAD ) {
+    if (!too_big &&  (this_info.first == last_info.first) && (this_info.second - last_info.second) <= DISC_PAD) {
+
       // read belongs in current cluster, so add
       clust.push_back(a);
       last_info = this_info;
@@ -307,8 +339,9 @@ namespace SnowTools {
     } else {
       
       // if enough supporting reads, add as a cluster
-      if (clust.size() >= MIN_PER_CLUST) 
+      if (clust.size() >= MIN_PER_CLUST) {
 	cvec.push_back(clust);
+      }
       
       // clear this cluster and start a new one
       clust.clear();
@@ -325,6 +358,7 @@ namespace SnowTools {
       {
 	BamReadVector this_fwd, this_rev;
 	std::sort(v.begin(), v.end(), BamReadSort::ByMatePosition());
+
 	for (auto& r : v) 
 	  {
 	    // forward clustering
@@ -350,7 +384,7 @@ namespace SnowTools {
     BamReadVector this_fwd, this_rev;
 
     std::set<std::string> tmp_set;
-    
+
     // cluster in the READ direction, separately for fwd and rev
     for (auto& i : brv) {
       std::string qq = i.Qname();
@@ -368,8 +402,9 @@ namespace SnowTools {
 	  __add_read_to_cluster(rev, this_rev, i, false);
       }
     }
+
     // finish the last clusters
-    if (this_fwd.size() > 0)
+    if (this_fwd.size() > 0) 
       fwd.push_back(this_fwd);
     if (this_rev.size() > 0)
       rev.push_back(this_rev);
@@ -396,5 +431,9 @@ namespace SnowTools {
 
   }
 
+  bool DiscordantCluster::isEmpty() const {
+    return m_reg1.isEmpty() || m_reg2.isEmpty() || m_reg1.chr == -1 || m_reg2.chr == -1;
+  }
   
 }
+

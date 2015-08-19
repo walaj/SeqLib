@@ -176,7 +176,7 @@ namespace SnowTools {
     
     if ( (min_disc_mapq < 10 && min_assm_mapq < 30) || (max_assm_mapq < 40))
       confidence = "LOWMAPQ";
-    else if ( std::max(tsplit, nsplit) < 2 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
+    else if ( std::max(tsplit, nsplit) == 0 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
       confidence = "WEAKASSEMBLY";
     else if ( total_count < 15 && germ && span == -1) // be super strict about germline interchrom
       confidence = "WEAKASSEMBLY";

@@ -14,14 +14,6 @@
 
 namespace SnowTools {
 
-template<class T>
-GenomicRegionCollection<T>::GenomicRegionCollection(const BamReadVector& brv) {
-
-  for (auto& i : brv)
-    m_grv.push_back(GenomicRegion(i.ChrID(), i.Position(), i.PositionEnd()));
-}
-
-
   template<class T>
   void GenomicRegionCollection<T>::gsort() {
     
@@ -403,8 +395,9 @@ bool GenomicRegionCollection<T>::getNextGenomicRegion(T& gr)
 template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection(const BamReadVector& brv) {
 
-  for (auto& i : brv)
-    m_grv.push_back(GenomicRegion(i.ChrID(), i.Position, i.PositionEnd()x));
+  for (auto& i : brv) 
+    m_grv.push_back(GenomicRegion(i.ChrID(), i.Position(), i.PositionEnd()));
+
 }
 
 template<class T>
