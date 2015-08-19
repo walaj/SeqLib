@@ -414,6 +414,12 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
 GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(GenomicRegionCollection<K>& subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const
 {  
 
+#ifdef DEBUG_OVERLAPS
+  std::cerr << "OVERLAP SUBJECT: " << std::endl;
+  for (auto& i : subject)
+    std::cerr << i << std::endl;
+#endif
+
   GenomicRegionCollection<GenomicRegion> output;
 
   // loop through the query GRanges (this) and overlap with subject
