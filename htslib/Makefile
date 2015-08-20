@@ -84,6 +84,9 @@ BUILT_TEST_PROGRAMS = \
 
 all: lib-static $(BUILT_PROGRAMS) ##$(BUILT_TEST_PROGRAMS)
 
+##JEREMIAH
+distdir: ;
+
 HTSPREFIX =
 include htslib_vars.mk
 

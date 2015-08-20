@@ -663,8 +663,8 @@ namespace SnowTools {
     
     int pos1 = gr1.pos1;
     bool isdel = insertion.length() == 0;
-    if (isdel) // del breaks are stored as last non-deleted base. CigarMap stores as THE deleted base
-      pos1++;
+    //if (isdel) // del breaks are stored as last non-deleted base. CigarMap stores as THE deleted base
+    //  pos1++;
     std::string st = std::to_string(gr1.chr) + "_" + std::to_string(pos1) + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
     return st;
   }
@@ -771,21 +771,29 @@ namespace SnowTools {
     // set the allelic fraction
     double af_n = -1;
     double af_t = -1;
-    std::cerr << cname << " " << tcov_support << " " << ncov_support << std::endl;
+
     if (isindel && tcov > 0) 
       af_t = static_cast<double>(/*std::max(tsplit, tcigar)*/tcov_support) / static_cast<double>(tcov);
     if (isindel && ncov > 0) 
       af_n = static_cast<double>(/*std::max(nsplit, ncigar)*/ncov_support) / static_cast<double>(ncov);
     
+    std::string s_af_t = std::to_string(af_t);
+    if (s_af_t.length() > 4)
+      s_af_t = s_af_t.substr(0, 4);      
+    std::string s_af_n = std::to_string(af_n);
+    if (s_af_n.length() > 4)
+      s_af_n = s_af_n.substr(0, 4);
     
+    size_t rs_t = std::count(rs.begin(), rs.end(), 'r');
+
     if (isindel)
-      ss << ">>>> " << (insertion.size() ? "INSERTION" : "DELETION") <<  " of length " << getSpan() << " at " << gr1 << " contig " << cname 
+      ss << ">" << (insertion.size() ? "INS: " : "DEL: ") << getSpan() << " " << gr1 /*<< " "  << cname */
 	 << " T/N split: " << tsplit << "/" << nsplit << " T/N cigar: " 
-	 << tcigar << "/" << ncigar << " T/N AF " << af_t << "/" << af_n << " T/N Cov " << tcov << "/" << ncov << " DBSNP " << rs;
+	 << tcigar << "/" << ncigar << " T/N AF " << s_af_t << "/" << s_af_n << " T/N Cov " << tcov << "/" << ncov << " DBSNP: " << rs_t;
     else
-      ss << ">>>> STRUCTURAL VAR  at " << gr1.pointString() << " to " << gr2.pointString() << " SPAN " << getSpan() << " contig " << cname 
-	 << " T/N split: " << tsplit << "/" << nsplit << " T/N discordant: " 
-	 << dc.tcount << "/" << dc.ncount << " evidence " << evidence;
+      ss << "> SV: " << gr1.pointString() << " to " << gr2.pointString() << " SPAN " << getSpan() /*<< " "  << cname */
+	 << " T/N split: " << tsplit << "/" << nsplit << " T/N disc: " 
+	 << dc.tcount << "/" << dc.ncount << " " << evidence;
     
     
     return ss.str();

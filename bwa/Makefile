@@ -31,6 +31,8 @@ bwa:libbwa.a $(AOBJS) main.o
 
 ## JEREMIAH
 test: ; 
+dist: ;
+distdir: ;
 
 check: ;
 
