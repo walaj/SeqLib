@@ -754,7 +754,7 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   //bp.homology = "";
 
   int curr = 0;
-  int gcurrlen = -1;
+  int gcurrlen = 0; //-1;
 
   bp.gr1.pos1 = -1;
   bp.gr1.pos2 = -1;
