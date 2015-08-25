@@ -485,7 +485,7 @@ GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
   GRC out;
   // get this - that
   
-#ifdef BOOST_CONFIG_HPP
+#ifdef BOOST_CONFIG_HPP_dum
   using namespace boost::icl;
   typedef interval_set<int> TIntervalSet; 
   
@@ -529,6 +529,22 @@ GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
 
 #else
   std::cerr << "No Boost library detected. GenomicRegionCollection::complement will not function. Returning Empty GRC" << std::endl;
+
+  // sort this
+  //gsort();
+
+  // sort that
+  //subject.gsort();
+
+  subject.createTreeMap();
+  createTreeMap();
+
+  std::vector<int32_t> sub, que;
+  GRC tt = findOverlaps(subject, sub, que, true);
+  for (auto& i : tt)
+    std::cerr << i << std::endl;
+  
+  
   return out;
 #endif
 
