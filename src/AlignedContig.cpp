@@ -18,6 +18,7 @@ namespace SnowTools {
 
   AlignedContig::AlignedContig(const BamReadVector& bav) 
   {
+
     if (!bav.size())
       return;
     
@@ -31,17 +32,28 @@ namespace SnowTools {
     tum_cov = std::vector<int>(m_seq.length(), 0);
     norm_cov = std::vector<int>(m_seq.length(), 0);
 
+    size_t num_align = 0;
+    for (auto& i : bav)
+      if (!i.SecondaryFlag())
+	++num_align;
+
     // make the individual alignments and add
     for (auto& i : bav) {
-      bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
-      m_frag_v.push_back(AlignmentFragment(i, flip));
-      m_frag_v.back().num_align = bav.size();
+      if (!i.SecondaryFlag()) {
+	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
+	m_frag_v.push_back(AlignmentFragment(i, flip));
+	m_frag_v.back().num_align = num_align;
+      } else {
+	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
+	m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip));
+	//m_frag_v_secondary.push_back(AlignmentFragment(i, flip));
+	//m_frag_v_secondary.back().num_align = bav.size();
+      }      
     }
 
     // sort fragments by order on fwd-strand contig
     if (m_frag_v.size() > 1)
       std::sort(m_frag_v.begin(), m_frag_v.end());
-
     // get breaks out of it
     setMultiMapBreakPairs();
   }
@@ -95,10 +107,20 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
       " ins_aginst_contig " << ac.insertion_against_contig_read_count << 
       " del_against_contig " << ac.deletion_against_contig_read_count  << std::endl;       
 
+  // print the global breakpoint for secondaries
+  if (ac.m_global_bp_secondaries.size())
+    out << "SECONDARY Global BP: " << ac.m_global_bp << 
+      " ins_aginst_contig " << ac.insertion_against_contig_read_count << 
+      " del_against_contig " << ac.deletion_against_contig_read_count  << std::endl;       
+
   // print the multi-map breakpoints
   for (auto& i : ac.m_local_breaks)
     if (!i.isEmpty())
       out << "Multi-map BP: " << i << " -- " << ac.getContigName() << std::endl;       
+  // print the multi-map breakpoints for secondary
+  for (auto& i : ac.m_local_breaks_secondaries)
+    if (!i.isEmpty())
+      out << "SECONDARY Multi-map BP: " << i << " -- " << ac.getContigName() << std::endl;       
 
   // print the indel breakpoints
   for (auto& i : ac.m_frag_v)
@@ -110,6 +132,15 @@ std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
   // print the AlignmentFragments alignments
   for (auto& i : ac.m_frag_v) 
     out << i << " Disc: " << ac.printDiscordantClusters() << " -- " << ac.getContigName() << std::endl;
+  bool draw_divider = true;
+  for (auto& i : ac.m_frag_v) 
+    for (auto& j : i.secondaries) {
+      if (draw_divider) {
+	out << std::string(ac.m_seq.length(), 'S') << std::endl;
+	draw_divider = false;
+      }
+      out << j << " Disc: " << ac.printDiscordantClusters() << " -- " << ac.getContigName() << std::endl;
+    }
 
   // print the break locations for indel deletions
   for (auto& i : ac.m_frag_v) {
@@ -223,7 +254,7 @@ void AlignedContig::setMultiMapBreakPairs() {
   // if single mapped contig, nothing to do here
   if (m_frag_v.size() == 1)
     return;
-
+  
   // initialize the breakpoint, fill with basic info
   BreakPoint bp;
   bp.seq = getSequence();
@@ -238,75 +269,100 @@ void AlignedContig::setMultiMapBreakPairs() {
   //parseDiscovarName(bp.disco_norm, bp.disco_tum);
 
   // walk along the ordered contig list and make the breakpoint pairs  
-  for (auto it = m_frag_v.begin(); it != m_frag_v.end() - 1; it++) {
+  for (/*auto*/AlignmentFragmentVector::const_iterator it = m_frag_v.begin(); it != m_frag_v.end() - 1; it++) {
     
-    bp.gr1 = SnowTools::GenomicRegion(it->m_align.ChrID(), it->gbreak2, it->gbreak2);
-    bp.gr2 = SnowTools::GenomicRegion((it+1)->m_align.ChrID(), (it+1)->gbreak1, (it+1)->gbreak1);
-    
-    bp.gr1.strand = it->m_align.ReverseFlag() ? '-' : '+'; 
-    bp.gr2.strand = (it+1)->m_align.ReverseFlag() ? '+' : '-';
+    AlignmentFragmentVector bwa_hits_1, bwa_hits_2;
+    bwa_hits_1.push_back(*it);
+    bwa_hits_2.push_back(*(it+1));
+    bwa_hits_1.insert(bwa_hits_1.end(), it->secondaries.begin(), it->secondaries.end());
+    bwa_hits_2.insert(bwa_hits_2.end(), (it+1)->secondaries.begin(), (it+1)->secondaries.end());
 
-    bp.cpos1 = it->break2; // take the right-most breakpoint as the first
-    bp.cpos2 = (it+1)->break1;  // take the left-most of the next one
-    
-    assert(bp.cpos1 < 10000);
-    assert(bp.cpos2 < 10000);
+    for (auto& a : bwa_hits_1) {
+      for (auto& b : bwa_hits_2) {
 
-    // set the mapq
-    bp.mapq1 = it->m_align.MapQuality();
-    bp.mapq2 = (it+1)->m_align.MapQuality();
-    
-    assert(bp.mapq1 < 1000 && bp.mapq2 < 1000);
-    
-    // set the local
-    bp.local1 = it->local;
-    bp.local2 = (it+1)->local;
-    
-    // set the match length
-    //for (CigarOpVec::const_iterator cc = it->align.CigarData.begin(); cc != it->align.CigarData.end(); cc++)
-    //  if (cc->Type == 'M')
-    //	bp.matchlen1 += cc->Length;
-    //for (CigarOpVec::const_iterator cc = (it+1)->align.CigarData.begin(); cc != (it+1)->align.CigarData.end(); cc++)
-    //  if (cc->Type == 'M')
-    //bp.matchlen2 += cc->Length;
-    
-    // set the NM
-    /*int nmtag;
-    if (!it->align.GetTag("NM", nmtag))
-      nmtag = 0;
-    bp.nm1 = nmtag;
-    if (!(it+1)->align.GetTag("NM", nmtag))
-      nmtag = 0;
-    bp.nm2 = nmtag;
-    */
+	bp.chr_name1 = a.m_align.GetZTag("MC");
+	bp.chr_name2 = b.m_align.GetZTag("MC");
+	
+	bp.gr1 = SnowTools::GenomicRegion(a.m_align.ChrID(), a.gbreak2, a.gbreak2);
+	bp.gr2 = SnowTools::GenomicRegion(b.m_align.ChrID(), b.gbreak1, b.gbreak1);
+	
+	bp.sub_n1 = a.sub_n;
+	bp.sub_n2 = b.sub_n;
+	
+	bp.gr1.strand = a.m_align.ReverseFlag() ? '-' : '+'; 
+	bp.gr2.strand = b.m_align.ReverseFlag() ? '+' : '-';
+	
+	bp.cpos1 = a.break2; // take the right-most breakpoint as the first
+	bp.cpos2 = b.break1;  // take the left-most of the next one
+	
+	assert(bp.cpos1 < 10000);
+	assert(bp.cpos2 < 10000);
+	
+	// set the mapq
+	bp.mapq1 = a.m_align.MapQuality();
+	bp.mapq2 = b.m_align.MapQuality();
+	
+	assert(bp.mapq1 < 1000 && bp.mapq2 < 1000);
+	
+	// set the local
+	bp.local1 = a.local;
+	bp.local2 = b.local;
+	
+	// set the match length
+	//for (CigarOpVec::const_iterator cc = a.align.CigarData.begin(); cc != a.align.CigarData.end(); cc++)
+	//  if (cc->Type == 'M')
+	//	bp.matchlen1 += cc->Length;
+	//for (CigarOpVec::const_iterator cc = b.align.CigarData.begin(); cc != b.align.CigarData.end(); cc++)
+	//  if (cc->Type == 'M')
+	//bp.matchlen2 += cc->Length;
+	
+	// set the NM
+	/*int nmtag;
+	  if (!a.align.GetTag("NM", nmtag))
+	  nmtag = 0;
+	  bp.nm1 = nmtag;
+	  if (!b.align.GetTag("NM", nmtag))
+	  nmtag = 0;
+	  bp.nm2 = nmtag;
+	*/
+	
+	// set the insertion / homology
+	try {
+	  if (bp.cpos1 >= bp.cpos2)
+	    bp.homology = m_seq.substr(bp.cpos2, bp.cpos1-bp.cpos2);
+	  else if (bp.cpos2 >= bp.cpos1)
+	    bp.insertion = m_seq.substr(bp.cpos1, bp.cpos2-bp.cpos1);
+	  if (bp.insertion.length() == 0)
+	    bp.insertion = "";
+	  if (bp.homology.length() == 0)
+	    bp.homology = "";
+	} catch (...) {
+	  unsigned hom = abs(bp.cpos1 - bp.cpos2);
+	  std::cout << "Caught error with contig on fine-getBreakPairs: " << a.m_align.Qname() << std::endl; 
+	  std::cout << "m_seq length: " << m_seq.length() << " bp.cpos1: " << bp.cpos1 << " bp.cpos2: " << bp.cpos2 << " bp.cpos1-bp.cpos2: " << hom << " m_seq: " << m_seq << std::endl;
+	}
+	
+	if (!a.m_align.SecondaryFlag() && !b.m_align.SecondaryFlag())
+	  m_local_breaks.push_back(bp);
+	else
+	  m_local_breaks_secondaries.push_back(bp);	  
 
-    // set the insertion / homology
-    try {
-      if (bp.cpos1 >= bp.cpos2)
-	bp.homology = m_seq.substr(bp.cpos2, bp.cpos1-bp.cpos2);
-      else if (bp.cpos2 >= bp.cpos1)
-	bp.insertion = m_seq.substr(bp.cpos1, bp.cpos2-bp.cpos1);
-      if (bp.insertion.length() == 0)
-	bp.insertion = "";
-      if (bp.homology.length() == 0)
-	bp.homology = "";
-    } catch (...) {
-      unsigned hom = abs(bp.cpos1 - bp.cpos2);
-      std::cout << "Caught error with contig on fine-getBreakPairs: " << it->m_align.Qname() << std::endl; 
-      std::cout << "m_seq length: " << m_seq.length() << " bp.cpos1: " << bp.cpos1 << " bp.cpos2: " << bp.cpos2 << " bp.cpos1-bp.cpos2: " << hom << " m_seq: " << m_seq << std::endl;
+      }
     }
-
-    m_local_breaks.push_back(bp);
-    
   }
   
   // if this is a double mapping, we are done
   if (m_frag_v.size() == 2) {
-    m_global_bp = bp;
+    m_global_bp = m_local_breaks[0];
     m_local_breaks.clear();
+    for (auto& i : m_local_breaks_secondaries)
+      m_global_bp_secondaries.push_back(i);
+    m_local_breaks_secondaries.clear();
     return;
   }
   
+  // TODO support 3+ mappings that contain secondary
+
   // go through alignments and find start and end that reach mapq 
   size_t bstart = 1000; //1000 is a dummy
   size_t bend = m_frag_v.size() - 1;
@@ -335,54 +391,54 @@ void AlignedContig::setMultiMapBreakPairs() {
   m_global_bp.gr2.chr = m_frag_v[bend].m_align.ChrID();
   //m_global_bp.pos1  = m_frag_v[bstart].gbreak2;
   m_global_bp.cpos2 = m_frag_v[bend].break1; // last mapping
-   //m_global_bp.pos2  = m_frag_v[bend].gbreak1;
-   //m_global_bp.refID1 = m_frag_v[bstart].align.RefID; 
-   //m_global_bp.refID2 = m_frag_v[bend].align.RefID; 
-
-   // set the strands
-   //m_global_bp.gr1.strand = m_frag_v[bstart].align.IsReverseStrand() ? '-' : '+';
-   //m_global_bp.gr2.strand = m_frag_v[bend].align.IsReverseStrand()   ? '+' : '-';
+  //m_global_bp.pos2  = m_frag_v[bend].gbreak1;
+  //m_global_bp.refID1 = m_frag_v[bstart].align.RefID; 
+  //m_global_bp.refID2 = m_frag_v[bend].align.RefID; 
+  
+  // set the strands
+  //m_global_bp.gr1.strand = m_frag_v[bstart].align.IsReverseStrand() ? '-' : '+';
+  //m_global_bp.gr2.strand = m_frag_v[bend].align.IsReverseStrand()   ? '+' : '-';
   m_global_bp.gr1.strand = !m_frag_v[bstart].m_align.ReverseFlag() ? '+' : '-';
   m_global_bp.gr2.strand = m_frag_v[bend].m_align.ReverseFlag() ? '+' : '-';
-
-
-   // set the splits
-   //m_global_bp.nsplit1 = m_frag_v[bstart].nsplit2;
-   //m_global_bp.tsplit1 = m_frag_v[bstart].tsplit2;
-   //m_global_bp.nsplit2 = m_frag_v[bend].nsplit1;
-   //m_global_bp.tsplit2 = m_frag_v[bend].tsplit1;
-
-   //m_global_bp.nsplit = std::min(m_global_bp.nsplit1, m_global_bp.nsplit2);
-   //m_global_bp.tsplit = std::min(m_global_bp.tsplit1, m_global_bp.tsplit2);
-
-   // set the mapping quality
+  
+  
+  // set the splits
+  //m_global_bp.nsplit1 = m_frag_v[bstart].nsplit2;
+  //m_global_bp.tsplit1 = m_frag_v[bstart].tsplit2;
+  //m_global_bp.nsplit2 = m_frag_v[bend].nsplit1;
+  //m_global_bp.tsplit2 = m_frag_v[bend].tsplit1;
+  
+  //m_global_bp.nsplit = std::min(m_global_bp.nsplit1, m_global_bp.nsplit2);
+  //m_global_bp.tsplit = std::min(m_global_bp.tsplit1, m_global_bp.tsplit2);
+  
+  // set the mapping quality
   m_global_bp.mapq1 = m_frag_v[bstart].m_align.MapQuality();
   m_global_bp.mapq2 = m_frag_v[bend].m_align.MapQuality();
 
-   if (m_global_bp.mapq1 > 60 || m_global_bp.mapq2 > 60) {
-     std::cerr << "bad mapq GLOBAL" << std::endl;
-     std::cerr << m_global_bp.toString() << std::endl;
-     std::cerr << " m_frag_v size " << m_frag_v.size() << " bstart " << bstart << " bend " << bend << std::endl;
-     exit(EXIT_FAILURE); 
-   }
-
-   // set the homologies
-   try {
-     if (m_global_bp.cpos1 >= m_global_bp.cpos2)
-       m_global_bp.homology = m_seq.substr(m_global_bp.cpos2, m_global_bp.cpos1-m_global_bp.cpos2);
-     else if (m_global_bp.cpos2 >= m_global_bp.cpos1)
-       m_global_bp.insertion = m_seq.substr(m_global_bp.cpos1, m_global_bp.cpos2-m_global_bp.cpos1);
-     if (m_global_bp.insertion.length() == 0)
-       m_global_bp.insertion = "N";
-     if (m_global_bp.homology.length() == 0)
-       m_global_bp.homology = "N";
-     m_global_bp.order();
-   } catch (...) {
-     std::cout << "Caught error with contig on global-getBreakPairs: " << getContigName() << std::endl;
-   }
-
+  if (m_global_bp.mapq1 > 60 || m_global_bp.mapq2 > 60) {
+    std::cerr << "bad mapq GLOBAL" << std::endl;
+    std::cerr << m_global_bp.toString() << std::endl;
+    std::cerr << " m_frag_v size " << m_frag_v.size() << " bstart " << bstart << " bend " << bend << std::endl;
+    exit(EXIT_FAILURE); 
+  }
+  
+  // set the homologies
+  try {
+    if (m_global_bp.cpos1 >= m_global_bp.cpos2)
+      m_global_bp.homology = m_seq.substr(m_global_bp.cpos2, m_global_bp.cpos1-m_global_bp.cpos2);
+    else if (m_global_bp.cpos2 >= m_global_bp.cpos1)
+      m_global_bp.insertion = m_seq.substr(m_global_bp.cpos1, m_global_bp.cpos2-m_global_bp.cpos1);
+    if (m_global_bp.insertion.length() == 0)
+      m_global_bp.insertion = "N";
+    if (m_global_bp.homology.length() == 0)
+      m_global_bp.homology = "N";
+    m_global_bp.order();
+  } catch (...) {
+    std::cout << "Caught error with contig on global-getBreakPairs: " << getContigName() << std::endl;
+  }
+  
 }
-
+  
   void AlignedContig::alignReads(BamReadVector& bav)
   {
     
@@ -464,7 +520,7 @@ void AlignedContig::setMultiMapBreakPairs() {
   }
  
   std::string AlignedContig::printDiscordantClusters() const {
-    
+
     std::stringstream out;
     if (m_dc.size() == 0)
       return "none";
@@ -518,7 +574,9 @@ void AlignedContig::setMultiMapBreakPairs() {
   AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip) {
     
     m_align = talign;
-    
+
+    sub_n = talign.GetIntTag("SB");
+          
     // orient cigar so it is on the contig orientation. 
     // need to do this to get the right ordering of the contig fragments below
     // We only flip if we flipped the sequence, and that was determined
@@ -574,7 +632,7 @@ void AlignedContig::setMultiMapBreakPairs() {
     // parse right away to see if there are indels on this alignment
     BreakPoint bp;
     size_t fail_safe_count = 0;
-    while (parseIndelBreak(bp) && fail_safe_count++ < 100) {
+    while (parseIndelBreak(bp) && fail_safe_count++ < 100 && !m_align.SecondaryFlag()) {
       m_indel_breaks.push_back(bp);
       assert(bp.num_align == 1);
     }
@@ -607,7 +665,10 @@ std::ostream& operator<<(std::ostream &out, const AlignmentFragment &c) {
   out << "\tC[" << c.break1 << "," << c.break2 << "] G[" << c.gbreak1 << "," << c.gbreak2 << "]";
   
   // add local info
-  out << "\tLocal: " << c.local << "\tAligned to: " << (c.m_align.ChrID()+1) << ":" << c.m_align.Position() << "(" << (c.m_align.ReverseFlag() ? "-" : "+") << ") CIG: " << c.m_align.CigarString() << " MAPQ: " << c.m_align.MapQuality();
+  std::string chr_name = c.m_align.GetZTag("MC");
+  if (!chr_name.length())
+    chr_name = std::to_string(c.m_align.ChrID()+1);
+  out << "\tLocal: " << c.local << "\tAligned to: " << chr_name << ":" << c.m_align.Position() << "(" << (c.m_align.ReverseFlag() ? "-" : "+") << ") CIG: " << c.m_align.CigarString() << " MAPQ: " << c.m_align.MapQuality() << " SUBN " << c.sub_n;
 
   // print the del if there is one TODO
   /*  std::string del_string = std::string(c.m_align.Length(), ' ');
@@ -772,6 +833,9 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
   bp.gr1.strand = '+';
   bp.gr2.strand = '-';
 
+  bp.chr_name1 = m_align.GetZTag("MC");
+  bp.chr_name2 = bp.chr_name1;
+
   assert(bp.cname.length());
 
   size_t count = 0; // count to make sure we are reporting the right indel
@@ -895,6 +959,21 @@ std::vector<BreakPoint> AlignedContig::getAllBreakPoints() const {
   return out;
 }
 
+std::vector<BreakPoint> AlignedContig::getAllBreakPointsSecondary() const {
+
+  std::vector<BreakPoint> out;
+  //for (auto& i : m_frag_v) {
+  //  for (auto& k : i.m_indel_breaks)
+  //    out.push_back(k);
+  // }
+  
+  for (auto& i : m_global_bp_secondaries)
+    if (!i.isEmpty())
+      out.push_back(i);
+  
+  return out;
+}
+
 
 bool AlignedContig::hasVariant() const { 
   
@@ -916,9 +995,14 @@ bool AlignedContig::hasVariant() const {
     for (auto& i : m_local_breaks)
       i.__combine_with_discordant_cluster(dmap);
     m_global_bp.__combine_with_discordant_cluster(dmap);
-
+    
+    if (m_global_bp.hasDiscordant())
+      m_dc.push_back(m_global_bp.dc);
+    
+    for (auto& i : m_global_bp_secondaries)
+      i.__combine_with_discordant_cluster(dmap);
   }
-
+  
   void AlignedContig::assignSupportCoverage() {
     
     // go through the indel breaks and assign support coverage

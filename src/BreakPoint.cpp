@@ -68,8 +68,11 @@ namespace SnowTools {
   std::string BreakPoint::toString() const {
     std::stringstream out;
     
-    out << gr1.chr+1 << ":" << gr1.pos1 << "(" << gr1.strand << ")" << "-" 
-	<< gr2.chr+1 << ":" << gr2.pos1 << "(" << gr2.strand << ")" <<
+    std::string chr1 = chr_name1.length() ? chr_name1 : std::to_string(gr1.chr+1);
+    std::string chr2 = chr_name2.length() ? chr_name2 : std::to_string(gr2.chr+1);
+
+    out << chr1 << ":" << gr1.pos1 << "(" << gr1.strand << ")" << "-" 
+	<< chr2 << ":" << gr2.pos1 << "(" << gr2.strand << ")" <<
       " SPAN: " << getSpan() << " MAPQ: " << 
       mapq1 << "/" << mapq2 << " HOM: " << 
       homology << " INS: " << insertion << " NS: " << 
@@ -142,6 +145,13 @@ namespace SnowTools {
     bool germ = dc.ncount > 0 || nsplit > 0;
     int total_count = disc_count + split_count;
     
+    int this_mapq1 = mapq1;
+    int this_mapq2 = mapq2;
+    if (local1)
+      this_mapq1 = 60;
+    if (local2)
+      this_mapq2 = 60;
+
     // set the allelic fraction
     double af_n = -1;
     double af_t = -1;
@@ -151,35 +161,54 @@ namespace SnowTools {
     af_n = static_cast<double>(std::max(nsplit, ncigar)) / static_cast<double>(ncov);
 
   int span = getSpan();
+  
+  int disc_mapq1 = -1;
+  int disc_mapq2 = -1;
+  if (hasDiscordant()) {
+    disc_mapq1 = dc_same_1_2 ? dc.getMeanMapq(false) : dc.getMeanMapq(true); // this, then mate
+    disc_mapq2 = dc_same_1_2 ? dc.getMeanMapq(true) : dc.getMeanMapq(false);
+  }
+
 
   // check assembly -only ones
   if (num_align > 1 && !hasDiscordant()) {
 
     if (split_count < 6 && (span > 1500 || span == -1))  // large and inter chrom need 7+
       confidence = "NODISC";
-    else if (std::max(mapq1, mapq2) != 60 || std::min(mapq1, mapq2) <= 50) 
+    else if (std::max(this_mapq1, this_mapq2) != 60 || std::min(this_mapq1, this_mapq2) <= 50) 
       confidence = "LOWMAPQ";
     else if ( split_count <= 3 && (span <= 1500 && span != -1) ) // small with little split
       confidence = "WEAKASSEMBLY";
     else if (/*std::min_end_align_length <= 40 || */(germ && span == -1) || (germ && span > 1000000)) // super short alignemtns are not to be trusted. Also big germline events
       confidence = "WEAKASSEMBLY";
+    else if (sub_n1 || sub_n2)
+      confidence = "MULTIMATCH";
     else
       confidence = "PASS";
 
     // score ones with both assembly and discordant
   } else if (num_align > 1 && hasDiscordant()) {
 
-    double min_disc_mapq = std::min(dc.getMeanMapq(true), dc.getMeanMapq(false));
-    int min_assm_mapq = std::min(mapq1, mapq2);
+
+    int min_assm_mapq = std::min(this_mapq1, this_mapq2);
     //double std::max_disc_mapq = std::max(dc.getMeanMapq(true), dc.getMeanMapq(false));
-    int max_assm_mapq = std::max(mapq1, mapq2);
+    int max_assm_mapq = std::max(this_mapq1, this_mapq2);
     
-    if ( (min_disc_mapq < 10 && min_assm_mapq < 30) || (max_assm_mapq < 40))
+    double min_disc_mapq = std::min(disc_mapq1, disc_mapq2);
+    
+//     if (cname == "c_1_1413700_1433700_45") {
+//       std::cerr << "disc_mapq1 " << disc_mapq1 << " disc_mapq2 " << disc_mapq2 << " sub1 " << sub_n1 << " sub2 " << sub_n2 << " DC " << dc << std::endl;
+//       exit(1);
+//     }
+
+    if ( (min_disc_mapq < 0 && min_assm_mapq < 30) || (max_assm_mapq < 40))
       confidence = "LOWMAPQ";
     else if ( std::max(tsplit, nsplit) == 0 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
       confidence = "WEAKASSEMBLY";
     else if ( total_count < 15 && germ && span == -1) // be super strict about germline interchrom
       confidence = "WEAKASSEMBLY";
+    else if ((sub_n1 && disc_mapq1 < 1) || (sub_n2 && disc_mapq2 < 1))
+      confidence = "MULTIMATCH";
     else
       confidence = "PASS";
 
@@ -202,7 +231,7 @@ namespace SnowTools {
     int cigar_count = ncigar+tcigar; 
     int max_count = std::max(split_count, cigar_count);
     bool blacklist_and_low_count = blacklist && (tsplit + nsplit) < 5 && (tcigar + ncigar) < 5;
-    bool blacklist_and_low_AF = max_af < 0.3 && blacklist;
+    bool blacklist_and_low_AF = (max_af < 0.2 && max_count < 8) && blacklist;
 
     if (rs.length())
       confidence="DBSNP";
@@ -268,14 +297,18 @@ namespace SnowTools {
     read_names = "";
   }
 
+  std::string chr1 = chr_name1.length() ? chr_name1 : std::to_string(gr1.chr+1);
+  std::string chr2 = chr_name2.length() ? chr_name2 : std::to_string(gr2.chr+1);
 
   // TODO convert chr to string with treader
-  ss << gr1.chr+1 << sep << gr1.pos1 << sep << gr1.strand << sep 
-     << gr2.chr+1 << sep << gr2.pos1 << sep << gr2.strand << sep 
+  ss << chr1 << sep << gr1.pos1 << sep << gr1.strand << sep 
+     << chr2 << sep << gr2.pos1 << sep << gr2.strand << sep 
      << getSpan() << sep
      << mapq1 <<  sep << mapq2 << sep 
      << nsplit << sep << tsplit << sep
+     << sub_n1 << sep << sub_n2 << sep
      << discordant_norm << sep << discordant_tum << sep
+     << disc_mapq1 << sep << disc_mapq2 << sep
      << ncigar << sep << tcigar << sep
     //<< nall << sep << tall << sep 
      << (homology.length() ? homology : "x") << sep 
@@ -845,6 +878,10 @@ namespace SnowTools {
 	      dc = d.second;
 	      d.second.m_contig = cname;
 	    } 
+
+	    // keep track of which end of DC coresponds to end 1 of BP
+	    if (bp1reg2 && bp2reg1)
+	      dc_same_1_2 = false;
 	    
 	  }
       }

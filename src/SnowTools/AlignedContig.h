@@ -64,9 +64,12 @@ namespace SnowTools {
     void writeToBAM(BamWalker& bw) { 
       bw.WriteAlignment(m_align); 
     } 
-
+    
+   std::vector<AlignmentFragment> secondaries;
 
     private:
+
+    int sub_n = 0; // number of sub optimal alignments
     
     BPVec m_indel_breaks; /**< indel variants on this alignment */
     
@@ -244,6 +247,7 @@ namespace SnowTools {
    * @return vector of ind
    */
   std::vector<BreakPoint> getAllBreakPoints() const;
+  std::vector<BreakPoint> getAllBreakPointsSecondary() const;
 
   void assignSupportCoverage();
 
@@ -264,8 +268,10 @@ namespace SnowTools {
  private:
 
   std::vector<BreakPoint> m_local_breaks; // store all of the multi-map BreakPoints for this contigs 
+  std::vector<BreakPoint> m_local_breaks_secondaries; // store all of the multi-map BreakPoints for this contigs 
 
   BreakPoint m_global_bp;  // store the single spanning BreakPoing for this contig e
+  std::vector<BreakPoint> m_global_bp_secondaries;  // store the single spanning BreakPoing for this contig e
 
   //ReadVec m_bamreads; // store smart pointers to all of the reads that align to this contig 
 
