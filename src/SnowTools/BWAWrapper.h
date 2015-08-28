@@ -61,6 +61,9 @@ class BWAWrapper {
     if (memopt)
       free(memopt);
   }
+  
+  /** Retrieve the sequence name from its ID */
+  std::string ChrIDToName(int id) const;
 
   /** Create a bam_hdr_t from the loaded index files */
   bam_hdr_t * HeaderFromIndex() const;
@@ -72,7 +75,7 @@ class BWAWrapper {
   bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;
 
   void alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
-			   bool keep_secondary);
+			   double keep_sec_with_frac_of_primary_score);
 
   /** Construct a new bwa index for this object. 
    */

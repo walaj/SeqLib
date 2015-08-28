@@ -33,7 +33,7 @@ void parseBreakOptions(int argc, char** argv);
 struct BreakPoint {
 
   static std::string header() { 
-    return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tspan\tmapq1\tmapq2\tnsplit\ttsplit\tndisc\ttdisc\tncigar\ttcigar\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tpon_samples\trepeat_seq\tnormal_cov\ttumor_cov\tnormal_allelic_fraction\ttumor_allelic_fraction\tblacklist\tDBSNP\treads"; 
+    return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tspan\tmapq1\tmapq2\tnsplit\ttsplit\tsubn1\tsubn2\tndisc\ttdisc\tdisc_mapq1\tdisc_mapq2\tncigar\ttcigar\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tpon_samples\trepeat_seq\tnormal_cov\ttumor_cov\tnormal_allelic_fraction\ttumor_allelic_fraction\tblacklist\tDBSNP\treads"; 
   }
   
   // reads spanning this breakpoint
@@ -41,6 +41,7 @@ struct BreakPoint {
   
   // discordant reads supporting this aseembly bp
   DiscordantCluster dc;
+  bool dc_same_1_2 = true;
   
   // breakpoints on the reference
   GenomicRegion gr1;
@@ -86,6 +87,9 @@ struct BreakPoint {
   size_t tcigar = 0;
   size_t ncigar = 0;
 
+  size_t sub_n1 = 0; // number of sub-optimal aligments on this frag
+  size_t sub_n2 = 0;
+
   size_t min_end_align_length = 0; // minimum length of alignment on end. real short are not to be trusted
   
   //char strand1;
@@ -130,6 +134,9 @@ struct BreakPoint {
 
   std::string evidence = "";
   std::string confidence = "";
+
+  std::string chr_name1 = "";
+  std::string chr_name2 = "";
 
   bool isindel = false;
 

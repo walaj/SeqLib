@@ -14,11 +14,24 @@ extern "C" {
 
 namespace SnowTools {
 
+  std::string BWAWrapper::ChrIDToName(int id) const {
+    assert(id >= 0);
+    assert(id < idx->bns->n_seqs);
+    return std::string(idx->bns->anns[id].name);
+  }
+
   bam_hdr_t * BWAWrapper::HeaderFromIndex() const 
   {
+
     std::string my_hdr = bwa_print_sam_hdr2(idx->bns, "");
     bam_hdr_t * hdr = bam_hdr_init();
     hdr = sam_hdr_read2(my_hdr); 
+    //hdr->n_targets = idx->bns->n_seqs;
+    //hdr->target_name = (char**)malloc(hdr->n_targets * sizeof(char*));
+    //for (int i = 0; i < idx->bns->n_seqs; ++i) {
+    //  hdr->target_name[i] = (char*)malloc( (strlen(idx->bns->anns[i].name) + 1) * sizeof(char));
+    //  strcpy(hdr->target_name[i], idx->bns->anns[i].name);
+    //}
     return hdr;
   }
 
@@ -34,17 +47,24 @@ namespace SnowTools {
 	p += 4;
       }
     }
+
+    //JEREMIAH
+    // get makx size
+    size_t max_s = 0;
+    for (i = 0; i < bns->n_seqs; ++i)
+      max_s = std::max(strlen(bns->anns[i].name), max_s);
+
     if (n_SQ == 0) {
-    char buffer[100];
-    for (i = 0; i < bns->n_seqs; ++i) {
-      //err_printf("@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
-      sprintf(buffer, "@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
-      out.append(buffer);
-    }
+      char buffer[max_s + 30];
+      for (i = 0; i < bns->n_seqs; ++i) {
+	//err_printf("@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
+	sprintf(buffer, "@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
+	out.append(buffer);
+      }
     } else if (n_SQ != bns->n_seqs && bwa_verbose >= 2)
       fprintf(stderr, "[W::%s] %d @SQ lines provided with -H; %d sequences in the index. Continue anyway.\n", __func__, n_SQ, bns->n_seqs);
     
-    if (hdr_line) { char buffer[100]; sprintf(buffer, "%s\n", hdr_line); out.append(buffer); } //err_printf("%s\n", hdr_line);
+    if (hdr_line) { char buffer[200]; sprintf(buffer, "%s\n", hdr_line); out.append(buffer); } //err_printf("%s\n", hdr_line);
     //if (bwa_pg) { char buffer[100]; sprintf(buffer, "%s\n", bwa_pg); out.append(buffer); } // err_printf("%s\n", bwa_pg);
     
     return out;
@@ -150,7 +170,7 @@ namespace SnowTools {
   }
 
   void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
-				       bool keep_secondary) {
+				       double keep_sec_with_frac_of_primary_score) {
     
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
@@ -160,15 +180,32 @@ namespace SnowTools {
     //std::cout << __print_bns() << std::endl;
 #endif    
 
+
+    double primary_score = 0;
+    //size_t num_secondary = 0;
     // loop through the hits
     for (size_t i = 0; i < ar.n; ++i) {
 
-      mem_aln_t a;
-      if (ar.a[i].secondary >= 0 && !keep_secondary) 
+      if (ar.a[i].secondary >= 0 && (keep_sec_with_frac_of_primary_score < 0 || keep_sec_with_frac_of_primary_score > 1))
       	continue; // skip secondary alignments
-
+      
       // get forward-strand position and CIGAR
+      mem_aln_t a;
       a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
+
+      //if (name == "c_1_1453100_1473100_12")
+      //std::cerr << name << " secondary " << ar.a[i].secondary << " primary_score " << primary_score << " a.score " << ar.a[i].score << " sub_N " << ar.a[i].sub_n << 
+      //	" frac_rep " << ar.a[i].frac_rep << " flag " << a.flag << std::endl;
+
+      // if score not sufficient, continue
+      if (ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score)
+	continue;
+      else if (ar.a[i].secondary < 0) {
+	primary_score = a.score;
+	//num_secondary = 0;
+      }
+
+      
 
       //if (i == 0 && a.is_rev)
       //first_is_rev = true;
@@ -284,6 +321,13 @@ namespace SnowTools {
 
       b.AddIntTag("NA", ar.n); // number of matches
       b.AddIntTag("NM", a.NM);
+
+      if (a.XA)
+	b.AddZTag("XA", std::string(a.XA));
+
+      // add num sub opt
+      b.AddIntTag("SB", ar.a[i].sub_n);
+      b.AddIntTag("AS", a.score);
 
       vec.push_back(b);
 

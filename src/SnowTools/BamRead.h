@@ -235,6 +235,36 @@ class BamRead {
     return ss.str();
   }
 
+  /** Get the start of the alignment on the read, by removing soft-clips
+   * Do this in the reverse orientation though.
+   */
+  inline int32_t AlignmentPositionReverse() const {
+    uint32_t* c = bam_get_cigar(b);
+    int32_t p = 0;
+    for (int32_t i = b->core.n_cigar - 1; i >= 0; --i) {
+      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
+	p += bam_cigar_oplen(c[i]);
+      else // not a clip, so stop counting
+	break;
+    }
+    return p;
+  }
+  
+  /** Get the end of the alignment on the read, by removing soft-clips
+   * Do this in the reverse orientation though.
+   */
+  inline int32_t AlignmentEndPositionReverse() const {
+    uint32_t* c = bam_get_cigar(b);
+    int32_t p = 0;
+    for (int32_t i = 0; i < b->core.n_cigar; ++i) { // loop from the end
+      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
+	p += bam_cigar_oplen(c[i]);
+      else // not a clip, so stop counting
+	break;
+    }
+    return (b->core.l_qseq - p);
+  }
+
 
   /** Get the start of the alignment on the read, by removing soft-clips
    */
