@@ -64,6 +64,13 @@ static const char *BP_USAGE_MESSAGE =
 
 namespace SnowTools {
 
+  template<typename T> 
+  void __flip(T& a, T& b) {
+    T tmp_a = a;
+    a = b;
+    b = tmp_a;
+  }
+
   // send breakpoint to a string
   std::string BreakPoint::toString() const {
     std::stringstream out;
@@ -87,17 +94,24 @@ namespace SnowTools {
     }*/
   
   // order them
+  // useful for deduping
   void BreakPoint::order() {
     
     if (gr1 < gr2)
       return;
-    
-    GenomicRegion tmp = gr1;
-    gr1 = gr2;
-    gr2 = tmp;
-    unsigned tmptsplit1 = tsplit1;  tsplit1 = tsplit2;  tsplit2 = tmptsplit1;
-    unsigned tmpnsplit1 = nsplit1;  nsplit1 = nsplit2;  nsplit2 = tmpnsplit1;
-    
+
+    __flip(gr1, gr2);
+    //__flip(nsplit1, nsplit2);
+    //__flip(local1, local2);
+    __flip(chr_name1, chr_name2);
+    __flip(sub_n1, sub_n2);
+    __flip(mapq1, mapq2);
+    //__flip(cpos1, cpos2);
+    //__flip(nm1, nm2);
+    //__flip(id1, id2);
+    __flip(matchlen1, matchlen2);
+    dc_same_1_2 = !dc_same_1_2;
+
   }
   
   // make the file string
@@ -173,7 +187,9 @@ namespace SnowTools {
   // check assembly -only ones
   if (num_align > 1 && !hasDiscordant()) {
 
-    if (split_count < 6 && (span > 1500 || span == -1))  // large and inter chrom need 7+
+    if (seq.length() < 101 + 30)
+      confidence = "TOOSHORT";
+    else if (split_count < 6 && (span > 1500 || span == -1))  // large and inter chrom need 7+
       confidence = "NODISC";
     else if (std::max(this_mapq1, this_mapq2) != 60 || std::min(this_mapq1, this_mapq2) <= 50) 
       confidence = "LOWMAPQ";
@@ -181,7 +197,7 @@ namespace SnowTools {
       confidence = "WEAKASSEMBLY";
     else if (/*std::min_end_align_length <= 40 || */(germ && span == -1) || (germ && span > 1000000)) // super short alignemtns are not to be trusted. Also big germline events
       confidence = "WEAKASSEMBLY";
-    else if (sub_n1 || sub_n2)
+    else if ((sub_n1 && mapq1 < 30) || (sub_n2 && mapq2 < 30))
       confidence = "MULTIMATCH";
     else
       confidence = "PASS";
@@ -248,7 +264,7 @@ namespace SnowTools {
     //else if (seq.find("AAAAAAAAAAA") != string::npos || seq.find("TTTTTTTTTTT") != string::npos || seq.find("TGTGTGTGTGTGTGTGTGTGTGTGTG") != string::npos)
     else if (repeat_seq.length() > 1) // && pon > 0)
       confidence="REPEAT";
-    else if ( (max_af < 0.2 && nsplit > 0) || (max_af < 0.15 && nsplit == 0)) // more strict for germline bc purity is not issue
+    else if ( (max_af < 0.2 && nsplit > 0) || (max_af < 0.15 && nsplit == 0 && tsplit < 3)) // more strict for germline bc purity is not issue
       confidence = "LOWAF";
     else if (ncov <= 5)
       confidence = "LOWNORMCOV";
@@ -297,6 +313,10 @@ namespace SnowTools {
     read_names = "";
   }
 
+  //if (cname == "c_1_155778800_155798800_104") {
+  //  std::cerr << chr_name1 << " " << std::to_string(gr1.chr+1) << std::endl;
+  //  std::cerr << chr_name2 << " " << std::to_string(gr2.chr+1) << std::endl;
+  //}
   std::string chr1 = chr_name1.length() ? chr_name1 : std::to_string(gr1.chr+1);
   std::string chr2 = chr_name2.length() ? chr_name2 : std::to_string(gr2.chr+1);
 
@@ -629,6 +649,25 @@ namespace SnowTools {
 
     for (auto& j : bav) {
       
+      // for indels, reads with ins alignments to del contig dont count, vice versa
+      bool read_should_be_skipped = false;
+      if (num_align == 1) {
+	std::vector<std::string> cigvec = j.GetSmartStringTag("SC"); // read against contig CIGAR
+	std::vector<std::string> cnvec = j.GetSmartStringTag("CN");
+	size_t kk = 0;
+	for (; kk < cnvec.size(); kk++) 
+	  if (cnvec[kk] == cname) {
+	    if ( (cigvec[kk].find("D") != std::string::npos/* && insertion.length()*/) || 
+	    	 (cigvec[kk].find("I") != std::string::npos/* && !insertion.length()*/)) {
+	      read_should_be_skipped = true;
+	      break;
+	    }
+	  }
+      }
+      
+      if (read_should_be_skipped)
+	continue;
+
       std::string sr = j.GetZTag("SR");
       assert(sr.at(0) == 't' || sr.at(0) == 'n');
       
@@ -689,7 +728,9 @@ namespace SnowTools {
 	
       }
     }
-    //std::cout << "tsplit1 " << tsplit1 << " nsplit1 " << nsplit1 << " tsplit2 " << tsplit2 << " nsplit2 " << nsplit2 << " mapq1 " << mapq1 << " mapq2 " << mapq2 << " cname " << cname << " bp " << *this << std::endl;
+
+    //if (cname == "c_1_150039500_150059500_4" && num_align == 1)
+    //  std::cout << "tsplit1 " << tsplit1 << " nsplit1 " << nsplit1 << " tsplit2 " << tsplit2 << " nsplit2 " << nsplit2 << " mapq1 " << mapq1 << " mapq2 " << mapq2 << " cname " << cname << " bp " << *this << std::endl;
   }
   
   std::string BreakPoint::getHashString() const {

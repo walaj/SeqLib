@@ -36,7 +36,7 @@ namespace SnowTools {
     for (auto& i : bav)
       if (!i.SecondaryFlag())
 	++num_align;
-
+    
     // make the individual alignments and add
     for (auto& i : bav) {
       if (!i.SecondaryFlag()) {
@@ -45,7 +45,8 @@ namespace SnowTools {
 	m_frag_v.back().num_align = num_align;
       } else {
 	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
-	m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip));
+	if (m_frag_v.size())
+	  m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip));
 	//m_frag_v_secondary.push_back(AlignmentFragment(i, flip));
 	//m_frag_v_secondary.back().num_align = bav.size();
       }      
@@ -54,10 +55,50 @@ namespace SnowTools {
     // sort fragments by order on fwd-strand contig
     if (m_frag_v.size() > 1)
       std::sort(m_frag_v.begin(), m_frag_v.end());
+
     // get breaks out of it
     setMultiMapBreakPairs();
+
+    // filter indels that land too close to a multi-map break
+    filterIndelsAtMultiMapSites(5);
   }
 
+  void AlignedContig::filterIndelsAtMultiMapSites(size_t buff) {
+    
+    if (m_frag_v.size() < 2)
+      return;
+
+    // make the ranges ON CONIG for the multimaps
+    GRC grc;
+    if (m_global_bp.cpos1 > m_global_bp.cpos2) {
+      grc.add(GenomicRegion(0, m_global_bp.cpos2-buff, m_global_bp.cpos1+buff)); // homology
+    }
+    else {
+      grc.add(GenomicRegion(0, m_global_bp.cpos1-buff, m_global_bp.cpos2+buff)); // insertion	
+    }    
+    
+    for (auto& i : m_local_breaks) {
+      if (i.cpos1 > i.cpos2) {
+	grc.add(GenomicRegion(0, i.cpos2-buff, i.cpos1+buff)); // homology
+      }
+      else {
+	grc.add(GenomicRegion(0, i.cpos1-buff, i.cpos2+buff)); // insertion	
+      }
+    }
+    grc.createTreeMap();
+
+    // check if 
+    for (auto& i : m_frag_v) {
+      BPVec new_indel_vec;
+      for (auto& b : i.m_indel_breaks) {
+	if (!grc.findOverlapping(GenomicRegion(0, b.cpos1, b.cpos2)))
+	  new_indel_vec.push_back(b);
+      }
+      i.m_indel_breaks = new_indel_vec;
+    }
+    
+  }
+  
 void AlignedContig::printContigFasta(std::ofstream& os) const {
   os << ">" << getContigName() << std::endl;
   os << getSequence() << std::endl;
@@ -328,9 +369,9 @@ void AlignedContig::setMultiMapBreakPairs() {
 	
 	// set the insertion / homology
 	try {
-	  if (bp.cpos1 >= bp.cpos2)
+	  if (bp.cpos1 >= bp.cpos2) {
 	    bp.homology = m_seq.substr(bp.cpos2, bp.cpos1-bp.cpos2);
-	  else if (bp.cpos2 >= bp.cpos1)
+	  } else if (bp.cpos2 >= bp.cpos1)
 	    bp.insertion = m_seq.substr(bp.cpos1, bp.cpos2-bp.cpos1);
 	  if (bp.insertion.length() == 0)
 	    bp.insertion = "";
@@ -389,6 +430,15 @@ void AlignedContig::setMultiMapBreakPairs() {
   m_global_bp.gr2.pos2 = m_global_bp.gr2.pos1;
   m_global_bp.gr1.chr = m_frag_v[bstart].m_align.ChrID();
   m_global_bp.gr2.chr = m_frag_v[bend].m_align.ChrID();
+  
+  m_global_bp.chr_name1 = m_frag_v[bstart].m_align.GetZTag("MC");
+  m_global_bp.chr_name2 = m_frag_v[bend].m_align.GetZTag("MC");
+
+  if (getContigName() == "c_1_155778800_155798800_104") {
+    std::cerr << m_frag_v[bstart].m_align << " MC " << m_global_bp.chr_name1 << std::endl;
+    std::cerr << m_frag_v[bend].m_align << " MC " << m_global_bp.chr_name2 << std::endl;
+  }
+
   //m_global_bp.pos1  = m_frag_v[bstart].gbreak2;
   m_global_bp.cpos2 = m_frag_v[bend].break1; // last mapping
   //m_global_bp.pos2  = m_frag_v[bend].gbreak1;
@@ -424,7 +474,7 @@ void AlignedContig::setMultiMapBreakPairs() {
   
   // set the homologies
   try {
-    if (m_global_bp.cpos1 >= m_global_bp.cpos2)
+    if (m_global_bp.cpos1 >= m_global_bp.cpos2 && m_frag_v.size() == 2)
       m_global_bp.homology = m_seq.substr(m_global_bp.cpos2, m_global_bp.cpos1-m_global_bp.cpos2);
     else if (m_global_bp.cpos2 >= m_global_bp.cpos1)
       m_global_bp.insertion = m_seq.substr(m_global_bp.cpos1, m_global_bp.cpos2-m_global_bp.cpos1);
@@ -576,7 +626,7 @@ void AlignedContig::setMultiMapBreakPairs() {
     m_align = talign;
 
     sub_n = talign.GetIntTag("SB");
-          
+
     // orient cigar so it is on the contig orientation. 
     // need to do this to get the right ordering of the contig fragments below
     // We only flip if we flipped the sequence, and that was determined
@@ -587,7 +637,7 @@ void AlignedContig::setMultiMapBreakPairs() {
     } else { 
       m_cigar = m_align.GetCigar();
     }
-    
+
     // find the start position of alignment ON CONTIG
     start = 0; 
     for (auto& i : /*m_align.GetCigar()*/ m_cigar) {
@@ -596,7 +646,7 @@ void AlignedContig::setMultiMapBreakPairs() {
       else
 	break;
     }
-    
+
     // set the left-right breaks
     unsigned currlen  = 0; 
     
@@ -611,9 +661,8 @@ void AlignedContig::setMultiMapBreakPairs() {
 	currlen += i.Length;
       if (i.Type == 'M') // keeps triggering every M, with pos at the right
 	break2 = currlen;
-      
     }
-    
+
     // assign the genomic coordinates of the break
     if (m_align.ReverseFlag()) {
       gbreak2 = m_align.Position() + 1;
@@ -628,7 +677,7 @@ void AlignedContig::setMultiMapBreakPairs() {
 
     assert(break1 >= 0);
     assert(break2 >= 0);
-    
+
     // parse right away to see if there are indels on this alignment
     BreakPoint bp;
     size_t fail_safe_count = 0;
@@ -636,7 +685,7 @@ void AlignedContig::setMultiMapBreakPairs() {
       m_indel_breaks.push_back(bp);
       assert(bp.num_align == 1);
     }
-    
+
     assert(fail_safe_count != 100);
     
     // set the cigar matches
@@ -772,10 +821,18 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
     return false;
   }
 
+  // reject if too many mismatches
+  size_t di_count = 0;
+  for (auto& i : m_cigar)
+    if (i.Type == 'D' || i.Type == 'I')
+      ++di_count;
+  if (di_count > 3)
+    return false;
+  
   // reject if it has small matches, could get confused. Fix later
-  for (auto& i : m_cigar) 
-    if (i.Type == 'M' && i.Length < 5)
-      return false;
+  //for (auto& i : m_cigar) 
+  //  if (i.Type == 'M' && i.Length < 5)
+  //    return false;
 
   // reject if first alignment is I or D
   if (m_cigar[0].Type == 'I' || m_cigar[0].Type == 'D' || m_cigar[m_cigar.size()-1].Type == 'D' || m_cigar[m_cigar.size()-1].Type == 'I') {
@@ -844,7 +901,7 @@ bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
     count++;
 
     // set the contig breakpoint
-    if (i.Type == 'M' || i.Type == 'I') 
+    if (i.Type == 'M' || i.Type == 'I' || i.Type == 'S') 
       curr += i.Length;
     if (i.Type == 'D' && bp.cpos1 == -1 && count == idx) {
 
@@ -979,7 +1036,7 @@ bool AlignedContig::hasVariant() const {
   
   if (!m_global_bp.isEmpty())
     return true;
-
+  
   for (auto& i : m_frag_v)
     if (i.local && i.m_indel_breaks.size())
       return true;

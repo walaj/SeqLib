@@ -4,7 +4,7 @@
 #include <set>
 #include <numeric>
 
-#define DISC_PAD 100
+#define DISC_PAD 200
 #define MIN_PER_CLUST 2
 
 namespace SnowTools {
@@ -53,10 +53,10 @@ namespace SnowTools {
     __cluster_reads(bav_dd, fwd, rev);
 
     // within the forward read clusters, cluster mates on fwd and rev
-    __cluster_mate_reads(fwd, fwdfwd, fwdrev);
+    //__cluster_mate_reads(fwd, fwdfwd, fwdrev); 
 
     // within the reverse read clusters, cluster mates on fwd and rev
-    __cluster_mate_reads(rev, revfwd, revrev); 
+    //__cluster_mate_reads(rev, revfwd, revrev); 
 
     // we have the reads in their clusters. Just convert to discordant reads clusters
     DiscordantClusterMap dd;
@@ -181,17 +181,16 @@ namespace SnowTools {
     // with mate regions
     GenomicRegion g(reads.begin()->second.MateChrID(), reads.begin()->second.MatePosition(), reads.begin()->second.MatePosition()); 
     bool st = reads.begin()->second.MateReverseFlag();
-    g.pad(DISC_PAD);
+    g.pad(DISC_PAD + 1000);
     
     for (auto& i : bav) {
       std::string sr;
-      if (qnames.count(i.Qname())) 
-	{
-
+      if (qnames.count(i.Qname())) {
 	  std::string tmp = i.GetZTag("SR");
-	  if (reads.count(tmp) == 0) // only add if this is a mate read
-	    if (i.ReverseFlag() == st && g.getOverlap(i.asGenomicRegion())) // agrees with intiial mate orientation and position
+	  if (reads.count(tmp) == 0)  {// only add if this is a mate read
+	    if (i.ReverseFlag() == st && g.getOverlap(i.asGenomicRegion()) > 0) // agrees with intiial mate orientation and position
 	      mates[tmp] = i;
+	  }
 	}
     }
     
@@ -268,7 +267,7 @@ namespace SnowTools {
     out << m_reg1.chr+1 << sep << m_reg1.pos1 << sep << m_reg1.strand << sep 
 	<< m_reg2.chr+1 << sep << m_reg2.pos1 << sep << m_reg2.strand << sep 
 	<< tcount << sep << ncount << sep << getMeanMapq(false) << sep 
-	<< getMeanMapq(true) << sep << reads_string;
+	<< getMeanMapq(true) << sep << m_contig << sep << reads_string;
 
     return (out.str());
     
@@ -323,9 +322,8 @@ namespace SnowTools {
       too_big = (clust.size() > 1 && (clust.back().Position() - clust[0].Position()) > 1500);      
     
     // note to self. this rarely gets hit?
-    if (too_big) {
+    if (too_big) 
       std::cerr << "Cluster too big at " << clust[0].Brief() << " to " << clust.back().Brief() << std::endl;
-    }
 
     // check if this read is close enough to the last
     if (!too_big &&  (this_info.first == last_info.first) && (this_info.second - last_info.second) <= DISC_PAD) {
