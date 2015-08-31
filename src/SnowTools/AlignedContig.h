@@ -240,6 +240,9 @@ namespace SnowTools {
       bw.WriteAlignment(i);
   } 
 
+  /*! Remove indels that map extremely close to rearrangement break points 
+   */
+  void filterIndelsAtMultiMapSites(size_t buff);
 
   bool hasLocal() const { for (auto& i : m_frag_v) if (i.local) return true; return false; }
 

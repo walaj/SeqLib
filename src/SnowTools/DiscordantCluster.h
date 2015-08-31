@@ -87,7 +87,6 @@ namespace SnowTools
 
     std::string m_contig = "";
 
-
     GenomicRegion m_reg1;
     GenomicRegion m_reg2;
 
