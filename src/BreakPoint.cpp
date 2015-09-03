@@ -206,6 +206,9 @@ namespace SnowTools {
   } else if (num_align > 1 && hasDiscordant()) {
 
 
+    int max_a_mapq = std::max(this_mapq1, disc_mapq1);
+    int max_b_mapq = std::max(this_mapq2, disc_mapq2);
+
     int min_assm_mapq = std::min(this_mapq1, this_mapq2);
     //double std::max_disc_mapq = std::max(dc.getMeanMapq(true), dc.getMeanMapq(false));
     int max_assm_mapq = std::max(this_mapq1, this_mapq2);
@@ -216,8 +219,9 @@ namespace SnowTools {
 //       std::cerr << "disc_mapq1 " << disc_mapq1 << " disc_mapq2 " << disc_mapq2 << " sub1 " << sub_n1 << " sub2 " << sub_n2 << " DC " << dc << std::endl;
 //       exit(1);
 //     }
-
-    if ( (min_disc_mapq < 0 && min_assm_mapq < 30) || (max_assm_mapq < 40))
+    if (max_a_mapq < 30 || max_b_mapq < 30)
+      confidence = "LOWMAPQ";
+    else if ( (min_disc_mapq < 0 && min_assm_mapq < 30) || (max_assm_mapq < 40))
       confidence = "LOWMAPQ";
     else if ( std::max(tsplit, nsplit) == 0 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
       confidence = "WEAKASSEMBLY";

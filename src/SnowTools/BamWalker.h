@@ -207,6 +207,8 @@ class BamWalker {
   
  protected:
 
+  bool m_region_fail = false;
+
   // for stdout mode, print header?
   bool m_print_header = false;
 

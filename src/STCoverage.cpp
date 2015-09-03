@@ -1,6 +1,7 @@
 #include "SnowTools/STCoverage.h"
 #include "SnowTools/SnowToolsCommon.h"
 #include <stdexcept>
+#include <algorithm>
 
 namespace SnowTools {
 
@@ -12,6 +13,10 @@ namespace SnowTools {
   STCoverage::STCoverage(const SnowTools::GenomicRegion& gr) {
     m_gr = gr;
     v = uint16_sp(new std::vector<uint16_t>(gr.width(),0));
+  }
+
+  uint16_t STCoverage::maxCov() const {
+    return (*std::max_element(v->begin(), v->end()));
   }
   
   void STCoverage::addRead(const BamRead &r) {
