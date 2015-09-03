@@ -295,7 +295,8 @@ void AlignedContig::setMultiMapBreakPairs() {
   // if single mapped contig, nothing to do here
   if (m_frag_v.size() == 1)
     return;
-  
+
+  // if single mapped contig, nothing to do here  
   // initialize the breakpoint, fill with basic info
   BreakPoint bp;
   bp.seq = getSequence();
@@ -308,6 +309,7 @@ void AlignedContig::setMultiMapBreakPairs() {
   
   // set the discovar support if it's there
   //parseDiscovarName(bp.disco_norm, bp.disco_tum);
+
 
   // walk along the ordered contig list and make the breakpoint pairs  
   for (/*auto*/AlignmentFragmentVector::const_iterator it = m_frag_v.begin(); it != m_frag_v.end() - 1; it++) {
@@ -342,6 +344,13 @@ void AlignedContig::setMultiMapBreakPairs() {
 	// set the mapq
 	bp.mapq1 = a.m_align.MapQuality();
 	bp.mapq2 = b.m_align.MapQuality();
+
+	// if alignment is too short, zero the mapq
+	if (a.m_align.NumMatchBases() < 30)
+	  bp.mapq1 = 0;
+	if (b.m_align.NumMatchBases() < 30)
+	  bp.mapq2 = 0;
+
 	
 	assert(bp.mapq1 < 1000 && bp.mapq2 < 1000);
 	
@@ -402,6 +411,16 @@ void AlignedContig::setMultiMapBreakPairs() {
     return;
   }
   
+  // 3+ mappings. If all good, then don't make the "global"
+  bool make_locals = true;
+  for (size_t i = 1; i < m_frag_v.size() - 1; ++i)
+    if (m_frag_v[i].m_align.MapQuality() < 50)
+      make_locals = false;
+  
+  if (make_locals) { // intermediates are good, so just leave locals as-is
+    return;
+  }
+
   // TODO support 3+ mappings that contain secondary
 
   // go through alignments and find start and end that reach mapq 
@@ -998,7 +1017,9 @@ std::vector<const BreakPoint*> AlignedContig::getAllBreakPointPointers() const  
   
   if (!m_global_bp.isEmpty())
     out.push_back(&m_global_bp);
-  
+  for (size_t i = 0; i < m_local_breaks.size(); ++i)
+    out.push_back(&(m_local_breaks[i]));
+
   return out;
 }
 
@@ -1013,6 +1034,8 @@ std::vector<BreakPoint> AlignedContig::getAllBreakPoints() const {
   if (!m_global_bp.isEmpty())
     out.push_back(m_global_bp);
   
+  out.insert(out.end(), m_local_breaks.begin(), m_local_breaks.end());
+
   return out;
 }
 

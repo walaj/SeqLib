@@ -45,9 +45,11 @@ bool BamWalker::__set_region(const GenomicRegion& gp) {
 
   if (!hts_itr) {
     std::cerr << "Error: Failed to set region: " << gp << std::endl; 
+    m_region_fail = true;
     return false;
   }
 
+  m_region_fail = false;
   return true;
 }
 
@@ -234,6 +236,11 @@ void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) 
 bool BamWalker::GetNextRead(BamRead& r, bool& rule)
 {
   
+  if (m_region_fail) {
+    std::cerr << "BamWalker::GetNextRead - Since region failed to be set, refuse to read in reads" << std::endl;
+    return false;
+  }
+
   void* dum = 0;
   bam1_t* b = bam_init1(); 
 

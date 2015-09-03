@@ -51,6 +51,8 @@ class STCoverage {
   /** Make a new coverage object at interval gr */
   STCoverage(const GenomicRegion& gr);
 
+  uint16_t maxCov() const;
+
   /** Make an empty coverage */
   STCoverage() {}
 
