@@ -244,8 +244,10 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
   void* dum = 0;
   bam1_t* b = bam_init1(); 
 
+  int32_t valid;
   if (hts_itr == 0) { 
-    if (bam_read1(fp.get(), b) < 0) { 
+    valid = bam_read1(fp.get(), b);    
+    if (valid < 0) { 
 
 #ifdef DEBUG_WALKER
       std::cerr << "ended reading on null hts_itr" << std::endl;
@@ -253,11 +255,6 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
       bam_destroy1(b); 
       return false;
     } 
-  } 
-
-  int32_t valid;
-  if (hts_itr == 0) {
-    valid = bam_read1(fp.get(), b);
   } else {
     valid = hts_itr_next(fp.get(), hts_itr.get(), b, dum);
   }
