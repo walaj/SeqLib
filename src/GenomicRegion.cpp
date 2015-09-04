@@ -152,10 +152,16 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
     strncpy(tmp, reg2.c_str(), q - reg2.c_str());
     tmp[q - reg2.c_str()] = 0;
     tid = bam_name2id(h, tmp);
+    if (tid < 0) {
+      std::cerr << "Failed to set region for region string " << reg << std::endl;
+      std::cerr << "chr-id " << tid << " pos1 " << beg << " pos2 " << end << std::endl;
+      exit(EXIT_FAILURE);
+    }
   } else {
     tid = bam_name2id(h, reg2.c_str());
     beg = 0;
     end = END_MAX;
+    std::cerr << "LTID " << tid << std::endl;
   }
 
   chr = tid;

@@ -180,7 +180,6 @@ namespace SnowTools {
     //std::cout << __print_bns() << std::endl;
 #endif    
 
-
     double primary_score = 0;
     //size_t num_secondary = 0;
     // loop through the hits
@@ -198,9 +197,10 @@ namespace SnowTools {
       //	" frac_rep " << ar.a[i].frac_rep << " flag " << a.flag << std::endl;
 
       // if score not sufficient, continue
-      if (ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score)
+      if (ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score) {
+	free(a.cigar);
 	continue;
-      else if (ar.a[i].secondary < 0) {
+      } else if (ar.a[i].secondary < 0) {
 	primary_score = a.score;
 	//num_secondary = 0;
       }

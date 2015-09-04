@@ -7,6 +7,8 @@
 #define DISC_PAD 200
 #define MIN_PER_CLUST 2
 
+//#define DEBUG_CLUSTER 1
+
 namespace SnowTools {
   
   void DiscordantCluster::addRead(std::string name) {
@@ -27,6 +29,8 @@ namespace SnowTools {
       else
 	tmp_map[tt]++;
     }
+
+
 
     BamReadVector bav_dd;
     for (auto& r : bav) {
@@ -53,10 +57,10 @@ namespace SnowTools {
     __cluster_reads(bav_dd, fwd, rev);
 
     // within the forward read clusters, cluster mates on fwd and rev
-    //__cluster_mate_reads(fwd, fwdfwd, fwdrev); 
+    __cluster_mate_reads(fwd, fwdfwd, fwdrev); 
 
     // within the reverse read clusters, cluster mates on fwd and rev
-    //__cluster_mate_reads(rev, revfwd, revrev); 
+    __cluster_mate_reads(rev, revfwd, revrev); 
 
     // we have the reads in their clusters. Just convert to discordant reads clusters
     DiscordantClusterMap dd;

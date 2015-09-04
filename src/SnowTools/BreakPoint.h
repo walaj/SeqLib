@@ -253,11 +253,58 @@ struct BreakPoint {
 
   // define how to sort these 
   bool operator < (const BreakPoint& bp) const { 
-    return (gr1 < bp.gr1) || (gr1 == bp.gr1 && gr2 < bp.gr2) || 
-      (gr1 == bp.gr1 && gr2 == bp.gr2 && nsplit > bp.nsplit) || // more read support should go first, do to property of std::unique
-      (gr1 == bp.gr1 && gr2 == bp.gr2 && tsplit > bp.tsplit) || 
-      (gr1 == bp.gr1 && gr2 == bp.gr2 && dc.ncount > bp.dc.ncount) || 
-      (gr1 == bp.gr1 && gr2 == bp.gr2 && dc.tcount > bp.dc.tcount);
+
+    if (gr1 < bp.gr1)
+      return true;
+    else if (bp.gr1 < gr1)
+      return false;
+
+    if (gr2 < bp.gr2)
+      return true;
+    else if (bp.gr2 < gr2)
+      return false;
+
+    if (nsplit > bp.nsplit)
+      return true;
+    else if (nsplit < bp.nsplit)
+      return false;
+
+    if (tsplit > bp.tsplit)
+      return true;
+    else if (tsplit < bp.tsplit)
+      return false;
+    
+    if (tsplit > bp.tsplit)
+      return true;
+    else if (tsplit < bp.tsplit)
+      return false;
+
+    if (dc.ncount > bp.dc.ncount)
+      return true;
+    else if (dc.ncount < bp.dc.ncount)
+      return false;
+
+    if (dc.tcount > bp.dc.tcount)
+      return true;
+    else if (dc.tcount < bp.dc.tcount)
+      return false;
+
+    if (cname > bp.cname)
+      return true;
+    else if (cname < bp.cname)
+      return false;
+    
+    return false;
+
+    /*return (gr1 < bp.gr1) || 
+      (gr1 == bp.gr1 && gr2 < bp.gr2) || 
+      (eq && nsplit > bp.nsplit) || // more read support should go first, do to property of std::unique
+      (eq && tsplit > bp.tsplit) || 
+      (eq && dc.ncount > bp.dc.ncount) || 
+      (eq && dc.tcount > bp.dc.tcount) || 
+      (eq && cname > bp.cname);
+    */
+    
     //(bp.gr1.ref == refID1 && bp.pos1 > pos1) || // low pos is first
       //  (bp.refID1 == refID1 && bp.pos1 == pos1 && bp.pos2 == pos2 && nsplit1 > bp.nsplit1) || // if same, check nsplit
       // (bp.refID1 == refID1 && bp.pos1 == pos1 && bp.pos2 == pos2 && nsplit1 == bp.nsplit1 && tsplit1 > bp.tsplit1); // if also same, check tsplit
