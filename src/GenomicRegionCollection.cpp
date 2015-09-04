@@ -201,13 +201,13 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 	    gr.pad(pad);
 	    m_grv.push_back(gr);
 	  }
-
 	}
 	
       }
     }
   }
-
+  
+  std::cerr << "...parsed " << m_grv.size() << " VCF lines " << std::endl;
   
 }
 
