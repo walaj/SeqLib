@@ -106,6 +106,9 @@ class BamRead {
   /** Trim the sequence down by removing bases from ends with low quality scores */
   std::string QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint) const;
 
+  /** Retrieve the quality trimmed seqeuence from QT tag if made. Otherwise return normal seq */
+  std::string QualitySequence() const;
+
   /** Get the alignment position */
   inline int32_t Position() const { return b->core.pos; }
   
@@ -218,21 +221,15 @@ class BamRead {
   void clearSeqQualAndTags();
 
   /** Get the sequence of this read as a string */
-  inline std::string Sequence() const { 
-    uint8_t * p = bam_get_seq(b);
-    std::stringstream ss;
-    for (int32_t i = 0; i < b->core.l_qseq; ++i) 
-      ss << BASES[bam_seqi(p, i)];
-    return ss.str();
-  }
+  /*inline */std::string Sequence() const;
 
   /** Get the quality scores of this read as a string */
   inline std::string Qualities() const { 
     uint8_t * p = bam_get_qual(b);
-    std::stringstream ss;
+    std::string out(b->core.l_qseq, ' ');
     for (int32_t i = 0; i < b->core.l_qseq; ++i) 
-      ss << (char)(p[i]+ 33);
-    return ss.str();
+      out[i] = (char)(p[i]+33);
+    return out;
   }
 
   /** Get the start of the alignment on the read, by removing soft-clips

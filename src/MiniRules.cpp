@@ -562,146 +562,154 @@ void Range::parseRuleLine(std::string line) {
 
 // main function for determining if a read is valid
   bool AbstractRule::isValid(BamRead &r) {
-
-  // check if its keep all or none
-  if (isEvery())
-    return true;
-
-  // check if it is a subsample
-  if (subsam_frac < 1) {
-    uint32_t k = __ac_Wang_hash(__ac_X31_hash_string(r.QnameChar()) ^ subsam_seed);
-    if ((double)(k&0xffffff) / 0x1000000 >= subsam_frac) 
-      return false;
-  }
-  /*if (subsample < 100) {
-    int randn = (rand() % 100); // random number between 1 and 100
-    if (subsample < randn)
+    
+    // check if its keep all or none
+    if (isEvery())
+      return true;
+    
+    // check if it is a subsample
+    if (subsam_frac < 1) {
+      uint32_t k = __ac_Wang_hash(__ac_X31_hash_string(r.QnameChar()) ^ subsam_seed);
+      if ((double)(k&0xffffff) / 0x1000000 >= subsam_frac) 
+	return false;
+    }
+    /*if (subsample < 100) {
+      int randn = (rand() % 100); // random number between 1 and 100
+      if (subsample < randn)
       return false;
       }*/
-  
-  // check if is discordant
-  bool isize_pass = isize.isValid(abs(r.InsertSize()));
-
-  if (!isize_pass) {
-    return false;
-  }
-
-  // check for valid mapping quality
-  if (!mapq.isEvery())
-    if (!mapq.isValid(r.MapQuality())) 
+    
+    // check if is discordant
+    bool isize_pass = isize.isValid(abs(r.InsertSize()));
+    
+    if (!isize_pass) {
       return false;
-
-  // check for valid flags
-  if (!fr.isValid(r))
-    return false;
-
-  // check the CIGAR
-  if (!ins.isEvery() || !del.isEvery()) {
-    if (!ins.isValid(r.MaxInsertionBases()))
+    }
+    
+    // check for valid mapping quality
+    if (!mapq.isEvery())
+      if (!mapq.isValid(r.MapQuality())) 
+	return false;
+    
+    // check for valid flags
+    if (!fr.isValid(r))
       return false;
-    if (!del.isValid(r.MaxDeletionBases()))
-      return false;
-  }
-  
-  // if we dont need to because everything is pass, just just pass it
-  bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || atm_file.length() || !xp.isEvery();
-  if (!need_to_continue)
-    return true;
-
-  // now check if we need to build char if all we want is clip
-  unsigned clipnum = 0;
-  if (!clip.isEvery()) {
-    clipnum = r.NumClip();
-    if (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) // if clip fails, its not going to get better by trimming. kill it now before building teh char data
-      return false;
-  }
-
-  // check for valid NM
-  if (!nm.isEvery()) {
-    int32_t nm_val = r.GetIntTag("NM");
-    if (!nm.isValid(nm_val))
-      return false;
-  }
-
-  // trim the read, then check length
-  int32_t new_len, new_clipnum; 
-  if (phred.isEvery()) {
-    new_len = r.Length(); //a.QueryBases.length();
-    new_clipnum = clipnum;
-  }
-
-  if (!phred.isEvery()) {
-
-    //int32_t start = r.GetIntTag("TS");
-    //new_len = r.GetIntTag("TL");
-    //r_get_int32_tag(r, "TS", start);
-    //r_get_int32_tag(r, "TL", new_len);
-    //if (start == 0 && new_len == 0) { // tag not already added. Trim
-    int32_t start = 0;
-    new_len = r.QualityTrimmedSequence(phred.min, start).length();
+    
+    // check the CIGAR
+    if (!ins.isEvery() || !del.isEvery()) {
+      if (!ins.isValid(r.MaxInsertionBases()))
+	return false;
+      if (!del.isValid(r.MaxDeletionBases()))
+	return false;
+    }
+    
+    // if we dont need to because everything is pass, just just pass it
+    bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || atm_file.length() || !xp.isEvery();
+    if (!need_to_continue)
+      return true;
+    
+    // now check if we need to build char if all we want is clip
+    unsigned clipnum = 0;
+    if (!clip.isEvery()) {
+      clipnum = r.NumClip();
+      if (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) // if clip fails, its not going to get better by trimming. kill it now before building teh char data
+	return false;
+    }
+    
+    // check for valid NM
+    if (!nm.isEvery()) {
+      int32_t nm_val = r.GetIntTag("NM");
+      if (!nm.isValid(nm_val))
+	return false;
+    }
+    
+    // trim the read, then check length
+    int32_t new_len, new_clipnum; 
+    if (phred.isEvery()) {
+      new_len = r.Length(); //a.QueryBases.length();
+      new_clipnum = clipnum;
+    }
+    
+    if (!phred.isEvery()) {
+      
+      //int32_t start = r.GetIntTag("TS");
+      //new_len = r.GetIntTag("TL");
+      //r_get_int32_tag(r, "TS", start);
+      //r_get_int32_tag(r, "TL", new_len);
+      //if (start == 0 && new_len == 0) { // tag not already added. Trim
+      int32_t start = 0;
+      
+      //std::string seq_trimmed = r.GetZTag("QT");
+      //if (!seq_trimmed.length()) {
+      std::string seq_trimmed = r.QualityTrimmedSequence(phred.min, start);
+      if (seq_trimmed.length() != r.Length())
+	  r.AddZTag("QT", seq_trimmed);
+      //}
+      new_len = seq_trimmed.length();
+      
       // add the tags
       //r_add_int32_tag(r, "TS", start);
       //r_add_int32_tag(r, "TL", new_len);
       // }
-
-    // all the bases are trimmed away 
-    if (new_len == 0)
-      return false;
-
-    new_clipnum = std::max(0, static_cast<int>(clipnum - (r.Length() - new_len)));
-
-    // check the N
-    if (!nbases.isEvery()) {
-
-      size_t n = 0;
-      //assert((new_len + start - 1) < r.Length()); //debug
-      //r_count_sub_nbases(r, n, start, new_len + start); // TODO factor in trimming
-      n = r.CountNBases();
-      if (!nbases.isValid(n))
-    	return false;
+      
+      // all the bases are trimmed away 
+      if (new_len == 0)
+	return false;
+      
+      new_clipnum = std::max(0, static_cast<int>(clipnum - (r.Length() - new_len)));
+      
+      // check the N
+      if (!nbases.isEvery()) {
+	
+	size_t n = 0;
+	//assert((new_len + start - 1) < r.Length()); //debug
+	//r_count_sub_nbases(r, n, start, new_len + start); // TODO factor in trimming
+	n = r.CountNBases();
+	if (!nbases.isValid(n))
+	  return false;
+      }
+      
     }
-
-  }
-
-  // check the N if we didn't do phred trimming
-  if (!nbases.isEvery() && phred.isEvery()) {
-    size_t n = r.CountNBases();
-    if (!nbases.isValid(n))
-      return false;
-  }
-
-  // check for valid length
-  if (!len.isValid(new_len))
-    return false;
-
-  // check for valid clip
-  if (!clip.isValid(new_clipnum))
-    return false;
-
-  // check for secondary alignments
-  if (!xp.isEvery()) 
-    if (!xp.isValid(r.CountSecondaryAlignments()))
-      return false;
-
-  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
-#ifndef __APPLE__
-  if (atm_file.length()) {
-    bool m = ahomatch(r);
-     if ( (!m && !atm_inv) || (m && atm_inv) )
-      return false;
-  }
-#endif
-  
-  return true;
-}
-
-bool FlagRule::isValid(BamRead &r) {
     
-  if (isEvery())
+    // check the N if we didn't do phred trimming
+    if (!nbases.isEvery() && phred.isEvery()) {
+      size_t n = r.CountNBases();
+      if (!nbases.isValid(n))
+	return false;
+    }
+    
+    // check for valid length
+    if (!len.isValid(new_len))
+      return false;
+    
+    // check for valid clip
+    if (!clip.isValid(new_clipnum))
+      return false;
+    
+    // check for secondary alignments
+    if (!xp.isEvery()) 
+      if (!xp.isValid(r.CountSecondaryAlignments()))
+	return false;
+    
+    //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifndef __APPLE__
+    if (atm_file.length()) {
+      bool m = ahomatch(r);
+      if ( (!m && !atm_inv) || (m && atm_inv) )
+	return false;
+    }
+#endif
+    
     return true;
-
-  if (!dup.isNA()) 
-    if ((dup.isOff() && r.DuplicateFlag()) || (dup.isOn() && !r.DuplicateFlag()))
+  }
+  
+  bool FlagRule::isValid(BamRead &r) {
+    
+    if (isEvery())
+      return true;
+    
+    if (!dup.isNA()) 
+      if ((dup.isOff() && r.DuplicateFlag()) || (dup.isOn() && !r.DuplicateFlag()))
       return false;
   if (!supp.isNA()) 
     if ((supp.isOff() && r.SecondaryFlag()) || (supp.isOn() && !r.SecondaryFlag()))

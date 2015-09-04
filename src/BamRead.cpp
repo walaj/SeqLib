@@ -21,6 +21,15 @@ namespace SnowTools {
     return GenomicRegion(b->core.tid, b->core.pos, PositionEnd());
   }
 
+  std::string BamRead::Sequence() const {
+    uint8_t * p = bam_get_seq(b);
+    std::string out(b->core.l_qseq, 'N');
+    for (int32_t i = 0; i < b->core.l_qseq; ++i) 
+      out[i] = BASES[bam_seqi(p,i)];
+    return out;
+    
+  }
+
   void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
   {
     // get the old tag
@@ -152,6 +161,13 @@ namespace SnowTools {
     return std::string(str->s);
     }*/
 
+  std::string BamRead::QualitySequence() const {
+    std::string seq = GetZTag("QT");
+    if (!seq.length()) 
+      seq = Sequence();
+    return seq;
+  }
+
   std::ostream& operator<<(std::ostream& out, const BamRead &r)
   {
     //kstring_t *str;
@@ -159,10 +175,11 @@ namespace SnowTools {
     //out << str->s;
 
     out << bam_get_qname(r.b) << "\t" << r.b->core.flag
-	<< "\t" << r.b->core.tid << "\t" << r.b->core.pos 
+	<< "\t" << (r.b->core.tid+1) << "\t" << r.b->core.pos 
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
-	<< "\t" << "=" << "\t" << 0 
-	<< "\t" << r.Sequence() << "\t" << "*";
+	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
+        << r.b->core.isize 
+	<< "\t" << r.Sequence()/* << "\t" << r.Qualities()*/;
     return out;
       
     
@@ -241,9 +258,11 @@ namespace SnowTools {
     if (startpoint == 0 && endpoint == -1) 
       return "";
     
-    std::string output = "";
+    std::string output = std::string(endpoint-startpoint, 'N');
     try { 
-      output = Sequence().substr(startpoint, endpoint - startpoint);
+      uint8_t * p = bam_get_seq(b);
+      for (int32_t i = startpoint; i < (endpoint - startpoint); ++i) 
+	output[i] = BASES[bam_seqi(p,i)];
     } catch (...) {
       std::cerr << "Trying to subset string in BamRead::QualityTrimRead out of bounds. String: " << Sequence() << " start " << startpoint << " length " << (endpoint - startpoint) << std::endl;
     }
