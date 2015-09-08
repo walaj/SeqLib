@@ -41,6 +41,20 @@ bool BamWalker::__set_region(const GenomicRegion& gp) {
   //HTS set region
   if (!idx) 
     idx = std::shared_ptr<hts_idx_t>(hts_idx_load(m_in.c_str(), HTS_FMT_BAI), idx_delete());
+  
+  if (gp.chr >= br->n_targets) {
+    m_region_fail= true;
+    std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << br->n_targets << std::endl;
+    return false;
+  }
+
+  if (!idx) {
+    std::cerr << "Failed to load index file for file " << m_in << std::endl;
+    std::cerr << "...suggest rebuilding index with samtools index" << std::endl;
+    m_region_fail = true;
+    exit(EXIT_FAILURE);
+    return false;
+  }
   hts_itr = std::shared_ptr<hts_itr_t>(sam_itr_queryi(idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
 
   if (!hts_itr) {
@@ -58,7 +72,7 @@ void BamWalker::setBamWalkerRegion(const GenomicRegion& g)
   m_region.clear();
   m_region.push_back(g);
   m_region_idx = 0; // rewind it
-  __check_regions_blacklist(); // sets m_region
+  //__check_regions_blacklist(); // sets m_region
   if (m_region.size())
     __set_region(m_region[0]);
   else
@@ -74,7 +88,7 @@ void BamWalker::setBamWalkerRegions(const GenomicRegionVector& grv)
     }
   m_region = grv;
   m_region_idx = 0; // rewind it
-  __check_regions_blacklist(); // sets m_region
+  //__check_regions_blacklist(); // sets m_region
   if (m_region.size())
     __set_region(m_region[0]);
   else
@@ -359,10 +373,10 @@ std::string BamWalker::displayMiniRulesCollection() const
   return ss.str();
 }
 
-void BamWalker::__check_regions_blacklist() 
+/*void BamWalker::__check_regions_blacklist() 
 {
 
-  //std::cerr << "BLACKLIST size " << blacklist.size() << std::endl;
+  // does not work until get complement implemented
 
   // check if it overlaps with blacklist
   if (blacklist.size()) 
@@ -370,18 +384,11 @@ void BamWalker::__check_regions_blacklist()
       GRC regs;
       for (auto& i : m_region)
 	regs.add(i);
-      //std::cerr << "regs " << std::endl;
-      //for (auto& i : regs)
-      //std::cerr << "REG " << i << std::endl;
-      GRC out = regs.complement(blacklist);
-      //for (auto& i : blacklist)
-      //std::cerr << "BL: " << i << std::endl;
+         //GRC out = regs.complement(blacklist);
       m_region = out.asGenomicRegionVector();
-      //for (auto& i : m_region)
-      //std::cerr << "TRIMMED REGION " << i << std::endl;
     }
 
-}
+    }*/
 
 void BamWalker::addBlacklist(GRC& bl) 
 {

@@ -109,6 +109,9 @@ namespace SnowTools {
   
   void BWAWrapper::constructIndex(const USeqVector& v) {
 
+    if (!v.size())
+      return;
+
     if (idx) {
       std::cout << "...clearing old index" << std::endl;
       bwa_idx_destroy(idx);
@@ -156,7 +159,7 @@ namespace SnowTools {
       __add_to_anns(v[k].name, v[k].seq, &bns->anns[k], offset);
       offset += v[k].seq.length();
     }
-    
+
     //ambs is "holes", like N bases
     bns->ambs = 0; //(bntamb1_t*)calloc(1, sizeof(bntamb1_t));
     
@@ -171,7 +174,6 @@ namespace SnowTools {
 
   void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
 				       double keep_sec_with_frac_of_primary_score) {
-    
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
 
@@ -204,8 +206,6 @@ namespace SnowTools {
 	primary_score = a.score;
 	//num_secondary = 0;
       }
-
-      
 
       //if (i == 0 && a.is_rev)
       //first_is_rev = true;

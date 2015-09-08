@@ -326,12 +326,7 @@ class BamRead {
    * @param tag Name of the tag. e.g. "XP"
    * @return The value stored in the tag. Returns empty string if it does not exist.
    */
-  inline std::string GetZTag(const std::string& tag) const {
-    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
-    if (!p)
-      return "";
-    return std::string(bam_aux2Z(p));
-  }
+  std::string GetZTag(const std::string& tag) const;
   
   /** Get a vector of ints from a Z tag delimited by "x"
    * @param tag Name of the tag e.g. "AL"
@@ -361,9 +356,7 @@ class BamRead {
    * @param tag Name of the tag. e.g. "XP"
    * @param val Value for the tag
    */
-  inline void AddZTag(std::string tag, std::string val) {
-    bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
-  }
+  void AddZTag(std::string tag, std::string val);
 
   /** Add an int (i) tag
    * @param tag Name of the tag. e.g. "XP"
