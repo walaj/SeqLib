@@ -523,6 +523,136 @@ $debug ||
 if test -n "$CONFIG_FILES"; then
 
 
+<<<<<<< HEAD
+# No need to generate the scripts if there are no CONFIG_FILES.
+# This happens for instance when ./config.status config.h
+if test -n "$CONFIG_FILES"; then
+  # Protect against being on the right side of a sed subst in config.status.
+  sed 's/,@/@@/; s/@,/@@/; s/,;t t$/@;t t/; /@;t t$/s/[\\&,]/\\&/g;
+   s/@@/,@/; s/@@/@,/; s/@;t t$/,;t t/' >$tmp/subs.sed <<\CEOF
+s,@SHELL@,/bin/sh,;t t
+s,@PATH_SEPARATOR@,:,;t t
+s,@PACKAGE_NAME@,snowtools,;t t
+s,@PACKAGE_TARNAME@,snowtools,;t t
+s,@PACKAGE_VERSION@,1.0,;t t
+s,@PACKAGE_STRING@,snowtools 1.0,;t t
+s,@PACKAGE_BUGREPORT@,jwala@broadinstitute.org,;t t
+s,@exec_prefix@,${prefix},;t t
+s,@prefix@,/usr/local,;t t
+s,@program_transform_name@,s,x,x,,;t t
+s,@bindir@,${exec_prefix}/bin,;t t
+s,@sbindir@,${exec_prefix}/sbin,;t t
+s,@libexecdir@,${exec_prefix}/libexec,;t t
+s,@datadir@,${prefix}/share,;t t
+s,@sysconfdir@,${prefix}/etc,;t t
+s,@sharedstatedir@,${prefix}/com,;t t
+s,@localstatedir@,${prefix}/var,;t t
+s,@libdir@,${exec_prefix}/lib,;t t
+s,@includedir@,${prefix}/include,;t t
+s,@oldincludedir@,/usr/include,;t t
+s,@infodir@,${prefix}/info,;t t
+s,@mandir@,${prefix}/man,;t t
+s,@build_alias@,,;t t
+s,@host_alias@,,;t t
+s,@target_alias@,,;t t
+s,@DEFS@,-DHAVE_CONFIG_H,;t t
+s,@ECHO_C@,,;t t
+s,@ECHO_N@,-n,;t t
+s,@ECHO_T@,,;t t
+s,@LIBS@,-lrt -lz ,;t t
+s,@INSTALL_PROGRAM@,${INSTALL},;t t
+s,@INSTALL_SCRIPT@,${INSTALL},;t t
+s,@INSTALL_DATA@,${INSTALL} -m 644,;t t
+s,@CYGPATH_W@,echo,;t t
+s,@PACKAGE@,snowtools,;t t
+s,@VERSION@,1.0,;t t
+s,@ACLOCAL@,aclocal-1.9,;t t
+s,@AUTOCONF@,autoconf,;t t
+s,@AUTOMAKE@,automake-1.9,;t t
+s,@AUTOHEADER@,autoheader,;t t
+s,@MAKEINFO@,makeinfo,;t t
+s,@install_sh@,/xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/install-sh,;t t
+s,@STRIP@,,;t t
+s,@ac_ct_STRIP@,,;t t
+s,@INSTALL_STRIP_PROGRAM@,${SHELL} $(install_sh) -c -s,;t t
+s,@mkdir_p@,mkdir -p --,;t t
+s,@AWK@,gawk,;t t
+s,@SET_MAKE@,,;t t
+s,@am__leading_dot@,.,;t t
+s,@AMTAR@,tar,;t t
+s,@am__tar@,${AMTAR} chof - "$$tardir",;t t
+s,@am__untar@,${AMTAR} xf -,;t t
+s,@MAINTAINER_MODE_TRUE@,#,;t t
+s,@MAINTAINER_MODE_FALSE@,,;t t
+s,@MAINT@,#,;t t
+s,@CXX@,g++,;t t
+s,@CXXFLAGS@,-O3,;t t
+s,@LDFLAGS@,,;t t
+s,@CPPFLAGS@, -I. -I/xchip/gistic/Jeremiah/boost_1_58_0,;t t
+s,@ac_ct_CXX@,g++,;t t
+s,@EXEEXT@,,;t t
+s,@OBJEXT@,o,;t t
+s,@DEPDIR@,.deps,;t t
+s,@am__include@,include,;t t
+s,@am__quote@,,;t t
+s,@AMDEP_TRUE@,,;t t
+s,@AMDEP_FALSE@,#,;t t
+s,@AMDEPBACKSLASH@,\,;t t
+s,@CXXDEPMODE@,depmode=gcc3,;t t
+s,@am__fastdepCXX_TRUE@,,;t t
+s,@am__fastdepCXX_FALSE@,#,;t t
+s,@CC@,gcc,;t t
+s,@CFLAGS@,-O3,;t t
+s,@ac_ct_CC@,gcc,;t t
+s,@CCDEPMODE@,depmode=gcc3,;t t
+s,@am__fastdepCC_TRUE@,,;t t
+s,@am__fastdepCC_FALSE@,#,;t t
+s,@RANLIB@,ranlib,;t t
+s,@ac_ct_RANLIB@,ranlib,;t t
+s,@CXXCPP@,g++ -E,;t t
+s,@EGREP@,grep -E,;t t
+s,@AM_CXXFLAGS@,-g  -Wno-unknown-pragmas -std=c++11,;t t
+s,@LIBOBJS@,,;t t
+s,@LTLIBOBJS@,,;t t
+CEOF
+
+  # Split the substitutions into bite-sized pieces for seds with
+  # small command number limits, like on Digital OSF/1 and HP-UX.
+  ac_max_sed_lines=48
+  ac_sed_frag=1 # Number of current file.
+  ac_beg=1 # First line for current file.
+  ac_end=$ac_max_sed_lines # Line after last line for current file.
+  ac_more_lines=:
+  ac_sed_cmds=
+  while $ac_more_lines; do
+    if test $ac_beg -gt 1; then
+      sed "1,${ac_beg}d; ${ac_end}q" $tmp/subs.sed >$tmp/subs.frag
+    else
+      sed "${ac_end}q" $tmp/subs.sed >$tmp/subs.frag
+    fi
+    if test ! -s $tmp/subs.frag; then
+      ac_more_lines=false
+    else
+      # The purpose of the label and of the branching condition is to
+      # speed up the sed processing (if there are no `@' at all, there
+      # is no need to browse any of the substitutions).
+      # These are the two extra sed commands mentioned above.
+      (echo ':t
+  /@[a-zA-Z_][a-zA-Z_0-9]*@/!b' && cat $tmp/subs.frag) >$tmp/subs-$ac_sed_frag.sed
+      if test -z "$ac_sed_cmds"; then
+	ac_sed_cmds="sed -f $tmp/subs-$ac_sed_frag.sed"
+      else
+	ac_sed_cmds="$ac_sed_cmds | sed -f $tmp/subs-$ac_sed_frag.sed"
+      fi
+      ac_sed_frag=`expr $ac_sed_frag + 1`
+      ac_beg=$ac_end
+      ac_end=`expr $ac_end + $ac_max_sed_lines`
+    fi
+  done
+  if test -z "$ac_sed_cmds"; then
+    ac_sed_cmds=cat
+  fi
+=======
 ac_cr=''
 ac_cs_awk_cr=`$AWK 'BEGIN { print "a\rb" }' </dev/null 2>/dev/null`
 if test "$ac_cs_awk_cr" = "a${ac_cr}b"; then
@@ -662,6 +792,7 @@ fi < "$tmp/subs1.awk" > "$tmp/subs.awk" \
   || { { $as_echo "$as_me:$LINENO: error: could not setup config files machinery" >&5
 $as_echo "$as_me: error: could not setup config files machinery" >&2;}
    { (exit 1); exit 1; }; }
+>>>>>>> 7441c136e52ce3c942dede91adb3e4e0b225979e
 fi # test -n "$CONFIG_FILES"
 
 # Set up the scripts for CONFIG_HEADERS section.
