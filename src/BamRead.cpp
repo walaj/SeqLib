@@ -33,8 +33,9 @@ namespace SnowTools {
   void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
   {
     // get the old tag
+    assert(tag.length());
+    assert(val.length());
     std::string tmp = GetZTag(tag);
-
     if (!tmp.length()) 
       {
 	AddZTag(tag, val);
@@ -48,8 +49,8 @@ namespace SnowTools {
     RemoveTag(tag.c_str());
     
     // add the new one
+    assert(tmp.length());
     AddZTag(tag, tmp);
-    
   }
 
   void BamRead::clearSeqQualAndTags() {
@@ -162,7 +163,7 @@ namespace SnowTools {
     }*/
 
   std::string BamRead::QualitySequence() const {
-    std::string seq = GetZTag("QT");
+    std::string seq = GetZTag("GV");
     if (!seq.length()) 
       seq = Sequence();
     return seq;
@@ -270,13 +271,32 @@ namespace SnowTools {
     return output;
 
   }
+
+  void BamRead::AddZTag(std::string tag, std::string val) {
+    if (tag.empty() || val.empty())
+      return;
+    bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
+  }
+
+  std::string BamRead::GetZTag(const std::string& tag) const {
+    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
+    if (!p)
+      return std::string();
+    char* pp = bam_aux2Z(p);
+    if (!pp) 
+      return std::string();
+    return std::string(pp);
+  }
+
   
   // get a string tag that might be separted by "x"
   std::vector<std::string> BamRead::GetSmartStringTag(const std::string& tag) const {
     
     std::vector<std::string> out;
     std::string tmp = GetZTag(tag);
-    assert(tmp.length());
+
+    if (tmp.empty())
+      return std::vector<std::string>();
     
     if (tmp.find("x") != std::string::npos) {
       std::istringstream iss(tmp);
@@ -301,7 +321,9 @@ namespace SnowTools {
     
     tmp = GetZTag(tag);
     //r_get_Z_tag(a, tag.c_str(), tmp);
-    assert(tmp.length());
+    //assert(tmp.length());
+    if (tmp.empty())
+      return std::vector<int>();
     
     if (tmp.find("x") != std::string::npos) {
       std::istringstream iss(tmp);

@@ -34,6 +34,8 @@ namespace SnowTools {
     
     //! print the AlignmentFragment
     friend std::ostream& operator<<(std::ostream &out, const AlignmentFragment& c); 
+
+    BreakEnd makeBreakEnd(bool left);
     
     /*! @function
      * @abstract Parse an alignment frag for a breakpoint
@@ -57,7 +59,7 @@ namespace SnowTools {
      */
     bool checkLocal(const GenomicRegion& window);
     
-    const BPVec& getIndelBreaks() const { return m_indel_breaks; }
+    const std::vector<BreakPoint>& getIndelBreaks() const { return m_indel_breaks; }
     
     /*! Write the alignment record to a BAM file
      */
@@ -71,7 +73,7 @@ namespace SnowTools {
 
     int sub_n = 0; // number of sub optimal alignments
     
-    BPVec m_indel_breaks; /**< indel variants on this alignment */
+    std::vector<BreakPoint> m_indel_breaks; /**< indel variants on this alignment */
     
     Cigar m_cigar; /**< cigar oriented to assembled orientation */
     

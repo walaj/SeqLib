@@ -24,7 +24,13 @@ namespace SnowTools
   public:
 
     /** Create an empty cluster */
-    DiscordantCluster() { m_reg1 = GenomicRegion(); m_reg2 = GenomicRegion(); assert(m_reg1.isEmpty()); }
+    DiscordantCluster() { 
+      m_reg1 = GenomicRegion(); 
+      m_reg2 = GenomicRegion(); 
+      assert(m_reg1.isEmpty()); 
+      ncount = 0; tcount = 0;
+      mapq1 = -1; mapq2 = 0;
+    }
 
     /** Make a cluster from a set of reads (pre-clustered) and look up a larger set to find 
      * their mates 
@@ -41,11 +47,10 @@ namespace SnowTools
       return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\ttcount\tncount\tmapq1\tmapq2\treads"; 
     }
     
+    bool hasAssociatedAssemblyContig() const { return m_contig.length(); }
+
     void addMateReads(const BamReadVector& bav);
     
-    // return the mean mapping quality for this cluster
-    double getMeanMapq(bool mate = false) const;
-
     /** Return the discordant cluster as a string with just coordinates */
     std::string toRegionString() const;
     
@@ -60,9 +65,6 @@ namespace SnowTools
     
     /** Sort by coordinate */
     bool operator < (const DiscordantCluster& b) const;
-
-    /** Has associated assembly contig */
-    bool hasAssociatedAssemblyContig() const { return m_contig.length(); } 
 
     static std::unordered_map<std::string, DiscordantCluster> clusterReads(const BamReadVector& bav, const GenomicRegion& interval);
 
@@ -79,8 +81,8 @@ namespace SnowTools
      * region give a query region */
     GenomicRegion GetMateRegionOfOverlap(const GenomicRegion& gr) const; 
 
-    size_t tcount = 0;
-    size_t ncount = 0; 
+    int tcount = 0;
+    int ncount = 0; 
 
     std::unordered_map<std::string, BamRead> reads;
     std::unordered_map<std::string, BamRead> mates;
@@ -90,10 +92,15 @@ namespace SnowTools
     GenomicRegion m_reg1;
     GenomicRegion m_reg2;
 
+    int mapq1;
+    int mapq2;
+
   private:    
     std::string m_id;
-
     std::unordered_map<std::string, bool> qnames; // TODO get rid of it
+
+    // return the mean mapping quality for this cluster
+    double __getMeanMapq(bool mate = false) const;
   };
   
   //! vector of AlignmentFragment objects

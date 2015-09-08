@@ -633,8 +633,9 @@ void Range::parseRuleLine(std::string line) {
       //std::string seq_trimmed = r.GetZTag("QT");
       //if (!seq_trimmed.length()) {
       std::string seq_trimmed = r.QualityTrimmedSequence(phred.min, start);
-      if (seq_trimmed.length() != r.Length())
-	  r.AddZTag("QT", seq_trimmed);
+      if ((int)seq_trimmed.length() != r.Length() && seq_trimmed.length()) {
+	r.AddZTag("GV", seq_trimmed);
+      }
       //}
       new_len = seq_trimmed.length();
       
