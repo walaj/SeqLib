@@ -14,6 +14,8 @@
 
 namespace SnowTools {
 
+  static bool header_has_chr_string = false;
+
   template<class T>
   void GenomicRegionCollection<T>::gsort() {
     
@@ -148,6 +150,11 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
 	
       }
 
+      if (header_has_chr_string) {
+	//if (chr == "X" || chr == "Y" || std::stoi(chr) < 23)
+	  chr = "chr" + chr;
+      }
+      
       // construct the GenomicRegion
       T gr(chr, pos1, pos2, h);
 
@@ -201,18 +208,20 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 	    gr.pad(pad);
 	    m_grv.push_back(gr);
 	  }
-
 	}
 	
       }
     }
   }
-
+  
+  std::cerr << "...parsed " << m_grv.size() << " VCF lines " << std::endl;
   
 }
 
 template<class T>
-void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pad, bam_hdr_t *h) {
+void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pad, bam_hdr_t *h, bool chr_header) {
+
+  header_has_chr_string = chr_header;
 
   igzstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
@@ -478,6 +487,7 @@ GRC GenomicRegionCollection<T>::intersection(GRC& subject, bool ignore_strand /*
   return out;
 }
 
+  /*
 template<class T>
 GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
 {
@@ -549,6 +559,7 @@ GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
 #endif
 
 }
+  */
 
 template<class T>
 void GenomicRegionCollection<T>::pad(int v)
