@@ -17,7 +17,7 @@ before_install:
  - sudo update-alternatives --config g++
 
 script:
- - ./configure && make all AUTOCONF=: AUTOHEADER=: AUTOMAKE=: ACLOCAL=:
+ - ./configure && make
 
 branches:
     only:
