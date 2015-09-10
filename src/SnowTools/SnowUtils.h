@@ -92,6 +92,14 @@ namespace SnowTools {
       return in.substr(0, in.length() - 1);
   }
   
+  // assign A to B and B to A
+  template<typename T> 
+    void flip(T& a, T& b) {
+    T tmp_a = a;
+    a = b;
+    b = tmp_a;
+  }
+  
   // remove substrings from a string
  inline std::string scrubString(const std::string& toscrub, const std::string& toremove) {
 

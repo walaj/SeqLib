@@ -82,7 +82,7 @@ class GenomicRegionCollection {
    * @param file Text file to read and store intervals
    * @param pad Amount to pad the intervals by (calls GenomicRegion::pad)
    */
- void regionFileToGRV(const std::string &file, int pad = 0, bam_hdr_t* h = NULL );
+ void regionFileToGRV(const std::string &file, int pad = 0, bam_hdr_t* h = NULL, bool chr_header = false);
 
   /** Fill in the GenomicIntervalTreeMap stored in this object. 
    *
@@ -202,7 +202,7 @@ class GenomicRegionCollection {
  
  GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
 
- GenomicRegionCollection<GenomicRegion> complement(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
+ //GenomicRegionCollection<GenomicRegion> complement(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
 
   std::vector<T> m_grv;
   

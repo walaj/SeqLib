@@ -94,7 +94,7 @@ namespace SnowTools {
   bool DBSnpFilter::queryBreakpoint(BreakPoint& bp) {
     
     std::vector<int32_t> sub, que;
-    GenomicRegion gr = bp.gr1;
+    GenomicRegion gr = bp.b1.gr;
     gr.pad(2);
     GRC subject(gr);
     GRC out = subject.findOverlaps(m_sites, sub, que, true); // true = ignore_strand

@@ -216,7 +216,7 @@ class BamWalker {
   int m_limit = -1;
   int m_keep_limit = -1;
   
-  void __check_regions_blacklist();
+  //void __check_regions_blacklist();
 
   // point index to this region of bam
   bool __set_region(const GenomicRegion& gp);

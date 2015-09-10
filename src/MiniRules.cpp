@@ -100,34 +100,43 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
   for (auto& it : m_regions) {
     which_rule = 0;
     bool rule_hit = false;
-    if (it.isReadOverlappingRegion(r)) // read overlaps a region
-      for (auto& jt : it.m_abstract_rules) { // loop rules in that region
-	if (jt.isValid(r)) {
+    if (it.isReadOverlappingRegion(r)) { // read overlaps a region
 
+      // empty rule. It's a pass
+      if (!it.m_abstract_rules.size()) { 
+	is_valid = true;
+	if (!rule_hit)
+	  ++it.m_count;
+	rule_hit = true;
+      }
+      
+      // non-empty, need to check
+      for (auto& jt : it.m_abstract_rules) { 
+	if (jt.isValid(r)) {
 	  // this whole read is valid
 	  is_valid = true;
 
 	  // update the region counter
-	  if (!rule_hit) { // first hit for this region?
+	  if (!rule_hit) // first hit for this region?
 	    ++it.m_count;
-	  }
 
 	  rule_hit = true;
-
+	  
 	  // update the rule counter within this region
 	  ++jt.m_count;
-
+	  
 	  if (!m_fall_through)
 	    break;
 	}
 	++which_rule;
-      }
-
+      } // end rules loop
+    }
+    
     // found a hit in a rule
     if (rule_hit && !m_fall_through)
       break;
-
-    // didnt find hit, move it up one
+    
+    // didnt find hit (or fall through checking), move it up one
     ++which_region;
   }
   
@@ -633,8 +642,9 @@ void Range::parseRuleLine(std::string line) {
       //std::string seq_trimmed = r.GetZTag("QT");
       //if (!seq_trimmed.length()) {
       std::string seq_trimmed = r.QualityTrimmedSequence(phred.min, start);
-      if (seq_trimmed.length() != r.Length())
-	  r.AddZTag("QT", seq_trimmed);
+      if ((int)seq_trimmed.length() != r.Length() && seq_trimmed.length()) {
+	r.AddZTag("GV", seq_trimmed);
+      }
       //}
       new_len = seq_trimmed.length();
       
