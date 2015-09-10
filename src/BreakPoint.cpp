@@ -3,7 +3,7 @@
 #include <getopt.h>
 #include "SnowTools/gzstream.h"
 
-#define SPLIT_BUFF 8
+#define SPLIT_BUFF 10
 
 // define repeats
 static std::vector<std::string> repr = {"AAAAAAAA", "TTTTTTTT", "CCCCCCCC", "GGGGGGGG", 
@@ -94,7 +94,7 @@ namespace SnowTools {
 
     cname = dc.toRegionString();
     
-    assert(b1.gr < b2.gr);
+    //assert(b1.gr < b2.gr);
 
   }
   
@@ -544,7 +544,7 @@ namespace SnowTools {
       confidence = "TOOSHORT";
     else if (split_count < 6 && (span > 1500 || span == -1))  // large and inter chrom need 7+
       confidence = "NODISC";
-    else if (std::max(b1.mapq, b2.mapq) <= 50 || std::min(b1.mapq, b2.mapq) <= 30) 
+    else if (std::max(b1.mapq, b2.mapq) <= 50 || std::min(b1.mapq, b2.mapq) <= 10) 
       confidence = "LOWMAPQ";
     else if ( split_count <= 3 && (span <= 1500 && span != -1) ) // small with little split
       confidence = "WEAKASSEMBLY";
@@ -554,6 +554,8 @@ namespace SnowTools {
       confidence = "MULTIMATCH";
     else if (secondary)
       confidence = "SECONDARY";
+    else if ( (insertion.length() >= 100 || span < 1000) && (tsplit <= 8 || nsplit) ) // be extra strict for huge insertions or really low spans
+      confidence = "WEAKASSEMBLY";
     else
       confidence = "PASS";
     
@@ -561,25 +563,27 @@ namespace SnowTools {
 
   void BreakPoint::__score_assembly_dscrd() {
 
-    //int this_mapq1 = b1.local ? 60 : b1.mapq;
-    //int this_mapq2 = b2.local ? 60 : b2.mapq;
+    int this_mapq1 = b1.local ? 60 : b1.mapq;
+    int this_mapq2 = b2.local ? 60 : b2.mapq;
     int span = getSpan();
     bool germ = dc.ncount > 0 || nsplit > 0;
 
-    int max_a_mapq = std::max(b1.mapq, dc.mapq1);
-    int max_b_mapq = std::max(b2.mapq, dc.mapq2);
+    int max_a_mapq = std::max(this_mapq1, dc.mapq1);
+    int max_b_mapq = std::max(this_mapq2, dc.mapq2);
 
-    int min_assm_mapq = std::min(b1.mapq, b2.mapq);
-    int max_assm_mapq = std::max(b1.mapq, b2.mapq);
+    int min_assm_mapq = std::min(this_mapq1, this_mapq2);
+    int max_assm_mapq = std::max(this_mapq1, this_mapq2);
     
     int total_count = nsplit + tsplit + dc.ncount + dc.tcount;
 
     double min_disc_mapq = std::min(dc.mapq1, dc.mapq2);
 
-    if (max_a_mapq < 30 || max_b_mapq < 30)
+    if (max_a_mapq <= 10 || max_b_mapq <= 10)
       confidence = "LOWMAPQ";
-    else if ( (min_disc_mapq < 0 && min_assm_mapq < 30) || (max_assm_mapq < 40))
+    else if (std::max(max_a_mapq, max_b_mapq) <= 30)
       confidence = "LOWMAPQ";
+    //if ( (min_disc_mapq <= 10 && min_assm_mapq < 30) || (max_assm_mapq < 40))
+    //  confidence = "LOWMAPQ";
     else if ( std::max(tsplit, nsplit) == 0 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
       confidence = "WEAKASSEMBLY";
     else if ( total_count < 15 && germ && span == -1) // be super strict about germline interchrom
@@ -594,7 +598,7 @@ namespace SnowTools {
 
   void BreakPoint::__score_dscrd() {
     int disc_count = dc.ncount + dc.tcount;
-    if (std::min(dc.mapq1, dc.mapq2) < 30 || std::max(dc.mapq1, dc.mapq2) <= 36) // mapq here is READ mapq (37 std::max)
+    if (std::min(dc.mapq1, dc.mapq2) < 20 || std::max(dc.mapq1, dc.mapq2) <= 30) // mapq here is READ mapq (37 std::max)
       confidence = "LOWMAPQ";
     else if (std::min(dc.mapq1, dc.mapq2) == 37 && disc_count >= 6)
       confidence = "PASS";
@@ -641,8 +645,8 @@ namespace SnowTools {
     __set_evidence();
     
     // ensure that discordant cluster is oriented
-    if (hasDiscordant()) 
-      assert(dc.m_reg1 < dc.m_reg2);
+    //if (hasDiscordant()) 
+    //  assert(dc.m_reg1 < dc.m_reg2);
     
     // ensure that breakpoint is oriented
     assert(valid()); 
