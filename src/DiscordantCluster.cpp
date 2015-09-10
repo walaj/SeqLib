@@ -165,7 +165,7 @@ namespace SnowTools {
       flip(mapq1, mapq2);
     }
 
-    assert(m_reg1 < m_reg2 || (m_reg1.chr == m_reg2.chr && m_reg1.pos1 == m_reg2.pos2 && m_reg1.strand != m_reg2.strand));
+    //assert(m_reg1 < m_reg2 || (m_reg1.chr == m_reg2.chr && m_reg1.pos1 == m_reg2.pos2 && m_reg1.strand != m_reg2.strand));
     
   }
   
