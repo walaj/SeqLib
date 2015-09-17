@@ -30,14 +30,18 @@ void BamWalker::SetWriteHeader(bam_hdr_t* hdr) {
 };
 
 // set the bam region
-bool BamWalker::__set_region(const GenomicRegion& gp) {
-
+bool BamWalker::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx) {
+  
   assert(m_in.length());
-
+  
 #ifdef DEBUG_WALKER
-    std::cerr << "trying to set the region for "<< m_in << " and on region " << gp << std::endl;
+  std::cerr << "trying to set the region for "<< m_in << " and on region " << gp << std::endl;
 #endif
-
+  
+  // store the pre-loaded idx rather than re-load
+  if (!idx && passed_idx) 
+    idx = passed_idx;
+  
   //HTS set region
   if (!idx) 
     idx = std::shared_ptr<hts_idx_t>(hts_idx_load(m_in.c_str(), HTS_FMT_BAI), idx_delete());
@@ -47,7 +51,7 @@ bool BamWalker::__set_region(const GenomicRegion& gp) {
     std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << br->n_targets << std::endl;
     return false;
   }
-
+  
   if (!idx) {
     std::cerr << "Failed to load index file for file " << m_in << std::endl;
     std::cerr << "...suggest rebuilding index with samtools index" << std::endl;
@@ -67,19 +71,28 @@ bool BamWalker::__set_region(const GenomicRegion& gp) {
   return true;
 }
 
-void BamWalker::setBamWalkerRegion(const GenomicRegion& g)
+void BamWalker::resetAll() {
+
+  m_region_fail = false;
+  m_region_idx = 0;
+  m_region = GenomicRegionVector();
+  m_num_reads_seen = 0;
+  m_num_reads_kept = 0;
+}
+
+void BamWalker::setBamWalkerRegion(const GenomicRegion& g, std::shared_ptr<hts_idx_t> passed_idx)
 {
   m_region.clear();
   m_region.push_back(g);
   m_region_idx = 0; // rewind it
   //__check_regions_blacklist(); // sets m_region
   if (m_region.size())
-    __set_region(m_region[0]);
+    __set_region(m_region[0], passed_idx);
   else
     m_region.push_back(GenomicRegion(-1,-1,-1));
 }
 
-void BamWalker::setBamWalkerRegions(const GenomicRegionVector& grv) 
+void BamWalker::setBamWalkerRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx) 
 {
   if (grv.size() == 0)
     {
@@ -90,7 +103,7 @@ void BamWalker::setBamWalkerRegions(const GenomicRegionVector& grv)
   m_region_idx = 0; // rewind it
   //__check_regions_blacklist(); // sets m_region
   if (m_region.size())
-    __set_region(m_region[0]);
+    __set_region(m_region[0], passed_idx);
   else
     m_region.push_back(GenomicRegion(-1,-1,-1));
 }

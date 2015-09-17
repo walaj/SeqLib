@@ -87,7 +87,7 @@ class BamWalker {
    * This will set the BAM pointer to the given region.
    * @param gp Location to point the BAM to
    */
-  void setBamWalkerRegion(const GenomicRegion& gp);
+  void setBamWalkerRegion(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
 
   /** Set up multiple regions. Overwrites current regions. 
    * 
@@ -95,7 +95,7 @@ class BamWalker {
    * input list.
    * @param grv Set of location to point BAM to
    */
-  void setBamWalkerRegions(const GenomicRegionVector& grv);
+  void setBamWalkerRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
 
   /** Create the index file for the output bam in BAI format.
    *
@@ -205,6 +205,9 @@ class BamWalker {
   /** Set the limit for total number of reads kept */
   void setReadKeepLimit(int lim) { m_keep_limit = lim; m_num_reads_kept = 0; }
   
+  /** Reset all the counters and regions, but keep the loaded index */
+  void resetAll();
+
  protected:
 
   bool m_region_fail = false;
@@ -219,7 +222,7 @@ class BamWalker {
   //void __check_regions_blacklist();
 
   // point index to this region of bam
-  bool __set_region(const GenomicRegion& gp);
+  bool __set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
 
   struct timespec start;
 
