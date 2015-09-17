@@ -478,8 +478,6 @@ namespace SnowTools {
 	bool bp1reg1 = bp1.getOverlap(d.second.m_reg1) > 0;
 	bool bp2reg2 = bp2.getOverlap(d.second.m_reg2) > 0;
 
-	assert(d.second.m_reg1 < d.second.m_reg2);
-
 	bool pass = bp1reg1 && bp2reg2;
 
 	/*	std::cerr << " gr1 " << gr1 << " gr2 " << gr2 << std::endl << 
@@ -626,7 +624,7 @@ namespace SnowTools {
       confidence="GRAYLISTLISTANDPON";
     else if (blacklist_and_low_count || blacklist_and_low_AF)
       confidence="GRAYLIST";
-    else if ( (max_count < 4 && max_af < 0.2) || (max_count < 3) || (max_count < 5 && b1.mapq < 30))
+    else if ( (max_count < 4 && max_af < 0.2) || (max_count < 2 && b1.mapq < 60) || (max_count < 5 && b1.mapq < 30))
       confidence="WEAKASSEMBLY";
     else if (b1.mapq < 10)
       confidence="LOWMAPQ";

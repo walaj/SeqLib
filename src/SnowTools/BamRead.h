@@ -104,7 +104,7 @@ class BamRead {
   int32_t CountNBases() const;
 
   /** Trim the sequence down by removing bases from ends with low quality scores */
-  std::string QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint) const;
+  void QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint, int32_t& endpoint) const;
 
   /** Retrieve the quality trimmed seqeuence from QT tag if made. Otherwise return normal seq */
   std::string QualitySequence() const;

@@ -632,29 +632,24 @@ void Range::parseRuleLine(std::string line) {
     
     if (!phred.isEvery()) {
       
-      //int32_t start = r.GetIntTag("TS");
-      //new_len = r.GetIntTag("TL");
-      //r_get_int32_tag(r, "TS", start);
-      //r_get_int32_tag(r, "TL", new_len);
-      //if (start == 0 && new_len == 0) { // tag not already added. Trim
-      int32_t start = 0;
+      int32_t startpoint = 0, endpoint = 0;
+      r.QualityTrimmedSequence(phred.min, startpoint, endpoint);
+      new_len = endpoint - startpoint;
       
-      //std::string seq_trimmed = r.GetZTag("QT");
-      //if (!seq_trimmed.length()) {
-      std::string seq_trimmed = r.QualityTrimmedSequence(phred.min, start);
-      if ((int)seq_trimmed.length() != r.Length() && seq_trimmed.length()) {
-	r.AddZTag("GV", seq_trimmed);
+      if (endpoint != -1 && new_len < r.Length() && new_len > 0 && new_len - startpoint >= 0 && startpoint + new_len < r.Length()) { 
+	try { 
+	  r.AddZTag("GV", r.Sequence().substr(startpoint, new_len));
+	  assert(r.GetZTag("GV").length());
+	} catch (...) {
+	  std::cerr << "Subsequence failure with sequence of length "  
+		    << r.Sequence().length() << " and startpoint "
+		    << startpoint << " endpoint " << endpoint 
+		    << " newlen " << new_len << std::endl;
+	}
       }
-      //}
-      new_len = seq_trimmed.length();
-      
-      // add the tags
-      //r_add_int32_tag(r, "TS", start);
-      //r_add_int32_tag(r, "TL", new_len);
-      // }
-      
+
       // all the bases are trimmed away 
-      if (new_len == 0)
+      if (endpoint == -1 || new_len == 0)
 	return false;
       
       new_clipnum = std::max(0, static_cast<int>(clipnum - (r.Length() - new_len)));

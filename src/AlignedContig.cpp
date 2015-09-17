@@ -185,7 +185,10 @@ namespace SnowTools {
       int dum= 0;
       int rc = 0;
       std::string this_cig;
-      std::string seq = i.QualityTrimmedSequence(4, dum);
+      //bool was_trimmed = false;
+      //std::string seq = i.QualityTrimmedSequence(4, dum, was_trimmed);
+      //std::string seq = ""; // dummy
+      std::string seq = i.QualitySequence();
       std::string sr = i.GetZTag("SR");
       
       // reverse complement if need be
@@ -222,10 +225,22 @@ namespace SnowTools {
 	SnowTools::rcomplement(seq);      
       
       if (aln > 0)
-	seq = seq.substr(aln, seq.length() - aln);
+	try {
+	  seq = seq.substr(aln, seq.length() - aln);
+	} catch (...) {
+	  std::cerr << "AlignedContig::operator<< error: substring out of bounds. seqlen " << 
+	    seq.length() << " start " << aln << " length " << (seq.length() - aln) << std::endl;
+	}
       
       if ( (pos + seq.length() ) > ac.getSequence().length()) 
-	seq = seq.substr(0, ac.getSequence().length() - pos);
+	try { 
+	  seq = seq.substr(0, ac.getSequence().length() - pos);
+	} catch (...) {
+	  std::cerr << "AlignedContig::operator<< (2) error: substring out of bounds. seqlen " << 
+	    seq.length() << " start " << 0 << " pos " << pos << " ac.getSequence().length() " << 
+	    ac.getSequence().length() << std::endl;
+
+	}
       
       
       assert(kk != cnvec.size()); // assure that we found something

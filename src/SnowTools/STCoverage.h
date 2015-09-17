@@ -21,7 +21,7 @@
 
 typedef std::shared_ptr<std::vector<uint16_t>> uint16_sp;
 typedef std::unordered_map<int,int> CovMap;
-typedef std::unordered_map<int,CovMap> CovMapMap;
+//typedef std::unordered_map<int,CovMap> CovMapMap;
 
 namespace SnowTools {
 
@@ -36,7 +36,8 @@ class STCoverage {
   GRC m_grc;
   GenomicRegion m_gr;
 
-  CovMapMap m_map;
+  //CovMapMap m_map;
+  std::vector<CovMap> m_map;
 
   uint16_sp v;
 
@@ -45,8 +46,11 @@ class STCoverage {
   /** */
   void settleCoverage();
       
-  /** Add a read to this coverage track */
-  void addRead(const BamRead &r);
+  /** Add a read to this coverage track 
+   * @param reserve_size Upper bound estimate for size of map. Not a hard
+   *   cutoff but improves performance if total number of positions is less than this, 
+   *   as it will not rehash. */
+  void addRead(const BamRead &r, int reserve_size = 30000);
 
   /** Make a new coverage object at interval gr */
   STCoverage(const GenomicRegion& gr);
