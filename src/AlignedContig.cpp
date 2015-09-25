@@ -182,7 +182,6 @@ namespace SnowTools {
       
       int pos = -1;
       int aln = -1;
-      int dum= 0;
       int rc = 0;
       std::string this_cig;
       //bool was_trimmed = false;
@@ -728,7 +727,7 @@ namespace SnowTools {
     
     std::vector<BreakPoint> out;
     for (auto& i : m_frag_v) {
-      if (i.local) // only output if alignment is local
+      if (i.local) // only output if alignment is local for indels
 	for (auto& k : i.m_indel_breaks)
 	  out.push_back(k);
     }
@@ -737,6 +736,7 @@ namespace SnowTools {
       out.push_back(m_global_bp);
     
     out.insert(out.end(), m_local_breaks.begin(), m_local_breaks.end());
+    out.insert(out.end(), m_global_bp_secondaries.begin(), m_global_bp_secondaries.end());
     
     return out;
   }

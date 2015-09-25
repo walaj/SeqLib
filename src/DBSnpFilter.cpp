@@ -16,19 +16,18 @@ namespace SnowTools {
     }
 
     m_rs = rs;
-    m_ref = ref;
-    m_alt = alt;
+    //m_ref = ref;
+    //m_alt = alt;
 
-    if (m_ref.length() == 0 || m_alt.length() == 0 || m_rs.length() == 0)
-      std::cerr << "DBSnpSite: Is the VCF formated correctly for this entry? Ref " << m_ref << " ALT " << m_alt << " rs " << m_rs << std::endl;
+    if (ref.length() == 0 || alt.length() == 0) // || m_rs.length() == 0)
+      std::cerr << "DBSnpSite: Is the VCF formated correctly for this entry? Ref " << ref << " ALT " << alt << " rs " << rs << std::endl;
 
     // insertion
-    if (m_ref.length() == 1)
+    if (ref.length() == 1)
       pos2 = pos1 + 1;
     // deletion
     else
-      pos2 = pos1 + m_ref.length() + 1;
-
+      pos2 = pos1 + ref.length() + 1;
     
   }
 
@@ -71,8 +70,19 @@ namespace SnowTools {
       DBSnpSite db(chr, pos, rs, ref, alt);
 
       // for now reject SNP sites
-      if (ref.length() + alt.length() > 2)
+      if (ref.length() + alt.length() > 2) {
 	m_sites.add(db);
+
+	// make the hash
+	cig.str(std::string());
+	//cig << db.chr << "_" << db.pos1 << "_" << (db.pos2-db.pos1) << (db.m_ref.length() == 1 ? "I" : "D");
+	cig << db.chr << "_" << db.pos1;
+	m_hash.insert(cig.str());
+	//std::cerr << line << " hash " << cig.str() << std::endl;
+	
+      }
+
+
       
     }
     
@@ -89,6 +99,10 @@ namespace SnowTools {
   std::ostream& operator<<(std::ostream& out, const DBSnpSite& d) {
     out << d.chr << ":" << d.pos1 << "-" << d.pos2 << "\t" << d.m_rs << " REF " << d.m_ref << " ALT " << d.m_alt;
     return out;
+  }
+
+  bool DBSnpFilter::queryHash(const std::string& h) const {
+    return m_hash.count(h);
   }
 
   bool DBSnpFilter::queryBreakpoint(BreakPoint& bp) {
