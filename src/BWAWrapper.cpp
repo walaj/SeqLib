@@ -15,6 +15,7 @@ extern "C" {
 namespace SnowTools {
 
   std::string BWAWrapper::ChrIDToName(int id) const {
+    assert(idx);
     assert(id >= 0);
     assert(id < idx->bns->n_seqs);
     return std::string(idx->bns->anns[id].name);
@@ -173,7 +174,7 @@ namespace SnowTools {
   }
 
   void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
-				       double keep_sec_with_frac_of_primary_score) {
+				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
 
@@ -198,8 +199,10 @@ namespace SnowTools {
       //std::cerr << name << " secondary " << ar.a[i].secondary << " primary_score " << primary_score << " a.score " << ar.a[i].score << " sub_N " << ar.a[i].sub_n << 
       //	" frac_rep " << ar.a[i].frac_rep << " flag " << a.flag << std::endl;
 
-      // if score not sufficient, continue
-      if (ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score) {
+      // if score not sufficient or past cap, continue
+      bool sec_and_low_score =  ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score;
+      bool sec_and_cap_hit = ar.a[i].secondary >= 0 && i > max_secondary;
+      if (sec_and_low_score || sec_and_cap_hit) {
 	free(a.cigar);
 	continue;
       } else if (ar.a[i].secondary < 0) {

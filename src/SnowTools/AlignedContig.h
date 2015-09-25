@@ -129,7 +129,7 @@ namespace SnowTools {
     /*! @function Loop through all the alignment framgents and their indel breaks and check against cigar database
      */
     void checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap);
-    
+
     /*! @function
       @abstract  Get whether the query is on the reverse strand
       @param  b  pointer to an alignment

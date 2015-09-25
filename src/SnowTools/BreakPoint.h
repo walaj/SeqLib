@@ -11,6 +11,7 @@
 #include "SnowTools/DiscordantCluster.h"
 #include "SnowTools/BamRead.h"
 #include "SnowTools/BWAWrapper.h"
+#include "SnowTools/PONFilter.h"
 
 #include "SnowTools/STCoverage.h"
 
@@ -20,7 +21,20 @@ namespace SnowTools {
 struct BreakPoint;
 
 typedef std::vector<BreakPoint> BPVec;
-typedef std::unordered_map<std::string, size_t> PON;
+ 
+ struct ReducedBreakEnd {
+   
+   ReducedBreakEnd() {}
+
+   ReducedBreakEnd(const GenomicRegion& g, int mq, const std::string & chr_n);
+   
+   std::string chr_name;
+   //char * chr_name;
+   GenomicRegion gr;
+   uint16_t mapq:8, sub_n:8;
+
+ };
+
 
  struct BreakEnd {
    
@@ -43,6 +57,80 @@ typedef std::unordered_map<std::string, size_t> PON;
    bool local;
    double n_af = -1;
    double t_af = -1;
+
+ };
+
+ struct ReducedDiscordantCluster {
+   uint32_t mapq1:8, mapq2:8, tcount:8, ncount:8;
+ };
+ 
+ struct ReducedBreakPoint {
+
+   // some helper functions
+   char* __string_alloc2char(const std::string& str, char * p) {
+     if (!str.empty() && str != "x") {
+       p = (char*)malloc(str.length() + 1);
+       strcpy(p, str.c_str());
+       return p;
+     } else {
+       return nullptr;
+     }
+   }
+   
+   void __smart_check_free(char * p) {
+     if (p)
+       free(p);
+   }
+
+   int getSpan() const {
+     if (indel && !insertion) // deletion
+       return (abs((int)b1.gr.pos1 - (int)b2.gr.pos1) - 1);
+     if (indel) // insertion
+       return (strlen(insertion)); // insertion
+     if (b1.gr.chr == b2.gr.chr)
+       return abs((int)b1.gr.pos1-(int)b2.gr.pos1);
+     else
+       return -1;
+
+   }
+
+   ReducedBreakPoint() {}
+   ~ReducedBreakPoint() {
+     __smart_check_free(ref);
+     __smart_check_free(alt);
+     __smart_check_free(cname);
+     __smart_check_free(homology);
+     __smart_check_free(insertion);
+     __smart_check_free(evidence);
+     __smart_check_free(confidence);
+   }
+   ReducedBreakPoint(const std::string &line, bam_hdr_t* h);
+
+   char * ref;
+   char * alt;
+   char * cname;
+   char * evidence;
+   char * confidence;
+   char * insertion;
+   char * homology;
+
+   //std::string ref;
+   //std::string alt;
+   //std::string cname;
+   //std::string evidence;
+   //std::string confidence;
+   //std::string insertion;
+   //std::string homology;
+
+   ReducedBreakEnd b1, b2;
+   float somatic_score;
+
+   uint32_t nsplit:8, tsplit:8, af_n:7, num_align:5, secondary:1, dbsnp:1, pass:1, blacklist:1, indel:1, imprecise:1;
+   uint32_t tcov_support:8, ncov_support:8, tcov:8, ncov:8;
+   uint32_t tcigar:8, ncigar:8, quality:8, af_t:8; 
+   uint8_t pon;
+
+   ReducedDiscordantCluster dc;
 
  };
  
@@ -86,8 +174,7 @@ typedef std::unordered_map<std::string, size_t> PON;
    // DBsnp 
    std::string rs = "";
    
-   std::string seq;
-   
+   std::string seq;   
    std::string cname;
    
    std::string insertion = "";
@@ -128,8 +215,6 @@ typedef std::unordered_map<std::string, size_t> PON;
     */
    std::string toPrintString() const;
    
-   //static void readPON(std::string &file, std::unique_ptr<PON> &pmap);
-
    /** Retrieve the reference sequence at a breakpoint and determine if 
     * it lands on a repeat */
    //void repeatFilter(faidx_t * f);
@@ -178,7 +263,7 @@ typedef std::unordered_map<std::string, size_t> PON;
     * @param Panel of normals hash
     * @return number of normal samples with this variant
     */
-   //int checkPon(std::unique_ptr<PON> &p);
+   int checkPon(const SnowTools::PONFilter * p);
    
    /*! @function get a unique string representation of this breakpoint.
     * Format for indel is chr_breakpos_type (eg. 0_134134_I)
