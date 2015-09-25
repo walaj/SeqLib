@@ -223,6 +223,10 @@ class BamRead {
   /** Get the sequence of this read as a string */
   /*inline */std::string Sequence() const;
 
+  /** Return the mean phred score 
+   */
+  double MeanPhred() const;
+
   /** Get the quality scores of this read as a string */
   inline std::string Qualities() const { 
     uint8_t * p = bam_get_qual(b);
