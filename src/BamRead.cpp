@@ -162,6 +162,18 @@ namespace SnowTools {
     return std::string(str->s);
     }*/
 
+  double BamRead::MeanPhred() const {
+
+    if (b->core.l_qseq <= 0)
+      return -1;
+
+    double s = 0;
+    uint8_t* p = bam_get_qual(b);
+    for (int32_t i = 0; i < b->core.l_qseq; ++i)
+      s += p[i];
+    return s / b->core.l_qseq;
+  }
+
   std::string BamRead::QualitySequence() const {
     std::string seq = GetZTag("GV");
     if (!seq.length()) 
