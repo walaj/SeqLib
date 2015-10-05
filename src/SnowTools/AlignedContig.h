@@ -51,7 +51,7 @@ namespace SnowTools {
      * @param const CigarMap reference containing hash with key=chr_breakpos_indeltype, val=tumor count
      * @param const CigarMap reference containing hash with key=chr_breakpos_indeltype, val=normal count
      */
-    void indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap);  
+    void indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap, const std::unordered_map<uint32_t, size_t> * n_cigpos);  
 
     /** Check whether the alignment fragement overlaps with the given windows
      * 
@@ -128,7 +128,7 @@ namespace SnowTools {
 
     /*! @function Loop through all the alignment framgents and their indel breaks and check against cigar database
      */
-    void checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap);
+    void checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap, const std::unordered_map<uint32_t, size_t> * n_cigpos);
 
     /*! @function
       @abstract  Get whether the query is on the reverse strand

@@ -542,14 +542,14 @@ namespace SnowTools {
   }
   
   
-  void AlignedContig::checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap) {
+  void AlignedContig::checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap, const std::unordered_map<uint32_t, size_t>* n_cigpos) {
     
     for (auto& i : m_frag_v)
-      i.indelCigarMatches(nmap, tmap);
+      i.indelCigarMatches(nmap, tmap, n_cigpos);
     
   }
   
-  void AlignmentFragment::indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap) { 
+  void AlignmentFragment::indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap, const std::unordered_map<uint32_t, size_t> *n_cigpos) { 
     
     // loop through the indel breakpoints
     for (auto& i : m_indel_breaks) {
@@ -568,6 +568,15 @@ namespace SnowTools {
 	i.ncigar = ffn->second;
       if (fft != tmap.end())
 	i.tcigar = fft->second;
+
+      // do extra check on near neighbors for normal
+      std::unordered_map<uint32_t, size_t>::const_iterator it = n_cigpos->find(i.b1.gr.chr * 1e9 + i.b1.gr.pos1);
+      int nn = 0;
+      if (it != n_cigpos->end())
+	nn = it->second;
+      i.ncigar = std::max(i.ncigar, nn);
+      //if (it != n_cigpos->end() && it->second i.ncigar < 2)
+      // i.ncigar = 2;
       
     }
   }
@@ -593,9 +602,9 @@ namespace SnowTools {
     //  if (i.Type == 'M' && i.Length < 5)
     //    return false;
     
-    // reject if first alignment is I or D
+    // reject if first alignment is I or D or start with too few M
     if (m_cigar.begin()->Type == 'I' || m_cigar.begin()->Type == 'D' || m_cigar.back().Type == 'D' || m_cigar.back().Type == 'I') {
-      std::cerr << "rejcting cigar for starting in I or D" << std::endl;
+      //std::cerr << "rejecting cigar for starting in I or D or < 5 M" << std::endl;
       return false;
     }
     
@@ -687,8 +696,10 @@ namespace SnowTools {
    
     // should have been explicitly ordered in the creation above
     if (!(bp.b1.gr < bp.b2.gr)) {
-      std::cerr << bp.b1.gr << " " << bp.b2.gr << std::endl;
-      std::cerr << (*this) << std::endl;
+      //std::cerr << "Warning: something went wrong in indelParseBreaks. Can't order breaks" << std::endl;
+      //std::cerr << bp.b1.gr << " " << bp.b2.gr << std::endl;
+      //std::cerr << (*this) << std::endl;
+      return false;
     }
     //bp.order();
 

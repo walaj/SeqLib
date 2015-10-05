@@ -37,7 +37,7 @@ namespace SnowTools {
     ++v[p - m_gr.pos1];
     }
   */
-  void STCoverage::addRead(const BamRead &r, int reserve_size) {
+  void STCoverage::addRead(const BamRead &r, bool full_length) {
     
     //m_settled = false;
     //m_grc.add(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd()));
@@ -48,8 +48,26 @@ namespace SnowTools {
 
     //int p = std::min(r.Position() - m_gr.pos1, m_gr.pos2);
     //int e = std::min(r.PositionEnd() - m_gr.pos1, m_gr.pos2);
-    int p = r.Position();
-    int e = r.PositionEnd();
+    int p = -1; 
+    int e = -1;
+
+    if (full_length) {
+      Cigar c = r.GetCigar();
+      // get beginning
+      if (c.size() && c[0].Type == 'S')
+	p = std::max((int32_t)0, r.Position() - (int32_t)c[0].Length); // get prefixing S
+      else
+	p = r.Position();
+      // get end
+      if (c.size() && c.back().Type == 'S')
+	e = r.PositionEnd() + c.back().Length;
+      else
+	e = r.PositionEnd();
+    }
+    else {
+      p = r.Position();
+      e = r.PositionEnd();
+    }
 
     if (p < 0 || e < 0)
       return;
@@ -59,7 +77,7 @@ namespace SnowTools {
       int k = m_map.size();
       while (k < (r.ChrID()+1)) {
 	m_map.push_back(CovMap());
-	m_map.back().reserve(reserve_size);
+	//m_map.back().reserve(reserve_size);
 	++k;
       }
     }

@@ -50,7 +50,7 @@ class STCoverage {
    * @param reserve_size Upper bound estimate for size of map. Not a hard
    *   cutoff but improves performance if total number of positions is less than this, 
    *   as it will not rehash. */
-  void addRead(const BamRead &r, int reserve_size = 30000);
+  void addRead(const BamRead &r, bool full_length = false);
 
   /** Make a new coverage object at interval gr */
   STCoverage(const GenomicRegion& gr);
