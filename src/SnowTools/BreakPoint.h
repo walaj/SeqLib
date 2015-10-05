@@ -13,6 +13,7 @@
 #include "SnowTools/BWAWrapper.h"
 #include "SnowTools/PONFilter.h"
 
+#include <unordered_set>
 #include "SnowTools/STCoverage.h"
 
 namespace SnowTools {
@@ -164,12 +165,16 @@ typedef std::vector<BreakPoint> BPVec;
    // total coverage at that position
    int tcov = 0;
    int ncov = 0;
+   int nclip_cov = 0;
    
    // total coverage supporting the variant at that position
    int tcov_support = 0;
    int ncov_support = 0;
 
    bool secondary = false;
+
+   std::unordered_set<std::string> split_reads;
+   std::unordered_set<std::string> qnames;
    
    // DBsnp 
    std::string rs = "";
@@ -252,7 +257,7 @@ typedef std::vector<BreakPoint> BPVec;
    * @param t_cov Base-pair level Coverage object, with coverage for all reads from Tumor bam(s).
    * @param n_cov Base-pair level Coverage object, with coverage for all reads from Normal bam(s).
    */
-  void addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov);
+   void addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov, STCoverage * n_clip_cov);
   
   /*! @function get the span of the breakpoints (in bp). -1 for interchrom
    * @return int distance between breakpoints
