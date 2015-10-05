@@ -270,8 +270,14 @@ namespace SnowTools {
       bool issplit2 = (leftend <= leftbreak2) && (rightend >= rightbreak2);
       
       // add the split reads for each end of the break
-      if (issplit1 || issplit2)
+      if ( (issplit1 && issplit2 && num_align > 1) ||  ((issplit1 || issplit2) && num_align == 1 )) {
 	reads.push_back(j);
+	split_reads.insert(j.GetZTag("SR"));
+	std::string qn = j.Qname();
+	if (qnames.count(qn))
+	  continue; // don't count support if already added
+	qnames.insert(qn);
+      }
       
       // update the counters for each break end
       if (issplit1 && tumor_read)
@@ -284,9 +290,9 @@ namespace SnowTools {
 	++b2.nsplit;
       
       // read spans both ends
-      if ((issplit1 || issplit2) && tumor_read)
+      if ((issplit1 && issplit2) && tumor_read)
 	++tsplit;
-      if ((issplit1 || issplit2) && !tumor_read)
+      if ((issplit1 && issplit2) && !tumor_read)
 	++nsplit;
       
     }
@@ -297,7 +303,8 @@ namespace SnowTools {
     bool isdel = insertion.length() == 0;
     //if (isdel) // del breaks are stored as last non-deleted base. CigarMap stores as THE deleted base
     //  pos1++;
-    std::string st = std::to_string(b1.gr.chr) + "_" + std::to_string(b1.gr.pos1) + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
+    //std::string st = std::to_string(b1.gr.chr) + "_" + std::to_string(b1.gr.pos1) + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
+    std::string st = std::to_string(b1.gr.chr) + "_" + std::to_string(b1.gr.pos1); // + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
     return st;
   }
   
@@ -329,9 +336,10 @@ namespace SnowTools {
     
   }
   
-  void BreakPoint::addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov) {
-    tcov = t_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1); 
-    ncov = n_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1); 
+  void BreakPoint::addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov, STCoverage * n_clip_cov) {
+    tcov = std::max(t_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1), t_cov->getCoverageAtPosition(b2.gr.chr, b2.gr.pos1)); 
+    ncov = std::max(n_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1),n_cov->getCoverageAtPosition(b2.gr.chr, b2.gr.pos1)); 
+    nclip_cov = std::max(n_clip_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1), n_clip_cov->getCoverageAtPosition(b2.gr.chr, b2.gr.pos1)); 
   }
   
   std::string BreakPoint::toPrintString() const {
@@ -367,7 +375,9 @@ namespace SnowTools {
     if (ncount > 0)
       somatic_ratio = (std::max(tsplit,dc.tcount)) / ncount;
     
-    if (somatic_ratio >= 12 && ncount < 2) 
+    double fraction_nclip = ncov == 0 ? 0 : nclip_cov / ncov;
+
+    if (somatic_ratio >= 20 && ncount < 2 && fraction_nclip < 0.3) // 5 or more nclips is bad
       return somatic_ratio;
     return 0;
   }
@@ -380,7 +390,7 @@ namespace SnowTools {
       somatic_ratio = (std::max(tsplit, tcigar)) / ncount;
 
     // delete if crosses DBSnp
-    if (!rs.empty()) 
+    if (confidence == "DBSNP") 
       return 0;
     if ( (pon * (1-af_t)) >= 2 && tcov >= 5)
       return 0;
@@ -501,6 +511,8 @@ namespace SnowTools {
 
   void BreakPoint::__score_assembly_only() {
 
+    __set_allelic_fraction();
+
     int split_count = tsplit + nsplit;
     //int this_mapq1 = b1.local ? 60 : b1.mapq;
     //int this_mapq2 = b2.local ? 60 : b2.mapq;
@@ -513,12 +525,16 @@ namespace SnowTools {
       confidence = "NODISC";
     else if (std::max(b1.mapq, b2.mapq) <= 50 || std::min(b1.mapq, b2.mapq) <= 10) 
       confidence = "LOWMAPQ";
+    else if ( std::min(b1.mapq, b2.mapq) <= 30 && split_count < 12 ) 
+      confidence = "LOWMAPQ";
     else if ( split_count <= 3 && (span <= 1500 && span != -1) ) // small with little split
       confidence = "WEAKASSEMBLY";
     //else if ( (germ && span == -1) || (germ && span > 1000000) ) // super short alignemtns are not to be trusted. Also big germline events
     //  confidence = "WEAKASSEMBLY";
-    else if ((b1.sub_n && b1.mapq < 30) || (b2.sub_n && b2.mapq < 30))
+    else if ((b1.sub_n && b1.mapq < 50) || (b2.sub_n && b2.mapq < 50))
       confidence = "MULTIMATCH";
+    else if (ncov > 500 || tcov==0 || ncov == 0)
+      confidence = "BADREGION";
     else if (secondary)
       confidence = "SECONDARY";
     else if ( (insertion.length() >= 100 || span < 1000) && (tsplit <= 8 || nsplit) ) // be extra strict for huge insertions or really low spans
@@ -530,10 +546,32 @@ namespace SnowTools {
 
   void BreakPoint::__score_assembly_dscrd() {
 
+    __set_allelic_fraction();
+
     int this_mapq1 = /*b1.local ? 60 : */b1.mapq;
     int this_mapq2 = /*b2.local ? 60 : */b2.mapq;
     int span = getSpan();
     bool germ = dc.ncount > 0 || nsplit > 0;
+
+    // total unique read support
+    int t_reads = 0, n_reads = 0;
+    std::unordered_set<std::string> this_reads_t;
+    std::unordered_set<std::string> this_reads_n;
+    for (auto& i : split_reads)
+      if (!this_reads_t.count(i) && i.at(0) == 't')
+	this_reads_t.insert(i);
+    for (auto& i : dc.reads)
+      if (!this_reads_t.count(i.first) && i.first.at(0) == 't')
+	this_reads_t.insert(i.first);
+    for (auto& i : split_reads)
+      if (!this_reads_n.count(i) && i.at(0) == 'n')
+	this_reads_n.insert(i);
+    for (auto& i : dc.reads)
+      if (!this_reads_n.count(i.first) && i.first.at(0) == 'n')
+	this_reads_n.insert(i.first);
+
+    t_reads = this_reads_t.size();
+    n_reads = this_reads_n.size();
 
     int max_a_mapq = std::max(this_mapq1, dc.mapq1);
     int max_b_mapq = std::max(this_mapq2, dc.mapq2);
@@ -541,7 +579,7 @@ namespace SnowTools {
     int min_assm_mapq = std::min(this_mapq1, this_mapq2);
     int max_assm_mapq = std::max(this_mapq1, this_mapq2);
     
-    int total_count = nsplit + tsplit + dc.ncount + dc.tcount;
+    int total_count = t_reads + n_reads; //nsplit + tsplit + dc.ncount + dc.tcount;
 
     double min_disc_mapq = std::min(dc.mapq1, dc.mapq2);
 
@@ -553,6 +591,7 @@ namespace SnowTools {
     //  confidence = "LOWMAPQ";
     else if ( std::max(tsplit, nsplit) == 0 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
       confidence = "WEAKASSEMBLY";
+    //else if ( std::min(b1.tsplit, b2.tsplit) >= 5  // take care of really long homoologies (longer than read length)
     else if ( total_count < 15 && germ && span == -1) // be super strict about germline interchrom
       confidence = "WEAKASSEMBLY";
     else if ((b1.sub_n && dc.mapq1 < 1) || (b2.sub_n && dc.mapq2 < 1))
@@ -564,13 +603,16 @@ namespace SnowTools {
   }
 
   void BreakPoint::__score_dscrd() {
+    int min_span = 10e3;
     int disc_count = dc.ncount + dc.tcount;
     if (std::min(dc.mapq1, dc.mapq2) < 20 || std::max(dc.mapq1, dc.mapq2) <= 30) // mapq here is READ mapq (37 std::max)
       confidence = "LOWMAPQ";
-    else if (std::min(dc.mapq1, dc.mapq2) == 37 && disc_count >= 6)
+    else if (getSpan() >= min_span && std::min(dc.mapq1, dc.mapq2) >= 35 && disc_count >= 7 && ncov >= 10 & ncov <= 200 && tcov >= 10 && tcov <= 1000)
       confidence = "PASS";
-    else if ( disc_count < 8 || (dc.ncount > 0 && disc_count < 12) )  // be stricter about germline disc only
+    else if ( disc_count < 8 || (dc.ncount > 0 && disc_count < 15) )  // be stricter about germline disc only
       confidence = "WEAKDISC";
+    else if ( getSpan() < min_span)
+      confidence = "LOWSPAN";
     else 
       confidence = "PASS";
   }
@@ -584,20 +626,22 @@ namespace SnowTools {
     double max_af = std::max(af_t, af_n);
     int cigar_count = ncigar+tcigar; 
     int max_count = std::max(tsplit+nsplit, cigar_count);
-    bool blacklist_and_low_count = blacklist && (tsplit + nsplit) < 5 && (tcigar + ncigar) < 5;
-    bool blacklist_and_low_AF = (max_af < 0.2 && max_count < 8) && blacklist;
+    //bool blacklist_and_low_count = blacklist && (tsplit + nsplit) < 5 && (tcigar + ncigar) < 5;
+    //bool blacklist_and_low_AF = (max_af < 0.2 && max_count < 8) && blacklist;
 
-    if (rs.length())
+    if (rs.length() && (af_t < 0.1 || tcov < 10 || std::max(nsplit, ncigar)))
       confidence="DBSNP";
     if (blacklist && pon > 3)
       confidence="GRAYLISTANDPON";
-    else if (blacklist_and_low_count || blacklist_and_low_AF)
-      confidence="LOWAF";
+    //else if (blacklist_and_low_count || blacklist_and_low_AF)
+    //  confidence="LOWAF";
+    else if (max_af * (double)tcov < 5)
+      confidence = "LOWAF";
     else if ( (max_count < 4 && max_af < 0.2) || (max_count < 2 && b1.mapq < 60) || (max_count < 5 && b1.mapq < 30))
       confidence="WEAKASSEMBLY";
     else if (b1.mapq < 10)
       confidence="LOWMAPQ";
-    else if ( (max_af < 0.2 && (nsplit+ncigar) > 0) || (max_af < 0.30 && nsplit == 0 && tsplit < 3)) // more strict for germline bc purity is not issue
+    else if ( (max_af < 0.1 && (nsplit+ncigar) > 0)) // || (max_af < 0.30 && nsplit == 0 && tsplit < 3)) // more strict for germline bc purity is not issue
       confidence = "LOWAF";
     else if (ncov <= 5)
       confidence = "LOWNORMCOV";
@@ -744,6 +788,11 @@ namespace SnowTools {
 	ref = "N";
       if (!alt.length())
 	alt = "N";
+
+      if (ref1)
+	free(ref1);
+      if (ref2)
+	free(ref2);
       
     } else {
 
@@ -763,6 +812,9 @@ namespace SnowTools {
 	// alt 
 	alt = ref + insertion;
       
+	if (refi)
+	  free(refi);
+
       // deletion
       } else {	
 
@@ -777,6 +829,8 @@ namespace SnowTools {
 	if (!ref.length())
 	  ref = "N";
 	alt = ref.substr(0,1);
+	if (refi)
+	  free(refi);
       }
     }
   }

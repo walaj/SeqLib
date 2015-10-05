@@ -24,10 +24,10 @@ namespace SnowTools {
     std::unordered_map<std::string, int> tmp_map;
     for (auto& i : bav) {
       std::string tt = i.Qname();
-      if (tmp_map.count(tt) ==0)
+      if (!tmp_map.count(tt))
 	tmp_map[tt] = 1;
       else
-	tmp_map[tt]++;
+	++tmp_map[tt];
     }
     
     BamReadVector bav_dd;
@@ -35,7 +35,7 @@ namespace SnowTools {
 
       // is the read even discordant?
       bool disc_r = (abs(r.InsertSize()) >= 1000) || (r.MateChrID() != r.ChrID());
-      if (tmp_map[r.Qname()] >= 2 && disc_r)
+      if (tmp_map[r.Qname()] >= 2 && disc_r && !r.SecondaryFlag())
 	bav_dd.push_back(r);
 
     }
