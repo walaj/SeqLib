@@ -5,6 +5,10 @@
 
 namespace SnowTools {
 
+  void STCoverage::clear() {
+    m_map.clear();
+  }
+
   void STCoverage::settleCoverage() {
     GRC tmp = m_grc;
     m_grc.mergeOverlappingIntervals();
@@ -110,14 +114,13 @@ namespace SnowTools {
       (*o) << m_gr.ChrName(h) << "\t" << (curr_start + m_gr.pos1) << "\t" << (v->size()+m_gr.pos1-1) << "\t" << curr_val << std::endl;
   }
   
-  int STCoverage::getCoverageAtPosition(int chr, int pos) {
+  int STCoverage::getCoverageAtPosition(int chr, int pos) const {
 
     //CovMapMap::iterator it = m_map.find(chr);
     //if (it == m_map.end())
     //  return 0;
     if (chr >= (int)m_map.size())
       return 0;
-    
     
     //std::cerr << " MAP " << std::endl;
     //for (auto& i : m_map)
@@ -137,7 +140,13 @@ namespace SnowTools {
     //  return 0;
     //}
     //return it->second[pos];
-    return m_map[chr][pos];
+    
+    CovMap::const_iterator ff = m_map[chr].find(pos);
+    if (ff == m_map[chr].end()) {
+      return 0;
+    }
+
+    return ff->second;
 
     //return (v->at(q));
     

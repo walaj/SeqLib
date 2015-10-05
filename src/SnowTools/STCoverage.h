@@ -41,7 +41,12 @@ class STCoverage {
 
   uint16_sp v;
 
+
  public:
+
+  /** Clear the coverage map */
+  void clear();
+
 
   /** */
   void settleCoverage();
@@ -73,7 +78,7 @@ class STCoverage {
   friend std::ostream& operator<<(std::ostream &out, const STCoverage &c);
 
   /** Return the coverage count at a position */
-  int getCoverageAtPosition(int chr, int pos);
+  int getCoverageAtPosition(int chr, int pos) const;
   
 };
 
