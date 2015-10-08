@@ -144,6 +144,13 @@ void BamWalker::MakeIndex() {
 
 }
 
+bool BamWalker::OpenReadBam(FILE * stdin) 
+{
+  
+  return __open_BAM_for_reading();
+}
+
+
 bool BamWalker::OpenReadBam(const std::string& bam) 
 {
   m_in = bam;
@@ -242,7 +249,7 @@ void BamWalker::SetMiniRulesCollection(const std::string& rules)
 
   // check that it worked
   if (!m_mr.size()) {
-    std::cerr << "No MiniRules were successfully parsed" << std::endl;
+    //std::cerr << "No MiniRules were successfully parsed" << std::endl;
     //throw 20;
   }
 }

@@ -275,8 +275,18 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       if (line.find(";mate") != std::string::npos || line.find("mlregion") != std::string::npos) {
 	mr.m_applies_to_mate = true;
       }
+
       // check if we should pad 
-      std::regex reg_pad(".*?pad\\[([0-9]+)\\].*");
+      std::regex reg_pad;
+      try {
+	std::regex(".*?pad\\[([0-9]+)\\].*", std::regex::ECMAScript);
+      } catch (const std::regex_error& e) {
+	  std::cout << "regex_error caught: " << e.what() << '\n';
+	  if (e.code() == std::regex_constants::error_brack) {
+	    std::cout << "The code was error_brack\n";
+	  }
+      }
+
       std::smatch pmatch;
       if (std::regex_search(line,pmatch,reg_pad))
 	try { mr.pad = std::stoi(pmatch[1].str()); } catch (...) { std::cerr << "Cant read pad value for line " << line << ", setting to 0" << std::endl; }
@@ -285,7 +295,7 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       if (line.find("@WG") != std::string::npos) {
 	  mr.m_whole_genome = true;
       } else {
-	std::regex file_reg("region@(.*?)(;|$)");
+	std::regex file_reg("region@(.*?)(;|$)", std::regex_constants::ECMAScript);
 	std::smatch match;
 	if (std::regex_search(line,match,file_reg))
 	  mr.setRegionFromFile(match[1].str());
@@ -401,21 +411,21 @@ void FlagRule::parseRuleLine(std::string line) {
   std::istringstream iss(line);
   std::string val;
   while (getline(iss, val, ';')) {
-    std::regex reg_dup("^!?dup.*");
-    std::regex reg_sup("^!?supp.*");
-    std::regex reg_qc("^!?qcfail$");
-    std::regex reg_fs("^!?fwd_strand$");
-    std::regex reg_hc("^!?hardclip.*");
-    std::regex reg_rs("^!?rev_strand$");
-    std::regex reg_mf("^!?mate_fwd_strand$");
-    std::regex reg_mr("^!?mate_rev_strand$");
-    std::regex reg_mp("^!?mapped$");
-    std::regex reg_mm("^!?mate_mapped$");
-    std::regex reg_ff("^!?ff$");
-    std::regex reg_fr("^!?fr$");
-    std::regex reg_rf("^!?rf$");
-    std::regex reg_rr("^!?rr$");
-    std::regex reg_ic("^!?ic$");
+    std::regex reg_dup("^!?dup.*", std::regex_constants::ECMAScript);
+    std::regex reg_sup("^!?supp.*", std::regex_constants::ECMAScript);
+    std::regex reg_qc("^!?qcfail$", std::regex_constants::ECMAScript);
+    std::regex reg_fs("^!?fwd_strand$", std::regex_constants::ECMAScript);
+    std::regex reg_hc("^!?hardclip.*", std::regex_constants::ECMAScript);
+    std::regex reg_rs("^!?rev_strand$", std::regex_constants::ECMAScript);
+    std::regex reg_mf("^!?mate_fwd_strand$", std::regex_constants::ECMAScript);
+    std::regex reg_mr("^!?mate_rev_strand$", std::regex_constants::ECMAScript);
+    std::regex reg_mp("^!?mapped$", std::regex_constants::ECMAScript);
+    std::regex reg_mm("^!?mate_mapped$", std::regex_constants::ECMAScript);
+    std::regex reg_ff("^!?ff$", std::regex_constants::ECMAScript);
+    std::regex reg_fr("^!?fr$", std::regex_constants::ECMAScript);
+    std::regex reg_rf("^!?rf$", std::regex_constants::ECMAScript);
+    std::regex reg_rr("^!?rr$", std::regex_constants::ECMAScript);
+    std::regex reg_ic("^!?ic$", std::regex_constants::ECMAScript);
 
     if (dup.parseRuleLine(val, reg_dup))   na = false;
     if (supp.parseRuleLine(val, reg_sup))  na = false;
@@ -441,7 +451,7 @@ void AbstractRule::parseRuleLine(std::string line) {
   id += line + ";";
 
   // get everything but the global keyword, if there is one
-  std::regex reg_noname("global@(.*)");
+  std::regex reg_noname("global@(.*)", std::regex_constants::ECMAScript);
   std::smatch nnmatch;
   std::string noname;
   if (std::regex_search(line, nnmatch, reg_noname)) {
@@ -455,7 +465,7 @@ void AbstractRule::parseRuleLine(std::string line) {
   std::string tmp;
 
   while (getline(iss_c, tmp, ';')) {
-    std::regex reg(".*?!?([a-z_]+).*");
+    std::regex reg(".*?!?([a-z_]+).*", std::regex_constants::ECMAScript);
     std::smatch cmatch;
 
     if (tmp.empty())
@@ -535,10 +545,10 @@ void Range::parseRuleLine(std::string line) {
     std::string n_reg_str = pattern + ":?!all";
     std::string a_reg_str = pattern + ":?all";
     
-    std::regex ireg(i_reg_str);
-    std::regex  reg(reg_str);
-    std::regex nreg(n_reg_str);
-    std::regex areg(a_reg_str);
+    std::regex ireg(i_reg_str, std::regex_constants::ECMAScript);
+    std::regex  reg(reg_str, std::regex_constants::ECMAScript);
+    std::regex nreg(n_reg_str, std::regex_constants::ECMAScript);
+    std::regex areg(a_reg_str, std::regex_constants::ECMAScript);
     
     std::smatch match;
     if (std::regex_search(val, match, areg)) {
@@ -1062,7 +1072,7 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
 void AbstractRule::parseSeqLine(std::string line) {
 
   // get the sequence file out
-  std::regex reg("^!?motif\\[(.*?)\\].*");
+  std::regex reg("^!?motif\\[(.*?)\\].*", std::regex_constants::ECMAScript);
   std::smatch match;
   if (std::regex_search(line, match, reg)) {
     atm_file = match[1].str();
@@ -1128,7 +1138,7 @@ void AbstractRule::parseSeqLine(std::string line) {
 // parse the subsample line
 void AbstractRule::parseSubLine(std::string line) {
 
-  std::regex reg("^!?sub\\[(.*)\\].*");
+  std::regex reg("^!?sub\\[(.*)\\].*", std::regex_constants::ECMAScript);
   std::smatch match;
   if (std::regex_search(line, match, reg)) {
     try {
@@ -1161,7 +1171,7 @@ GRC MiniRulesCollection::getAllRegions() const
 {
 
   // check for "discordant" shortcut
-  std::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)");
+  std::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)", std::regex_constants::ECMAScript);
   std::smatch omatch;
   if (std::regex_search(line, omatch, regex_disc)) {
     bool isneg = line.find("!discordant[") != std::string::npos;
