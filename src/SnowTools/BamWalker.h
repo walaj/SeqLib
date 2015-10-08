@@ -119,6 +119,9 @@ class BamWalker {
    */
   bool OpenReadBam(const std::string& bam);
 
+  /** Open an NGS file direct from stdin */
+  bool OpenReadBam(FILE * stdin);
+
   /** Open a BAM file for streaming out
    */
   bool OpenWriteBam(const std::string& bam);
