@@ -228,12 +228,13 @@ namespace SnowTools {
     int leftbreak2 = b2.cpos - SPLIT_BUFF;
 
     for (auto& j : bav) {
+
+      std::vector<std::string> cnvec = j.GetSmartStringTag("CN");
       
       // for indels, reads with ins alignments to del contig dont count, vice versa
       bool read_should_be_skipped = false;
       if (num_align == 1) {
 	std::vector<std::string> cigvec = j.GetSmartStringTag("SC"); // read against contig CIGAR
-	std::vector<std::string> cnvec = j.GetSmartStringTag("CN");
 	assert(cigvec.size() == cnvec.size());
 	size_t kk = 0;
 	for (; kk < cnvec.size(); kk++) 
@@ -253,22 +254,31 @@ namespace SnowTools {
       assert(sr.at(0) == 't' || sr.at(0) == 'n');
       bool tumor_read = (sr.at(0) == 't');
 
-      // get the contig qname
-      std::string qname = j.GetSmartStringTag("CN").back(); //GetStringTag(j, "CN").back();
-      int pos = j.GetSmartIntTag("SL").back();
-      int te = 0;
+      std::string qname;
+      // get the alignment position on contig
+      int pos = 0, te = 0;
       try {
-	te = j.GetSmartIntTag("SE").back();
+	std::vector<int> posvec = j.GetSmartIntTag("SL");
+	std::vector<int> tevec  = j.GetSmartIntTag("SE");
+	
+	for (size_t y = 0; y < cnvec.size(); ++y) {
+	  if (cnvec[y] == cname) {
+	    pos = posvec[y];
+	    te  = tevec[y];
+	    qname = cname;
+	  }
+	}
       } catch (...) {
 	std::cerr << "error grabbing SE tag for tag " << j.GetZTag("SE") << std::endl;
       }
+      //std::cerr << qname << " " << cname << " " << j << " " << j.GetZTag("CN") << std::endl;
       assert(qname == cname);
     
       int rightend = te; //seq.length();
       int leftend  = pos;
       bool issplit1 = (leftend <= leftbreak1) && (rightend >= rightbreak1);
       bool issplit2 = (leftend <= leftbreak2) && (rightend >= rightbreak2);
-      
+
       // add the split reads for each end of the break
       if ( (issplit1 && issplit2 && num_align > 1) ||  ((issplit1 || issplit2) && num_align == 1 )) {
 	reads.push_back(j);
@@ -303,8 +313,8 @@ namespace SnowTools {
     bool isdel = insertion.length() == 0;
     //if (isdel) // del breaks are stored as last non-deleted base. CigarMap stores as THE deleted base
     //  pos1++;
-    //std::string st = std::to_string(b1.gr.chr) + "_" + std::to_string(b1.gr.pos1) + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
-    std::string st = std::to_string(b1.gr.chr) + "_" + std::to_string(b1.gr.pos1); // + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
+    std::string st = std::to_string(b1.gr.chr) + "_" + std::to_string(b1.gr.pos1) + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
+    //std::string st = std::to_string(b1.gr.chr) + "_" + std::to_string(b1.gr.pos1); // + "_" + std::to_string(this->getSpan()) + (isdel ? "D" : "I");
     return st;
   }
   
@@ -397,7 +407,7 @@ namespace SnowTools {
     if (pon > 1 && tcov < 5)
       return 0;
 
-    if (somatic_ratio >= 10 && ncount < 2 && af_n < 0.05) 
+    if (somatic_ratio >= 10 && ncount < 1 && af_n < 0.05) 
       return somatic_ratio;
 
     return 0;
@@ -642,6 +652,10 @@ namespace SnowTools {
     else if (b1.mapq < 10)
       confidence="LOWMAPQ";
     else if ( (max_af < 0.1 && (nsplit+ncigar) > 0)) // || (max_af < 0.30 && nsplit == 0 && tsplit < 3)) // more strict for germline bc purity is not issue
+      confidence = "LOWAF";
+    else if (max_af < 0.1)
+      confidence = "LOWAF";
+    else if (!repeat_seq.empty() && max_af < 0.2)
       confidence = "LOWAF";
     else if (ncov <= 5)
       confidence = "LOWNORMCOV";

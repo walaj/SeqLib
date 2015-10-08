@@ -193,16 +193,28 @@ namespace SnowTools {
       
       // get forward-strand position and CIGAR
       mem_aln_t a;
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "awdlfkajsdf" << std::endl;
+#endif
       a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
 
       //if (name == "c_1_1453100_1473100_12")
       //std::cerr << name << " secondary " << ar.a[i].secondary << " primary_score " << primary_score << " a.score " << ar.a[i].score << " sub_N " << ar.a[i].sub_n << 
       //	" frac_rep " << ar.a[i].frac_rep << " flag " << a.flag << std::endl;
 
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "DDDDDDDDDDDDDawdlfkajsdf" << std::endl;
+#endif
+
       // if score not sufficient or past cap, continue
       bool sec_and_low_score =  ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score;
       bool sec_and_cap_hit = ar.a[i].secondary >= 0 && i > max_secondary;
       if (sec_and_low_score || sec_and_cap_hit) {
+
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "freeing cigar" << std::endl;
+#endif
+
 	free(a.cigar);
 	continue;
       } else if (ar.a[i].secondary < 0) {
@@ -212,6 +224,10 @@ namespace SnowTools {
 
       //if (i == 0 && a.is_rev)
       //first_is_rev = true;
+
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "allocing bamread" << std::endl;
+#endif
 
       // instantiate the read
       BamRead b;
@@ -238,6 +254,10 @@ namespace SnowTools {
       b.b->l_data = b.b->core.l_qname + (a.n_cigar<<2) + ((b.b->core.l_qseq+1)>>1) + (b.b->core.l_qseq);
       b.b.get()->data = (uint8_t*)malloc(b.b.get()->l_data);
 
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "memcpy" << std::endl;
+#endif
+
       // allocate the qname
       memcpy(b.b->data, name.c_str(), name.length() + 1);
 
@@ -245,6 +265,10 @@ namespace SnowTools {
       // cigars relative to referemce string oreiatnion, not forward alignment
       memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a.cigar, a.n_cigar<<2);
       //std::cerr << "ORIGINAL CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
+
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "memcpy2" << std::endl;
+#endif
 
       /*      if (a.is_rev != first_is_rev) {
 	uint32_t temp;
@@ -315,6 +339,10 @@ namespace SnowTools {
 	}
       }
 
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "memcpy3" << std::endl;
+#endif
+
       // allocate the quality to NULL
       uint8_t* s = bam_get_qual(b.b);
       s[0] = 0xff;
@@ -323,6 +351,7 @@ namespace SnowTools {
       //b.SetSequence(seq);
 
       b.AddIntTag("NA", ar.n); // number of matches
+      //std::cerr << a.NM << std::endl;
       b.AddIntTag("NM", a.NM);
 
       if (a.XA)
@@ -341,6 +370,10 @@ namespace SnowTools {
       //	printf("%d%c", a.cigar[k]>>4, "MIDSH"[a.cigar[k]&0xf]);
       // printf("\t%d\n", a.NM); // print edit distance
       //#endif
+#ifdef DEBUG_BWATOOLS
+      std::cerr << "final done" << std::endl;
+#endif
+
       free(a.cigar); // don't forget to deallocate CIGAR
     }
     free (ar.a); // dealloc the hit list

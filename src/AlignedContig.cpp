@@ -4,7 +4,18 @@
 #include <regex>
 #include <unordered_map>
 
+#define MAX_CONTIG_SIZE 5000000
+
 namespace SnowTools {
+
+  static std::vector<std::string> repr = {"AAAAA", "TTTTT", "CCCCC", "GGGG", 
+					  "TATATATA", "ATATATAT", 
+					  "GCGCGCGC", "CGCGCGCG", 
+					  "TGTGTGTG", "GTGTGTGT", 
+					  "TCTCTCTC", "CTCTCTCT", 
+					  "CACACACA", "ACACACAC", 
+					  "GAGAGAGA", "AGAGAGAG"};
+  
 
   AlignedContig::AlignedContig(const BamReadVector& bav) 
   {
@@ -248,7 +259,7 @@ namespace SnowTools {
       padlen = std::max(5, padlen);
       
       std::stringstream rstream;
-      assert(pos < 1e4 && padlen < 1e4); // bug, need to check
+      assert(pos < MAX_CONTIG_SIZE && padlen < MAX_CONTIG_SIZE); // bug, need to check
       rstream << sr << "--" << (i.ChrID()+1) << ":" << i.Position() << " r2c CIGAR: " << this_cig;
       
       plot_vec.push_back({pos, seq, rstream.str()});
@@ -360,21 +371,21 @@ namespace SnowTools {
     // TODO support 3+ mappings that contain secondary
     
     // go through alignments and find start and end that reach mapq 
-    size_t bstart = 10000; //1000 is a dummy
+    size_t bstart = MAX_CONTIG_SIZE; //1000 is a dummy
     size_t bend = m_frag_v.size() - 1;
     for (size_t i = 0; i < m_frag_v.size(); i++)
       if (m_frag_v[i].m_align.MapQuality() >= 60) {
 	bend = i;
-	if (bstart == 10000)
+	if (bstart == MAX_CONTIG_SIZE)
 	  bstart = i;
       }
-    if (bstart == bend || bstart==10000) {
+    if (bstart == bend || bstart==MAX_CONTIG_SIZE) {
       bstart = 0;
       bend = m_frag_v.size() -1 ;
     }
     assert(bend <= m_frag_v.size());
     assert(bstart <= m_frag_v.size());
-    assert(bstart != 10000);
+    assert(bstart != MAX_CONTIG_SIZE);
     
     // there are 3+ mappings, and middle is not great. Set a global break
     m_global_bp = bp;
@@ -492,8 +503,10 @@ namespace SnowTools {
       gbreak2 = m_align.PositionEnd();
     }
 
-    assert(break1 < 10000);
-    assert(break2 < 10000);
+    if (break1 >= MAX_CONTIG_SIZE || break2 >= MAX_CONTIG_SIZE || break1 < 0 || break2 < 0) 
+      std::cerr << " break1 " << break1 << " break2 " << break2 << " " << (*this) << std::endl;
+    assert(break1 < MAX_CONTIG_SIZE);
+    assert(break2 < MAX_CONTIG_SIZE);
 
     assert(break1 >= 0);
     assert(break2 >= 0);
@@ -543,7 +556,7 @@ namespace SnowTools {
   
   
   void AlignedContig::checkAgainstCigarMatches(const CigarMap& nmap, const CigarMap& tmap, const std::unordered_map<uint32_t, size_t>* n_cigpos) {
-    
+
     for (auto& i : m_frag_v)
       i.indelCigarMatches(nmap, tmap, n_cigpos);
     
@@ -558,11 +571,11 @@ namespace SnowTools {
       
       // get the hash string in same formate as cigar map (eg. pos_3D)
       std::string st = i.getHashString();
-      
+
       // check if this breakpoint from assembly is in the cigarmap
       CigarMap::const_iterator ffn = nmap.find(st);
       CigarMap::const_iterator fft = tmap.find(st);
-      
+
       // if it is, add it
       if (ffn != nmap.end())
 	i.ncigar = ffn->second;
@@ -706,6 +719,23 @@ namespace SnowTools {
     bp.b1.gr.strand = '+';
     bp.b2.gr.strand = '-';
 
+    // find if it has repeat seq near break
+    int rstart = std::max(0, bp.b1.cpos - 7);
+    int rlen = std::min(rstart + 7,(int)bp.seq.length() - rstart);
+    std::string rr;
+    try {
+      rr = bp.seq.substr(rstart, rlen);
+    } catch (...) { 
+      std::cerr << "Caught substring error for string: " << bp.seq << " start " << rstart << " len " << rlen << std::endl;
+    }
+    for (auto& i : repr) {
+      if (rr.find(i) != std::string::npos) {
+	bp.repeat_seq = i;
+	break;
+      }
+    }
+
+
     assert(bp.valid());
     return true;
   }
@@ -848,7 +878,7 @@ namespace SnowTools {
       b.cpos = break1;  // take the left-most of the next one
     }
 
-    assert(b.cpos < 10000);
+    assert(b.cpos < MAX_CONTIG_SIZE);
     
     return b;
   }
