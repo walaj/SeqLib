@@ -8,7 +8,7 @@
 #include <unordered_set>
 
 #include "SnowTools/GenomicRegionCollection.h"
-#include "SnowTools/BreakPoint.h"
+#include "SnowTools/BreakPoint2.h"
 
 namespace SnowTools {
 
