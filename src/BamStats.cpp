@@ -79,6 +79,8 @@ void BamReadGroup::addRead(BamRead &r)
   
   len.addElem(r.Length());
 
+  phred.addElem((int)r.MeanPhred());
+
 }
 
 void BamStats::addRead(BamRead &r)

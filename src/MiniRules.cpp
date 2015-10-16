@@ -3,6 +3,9 @@
 #include <cassert>
 #include "htslib/khash.h"
 
+//#define DEBUG_GIVEN_READ
+//#define QNAME "H23LHALXX150312:2:2213:7526:64141"
+//#define QFLAG 89
 
 //#define DEBUG_MINI 1
 
@@ -225,9 +228,6 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
   // define a default rule set
   std::vector<AbstractRule> all_rules;
 
-  // default a default rule
-  AbstractRule rule_all;
-  
   while(getline(iss_rules, line, delim)) {
 
 #ifdef DEBUG_MINI
@@ -273,16 +273,14 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       if (line.find(";mate") != std::string::npos || line.find("mlregion") != std::string::npos) {
 	mr.m_applies_to_mate = true;
       }
+
       // check if we should pad 
-      //std::regex reg_pad(".*?pad\\[([0-9]+)\\].*");
       boost::regex reg_pad(".*?pad\\[([0-9]+)\\].*"); 
       
       boost::cmatch pmatch;
-      //std::smatch pmatch;
       if (boost::regex_match(line.c_str(), pmatch, reg_pad))
       	try { mr.pad = std::stoi(pmatch[1].str()); } catch (...) { std::cerr << "Cant read pad value for line " << line << ", setting to 0" << std::endl; }
-      
-      
+
       if (line.find("@WG") != std::string::npos) {
 	  mr.m_whole_genome = true;
       } else {
@@ -505,7 +503,18 @@ void AbstractRule::parseRuleLine(std::string line) {
   // parse the line for flag rules (also checks syntax)
   fr.parseRuleLine(noname);
 
-  parseSeqLine(noname);
+  // parse aho corasick file, if not already inheretid
+  if (!atm) {
+    std::istringstream iss_m(noname);
+    while (getline(iss_m, tmp, ';')) 
+      if (tmp.find("motif") != std::string::npos)
+	parseSeqLine(tmp);
+    if (atm) {
+      ac_automata_finalize(atm);
+      std::cerr << "Done generating Aho-Corasick tree" << std::endl;  
+    }
+  }
+    
 }
 
 // parse for range
@@ -565,6 +574,12 @@ void Range::parseRuleLine(std::string line) {
 // main function for determining if a read is valid
   bool AbstractRule::isValid(BamRead &r) {
     
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES Read seen " << " ID " << id << " " << r << std::endl;
+#endif
+
     // check if its keep all or none
     if (isEvery())
       return true;
@@ -583,6 +598,11 @@ void Range::parseRuleLine(std::string line) {
     
     // check if is discordant
     bool isize_pass = isize.isValid(abs(r.InsertSize()));
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES isize_pass " << isize_pass << " " << " ID " << id << " " << r << std::endl;
+#endif
     
     if (!isize_pass) {
       return false;
@@ -592,10 +612,20 @@ void Range::parseRuleLine(std::string line) {
     if (!mapq.isEvery())
       if (!mapq.isValid(r.MapQuality())) 
 	return false;
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES mapq pass " << " ID " << id << " " << r << std::endl;
+#endif
     
     // check for valid flags
     if (!fr.isValid(r))
       return false;
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES flag pass " << " " << id << " " << r << std::endl;
+#endif
     
     // check the CIGAR
     if (!ins.isEvery() || !del.isEvery()) {
@@ -604,11 +634,23 @@ void Range::parseRuleLine(std::string line) {
       if (!del.isValid(r.MaxDeletionBases()))
 	return false;
     }
+
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES cigar pass " << " ID " << id << " "  << r << std::endl;
+#endif
+
     
     // if we dont need to because everything is pass, just just pass it
     bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || atm_file.length() || !xp.isEvery();
     if (!need_to_continue)
       return true;
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME  && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES moving on. ID " << id << " " << r << std::endl;
+#endif
     
     // now check if we need to build char if all we want is clip
     unsigned clipnum = 0;
@@ -617,6 +659,11 @@ void Range::parseRuleLine(std::string line) {
       if (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) // if clip fails, its not going to get better by trimming. kill it now before building teh char data
 	return false;
     }
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES pre-phred filter clip pass. ID " << id  << " " << r << std::endl;
+#endif
     
     // check for valid NM
     if (!nm.isEvery()) {
@@ -634,29 +681,29 @@ void Range::parseRuleLine(std::string line) {
     
     if (!phred.isEvery()) {
       
-      //int32_t start = r.GetIntTag("TS");
-      //new_len = r.GetIntTag("TL");
-      //r_get_int32_tag(r, "TS", start);
-      //r_get_int32_tag(r, "TL", new_len);
-      //if (start == 0 && new_len == 0) { // tag not already added. Trim
-      int32_t start = 0;
+      int32_t startpoint = 0, endpoint = 0;
+      r.QualityTrimmedSequence(phred.min, startpoint, endpoint);
+      new_len = endpoint - startpoint;
       
-      //std::string seq_trimmed = r.GetZTag("QT");
-      //if (!seq_trimmed.length()) {
-      std::string seq_trimmed = r.QualityTrimmedSequence(phred.min, start);
-      if ((int)seq_trimmed.length() != r.Length() && seq_trimmed.length()) {
-	r.AddZTag("GV", seq_trimmed);
+      if (endpoint != -1 && new_len < r.Length() && new_len > 0 && new_len - startpoint >= 0 && startpoint + new_len < r.Length()) { 
+	try { 
+	  r.AddZTag("GV", r.Sequence().substr(startpoint, new_len));
+	  assert(r.GetZTag("GV").length());
+	} catch (...) {
+	  std::cerr << "Subsequence failure with sequence of length "  
+		    << r.Sequence().length() << " and startpoint "
+		    << startpoint << " endpoint " << endpoint 
+		    << " newlen " << new_len << std::endl;
+	}
       }
-      //}
-      new_len = seq_trimmed.length();
-      
-      // add the tags
-      //r_add_int32_tag(r, "TS", start);
-      //r_add_int32_tag(r, "TL", new_len);
-      // }
-      
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES pre-phred filter. ID " << id << " start " << startpoint << " endpoint " << endpoint << " " << r << std::endl;
+#endif
+
       // all the bases are trimmed away 
-      if (new_len == 0)
+      if (endpoint == -1 || new_len == 0)
 	return false;
       
       new_clipnum = std::max(0, static_cast<int>(clipnum - (r.Length() - new_len)));
@@ -680,14 +727,31 @@ void Range::parseRuleLine(std::string line) {
       if (!nbases.isValid(n))
 	return false;
     }
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES NBASES PASS. id: " << id << r << " new_len " << new_len << " new_clipnum" << new_clipnum << std::endl;
+#endif
+
     
     // check for valid length
     if (!len.isValid(new_len))
       return false;
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES LENGTH PASS. id: " << id << r << " newlen " << new_len << std::endl;
+#endif
     
     // check for valid clip
     if (!clip.isValid(new_clipnum))
       return false;
+
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES CLIP AND LEN PASS. ID " << id << " "  << r << std::endl;
+#endif
+
     
     // check for secondary alignments
     if (!xp.isEvery()) 
@@ -703,6 +767,12 @@ void Range::parseRuleLine(std::string line) {
     }
 #endif
     
+#ifdef DEBUG_GIVEN_READ
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << "MINIRULES PASS EVERYTHING. ID " << id << " " << r << std::endl;
+#endif
+
+
     return true;
   }
   
@@ -810,7 +880,7 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
 #ifndef __APPLE__
     //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
     if (ar.atm_file != "")
-      out << "matching on " << ar.atm_count << " subsequences from file " << ar.atm_file << " -- ";
+      out << (ar.atm_inv ? "NOT " : "") << "matching on " << ar.atm_count << " motifs from " << ar.atm_file << " -- ";
 #endif
     out << ar.fr;
   }
@@ -993,7 +1063,7 @@ void AbstractRule::parseSeqLine(std::string line) {
   if (boost::regex_match(line.c_str(), match, reg)) {
     line = match[1].str();
     atm_file = line;
-    
+
     //#ifndef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifdef __APPLE__
     std::cerr << "NOT AVAILBLE ON APPLE -- Attempting to perform motif matching without Aho-Corasick library. Need to link to lahocorasick to do this." << std::endl;
@@ -1005,9 +1075,9 @@ void AbstractRule::parseSeqLine(std::string line) {
   }
 
   // open the sequence file
-  igzstream iss(line.c_str());
-  if (!iss || !read_access_test(line)) {
-    std::cerr << "ERROR: Cannot read the sequence file: " << line << std::endl;
+  igzstream iss(atm_file.c_str());
+  if (!iss || !read_access_test(atm_file)) {
+    std::cerr << "ERROR: Cannot read the sequence file: " << atm_file << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -1021,21 +1091,30 @@ void AbstractRule::parseSeqLine(std::string line) {
 //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifndef __APPLE__
   // initialize it
-  atm = ac_automata_init(); //atm_ptr(ac_automata_init(), atm_free_delete);
-  
+  if (!atm)
+    atm = ac_automata_init(); //atm_ptr(ac_automata_init(), atm_free_delete);
   // make the Aho-Corasick key
   std::cerr << "...generating Aho-Corasick key"  << inv << " from file " << atm_file << std::endl;
   std::string pat;
   size_t count = 0;
   while (getline(iss, pat, '\n')) {
-    count++;
-    AC_PATTERN_t tmp_pattern;
-    tmp_pattern.astring = pat.c_str();
-    tmp_pattern.length = static_cast<unsigned>(pat.length());
-    ac_automata_add(atm, &tmp_pattern);
+    ++count;
+    std::istringstream iss2(pat);
+    std::string val;
+    size_t count2 = 0;
+    /// only look at second element
+    while (getline(iss2, val, '\t')) {
+	++count2;
+	if (count2 > 1)
+	  continue;
+	AC_PATTERN_t tmp_pattern;
+	tmp_pattern.astring = val.c_str();
+	tmp_pattern.length = static_cast<unsigned>(val.length());
+	ac_automata_add(atm, &tmp_pattern);
+      }
   }
-  ac_automata_finalize(atm);
-  std::cerr << "Done generating Aho-Corasick key of size " << count << std::endl;  
+  //ac_automata_finalize(atm);
+  //std::cerr << "Done generating Aho-Corasick key of size " << count << std::endl;  
 
   atm_count = count;
 #endif
@@ -1148,5 +1227,5 @@ GRC MiniRulesCollection::getAllRegions() const
     of.close();
     
   }
-
 }
+

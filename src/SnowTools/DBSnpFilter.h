@@ -4,6 +4,8 @@
 #include <cstring>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <unordered_set>
 
 #include "SnowTools/GenomicRegionCollection.h"
 #include "SnowTools/BreakPoint.h"
@@ -38,13 +40,21 @@ namespace SnowTools {
      * If it does, fill the BreakPoint rs field
      */
     bool queryBreakpoint(BreakPoint& bp);
+
+    bool queryRead(const BamRead& r) const;
+
+    bool queryHash(const std::string& r) const;
     
     friend std::ostream& operator<<(std::ostream& out, const DBSnpFilter& d);
 
   private:
     
-    DBC m_sites;
+    // initialize here once
+    std::stringstream cig;
 
+    DBC m_sites;
+    std::unordered_set<std::string> m_hash;
+    
   };
 
 }

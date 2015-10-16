@@ -162,6 +162,18 @@ namespace SnowTools {
     return std::string(str->s);
     }*/
 
+  double BamRead::MeanPhred() const {
+
+    if (b->core.l_qseq <= 0)
+      return -1;
+
+    double s = 0;
+    uint8_t* p = bam_get_qual(b);
+    for (int32_t i = 0; i < b->core.l_qseq; ++i)
+      s += p[i];
+    return s / b->core.l_qseq;
+  }
+
   std::string BamRead::QualitySequence() const {
     std::string seq = GetZTag("GV");
     if (!seq.length()) 
@@ -217,9 +229,9 @@ namespace SnowTools {
     return n;
   }
 
-  std::string BamRead::QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint) const {
+  void BamRead::QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint, int32_t& endpoint) const {
 
-    int endpoint = -1; //seq.length();
+    endpoint = -1; //seq.length();
     startpoint = 0;
     int i = 0; 
     
@@ -228,9 +240,10 @@ namespace SnowTools {
     // if there is no quality score, return whole thing
     if (qual[0] == 0xff) {
       startpoint = 0;
-      return Sequence();
+      return;
+      
+      //return Sequence();
     }
-
     
     // get the start point (loop forward)
     while(i < b->core.l_qseq) {
@@ -255,9 +268,16 @@ namespace SnowTools {
       --i;
     }
 
+    /*
     // check that they aren't all bad
     if (startpoint == 0 && endpoint == -1) 
-      return "";
+      return;
+
+    // if they're all good, mark and return
+    if (startpoint == 0 && endpoint == b->core.l_qseq) {
+      return; 
+    }
+    has_trim = true;
     
     std::string output = std::string(endpoint-startpoint, 'N');
     try { 
@@ -269,7 +289,7 @@ namespace SnowTools {
     }
 
     return output;
-
+    */
   }
 
   void BamRead::AddZTag(std::string tag, std::string val) {
