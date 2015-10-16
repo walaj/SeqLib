@@ -11,7 +11,7 @@ libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
-			AlignedContig.cpp STCoverage.cpp DBSnpFilter.cpp \
+			AlignedContig.cpp STCoverage.cpp DBSnpFilter.cpp PONFilter.cpp \
 			BreakPoint.cpp DiscordantCluster.cpp Fractions.cpp \
 			../bwa/is.c ../bwa/bwtindex.c \
 			../bwa/bwt_gen.c ../bwa/QSufSort.c \

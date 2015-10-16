@@ -364,7 +364,7 @@ class MiniRules {
   public:
   MiniRules() {}
   ~MiniRules() {}
-
+  
   std::string id;
     
   bool isValid(BamRead &r);
@@ -417,9 +417,13 @@ class MiniRulesCollection {
    */
   MiniRulesCollection() {}
 
+  AbstractRule rule_all;
+  
   MiniRulesCollection(const std::string& file, bam_hdr_t *b);
 
   MiniRulesCollection(const std::string& file);
+
+  void addGlobalRule(const std::string& rule);
 
   bool isValid(BamRead &r);
   

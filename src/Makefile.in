@@ -62,6 +62,7 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-AlignedContig.$(OBJEXT) \
 	libsnowtools_a-STCoverage.$(OBJEXT) \
 	libsnowtools_a-DBSnpFilter.$(OBJEXT) \
+	libsnowtools_a-PONFilter.$(OBJEXT) \
 	libsnowtools_a-BreakPoint.$(OBJEXT) \
 	libsnowtools_a-DiscordantCluster.$(OBJEXT) \
 	libsnowtools_a-Fractions.$(OBJEXT) libsnowtools_a-is.$(OBJEXT) \
@@ -193,7 +194,7 @@ libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
-			AlignedContig.cpp STCoverage.cpp DBSnpFilter.cpp \
+			AlignedContig.cpp STCoverage.cpp DBSnpFilter.cpp PONFilter.cpp \
 			BreakPoint.cpp DiscordantCluster.cpp Fractions.cpp \
 			../bwa/is.c ../bwa/bwtindex.c \
 			../bwa/bwt_gen.c ../bwa/QSufSort.c \
@@ -261,6 +262,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-GenomicRegion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-Histogram.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-MiniRules.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-PONFilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-QSufSort.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-STCoverage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-SnowUtils.Po@am__quote@
@@ -469,6 +471,20 @@ libsnowtools_a-DBSnpFilter.obj: DBSnpFilter.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DBSnpFilter.cpp' object='libsnowtools_a-DBSnpFilter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-DBSnpFilter.obj `if test -f 'DBSnpFilter.cpp'; then $(CYGPATH_W) 'DBSnpFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/DBSnpFilter.cpp'; fi`
+
+libsnowtools_a-PONFilter.o: PONFilter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-PONFilter.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-PONFilter.Tpo -c -o libsnowtools_a-PONFilter.o `test -f 'PONFilter.cpp' || echo '$(srcdir)/'`PONFilter.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-PONFilter.Tpo $(DEPDIR)/libsnowtools_a-PONFilter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='PONFilter.cpp' object='libsnowtools_a-PONFilter.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-PONFilter.o `test -f 'PONFilter.cpp' || echo '$(srcdir)/'`PONFilter.cpp
+
+libsnowtools_a-PONFilter.obj: PONFilter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-PONFilter.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-PONFilter.Tpo -c -o libsnowtools_a-PONFilter.obj `if test -f 'PONFilter.cpp'; then $(CYGPATH_W) 'PONFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/PONFilter.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-PONFilter.Tpo $(DEPDIR)/libsnowtools_a-PONFilter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='PONFilter.cpp' object='libsnowtools_a-PONFilter.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-PONFilter.obj `if test -f 'PONFilter.cpp'; then $(CYGPATH_W) 'PONFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/PONFilter.cpp'; fi`
 
 libsnowtools_a-BreakPoint.o: BreakPoint.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BreakPoint.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-BreakPoint.Tpo -c -o libsnowtools_a-BreakPoint.o `test -f 'BreakPoint.cpp' || echo '$(srcdir)/'`BreakPoint.cpp
