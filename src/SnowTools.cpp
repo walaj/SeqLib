@@ -2,10 +2,11 @@
 #include <getopt.h>
 #include <iostream>
 
-#include "CoverageTool.h"
+//#include "CoverageTool.h"
 //#include "VFilterTool.h"
-#include "RealignTool.h"
+//#include "RealignTool.h"
 
+/*
 //static const char* SNOWTOOLS_USAGE_MESSAGE =
 static std::string SNOWTOOLS_USAGE_MESSAGE = 
 "Usage: snowtools <module> \n\n" +
@@ -35,3 +36,5 @@ int main(int argc, char** argv)
   
   return 1;
 }
+
+*/

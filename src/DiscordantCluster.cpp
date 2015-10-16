@@ -74,6 +74,21 @@ namespace SnowTools {
 	if (interval.isEmpty() /* whole genome */ || i.second.m_reg1.getOverlap(interval) > 0 || i.second.m_reg2.getOverlap(interval))
 	  dd_clean[i.first] = i.second;
     }
+
+    // score by number of maps
+    for (auto d : dd_clean) {
+      for (auto& r : d.second.reads) {
+       double rr = r.second.GetIntTag("DD");
+       d.second.read_score += (rr > 0) ? 1/rr : 1;
+      }
+      for (auto& r : d.second.mates) {
+       double rr = r.second.GetIntTag("DD");
+       // d.second.
+	 d.second.mate_score += (rr > 0) ? 1/rr : 1;
+      }
+      //std::cerr << d.second << " rscore " << d.second.read_score << " mate " << d.second.mate_score << std::endl;
+    }
+
     
     return dd_clean;
     

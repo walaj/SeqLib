@@ -26,9 +26,9 @@ int SnowTools::weightedRandom(const std::vector<double>& cs) {
 
   // get a weighted random number
   size_t al = 0;
-  double rand_allele = rand() % 1000;
+  double rand_val = rand() % 1000;
   while (al < cs.size()) {
-    if (rand_allele <= cs[al] * 1000) 
+    if (rand_val <= cs[al] * 1000) 
       return al;
     ++al;
   }
