@@ -6,7 +6,6 @@ SVSim*
 *.o
 *.gif
 .*
-Test
 autom4te.cache
 .Rhistory
 .in
@@ -29,4 +28,3 @@ stamp-h1
 *.so*
 Makefile
 *.pico
-test*
