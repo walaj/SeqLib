@@ -688,6 +688,7 @@ D["HAVE_INTTYPES_H"]=" 1"
 D["HAVE_STDINT_H"]=" 1"
 D["HAVE_UNISTD_H"]=" 1"
 D["HAVE_CLOCK_GETTIME"]=" 1"
+D["HAVE_BOOST_ICL_INTERVAL_SET_HPP"]=" 1"
   for (key in D) D_is_set[key] = 1
   FS = ""
 }

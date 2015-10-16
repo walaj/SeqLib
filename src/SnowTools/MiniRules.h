@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <regex>
+#include <boost/regex.hpp>
 
 #include "SnowTools/GenomicRegionCollection.h"
 #include "SnowTools/BamRead.h"
@@ -71,7 +71,7 @@ class Flag {
    * will look for is specified by the regex (e.g. !?hardclip)
    * @return Returns true if the regex was successfully parsed
    */
-  bool parseRuleLine(std::string &val, std::regex &reg);
+  bool parseRuleLine(std::string &val, boost::regex &reg);
 
  private: 
 
