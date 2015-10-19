@@ -64,7 +64,6 @@ AC_SUBST(LIBS, "$LIBS")
 ##AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile
-	         src/Makefile
-		 boost/libs/regex/src/Makefile])
+	         src/Makefile])
 
 AC_OUTPUT
