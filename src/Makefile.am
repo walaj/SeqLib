@@ -4,9 +4,10 @@ libsnowtools_a_CPPFLAGS = \
         -I.. \
 	-I../multifast-v1.4.2 \
         -I../htslib \
-	-I../boost
+	-I../modular-boost \
+	-I/xchip/gistic/Jeremiah/GIT/rapidjson/include
 
-libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
+libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ../modular-boost/stage/lib/libboost_regex.a
 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
