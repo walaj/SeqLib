@@ -5113,7 +5113,7 @@ LIBS="$LIBS"
 # Make sure the boost headers can be found
 ##AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])
 
-ac_config_files="$ac_config_files Makefile src/Makefile boost/libs/regex/src/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -5761,7 +5761,6 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
-    "boost/libs/regex/src/Makefile") CONFIG_FILES="$CONFIG_FILES boost/libs/regex/src/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 $as_echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
