@@ -1,3 +1,3 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib src build
+SUBDIRS = modular-boost bwa htslib src
 

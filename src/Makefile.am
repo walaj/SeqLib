@@ -4,8 +4,7 @@ libsnowtools_a_CPPFLAGS = \
         -I.. \
 	-I../multifast-v1.4.2 \
         -I../htslib \
-	-I../modular-boost \
-	-I/xchip/gistic/Jeremiah/GIT/rapidjson/include
+	-I../modular-boost
 
 libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ../modular-boost/stage/lib/libboost_regex.a
 
