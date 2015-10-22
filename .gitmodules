@@ -1,6 +1,6 @@
 [submodule "modular-boost"]
 	path = modular-boost
-	url = https://github.com/jwalabroad/boost.git
+	url = https://github.com/boostorg/boost.git
 [submodule "boost"]
 	path = boost
 	url = https://github.com/jwalabroad/boost.git
