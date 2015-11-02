@@ -5,8 +5,6 @@
 #include <cassert>
 #include "SnowTools/gzstream.h"
 
-#include <boost/math/distributions/binomial.hpp>
-
 #define SPLIT_BUFF 8
 #define LOD_CUTOFF 8
 #define DBCUTOFF 12
