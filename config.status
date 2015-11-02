@@ -363,7 +363,7 @@ Copyright (C) 2008 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools'
+ac_pwd='/xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 MKDIR_P='/bin/mkdir -p'
@@ -564,12 +564,12 @@ S["CPPFLAGS"]=" -I. -I/xchip/gistic/Jeremiah/boost_1_58_0"
 S["LDFLAGS"]=""
 S["CXXFLAGS"]="-O3"
 S["CXX"]="g++"
-S["MAINT"]=""
-S["MAINTAINER_MODE_FALSE"]="#"
-S["MAINTAINER_MODE_TRUE"]=""
+S["MAINT"]="#"
+S["MAINTAINER_MODE_FALSE"]=""
+S["MAINTAINER_MODE_TRUE"]="#"
 S["am__untar"]="${AMTAR} xf -"
 S["am__tar"]="${AMTAR} chof - \"$$tardir\""
-S["AMTAR"]="${SHELL} /xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools/missing --run tar"
+S["AMTAR"]="${SHELL} /xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/missing --run tar"
 S["am__leading_dot"]="."
 S["SET_MAKE"]=""
 S["AWK"]="gawk"
@@ -577,12 +577,12 @@ S["mkdir_p"]="/bin/mkdir -p"
 S["MKDIR_P"]="/bin/mkdir -p"
 S["INSTALL_STRIP_PROGRAM"]="$(install_sh) -c -s"
 S["STRIP"]=""
-S["install_sh"]="${SHELL} /xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools/install-sh"
-S["MAKEINFO"]="${SHELL} /xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools/missing --run makeinfo"
-S["AUTOHEADER"]="${SHELL} /xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools/missing --run autoheader"
-S["AUTOMAKE"]="${SHELL} /xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools/missing --run automake-1.11"
-S["AUTOCONF"]="${SHELL} /xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools/missing --run autoconf"
-S["ACLOCAL"]="${SHELL} /xchip/gistic/Jeremiah/GIT/SnowmanSV/SnowTools/missing --run aclocal-1.11"
+S["install_sh"]="${SHELL} /xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/install-sh"
+S["MAKEINFO"]="${SHELL} /xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/missing --run makeinfo"
+S["AUTOHEADER"]="${SHELL} /xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/missing --run autoheader"
+S["AUTOMAKE"]="${SHELL} /xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/missing --run automake-1.11"
+S["AUTOCONF"]="${SHELL} /xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/missing --run autoconf"
+S["ACLOCAL"]="${SHELL} /xchip/gistic/Jeremiah/GIT/VariantBam/SnowTools/missing --run aclocal-1.11"
 S["VERSION"]="1.0"
 S["PACKAGE"]="snowtools"
 S["CYGPATH_W"]="echo"
@@ -688,7 +688,6 @@ D["HAVE_INTTYPES_H"]=" 1"
 D["HAVE_STDINT_H"]=" 1"
 D["HAVE_UNISTD_H"]=" 1"
 D["HAVE_CLOCK_GETTIME"]=" 1"
-D["HAVE_BOOST_ICL_INTERVAL_SET_HPP"]=" 1"
   for (key in D) D_is_set[key] = 1
   FS = ""
 }
