@@ -5,7 +5,7 @@ AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
 AM_INIT_AUTOMAKE(foreign)
 AC_CONFIG_SRCDIR([src/SnowTools.cpp])
 AC_CONFIG_HEADER([config.h])
-AM_MAINTAINER_MODE([enable])
+AM_MAINTAINER_MODE([disable])
 ##m4_include([m4/m4_ax_openmp.m4])
 
 # Checks for programs.
@@ -61,7 +61,7 @@ AC_SUBST(LIBS, "$LIBS")
 ##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
 
 # Make sure the boost headers can be found
-AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])
+##AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile
 	         src/Makefile])

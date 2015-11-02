@@ -46,7 +46,8 @@ LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
 libsnowtools_a_AR = $(AR) $(ARFLAGS)
-libsnowtools_a_DEPENDENCIES = ../bwa/libbwa.a ../htslib/libhts.a
+libsnowtools_a_DEPENDENCIES = ../bwa/libbwa.a ../htslib/libhts.a \
+	../modular-boost/stage/lib/libboost_regex.a
 am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-Histogram.$(OBJEXT) \
 	libsnowtools_a-BamWalker.$(OBJEXT) \
@@ -188,9 +189,9 @@ libsnowtools_a_CPPFLAGS = \
         -I.. \
 	-I../multifast-v1.4.2 \
         -I../htslib \
-	-I../boost
+	-I../modular-boost
 
-libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
+libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ../modular-boost/stage/lib/libboost_regex.a
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
