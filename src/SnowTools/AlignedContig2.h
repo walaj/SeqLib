@@ -27,7 +27,7 @@ namespace SnowTools {
      * @param const reference to an aligned sequencing read
      * @param flip If the contig sequence was flipped (rev of BAM record), need to track this. This flipping occurs in AlignedContig::AlignedContig
      */
-    AlignmentFragment(const BamRead &talign, bool flip);
+    AlignmentFragment(const BamRead &talign, bool flip, const std::unordered_set<std::string>& prefixes);
     
     //! sort AlignmentFragment objects by start position
     bool operator < (const AlignmentFragment& str) const { return (start < str.start); }
@@ -254,7 +254,7 @@ namespace SnowTools {
   /*! @function retrieves all of the breakpoints by combining indels with global mutli-map break
    * @return vector of ind
    */
-  std::vector<BreakPoint> getAllBreakPoints() const;
+  std::vector<BreakPoint> getAllBreakPoints(bool local_restrict = true) const;
   std::vector<BreakPoint> getAllBreakPointsSecondary() const;
 
   void assignSupportCoverage();
@@ -272,6 +272,8 @@ namespace SnowTools {
 
   std::unordered_map<std::string, std::vector<int>> cov;
   std::vector<int> tum_cov, norm_cov;
+
+  std::unordered_set<std::string> prefixes; // store the sample ids. Needed to create accurate BreakPoint genotypes
 
  private:
 
@@ -334,7 +336,7 @@ struct PlottedReadLine {
       last_loc = i->pos + i->seq.length();
     }
     int name_buff = r.contig_len - last_loc;
-    assert(name_buff < 10000);
+    assert(name_buff < 1e6);
     out << std::string(std::max(name_buff, 5), ' ');
     for (auto& i : r.read_vec) { // add the data
       out << i->info << ",";

@@ -37,17 +37,17 @@ namespace SnowTools {
     for (auto& i : bav)
       if (!i.SecondaryFlag())
 	++num_align;
-    
+
     // make the individual alignments and add
     for (auto& i : bav) {
       if (!i.SecondaryFlag()) {
 	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
-	m_frag_v.push_back(AlignmentFragment(i, flip));
+	m_frag_v.push_back(AlignmentFragment(i, flip, prefixes));
 	m_frag_v.back().num_align = num_align;
       } else {
 	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
 	if (m_frag_v.size())
-	  m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip));
+	  m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip, prefixes));
 	//m_frag_v_secondary.push_back(AlignmentFragment(i, flip));
 	//m_frag_v_secondary.back().num_align = bav.size();
       }      
@@ -119,6 +119,12 @@ namespace SnowTools {
   
   void AlignedContig::splitCoverage() { 
     
+    for (auto& i : m_local_breaks_secondaries) 
+      i.splitCoverage(m_bamreads);
+
+    for (auto& i : m_global_bp_secondaries) 
+      i.splitCoverage(m_bamreads);
+
     for (auto& i : m_frag_v) 
       for (auto& j : i.m_indel_breaks) 
       j.splitCoverage(m_bamreads);
@@ -302,6 +308,9 @@ namespace SnowTools {
     // if single mapped contig, nothing to do here  
     // initialize the breakpoint, fill with basic info
     BreakPoint bp;
+    for (auto& i : prefixes) 
+      bp.allele[i].indel = false;
+
     bp.seq = getSequence();
     bp.num_align = m_frag_v.size();
     assert(bp.num_align > 0);
@@ -331,10 +340,10 @@ namespace SnowTools {
 	  // order the breakpoint
 	  bp.order();
 
+
 	  if (a.m_align.SecondaryFlag() || b.m_align.SecondaryFlag())
 	    bp.secondary = true;
 	  
-	  //std::cerr << bp << std::endl;
 	  assert(bp.valid());
 
 	  // add the the vector of breakpoints
@@ -456,7 +465,7 @@ namespace SnowTools {
     return false;
   }
 
-  AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip) {
+  AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip, const std::unordered_set<std::string>& prefixes) {
 
     m_align = talign;
 
@@ -514,6 +523,9 @@ namespace SnowTools {
     assert(break1 < MAX_CONTIG_SIZE);
     assert(break2 < MAX_CONTIG_SIZE);
 
+    if (break1 < 0 || break2 < 0) {
+      std::cout << (*this) << std::endl;
+    }
     assert(break1 >= 0);
     assert(break2 >= 0);
 
@@ -523,6 +535,8 @@ namespace SnowTools {
     while (parseIndelBreak(bp) && fail_safe_count++ < 100 && !m_align.SecondaryFlag()) {
       //std::cerr << bp << " " << (*this) << std::endl;
       assert(bp.valid());
+      for (auto& i : prefixes)
+	bp.allele[i].indel = true;
       m_indel_breaks.push_back(bp);
       assert(bp.num_align == 1);
     }
@@ -589,8 +603,9 @@ namespace SnowTools {
       for (auto& c : cmap) {
 	CigarMap::const_iterator ff = c.second.find(st);
 	// if it is, add it
-	if (ff != c.second.end())
+	if (ff != c.second.end()) {
 	  i.allele[c.first].cigar = ff->second;	  
+	}
       }
     }      
     
@@ -606,7 +621,7 @@ namespace SnowTools {
       // get the hash string in same formate as cigar map (eg. pos_3D)
       std::string st = i.getHashString();
 
-      std::cerr << " hash " << st << " nmap.size() " << nmap.size() << " tmap.size() " << tmap.size() << std::endl;
+      //std::cerr << " hash " << st << " nmap.size() " << nmap.size() << " tmap.size() " << tmap.size() << std::endl;
 
       // check if this breakpoint from assembly is in the cigarmap
       CigarMap::const_iterator ffn = nmap.find(st);
@@ -648,7 +663,7 @@ namespace SnowTools {
 	++di_count;
     if (di_count > 3)
       return false;
-    
+
     // reject if it has small matches, could get confused. Fix later
     //for (auto& i : m_cigar) 
     //  if (i.Type == 'M' && i.Length < 5)
@@ -673,10 +688,11 @@ namespace SnowTools {
       }
     }
     
+
     // we made it to the end, no more indels to report
     if (loc == m_cigar.size())
       return false;
-    
+
     // clear out the old bp just in case
     bp = BreakPoint();
     bp.num_align = 1;
@@ -802,11 +818,11 @@ namespace SnowTools {
   */
   //}
   
-  std::vector<BreakPoint> AlignedContig::getAllBreakPoints() const {
+  std::vector<BreakPoint> AlignedContig::getAllBreakPoints(bool local_restrict) const {
     
     std::vector<BreakPoint> out;
     for (auto& i : m_frag_v) {
-      if (i.local) // only output if alignment is local for indels
+      if (i.local || !local_restrict) // only output if alignment is local for indels
 	for (auto& k : i.m_indel_breaks)
 	  out.push_back(k);
     }

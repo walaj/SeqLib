@@ -60,4 +60,18 @@ void SnowTools::genRandomValue(uint32_t &i, const uint32_t &max, uint32_t seed) 
   std::uniform_int_distribution<uint32_t> distr(0, max); // define the range
   i = distr(eng);
 }
+
+
+std::string SnowTools::getFileName(const std::string& s) {
+    char sep = '/';
+#ifdef _WIN32
+    sep = '\\';
+#endif
+    size_t i = s.rfind(sep, s.length());
+    if (i != std::string::npos) {
+      return(s.substr(i+1, s.length() - i));
+    }
+    
+    return("");
+  }
  

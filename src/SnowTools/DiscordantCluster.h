@@ -29,7 +29,7 @@ namespace SnowTools
       m_reg2 = GenomicRegion(); 
       assert(m_reg1.isEmpty()); 
       ncount = 0; tcount = 0;
-      mapq1 = -1; mapq2 = 0;
+      mapq1 = -1; mapq2 = -1;
     }
 
     /** Make a cluster from a set of reads (pre-clustered) and look up a larger set to find 
@@ -83,6 +83,7 @@ namespace SnowTools
 
     int tcount = 0;
     int ncount = 0; 
+    std::unordered_map<std::string, int> counts;
 
     std::unordered_map<std::string, BamRead> reads;
     std::unordered_map<std::string, BamRead> mates;
