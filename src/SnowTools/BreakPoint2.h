@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <unordered_map>
+#include <map>
 #include "htslib/faidx.h"
 
 #include "SnowTools/GenomicRegion.h"
@@ -32,7 +33,7 @@ namespace SnowTools {
    std::string chr_name;
    //char * chr_name;
    GenomicRegion gr;
-   uint16_t mapq:8, sub_n:8;
+   uint32_t mapq:8, sub_n:8, nm:16;
 
  };
 
@@ -44,6 +45,8 @@ namespace SnowTools {
    BreakEnd(const GenomicRegion& g, int mq, const std::string & chr_n);
    
    BreakEnd(const BamRead& b);
+
+   std::string hash() const;
 
    std::string id;
    std::string chr_name;
@@ -57,12 +60,8 @@ namespace SnowTools {
    std::unordered_map<std::string, int> split;
    std::unordered_map<std::string, double> af;
 
-   //int tsplit = -1;
-   //int nsplit = -1;
    int sub_n = -1;
    bool local;
-   //double n_af = -1;
-   //double t_af = -1;
 
  };
 
@@ -109,6 +108,7 @@ namespace SnowTools {
      __smart_check_free(insertion);
      __smart_check_free(evidence);
      __smart_check_free(confidence);
+     __smart_check_free(repeat);
    }
    ReducedBreakPoint(const std::string &line, bam_hdr_t* h);
 
@@ -119,6 +119,9 @@ namespace SnowTools {
    char * confidence;
    char * insertion;
    char * homology;
+   char * repeat;
+
+   std::vector<std::string> format_s;
 
    //std::string ref;
    //std::string alt;
@@ -129,7 +132,9 @@ namespace SnowTools {
    //std::string homology;
 
    ReducedBreakEnd b1, b2;
-   float somatic_score;
+   double somatic_score = 0;
+   double somatic_lod = 0; // LogOdds that variant not in normal
+   double true_lod = 0;
 
    uint32_t nsplit:8, tsplit:8, af_n:7, num_align:5, secondary:1, dbsnp:1, pass:1, blacklist:1, indel:1, imprecise:1;
    uint32_t tcov_support:8, ncov_support:8, tcov:8, ncov:8;
@@ -140,33 +145,65 @@ namespace SnowTools {
 
  };
 
- struct AlleleInfo {
+ struct SampleInfo {
 
-   int split;
-   int cigar;
-   int support_cov;
-   int clip_cov;
-   int cov;
+   bool indel;
 
-   friend std::ostream& operator<<(std::ostream& out, const AlleleInfo& a);
+   int split = 0;
+   int cigar = 0;
+   int alt =0;
+   int clip_cov = 0;
+   int cov = 0;
+   int disc = 0;
+   
+   // genotype info
+   double GQ = 0;
+   double PL = 0;
+   std::string genotype;
 
-   void modelSelection();
+   double af = 0;
+   double error_rate = 1e-4;
 
+   double LO = 0; // log odds of variant vs error
+   double SLO = 0; // MAPQ scaled log odds of variant vs error
+   double LO_n = 0; // log odds of variant at af=0.5 vs ref (af=0) with errors
+
+   std::set<std::string> supporting_reads;
+
+   friend std::ostream& operator<<(std::ostream& out, const SampleInfo& a);
+
+   friend SampleInfo operator+(const SampleInfo& a1, const SampleInfo& a2);
+
+   double __log_likelihood(int ref, int alt, double f, double e);
+
+   void modelSelection(double err);
+
+   std::string toFileString() const;
+
+   void fromString(const std::string& s);
+   
  };
  
  struct BreakPoint {
    
    static std::string header() { 
-     return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tref\talt\tspan\tmapq1\tmapq2\tnsplit\ttsplit\tsubn1\tsubn2\tndisc\ttdisc\tdisc_mapq1\tdisc_mapq2\tncigar\ttcigar\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tquality\tsecondary_alignment\tsomatic_score\tpon_samples\trepeat_seq\tnormal_cov\ttumor_cov\tnormal_allelic_fraction\ttumor_allelic_fraction\tgraylist\tDBSNP\treads"; 
+     return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tref\talt\tspan\tmapq1\tmapq2\tnm1\tnm2\tdisc_mapq1\tdisc_mapq2\tsub_n1\tsub_n2\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tquality\tsecondary_alignment\tsomatic_score\tsomatic_lod\ttrue_lod\tpon_samples\trepeat_seq\tgraylist\tDBSNP\treads"; 
    }
+
+   double somatic_score = 0;
+   double somatic_lod = 0; // LogOdds that variant not in normal
 
    std::string seq, cname, rs, insertion, homology, repeat_seq, evidence, confidence, ref, alt, read_names;   
 
    // the evidence per break-end
    BreakEnd b1, b2;
    
+   SampleInfo t, n, a;
+
    // reads spanning this breakpoint
    BamReadVector reads;
+
+   int t_reads = 0, n_reads = 0;
 
    // discordant reads supporting this aseembly bp
    DiscordantCluster dc;
@@ -174,21 +211,21 @@ namespace SnowTools {
    int quality = 0;
 
    // total coverage at that position
-   std::unordered_map<std::string, AlleleInfo> allele;
-
-   int tsplit, nsplit, ncov, tcov, ncov_support, tcov_support, tcigar, ncigar;
-   double af_t, af_n;
+   std::map<std::string, SampleInfo> allele; // ordered to keep in alphabetical order by prefix (e.g. n001)
 
    bool secondary = false;
 
-   std::unordered_set<std::string> split_reads;
-   std::unordered_set<std::string> qnames;
+   std::unordered_set<std::string> split_reads, qnames;
    
    int pon = 0;
    int num_align = 0;
    
    bool isindel = false;
    bool blacklist = false;
+
+   void __combine_alleles();
+
+   void __rep(int rep_num, std::string& rseq);
    
    /** Construct a breakpoint from a cluster of discordant reads
     */
@@ -197,18 +234,17 @@ namespace SnowTools {
    BreakPoint() {}
    
    BreakPoint(const std::string &line, bam_hdr_t* h);
+
+   void __set_total_reads();
    
+   void __score_somatic();
+
    void addCovs(const std::unordered_map<std::string, STCoverage*>& covs, const std::unordered_map<std::string, STCoverage*>& clip_covs);
 
-   /*! Return a string with information useful for printing at the 
-    * command line as Snowman runs 
-    * @return string with minimal information about the BreakPoint.
-    */
-   std::string toPrintString() const;
-   
    /** Retrieve the reference sequence at a breakpoint and determine if 
     * it lands on a repeat */
-   //void repeatFilter(faidx_t * f);
+   void repeatFilter();
+
    void __combine_with_discordant_cluster(DiscordantClusterMap& dmap);
    
    /*! @function determine if the breakpoint has split read support
@@ -289,19 +325,19 @@ namespace SnowTools {
      else if (bp.b2.gr < b2.gr)
        return false;
      
-     if (nsplit > bp.nsplit) // nsplit > bp.nsplit
+     if (n.split > bp.n.split) 
        return true;
-     else if (nsplit < bp.nsplit)
+     else if (n.split < bp.n.split)
        return false;
      
-     if (tsplit > bp.tsplit)
+     if (t.split > bp.t.split)
        return true;
-     else if (tsplit < bp.tsplit)
+     else if (t.split < bp.t.split)
        return false;
      
-     if (tsplit > bp.tsplit)
+     if (t.split > bp.t.split)
        return true;
-     else if (tsplit < bp.tsplit)
+     else if (t.split < bp.t.split)
        return false;
      
      if (dc.ncount > bp.dc.ncount)
@@ -331,7 +367,6 @@ namespace SnowTools {
    std::string __format_readname_string();
    void __set_homologies_insertions();
    void __set_evidence();
-   void __set_allelic_fraction();
    bool valid() const;
    
    double __sv_is_somatic() const;

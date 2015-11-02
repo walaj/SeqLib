@@ -124,6 +124,8 @@ namespace SnowTools {
 	assert(tmp.length());
 	reads[tmp] = i;
 	
+	counts[tmp.substr(0,4)]++;
+
 	// set the qname map
 	std::string qn = i.Qname();
 	qnames[qn] = true;

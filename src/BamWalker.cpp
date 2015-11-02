@@ -78,6 +78,7 @@ void BamWalker::resetAll() {
   m_region = GenomicRegionVector();
   m_num_reads_seen = 0;
   m_num_reads_kept = 0;
+
 }
 
 void BamWalker::setBamWalkerRegion(const GenomicRegion& g, std::shared_ptr<hts_idx_t> passed_idx)

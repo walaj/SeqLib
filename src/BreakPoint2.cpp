@@ -1,9 +1,16 @@
 #include "SnowTools/BreakPoint2.h"
 
 #include <getopt.h>
+#include <iomanip>
+#include <cassert>
 #include "SnowTools/gzstream.h"
 
-#define SPLIT_BUFF 10
+#include <boost/math/distributions/binomial.hpp>
+
+#define SPLIT_BUFF 8
+#define LOD_CUTOFF 8
+#define DBCUTOFF 12
+#define NODBCUTOFF 8
 
 // define repeats
 static std::vector<std::string> repr = {"AAAAAAAA", "TTTTTTTT", "CCCCCCCC", "GGGGGGGG", 
@@ -14,28 +21,14 @@ static std::vector<std::string> repr = {"AAAAAAAA", "TTTTTTTT", "CCCCCCCC", "GGG
 				 "CACACACACACACACA", "ACACACACACACACAC", 
 				 "GAGAGAGAGAGAGAGA", "AGAGAGAGAGAGAGAG"};
 
+static std::unordered_map<int, double> ERROR_RATES = {{0,1e-4}, {1,1e-4}, {2, 1e-4}, {3, 1e-4}, {4, 1e-4}, {5, 2e-4}, {6, 5e-4}, {7, 1e-3},
+						      {8,2e-3}, {9,3e-3}, {10, 1e-2}, {11, 2e-2}, {12, 3e-5}};
+
 namespace SnowTools {
-
-  // send breakpoint to a string
-  std::ostream& operator<<(std::ostream& out, const BreakPoint& b) {
-
-    out << b.b1.chr_name << ":" << b.b1.gr.pos1 << "(" << b.b1.gr.strand << ")" << "-" 
-	<< b.b2.chr_name << ":" << b.b2.gr.pos1 << "(" << b.b2.gr.strand << ")" <<
-      " SPAN: " << b.getSpan() << " MAPQ: " << 
-      b.b1.mapq << "/" << b.b2.mapq << " HOM: " << 
-      b.homology << " INS: " << b.insertion << " NS: " << 
-      b.nsplit << " TS: " << b.tsplit << " TD: " << b.dc.tcount << " ND: " << b.dc.ncount 
-	<< " NC " << b.ncigar << " TC " << b.tcigar << " NCOV " << b.ncov << " TCOV " << b.tcov << " -- " << b.cname; 
-    return out;
-  }
-
-  // make the file string
-  
 
   // make the file string
   std::string BreakPoint::toFileString(bool noreads) {
     
-    /*
     // make sure we already ran scoring
     assert(evidence.length());
     assert(confidence.length());
@@ -47,30 +40,38 @@ namespace SnowTools {
     if (!noreads) 
       __format_readname_string();
     
+    double max_lod = 0;
+    for (auto& s : allele) {
+      max_lod = std::max(max_lod, s.second.LO);
+    }
+
+
     ss << b1.chr_name << sep << b1.gr.pos1 << sep << b1.gr.strand << sep 
        << b2.chr_name << sep << b2.gr.pos1 << sep << b2.gr.strand << sep 
        << ref << sep << alt << sep 
        << getSpan() << sep
        << b1.mapq << sep << b2.mapq << sep 
-       << nsplit << sep << tsplit << sep
-       << b1.sub_n << sep << b2.sub_n << sep
-       << dc.ncount << sep << dc.tcount << sep
+       << b1.nm << sep << b2.nm << sep 
        << dc.mapq1 << sep << dc.mapq2 << sep
-       << ncigar << sep << tcigar << sep
+       //<< dc.ncount << sep << dc.tcount << sep
+       << b1.sub_n << sep << b2.sub_n << sep      
        << (homology.length() ? homology : "x") << sep 
        << (insertion.length() ? insertion : "x") << sep 
        << cname << sep
        << num_align << sep 
        << confidence << sep << evidence << sep
        << quality << sep
-       << secondary << sep << somatic_score << sep 
+       << secondary << sep << somatic_score << sep << somatic_lod << sep 
+       << max_lod << sep 
        << pon << sep << (repeat_seq.length() ? repeat_seq : "x") << sep 
-       << ncov << sep << tcov << sep << af_n << sep << af_t << sep
        << blacklist << sep << (rs.length() ? rs : "x") << sep 
        << (read_names.length() ? read_names : "x");
-    
+
+    for (auto& a : allele)
+      ss << sep << a.second.toFileString();
+
     return ss.str();
-    */
+
   }
   
   BreakEnd::BreakEnd(const GenomicRegion& g, int mq, const std::string& chr_n) {
@@ -84,8 +85,6 @@ namespace SnowTools {
     gr = g;
     mapq = mq;
     chr_name = chr_n;
-    //chr_name = (char*)malloc(chr_n.length() + 1);
-    //strcpy(chr_name, chr_n.c_str());
   }
 
 
@@ -106,8 +105,6 @@ namespace SnowTools {
     b2.gr.strand = dc.m_reg2.strand;
 
     cname = dc.toRegionString();
-    
-    //assert(b1.gr < b2.gr);
 
   }
   
@@ -115,48 +112,42 @@ namespace SnowTools {
     return (dc.ncount || dc.tcount);
   }
   
-  /** 
-   * Has at least two supporting reads
-   */
   bool BreakPoint::hasMinimal() const {
     int count;
-    count = dc.tcount + dc.ncount + tsplit + nsplit;
+    count = dc.tcount + dc.ncount + t.split + n.split;
     if (count >= 2)
       return true;
     return false;
   }
   
   bool BreakPoint::operator==(const BreakPoint &bp) const {
-    return (b1.gr == bp.b1.gr && b2.gr == bp.b2.gr); 
+    return (b1.gr == bp.b1.gr && b2.gr == bp.b2.gr && bp.insertion == insertion); 
   }
     
-  /*void BreakPoint::repeatFilter(faidx_t * f) {
+  void BreakPoint::repeatFilter() {
 
-    if (!f) {
-      std::cerr << "Need to open reference for reading. BreakPoint::repeatFilter" << std::endl;
-      return;
-    }
-   
-    if (gr1.chr >= 24)
+    int span = getSpan();
+
+    if (seq.length() == 0 || span <= 0)
       return;
 
+    std::string r1, r2; //, r3, r4;
+    __rep(1, r1);
+    repeat_seq = r1.length() > repeat_seq.length() ? r1 : repeat_seq;
+    __rep(2, r2);
+    repeat_seq = r2.length() > repeat_seq.length() ? r2 : repeat_seq;
+    //__rep(3, r3);
+    //repeat_seq = r3.length() > repeat_seq.length() ? r3 : repeat_seq;
+    // __rep(4, r4);
+    //repeat_seq = r4.length() > repeat_seq.length() ? r4 : repeat_seq;
 
-    GenomicRegion gr = gr1;
-    gr.pad(40);
+    //std::cerr << seq << " cpos1 " << b1.cpos << " r1 " << r1 << " r2 " << r2 << " r3 " << r3 << " r4 " << r4 << std::endl;
 
-    int len;    
-    std::string chrstring = GenomicRegion::chrToString(gr.chr);
-    char * seq = faidx_fetch_seq(f, const_cast<char*>(chrstring.c_str()), gr.pos1-1, gr.pos2-1, &len);
-    std::string seqr = std::string(seq);
+  }
 
-    for (auto& i : repr)
-      if (seqr.find(i) != std::string::npos)
-	repeat_seq = i;
-    
-	}*/
 
   BreakPoint::BreakPoint(const std::string &line, bam_hdr_t* h) {
-    /*
+
     if (!h) {
       std::cerr << "BreakPoint::BreakPoint - Must supply non-empty header" << std::endl;
       exit(EXIT_FAILURE);
@@ -166,7 +157,9 @@ namespace SnowTools {
     std::string val;
     size_t count = 0;
 
-    std::string chr1, pos1, chr2, pos2, chr_name1, chr_name2; 
+    SampleInfo aaa;
+
+    std::string chr1, pos1, chr2, pos2, chr_name1, chr_name2, id; 
     char strand1 = '*', strand2 = '*';
     while (std::getline(iss, val, '\t')) {
 
@@ -180,39 +173,41 @@ namespace SnowTools {
 	case 6: assert(val.length()); strand2 = val.at(0); break;
 	case 7: ref = val; break;
 	case 8: alt = val; break;
-	  //case 9: span = stoi(val); break; // automatically calculated
+	case 9: break; //span = stoi(val); break; // automatically calculated
 	case 10: 
 	  b1 = BreakEnd(GenomicRegion(chr1, pos1, pos1, h), std::stoi(val), chr_name1); b1.gr.strand = strand1; break;
 	case 11:
 	  b2 = BreakEnd(GenomicRegion(chr2, pos2, pos2, h), std::stoi(val), chr_name2); b2.gr.strand = strand2; break;
-	case 12: nsplit = std::stoi(val); break;
-	case 13: tsplit = std::stoi(val); break;
-	case 14: b1.sub_n = std::stoi(val); break;
-	case 15: b2.sub_n = std::stoi(val); break;
-	case 16: dc.ncount = std::stoi(val); break;
-	case 17: dc.tcount = std::stoi(val); break;
-	case 18: dc.mapq1 = std::stoi(val); break;  
-	case 19: dc.mapq2 = std::stoi(val); break;  
-	case 20: ncigar = std::stoi(val); break;
-	case 21: tcigar = std::stoi(val); break;
-	case 22: homology = (val == "x" ? "" : val); break;
-	case 23: insertion = (val == "x" ? "" : val); break;
-	case 24: cname = val; break;
-	case 25: num_align = std::stoi(val); break;
-	case 26: confidence = val; break;
-	case 27: evidence = val; break;
-	case 28: quality = std::stoi(val); break;
-	case 29: secondary = val == "1";
-	case 30: somatic_score = std::stod(val); break;
-	case 31: pon = std::stoi(val); break;
-	case 32: repeat_seq = val; break;
-	case 33: ncov = std::stoi(val); break;
-	case 34: tcov = std::stoi(val); break;
-	case 35: af_n = stod(val); break;
-	case 36: af_t = stod(val); break;
-	case 37: blacklist = (val=="1"); break;
-	case 38: rs = val; break;
-	case 39: read_names = val; break;
+	case 12: b1.nm = std::stoi(val); break;
+	case 13: b2.nm = std::stoi(val); break;
+	  //case 14: dc.ncount = std::stoi(val); break;
+	  //case 15: dc.tcount = std::stoi(val); break;
+	case 14: dc.mapq1 = std::stoi(val); break;  
+	case 15: dc.mapq2 = std::stoi(val); break;  
+	case 16: b1.sub_n = std::stoi(val); break;
+	case 17: b2.sub_n = std::stoi(val); break;
+	case 18: homology = (val == "x" ? "" : val); break;
+	case 19: insertion = (val == "x" ? "" : val); break;
+	case 20: cname = val; break;
+	case 21: num_align = std::stoi(val); break;
+	case 22: confidence = val; break;
+	case 23: evidence = val; break;
+	case 24: quality = std::stoi(val); break;
+	case 25: secondary = val == "1";
+	case 26: somatic_score = std::stod(val); break;
+	case 27: somatic_lod = std::stod(val); break;
+	case 28: a.LO = std::stod(val); break;
+	case 29: pon = std::stoi(val); break;
+	case 30: repeat_seq = val; break;
+	case 31: blacklist = (val=="1"); break;
+	case 32: rs = val; break;
+	case 33: read_names = val; break;
+        default: 
+	  aaa.indel = evidence == "INDEL";
+	  aaa.fromString(val);
+	  id += "A";
+	  allele[id] = aaa; //id is dummy. just keep in order as came in;
+	  break;
 	}
       } catch(...) {
 	std::cerr << "caught stoi error on: " << val << std::endl;
@@ -220,19 +215,17 @@ namespace SnowTools {
 	exit(1);
       }
     }
-    */
+
   }
   
   void BreakPoint::splitCoverage(BamReadVector &bav) {
-    
-    // zero the counts
-    tsplit = 0; nsplit = 0;
-    //b1.tsplit = 0; b1.nsplit = 0; b2.tsplit = 0; b2.nsplit = 0;
     
     int rightbreak1= b1.cpos + SPLIT_BUFF; // read must extend this far right of break1
     int leftbreak1 = b1.cpos - SPLIT_BUFF; // read must extend this far left break2
     int rightbreak2= b2.cpos + SPLIT_BUFF;
     int leftbreak2 = b2.cpos - SPLIT_BUFF;
+
+    int span = getSpan();
 
     for (auto& j : bav) {
 
@@ -279,7 +272,6 @@ namespace SnowTools {
       } catch (...) {
 	std::cerr << "error grabbing SE tag for tag " << j.GetZTag("SE") << std::endl;
       }
-      //std::cerr << qname << " " << cname << " " << j << " " << j.GetZTag("CN") << std::endl;
       assert(qname == cname);
     
       int rightend = te; //seq.length();
@@ -288,15 +280,17 @@ namespace SnowTools {
       bool issplit2 = (leftend <= leftbreak2) && (rightend >= rightbreak2);
 
       // add the split reads for each end of the break
-      if ( (issplit1 && issplit2 && num_align > 1) ||  ((issplit1 || issplit2) && num_align == 1 )) {
+      if ( (issplit1 && issplit2 && num_align > 1 ) ||  ((issplit1 || issplit2) && num_align == 1 )) {
 	reads.push_back(j);
-	split_reads.insert(j.GetZTag("SR"));
+	std::string rname = j.GetZTag("SR");
+	split_reads.insert(rname);
 	std::string qn = j.Qname();
-	if (qnames.count(qn))
-	  continue; // don't count support if already added
+	if (qnames.count(qn) && span > 1000)
+	  continue; // don't count support if already added and not a short event
 	qnames.insert(qn);
+	allele[sample_id].supporting_reads.insert(rname);
       }
-      
+
       // update the counters for each break end
       if (issplit1)
 	++b1.split[sample_id];
@@ -304,10 +298,18 @@ namespace SnowTools {
 	++b2.split[sample_id];	
       
       // read spans both ends
-      if (issplit1 && issplit2)
+      if (issplit1 && issplit2) {
 	++allele[sample_id].split;
+      }
       
+    } // end read loop
+
+      // adjust the alt count
+    for (auto& i : allele) {
+      i.second.indel = num_align == 1;
+      i.second.alt = std::max((int)i.second.supporting_reads.size(), i.second.cigar);
     }
+    
   }
   
   std::string BreakPoint::getHashString() const {
@@ -348,83 +350,28 @@ namespace SnowTools {
     
   }
   
-  void BreakPoint::addAllelicFraction(STCoverage * t_cov, STCoverage * n_cov, STCoverage * n_clip_cov) {
-    //tcov = std::max(t_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1), t_cov->getCoverageAtPosition(b2.gr.chr, b2.gr.pos1)); 
-    //ncov = std::max(n_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1),n_cov->getCoverageAtPosition(b2.gr.chr, b2.gr.pos1)); 
-    //nclip_cov = std::max(n_clip_cov->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1), n_clip_cov->getCoverageAtPosition(b2.gr.chr, b2.gr.pos1)); 
-  }
-  
-  std::string BreakPoint::toPrintString() const {
-    
-    std::stringstream ss;
-
-    /*    
-    std::string s_af_t = std::to_string(af_t);
-    if (s_af_t.length() > 4)
-      s_af_t = s_af_t.substr(0, 4);      
-    std::string s_af_n = std::to_string(af_n);
-    if (s_af_n.length() > 4)
-      s_af_n = s_af_n.substr(0, 4);
-    */
-
-
-    size_t rs_t = std::count(rs.begin(), rs.end(), 'r');
-    
-    if (isindel) {
-      ss << ">" << (insertion.size() ? "INS: " : "DEL: ") << getSpan() << " " << b1.gr /*<< " "  << cname */
-	 << " T/N split: " << tsplit << "/" << nsplit << " T/N cigar: " 
-	 << tcigar << "/" << ncigar << /*" T/N AF " << s_af_t << "/" << s_af_n << */" T/N Cov " << tcov << "/" << ncov << " DBSNP: " << rs_t;
-      for (auto& i : allele)
-	ss << " " << i.first << ":" << i.second.split;  
-    } else {
-      ss << "> SV: " << b1.gr.pointString() << " to " << b2.gr.pointString() << " SPAN " << getSpan() /*<< " "  << cname */
-	 << " T/N split: " << tsplit << "/" << nsplit << " T/N disc: " 
-	 << dc.tcount << "/" << dc.ncount << " " << evidence;
-      for (auto& i : allele)
-	ss << " " << i.first << ":" << i.second.split;  
+    std::ostream& operator<<(std::ostream& out, const BreakPoint& b) {
+      
+      size_t rs_t = std::count(b.rs.begin(), b.rs.end(), 'r');
+      
+      if (b.isindel) {
+	out << ">" << (b.insertion.size() ? "INS: " : "DEL: ") << b.getSpan() << " " << b.b1.gr;
+	  //<< " T/N split: " << b.t.split << "/" << b.n.split << " T/N cigar: " 
+          //  << b.t.cigar << "/" << b.n.cigar << " T/N Cov " << b.t.cov << "/" << b.n.cov << " DBSNP: " << rs_t;
+	for (auto& i : b.allele)
+	  out << " " << i.first << ":" << i.second.split;  
+      } else {
+	out << ": " << b.b1.gr.pointString() << " to " << b.b2.gr.pointString() << " SPAN " << b.getSpan();
+	  //<< " T/N split: " << b.t.split << "/" << b.n.split << " T/N disc: " 
+	  //  << b.dc.tcount << "/" << b.dc.ncount << " " << b.evidence;
+	for (auto& i : b.allele)
+	  out << " " << i.first << ":" << i.second.split;  
+      }
+      
+      return out;
+      
     }
-    
-    return ss.str();
-    
-  }
   
-  double BreakPoint::__sv_is_somatic() const {
-    /*
-    double somatic_ratio = 100;
-    size_t ncount = std::max(nsplit, dc.ncount);
-    if (ncount > 0)
-      somatic_ratio = (std::max(tsplit,dc.tcount)) / ncount;
-    
-    double fraction_nclip = ncov == 0 ? 0 : nclip_cov / ncov;
-
-    if (somatic_ratio >= 20 && ncount < 2 && fraction_nclip < 0.3) // 5 or more nclips is bad
-      return somatic_ratio;
-    return 0;
-    */
-  }
-
-  double BreakPoint::__indel_is_somatic() const {
-    /*    
-    double somatic_ratio = 100;
-    size_t ncount = std::max(nsplit, ncigar);
-    if (ncount > 0)
-      somatic_ratio = (std::max(tsplit, tcigar)) / ncount;
-
-    // delete if crosses DBSnp
-    if (confidence == "DBSNP") 
-      return 0;
-    if ( (pon * (1-af_t)) >= 2 && tcov >= 5)
-      return 0;
-    if (pon > 1 && tcov < 5)
-      return 0;
-
-    if (somatic_ratio >= 10 && ncount < 1 && af_n < 0.05) 
-      return somatic_ratio;
-
-    return 0;
-    */
-  }
-
   void BreakPoint::checkBlacklist(GRC &grv) {
     
     // only check for indels
@@ -460,6 +407,7 @@ namespace SnowTools {
     chr_name = b.GetZTag("MC"); 
     assert(chr_name.length());
     assert(chr_name != "23");
+    nm = std::max(b.GetIntTag("NM") - (int)b.MaxInsertionBases() - (int)b.MaxDeletionBases(), 0);
   }
 
   void BreakPoint::__combine_with_discordant_cluster(DiscordantClusterMap& dmap)
@@ -491,6 +439,27 @@ namespace SnowTools {
 	  if (dc.isEmpty() || dc.tcount < d.second.tcount) {
 	      dc = d.second;
 	      d.second.m_contig = cname;
+
+	      // add the counts
+	      for (auto& c : d.second.counts) {
+		allele[c.first].disc = c.second;
+		allele[c.first].indel = num_align == 1;
+
+		// add the discordant reads names to supporting reads for each sampleinfo
+		for (auto& rr : d.second.reads) {
+		  std::string nn = rr.second.GetZTag("SR");
+		  allele[nn.substr(0,4)].supporting_reads.insert(nn);
+		}
+		for (auto& rr : d.second.mates){
+		  std::string nn = rr.second.GetZTag("SR");
+		  allele[nn.substr(0,4)].supporting_reads.insert(nn);
+		}
+		
+		// adjust the alt counts
+		for (auto& aa : allele)
+		  aa.second.alt = aa.second.supporting_reads.size();
+	      }
+
 	  } 
 	
       }
@@ -500,11 +469,11 @@ namespace SnowTools {
   void BreakPoint::__set_evidence() {
 
     bool isdisc = (dc.tcount + dc.ncount) != 0;
-    bool issplit = (tsplit + nsplit) != 0;//dc.m_contig != ""; 
+    //bool issplit = (t.split + n.split) != 0;
 
     if (num_align == 1)
       evidence = "INDEL";
-    else if ( isdisc && issplit )
+    else if ( isdisc && num_align == 2 )
       evidence = "ASDIS";
     else if ( isdisc )
       evidence = "DSCRD";
@@ -519,88 +488,119 @@ namespace SnowTools {
 
   }
 
-  void BreakPoint::__set_allelic_fraction() {
-
-    /*
-    if (tcov > 0) 
-      af_t = static_cast<double>(std::max(tsplit, tcigar)) / static_cast<double>(tcov);
-    else
-      af_t = 0;
-    if ( ncov > 0) 
-      af_n = static_cast<double>(std::max(nsplit, ncigar)) / static_cast<double>(ncov);
-    else
-      af_n = 0;
-    */
-  }
-
   void BreakPoint::__score_assembly_only() {
 
-    
-
-    /*
-    __set_allelic_fraction();
-
-    int split_count = tsplit + nsplit;
-    //int this_mapq1 = b1.local ? 60 : b1.mapq;
-    //int this_mapq2 = b2.local ? 60 : b2.mapq;
     int span = getSpan();
-    //bool germ = dc.ncount > 0 || nsplit > 0;
+    int this_mapq1 = b1.local ? 60 : b1.mapq;
+    int this_mapq2 = b2.local ? 60 : b2.mapq;
 
     if (seq.length() < 101 + 30)
       confidence = "TOOSHORT";
-    else if (split_count < 6 && (span > 1500 || span == -1))  // large and inter chrom need 7+
+    else if (a.split < 6 && (span > 1500 || span == -1) && a.split < 7)  // large and inter chrom need 7+
       confidence = "NODISC";
     else if (std::max(b1.mapq, b2.mapq) <= 50 || std::min(b1.mapq, b2.mapq) <= 10) 
       confidence = "LOWMAPQ";
-    else if ( std::min(b1.mapq, b2.mapq) <= 30 && split_count < 12 ) 
+    else if ( std::min(b1.mapq, b2.mapq) <= 30 && a.split < 12 ) 
       confidence = "LOWMAPQ";
-    else if ( split_count <= 3 && (span <= 1500 && span != -1) ) // small with little split
+    else if (a.split <= 3 && span <= 1500 && span != -1) // small with little split
       confidence = "WEAKASSEMBLY";
     //else if ( (germ && span == -1) || (germ && span > 1000000) ) // super short alignemtns are not to be trusted. Also big germline events
     //  confidence = "WEAKASSEMBLY";
     else if ((b1.sub_n && b1.mapq < 50) || (b2.sub_n && b2.mapq < 50))
       confidence = "MULTIMATCH";
-    else if (ncov > 500 || tcov==0 || ncov == 0)
-      confidence = "BADREGION";
+    //else if (n.cov > 500 || t.cov==0 || n.cov == 0)
+    //  confidence = "BADREGION";
     else if (secondary)
       confidence = "SECONDARY";
-    else if ( (insertion.length() >= 100 || span < 1000) && (tsplit <= 8 || nsplit) ) // be extra strict for huge insertions or really low spans
-      confidence = "WEAKASSEMBLY";
+    //else if ( (insertion.length() >= 100 || span < 1000) && (t.split <= 8 || n.split) ) // be extra strict for huge insertions or really low spans
+    //  confidence = "WEAKASSEMBLY";
     else
       confidence = "PASS";
+
+  }
+
+  void BreakPoint::__score_somatic() {
+
+    if (evidence == "INDEL") {
+
+      double ratio = n.alt > 0 ? t.alt / n.alt : 100;
+      bool immediate_reject = ratio <= 5 || n.alt > 2; // can't call somatic with 3+ reads or <5x more tum than norm ALT
+
+      somatic_lod = n.LO_n;
+      if (confidence != "DBSNP")
+	somatic_score = somatic_lod > NODBCUTOFF && !immediate_reject;
+      else
+	somatic_score = somatic_lod > DBCUTOFF && !immediate_reject;	
+
+    } else {
     
-    */
+      // old model
+      double somatic_ratio = 100;
+      size_t ncount = std::max(n.split, dc.ncount);
+      if (ncount > 0)
+	somatic_ratio = (std::max(t.split,dc.tcount)) / ncount;
+      
+      //double fraction_nclip = ncov == 0 ? 0 : nclip_cov / ncov;
+      
+      if (somatic_ratio >= 20 && n.split < 2) { // && fraction_nclip < 0.3) // 5 or more nclips is bad
+	somatic_score = 1; //somatic_ratio;
+	somatic_lod = somatic_ratio;
+      } else {
+	somatic_lod = 0;
+	somatic_score = 0;
+      }
+    }
+
+    // kill all if too many normal support
+    if (n.alt > 2)
+      somatic_score = 0;
+
+    // kill if bad ratio
+    int r = n.alt > 0 ? t.alt / n.alt : 100;
+    if (r < 5)
+      somatic_score = 0;
+
+  }
+
+  void BreakPoint::__set_total_reads() {
+
+    // total unique read support
+    
+    if (evidence == "ASDIS") {
+      std::unordered_set<std::string> this_reads_t;
+      std::unordered_set<std::string> this_reads_n;
+      for (auto& i : split_reads)
+	if (!this_reads_t.count(i) && i.at(0) == 't')
+	  this_reads_t.insert(i);
+      for (auto& i : dc.reads)
+	if (!this_reads_t.count(i.first) && i.first.at(0) == 't')
+	  this_reads_t.insert(i.first);
+      for (auto& i : split_reads)
+	if (!this_reads_n.count(i) && i.at(0) == 'n')
+	  this_reads_n.insert(i);
+      for (auto& i : dc.reads)
+	if (!this_reads_n.count(i.first) && i.first.at(0) == 'n')
+	  this_reads_n.insert(i.first);
+      
+      t_reads = this_reads_t.size();
+      n_reads = this_reads_n.size();
+    } else if (evidence == "INDEL" || evidence == "ASSMB") {
+      t_reads = t.alt;
+      n_reads = n.alt;
+    } else if (evidence == "DSCRD") {
+      t_reads = dc.tcount;
+      n_reads = dc.ncount;
+    } 
+
   }
 
   void BreakPoint::__score_assembly_dscrd() {
 
-    /*
-    __set_allelic_fraction();
-
     int this_mapq1 = b1.mapq;
     int this_mapq2 = b2.mapq;
     int span = getSpan();
-    bool germ = dc.ncount > 0 || nsplit > 0;
+    bool germ = dc.ncount > 0 || n.split > 0;
 
-    // total unique read support
-    int t_reads = 0, n_reads = 0;
-    std::unordered_set<std::string> this_reads_t;
-    std::unordered_set<std::string> this_reads_n;
-    for (auto& i : split_reads)
-      if (!this_reads_t.count(i) && i.at(0) == 't')
-	this_reads_t.insert(i);
-    for (auto& i : dc.reads)
-      if (!this_reads_t.count(i.first) && i.first.at(0) == 't')
-	this_reads_t.insert(i.first);
-    for (auto& i : split_reads)
-      if (!this_reads_n.count(i) && i.at(0) == 'n')
-	this_reads_n.insert(i);
-    for (auto& i : dc.reads)
-      if (!this_reads_n.count(i.first) && i.first.at(0) == 'n')
-	this_reads_n.insert(i.first);
-
-    t_reads = this_reads_t.size();
-    n_reads = this_reads_n.size();
 
     int max_a_mapq = std::max(this_mapq1, dc.mapq1);
     int max_b_mapq = std::max(this_mapq2, dc.mapq2);
@@ -608,7 +608,7 @@ namespace SnowTools {
     int min_assm_mapq = std::min(this_mapq1, this_mapq2);
     int max_assm_mapq = std::max(this_mapq1, this_mapq2);
     
-    int total_count = t_reads + n_reads; //nsplit + tsplit + dc.ncount + dc.tcount;
+    int total_count = t_reads + n_reads; //n.split + t.split + dc.ncount + dc.tcount;
 
     double min_disc_mapq = std::min(dc.mapq1, dc.mapq2);
 
@@ -618,9 +618,9 @@ namespace SnowTools {
       confidence = "LOWMAPQ";
     //if ( (min_disc_mapq <= 10 && min_assm_mapq < 30) || (max_assm_mapq < 40))
     //  confidence = "LOWMAPQ";
-    else if ( std::max(tsplit, nsplit) == 0 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
+    else if ( std::max(t.split, n.split) == 0 || total_count < 4 || (germ && (total_count <= 6) )) // stricter about germline
       confidence = "WEAKASSEMBLY";
-    //else if ( std::min(b1.tsplit, b2.tsplit) >= 5  // take care of really long homoologies (longer than read length)
+    //else if ( std::min(b1.t.split, b2.t.split) >= 5  // take care of really long homoologies (longer than read length)
     else if ( total_count < 15 && germ && span == -1) // be super strict about germline interchrom
       confidence = "WEAKASSEMBLY";
     else if ((b1.sub_n && dc.mapq1 < 1) || (b2.sub_n && dc.mapq2 < 1))
@@ -630,17 +630,15 @@ namespace SnowTools {
     else
       confidence = "PASS";
 
-*/
   }
 
   void BreakPoint::__score_dscrd() {
 
-    /*
     int min_span = 10e3;
     int disc_count = dc.ncount + dc.tcount;
     if (std::min(dc.mapq1, dc.mapq2) < 20 || std::max(dc.mapq1, dc.mapq2) <= 30) // mapq here is READ mapq (37 std::max)
       confidence = "LOWMAPQ";
-    else if (getSpan() >= min_span && std::min(dc.mapq1, dc.mapq2) >= 35 && disc_count >= 7 && ncov >= 10 & ncov <= 200 && tcov >= 10 && tcov <= 1000)
+    else if (getSpan() >= min_span && std::min(dc.mapq1, dc.mapq2) >= 35 && disc_count >= 7 && n.cov >= 10 & n.cov <= 200 && t.cov >= 10 && t.cov <= 1000)
       confidence = "PASS";
     else if ( disc_count < 8 || (dc.ncount > 0 && disc_count < 15) )  // be stricter about germline disc only
       confidence = "WEAKDISC";
@@ -648,73 +646,47 @@ namespace SnowTools {
       confidence = "LOWSPAN";
     else 
       confidence = "PASS";
-    */
   }
 
   void BreakPoint::__score_indel() {
 
-    /*
-
     assert(b1.mapq == b2.mapq);
     
-    __set_allelic_fraction();
+    double ratio = n.alt > 0 ? t.alt / n.alt : 100;
 
-    double max_af = std::max(af_t, af_n);
-    int cigar_count = ncigar+tcigar; 
-    int max_count = std::max(tsplit+nsplit, cigar_count);
-    //bool blacklist_and_low_count = blacklist && (tsplit + nsplit) < 5 && (tcigar + ncigar) < 5;
+    double max_lod = 0;
+    for (auto& s : allele) {
+      max_lod = std::max(max_lod, s.second.SLO);
+    }
+
+    //bool blacklist_and_low_count = blacklist && (t.split + n.split) < 5 && (t.cigar + n.cigar) < 5;
     //bool blacklist_and_low_AF = (max_af < 0.2 && max_count < 8) && blacklist;
 
-    if (rs.length() && (af_t < 0.1 || tcov < 10 || std::max(nsplit, ncigar)))
-      confidence="DBSNP";
-    if (blacklist && pon > 3)
-      confidence="GRAYLISTANDPON";
+    //if (rs.length() && (af_t < 0.1 || t.cov < 10 || std::max(n.split, n.cigar)))
+    //  confidence="DBSNP";
+    //if (blacklist && pon > 3)
+    //  confidence="GRAYLISTANDPON";
     //else if (blacklist_and_low_count || blacklist_and_low_AF)
     //  confidence="LOWAF";
-    else if (max_af * (double)tcov < 5)
-      confidence = "LOWAF";
-    else if ( (max_count < 4 && max_af < 0.2) || (max_count < 2 && b1.mapq < 60) || (max_count < 5 && b1.mapq < 30))
-      confidence="WEAKASSEMBLY";
-    else if (b1.mapq < 10)
+    //else if (max_af * (double)t.cov < 5)
+    //  confidence = "LOWAF";
+    //else if ( (max_count < 4 && max_af < 0.2) || (max_count < 2 && b1.mapq < 60) || (max_count < 5 && b1.mapq < 30))
+    //  confidence="WEAKASSEMBLY";
+    if (b1.mapq < 10)
       confidence="LOWMAPQ";
-    else if ( (max_af < 0.1 && (nsplit+ncigar) > 0)) // || (max_af < 0.30 && nsplit == 0 && tsplit < 3)) // more strict for germline bc purity is not issue
+    else if (max_lod <= LOD_CUTOFF) 
       confidence = "LOWAF";
-    else if (max_af < 0.1)
-      confidence = "LOWAF";
-    else if (!repeat_seq.empty() && max_af < 0.2)
-      confidence = "LOWAF";
-    else if (ncov <= 5)
-      confidence = "LOWNORMCOV";
+    //else if ( (max_af < 0.1 && (n.split+n.cigar) > 0)) // || (max_af < 0.30 && n.split == 0 && t.split < 3)) // more strict for germline bc purity is not issue
+    //  confidence = "LOWAF";
+    //else if (max_af < 0.1)
+    //  confidence = "LOWAF";
+    //else if (!repeat_seq.empty() && max_af < 0.2)
+    //  confidence = "LOWAF";
+    //else if (n.cov <= 5)
+    //  confidence = "LOWNORMCOV";
     else
       confidence="PASS";
-
-    // give it a score
-    const int alpha_prior = 0;
-    const int beta_prior = 0;
-    double alpha_n = (alpha_prior + nsplit);
-    double alpha_t = (alpha_prior + tsplit);
-    double beta_n = (beta_prior + ncov - nsplit);
-    double beta_t = (beta_prior + tcov - tsplit);
-
-    double naf    = (alpha_n + beta_n > 0) ? alpha_n / (alpha_n + beta_n) : 0;
-    double naf_sd = (alpha_n + beta_n > 0) ? alpha_n*beta_n / ( (alpha_n + beta_n)*(alpha_n + beta_n)*(alpha_n+beta_n+1) ) : 0;
-    double taf    = (alpha_t + beta_t > 0) ? alpha_t / (alpha_t + beta_t) : 0;
-    double taf_sd = (alpha_t + beta_t > 0) ? alpha_t*beta_t / ( (alpha_t + beta_t)*(alpha_t + beta_t)*(alpha_t+beta_t+1) ) : 0;
     
-    //std::cerr << "Normal (" << (naf - naf_sd * 3) << "," << (naf + naf_sd * 3) << ")" << std::endl;
-    //std::cerr << "Tumor  (" << (taf - taf_sd * 3) << "," << (taf + taf_sd * 3) << ")" << std::endl;
-
-    //if (naf >= 0.2 && naf <= 0.8)
-    //  genotype_n = 1;
-    //else if (naf >= 0.8)
-    //  genotype_n = 2;
-
-    //if (taf >= 0.2 && taf <= 0.8)
-    //  genotype_t = 1;
-    //else if (taf >= 0.8)
-    //  genotype_t = 2;
-
-    */
   }
 
   void BreakPoint::scoreBreakpoint() {
@@ -722,13 +694,36 @@ namespace SnowTools {
     // set the evidence (INDEL, DSCRD, etc)
     __set_evidence();
     
-    // ensure that discordant cluster is oriented
-    //if (hasDiscordant()) 
-    //  assert(dc.m_reg1 < dc.m_reg2);
-    
     // ensure that breakpoint is oriented
     assert(valid()); 
+
+    // 
+    double er = repeat_seq.length() > 10 ? 0.04 : ERROR_RATES[repeat_seq.length()] * 5;
+    if (evidence == "INDEL" || true)
+      for (auto& i : allele)
+	i.second.modelSelection(er);
     
+    __combine_alleles();
+
+    // scale the LOD for MAPQ    
+    int mapqr1 = b1.local ? std::max(30, b1.mapq) : b1.mapq; // if local, don't drop below 30
+    int mapqr2 = b2.local ? std::max(30, b2.mapq) : b2.mapq; // if local (aligns to within window), don't drop below 30
+    double scale = (double)( std::min(b1.mapq, b2.mapq) - 2 * b1.nm) / (double)60;
+    for (auto& i : allele) 
+      i.second.SLO = i.second.LO * scale;
+    t.LO = t.SLO * scale;
+    n.LO = n.SLO * scale;
+   a.LO = a.SLO * scale;
+    
+    // sanity check
+    int split =0;
+    for (auto& i : allele) {
+      split += i.second.split;
+    }
+    assert( (split == 0 && t.split == 0 && n.split==0) || (split > 0 && (t.split + n.split > 0)));
+
+    __set_total_reads();
+
     // do the scoring
     if (evidence == "ASSMB" || (evidence == "COMPL" && (dc.ncount + dc.tcount)==0))
       __score_assembly_only();
@@ -744,14 +739,13 @@ namespace SnowTools {
       exit(EXIT_FAILURE);
     }
 
-    //somatic_score = (evidence == "INDEL") ? __indel_is_somatic() : __sv_is_somatic();
+    __score_somatic();
 
     if (confidence == "PASS")
       quality = 99;
     else
       quality = 0;
     
-    assert(confidence.length());
     assert(getSpan() > -2);
 
   }
@@ -921,10 +915,6 @@ namespace SnowTools {
       exit(EXIT_FAILURE);
     }
 
-    //ref = (char*) malloc(line.length() + 1);
-    //strcpy(ref, line.c_str());
-    //exit(0);
-
     std::istringstream iss(line);
     std::string val;
     size_t count = 0;
@@ -940,7 +930,7 @@ namespace SnowTools {
     float afn, aft;
     std::string ref_s, alt_s, cname_s, insertion_s, homology_s, evidence_s, confidence_s;
     
-    std::string chr1, pos1, chr2, pos2, chr_name1, chr_name2; 
+    std::string chr1, pos1, chr2, pos2, chr_name1, chr_name2, repeat_s; 
     char strand1 = '*', strand2 = '*';
     while (std::getline(iss, val, '\t')) {
       try{
@@ -957,72 +947,58 @@ namespace SnowTools {
 	case 8: 
 	  alt_s = val;
 	  break;
-	  //case 9: span = stoi(val); break; // automatically calculated
+	case 9: break; //span = stoi(val); break; // automatically calculated
 	case 10: 
 	  b1 = ReducedBreakEnd(GenomicRegion(chr1, pos1, pos1, h), std::stoi(val), chr_name1); b1.gr.strand = strand1; break;
 	case 11:
 	  b2 = ReducedBreakEnd(GenomicRegion(chr2, pos2, pos2, h), std::stoi(val), chr_name2); b2.gr.strand = strand2; break;
-	case 12: nsplit = std::min((int)255,std::stoi(val)); break;
-	case 13: tsplit = std::min((int)255,std::stoi(val)); break;
-	case 14: b1.sub_n = std::min((int)255, std::stoi(val)); break;
-	case 15: b2.sub_n = std::min((int)255, std::stoi(val)); break;
-	case 16: dc.ncount = std::min((int)255, std::stoi(val)); break;
-	case 17: dc.tcount = std::min((int)255,std::stoi(val)); break;
-	case 18: dc.mapq1 = std::stoi(val); break;  
-	case 19: dc.mapq2 = std::stoi(val); break;  
-	case 20: ncigar = std::min((int)255, std::stoi(val)); break;
-	case 21: tcigar = std::min((int)255, std::stoi(val)); break;
-	case 22: 
+	case 12: b1.nm = std::stoi(val); break;
+	case 13: b2.nm = std::stoi(val); break;
+	case 16: b1.sub_n = std::min((int)255, std::stoi(val)); break;
+	case 17: b2.sub_n = std::min((int)255, std::stoi(val)); break;
+	  //case 14: dc.ncount = std::min((int)255, std::stoi(val)); break;
+	  //case 15: dc.tcount = std::min((int)255,std::stoi(val)); break;
+	case 14: dc.mapq1 = std::stoi(val); break;  
+	case 15: dc.mapq2 = std::stoi(val); break;  
+	case 18: 
 	  homology_s = val;
 	  break; 
-	case 23: 
+	case 19: 
 	  //insertion_size = (val == "x") ? 0 : val.length();
 	  insertion_s = val;
 	  break; 
-	case 24: cname_s = val; break;
-	case 25: num_align = std::min((int)31, std::stoi(val)); break;
-	case 26: 
+	case 20: cname_s = val; break;
+	case 21: num_align = std::min((int)31, std::stoi(val)); break;
+	case 22: 
 	  pass = val == "PASS";
 	  confidence_s = val;
 	  break;
-	case 27: 
+	case 23: 
 	  evidence_s = val;
 	  indel = val == "INDEL"; 
 	  imprecise = val == "DSCRD"; 
 	  break; 
-	case 28: quality = std::min((int)255,std::stoi(val)); break;
-	case 29: secondary = val == "1" ? 1 : 0;
-	case 30: somatic_score = std::stof(val); break;
-	case 31: pon = std::min(255,std::stoi(val)); break;
-	  //case 32: repeat_seq = val; break;
-	case 33: ncov = std::min((int)255,std::stoi(val)); break;
-	case 34: tcov = std::min((int)255,std::stoi(val)); break;
-	case 35: 
-	  afn = std::max((float)0, stof(val)); 
-	  if (!(afn >= 0 && afn <= 1))
-	    afn = 0;
-	  af_n = afn * 100; // between 0 and 100
-	  break;
-	case 36: 
-	  aft = std::max((float)0, stof(val)); 
-	  if (!(aft >= 0 && aft <= 1))
-	    aft = 0;
-	  af_t = aft * 100; // between 0 and 100
-	  break;
-	case 37: blacklist = (val=="1" ? 1 : 0); break;
-	case 38: 
-	  dbsnp = val != "x";
-	  break;
-	  //case 39: read_names = val; break;
+	case 24: quality = std::min((int)255,std::stoi(val)); break;
+	case 25: secondary = val == "1" ? 1 : 0;
+	case 26: somatic_score = std::stod(val); break;
+	case 27: somatic_lod = std::stod(val); break;
+	case 28: true_lod = std::stod(val); break;
+	case 29: pon = std::min(255,std::stoi(val)); break;
+	case 30: repeat_s = val; break; // repeat_seq
+	case 31: blacklist = (val=="1" ? 1 : 0); break;
+	case 32: dbsnp = val != "x"; break;
+	case 33: break; //reads
+	default:
+	  format_s.push_back(val);
 	}
 
       } catch(...) {
-	std::cerr << "caught stoi error on: " << val << " for count " << count << std::endl;
+	std::cerr << "caught stoi/stod/stof error on: " << val << " for count " << count << std::endl;
 	std::cerr << line << std::endl;
 	exit(1);
       }
     }
-
+    
     confidence = __string_alloc2char(confidence_s, confidence);
     evidence   = __string_alloc2char(evidence_s, evidence);
     insertion  = __string_alloc2char(insertion_s, insertion);
@@ -1030,20 +1006,51 @@ namespace SnowTools {
     cname      = __string_alloc2char(cname_s, cname);
     ref        = __string_alloc2char(ref_s, ref);
     alt        = __string_alloc2char(alt_s, alt);
+    repeat     = repeat_s.empty() ? nullptr : __string_alloc2char(repeat_s, repeat);
 
   }
 
-  void AlleleInfo::modelSelection() {
+  double SampleInfo::__log_likelihood(int ref, int alt, double f, double e) {
     
-    // set the error model
-    const int alpha_prior = 1;
-    const int beta_prior = 1;
-    double alpha = (alpha_prior + split);
-    double beta  = (beta_prior + cov - split);
-    
-    double af    = (alpha + beta > 0) ? alpha / (alpha + beta) : 0;
-    double af_sd = (alpha + beta > 0) ? alpha * beta / ( (alpha + beta) * (alpha + beta) * (alpha + beta + 1) ) : 0;
-    
+    // mutect log liklihood against error
+    double ll = 0;
+    const double back_mutate_chance = 1;
+    ref = ref <= 0 ? 0 : ref;
+    ll += ref * log10(f * e * back_mutate_chance  /* p(alt mut to ref) */ + (1-f)  * (1-e) /* p(ref not mutated) */ ); // ref
+    ll += alt * log10(f * (1 - e) /* p(alt not mut) */ + (1-f) * back_mutate_chance * e /* p (ref mut to alt) */); // alt
+
+    return ll;
+
+  }
+
+  void SampleInfo::modelSelection(double er) {
+
+    if (alt >= cov) {
+      cov = alt;
+    }
+
+    af = cov > 0 ? (double)alt / (double)cov : 1;
+    af = af > 1 ? 1 : af;
+
+    // mutect log liklihood against error
+    double ll_alt = __log_likelihood(cov - alt, alt, af    , er);
+    double ll_err = __log_likelihood(cov - alt, alt, 0, er);
+    LO = ll_alt - ll_err;
+
+    //mutetct log likelihood normal
+    er = 0.0005; // make this low, so that ALT in REF is rare and NORM in TUM gives low somatic prob
+    double ll_alt_norm = __log_likelihood(cov - alt, alt, 0.5, er);
+    double ll_ref_norm = __log_likelihood(cov - alt, alt, 0  , er);
+    LO_n = ll_ref_norm - ll_alt_norm; // higher number means more likely to be REF than ALT
+
+    // genotype NOT SUPPORTED CURRENTLY
+    if (af < 0.2) 
+      genotype = "0/1";
+    else if (af < 0.8)
+      genotype = "0/1";
+    else
+      genotype = "0/1";
+
   }
   
 
@@ -1054,10 +1061,142 @@ namespace SnowTools {
       allele[i.first].clip_cov = std::max(i.second->getCoverageAtPosition(b1.gr.chr, b1.gr.pos1), i.second->getCoverageAtPosition(b2.gr.chr, b2.gr.pos1));
   }
 
-  std::ostream& operator<<(std::ostream& out, const AlleleInfo& a) {
-    out << " split: " << a.split << " cigar " << a.cigar << " support_cov " << a.support_cov << " clip_cov " << a.clip_cov << " cov " << a.cov;
+  std::ostream& operator<<(std::ostream& out, const SampleInfo& a) {
+    out << " split: " << a.split << " cigar " << a.cigar << " alt " << a.alt << " clip_cov " << a.clip_cov << " cov " << a.cov << " disc " << a.disc;
     return out;
   }
 
+  SampleInfo operator+(const SampleInfo& a1, const SampleInfo& a2) {
+
+    SampleInfo a;
+
+    a.disc = a1.disc + a2.disc;
+    a.split = a1.split + a2.split;
+    a.cigar = a1.cigar + a2.cigar;
+    a.clip_cov = a1.clip_cov + a2.clip_cov;
+    a.cov = a1.cov + a2.cov;
+
+    // add the reads
+    for (auto& i : a1.supporting_reads)
+      a.supporting_reads.insert(i);
+    for (auto& i : a2.supporting_reads)
+      a.supporting_reads.insert(i);
+    
+    a.alt = std::max((int)a.supporting_reads.size(), a.cigar);
+
+    return a;
+  }
+
+  void BreakPoint::__combine_alleles() {
+
+    for (auto& s : allele) {
+      if (s.first.at(0) == 't') {
+	t = t + s.second;
+      } else {
+	n = n + s.second;
+      }
+    }
+
+    a = t + n;
+    
+    double er = repeat_seq.length() > 10 ? 0.04 : ERROR_RATES[repeat_seq.length()] * 5;
+    if (evidence == "INDEL") {
+      a.modelSelection(er);
+      t.modelSelection(er);
+      n.modelSelection(er);
+    }
+
+  }
+
+
+  std::string SampleInfo::toFileString() const {
+
+    std::stringstream ss;
+    
+    if (indel)
+      ss << std::setprecision(4) << genotype << ":" << std::max(alt, cigar) << ":" << cov << ":" << GQ << ":" << PL << ":" << split << ":" << cigar 
+	 << ":" << LO_n << ":" << LO << ":" << SLO;
+    else
+      ss << std::setprecision(4) << genotype << ":" << alt << ":" << cov << ":" << GQ << ":" << PL << ":" << split
+	 << ":" << disc << ":" << LO_n << ":" << LO << ":" << SLO;
+          
+    return ss.str();
+
+  }
+
+  void SampleInfo::fromString(const std::string& s) { 
+
+    std::string val;
+    int count = 0;
+    std::istringstream input(s);
+    
+    while (std::getline(input, val, ':')) {
+      switch(++count) {
+      case 6: split = std::stoi(val);
+      case 7: cigar = std::stoi(val);
+      case 9: LO_n =   std::stod(val);
+      case 10: LO = std::stod(val);
+      case 11: SLO = std::stod(val);
+      case 8: 
+	if (indel)
+	  cigar = std::stoi(val);
+	else
+	  disc = std::stoi(val);
+      case 2: alt = std::stoi(val);
+      case 3: cov = std::stoi(val);
+      case 4: GQ = std::stod(val);
+      case 5: PL = std::stod(val);
+      case 1: genotype = val;
+      }
+    }
+    
+  }
+
+  void BreakPoint::__rep(int rep_num, std::string& rseq) {
+    
+    // move left and right from breakend 1
+    int replen = 0;
+    std::string mc = "N";
+    int curr_replen = 1;
+    std::string c = "N";
+    rseq = "";
+
+    const int REP_BUFF = 15;
+    int i = std::max(0, b1.cpos - REP_BUFF);
+    int stop = std::min((int)seq.length() - 1, b1.cpos + REP_BUFF);
+
+    assert(stop - i < 80);
+
+    for (;i < stop; i += rep_num) {
+
+      if (i + rep_num > seq.length()) // shouldn't happen, but ensures no substr errors
+	break;
+
+      // terminating
+      if (c != seq.substr(i,rep_num) || i >= (stop - rep_num)) {
+	if (curr_replen >= replen) {
+	  mc = c;
+	  replen = curr_replen;
+	}
+	
+	c = seq.substr(i,rep_num );
+	curr_replen = rep_num;
+      } else {
+	curr_replen += rep_num;
+      }
+
+    }
+    
+    for (i = 0; i < replen / rep_num; ++i)
+      rseq = rseq + mc;
+
+
+  }
+
+  std::string BreakEnd::hash() const {
+    
+    return (std::to_string(gr.chr) + ":" + std::to_string(gr.pos1));
+    
+  }
 
 }

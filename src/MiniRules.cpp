@@ -4,8 +4,8 @@
 #include "htslib/khash.h"
 
 //#define DEBUG_GIVEN_READ
-//#define QNAME "H23LHALXX150312:2:2213:7526:64141"
-//#define QFLAG 89
+//#define QNAME "HFCNNADXX150330:2:1203:21337:34241"
+//#define QFLAG 99
 
 //#define DEBUG_MINI 1
 
@@ -275,18 +275,18 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       }
 
       // check if we should pad 
-      boost::regex reg_pad(".*?pad\\[([0-9]+)\\].*"); 
+      std::regex reg_pad(".*?pad\\[([0-9]+)\\].*"); 
       
-      boost::cmatch pmatch;
-      if (boost::regex_match(line.c_str(), pmatch, reg_pad))
+      std::smatch pmatch;
+      if (std::regex_search(line, pmatch, reg_pad))
       	try { mr.pad = std::stoi(pmatch[1].str()); } catch (...) { std::cerr << "Cant read pad value for line " << line << ", setting to 0" << std::endl; }
 
       if (line.find("@WG") != std::string::npos) {
 	  mr.m_whole_genome = true;
       } else {
-	boost::regex file_reg("region@(.*?)(;|$)");
-	boost::cmatch match;
-	if (boost::regex_match(line.c_str(), match, file_reg))
+	std::regex file_reg("region@(.*?)(;|$)");
+	std::smatch match;
+	if (std::regex_search(line, match, file_reg))
 	  mr.setRegionFromFile(match[1].str());
 	else {
 	  std::cerr << "Could not parse line: " << line << " to grab region " << std::endl;
@@ -337,11 +337,11 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
 // print the MiniRulesCollection
 std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
 
-  std::cerr << "----------MiniRulesCollection-------------" << std::endl;
-  std::cerr << "--- counting all rules: " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
+  out << "----------MiniRulesCollection-------------" << std::endl;
+  out << "--- counting all rules (fall through): " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
   for (auto& it : mr.m_regions)
     out << it;
-  std::cerr << "------------------------------------------";
+  out << "------------------------------------------";
   /*  std::cerr << "--- Rule counts " << std::endl;
   for (auto& g : mr.m_regions)
     for (auto& r : g.m_abstract_rules)
@@ -400,21 +400,21 @@ void FlagRule::parseRuleLine(std::string line) {
   std::istringstream iss(line);
   std::string val;
   while (getline(iss, val, ';')) {
-    boost::regex reg_dup("^!?dup.*");
-    boost::regex reg_sup("^!?supp.*");
-    boost::regex reg_qc("^!?qcfail$");
-    boost::regex reg_fs("^!?fwd_strand$");
-    boost::regex reg_hc("^!?hardclip.*");
-    boost::regex reg_rs("^!?rev_strand$");
-    boost::regex reg_mf("^!?mate_fwd_strand$");
-    boost::regex reg_mr("^!?mate_rev_strand$");
-    boost::regex reg_mp("^!?mapped$");
-    boost::regex reg_mm("^!?mate_mapped$");
-    boost::regex reg_ff("^!?ff$");
-    boost::regex reg_fr("^!?fr$");
-    boost::regex reg_rf("^!?rf$");
-    boost::regex reg_rr("^!?rr$");
-    boost::regex reg_ic("^!?ic$");
+    std::regex reg_dup("^!?dup.*");
+    std::regex reg_sup("^!?supp.*");
+    std::regex reg_qc("^!?qcfail$");
+    std::regex reg_fs("^!?fwd_strand$");
+    std::regex reg_hc("^!?hardclip.*");
+    std::regex reg_rs("^!?rev_strand$");
+    std::regex reg_mf("^!?mate_fwd_strand$");
+    std::regex reg_mr("^!?mate_rev_strand$");
+    std::regex reg_mp("^!?mapped$");
+    std::regex reg_mm("^!?mate_mapped$");
+    std::regex reg_ff("^!?ff$");
+    std::regex reg_fr("^!?fr$");
+    std::regex reg_rf("^!?rf$");
+    std::regex reg_rr("^!?rr$");
+    std::regex reg_ic("^!?ic$");
 
     if (dup.parseRuleLine(val, reg_dup))   na = false;
     if (supp.parseRuleLine(val, reg_sup))  na = false;
@@ -440,10 +440,10 @@ void AbstractRule::parseRuleLine(std::string line) {
   id += line + ";";
 
   // get everything but the global keyword, if there is one
-  boost::regex reg_noname("global@(.*)");
-  boost::cmatch nnmatch;
+  std::regex reg_noname("global@(.*)");
+  std::smatch nnmatch;
   std::string noname;
-  if (boost::regex_match(line.c_str(), nnmatch, reg_noname)) {
+  if (std::regex_search(line, nnmatch, reg_noname)) {
     noname = nnmatch[1].str();
   } else {
     noname = line;
@@ -454,10 +454,10 @@ void AbstractRule::parseRuleLine(std::string line) {
   std::string tmp;
 
   while (getline(iss_c, tmp, ';')) {
-    boost::regex reg(".*?!?([a-z_]+).*");
-    boost::cmatch cmatch;
+    std::regex reg(".*?!?([a-z_]+).*");
+    std::smatch cmatch;
 
-    if (boost::regex_match(tmp.c_str(), cmatch, reg)) {
+    if (std::regex_search(tmp, cmatch, reg)) {
       if (valid.count(cmatch[1].str()) == 0) {
 	std::cerr << "Invalid condition of: " << tmp << std::endl;
 	exit(EXIT_FAILURE);
@@ -531,15 +531,15 @@ void Range::parseRuleLine(std::string line) {
     std::string n_reg_str = pattern + ":?!all";
     std::string a_reg_str = pattern + ":?all";
     
-    boost::regex ireg(i_reg_str);
-    boost::regex  reg(reg_str);
-    boost::regex nreg(n_reg_str);
-    boost::regex areg(a_reg_str);
+    std::regex ireg(i_reg_str);
+    std::regex  reg(reg_str);
+    std::regex nreg(n_reg_str);
+    std::regex areg(a_reg_str);
     
-    boost::cmatch match;
-    if (boost::regex_match(val.c_str(), match, areg)) {
+    std::smatch match;
+    if (std::regex_search(val, match, areg)) {
       setEvery();
-    } else if (boost::regex_match(val.c_str(), match, ireg)) {
+    } else if (std::regex_search(val, match, ireg)) {
       try {
 	min = std::stoi(match[1].str());
 	max = std::stoi(match[2].str());
@@ -550,7 +550,7 @@ void Range::parseRuleLine(std::string line) {
 	std::cerr << "Caught error trying to parse inverted for " << pattern << " on line " << line << " match[1] " << match[1].str() << " match[2] " << match[2].str() << std::endl;     
 	exit(EXIT_FAILURE);
       }
-    } else if (boost::regex_match(val.c_str(), match, reg)) {
+    } else if (std::regex_search(val, match, reg)) {
       try {
 	min = std::stoi(match[1].str());
 	max = std::stoi(match[2].str());
@@ -990,10 +990,10 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
   return out;
 }
 
-bool Flag::parseRuleLine(std::string &val, boost::regex &reg) {
+bool Flag::parseRuleLine(std::string &val, std::regex &reg) {
 
-  boost::cmatch match;
-  if (boost::regex_match(val.c_str(), match, reg)) {
+  std::smatch match;
+  if (std::regex_search(val, match, reg)) {
     //auto ff = flags.find(match[1].str()); 
     if (val.at(0) == '!') { // it is a val in flags and is off
       setOff();
@@ -1058,9 +1058,9 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
 void AbstractRule::parseSeqLine(std::string line) {
 
   // get the sequence file out
-  boost::regex reg("^!?motif\\[(.*)\\].*");
-  boost::cmatch match;
-  if (boost::regex_match(line.c_str(), match, reg)) {
+  std::regex reg("^!?motif\\[(.*)\\].*");
+  std::smatch match;
+  if (std::regex_search(line, match, reg)) {
     line = match[1].str();
     atm_file = line;
 
@@ -1126,9 +1126,9 @@ void AbstractRule::parseSeqLine(std::string line) {
 // parse the subsample line
 void AbstractRule::parseSubLine(std::string line) {
 
-  boost::regex reg("^!?sub\\[(.*)\\].*");
-  boost::cmatch match;
-  if (boost::regex_match(line.c_str(), match, reg)) {
+  std::regex reg("^!?sub\\[(.*)\\].*");
+  std::smatch match;
+  if (std::regex_search(line, match, reg)) {
     try {
       subsam_frac = stod(match[1].str());
     } catch (...) {
@@ -1159,9 +1159,9 @@ GRC MiniRulesCollection::getAllRegions() const
 {
 
   // check for "discordant" shortcut
-  boost::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)");
-  boost::cmatch omatch;
-  if (boost::regex_match(line.c_str(), omatch, regex_disc)) {
+  std::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)");
+  std::smatch omatch;
+  if (std::regex_search(line, omatch, regex_disc)) {
     bool isneg = line.find("!discordant[") != std::string::npos;
     try {
       // fill in the isize condition 
