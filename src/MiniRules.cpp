@@ -284,7 +284,7 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       if (line.find("@WG") != std::string::npos) {
 	  mr.m_whole_genome = true;
       } else {
-	std::regex file_reg("region@(.*?)(;|$)");
+	std::regex file_reg(".*?region@(.*?)(;|$)");
 	std::smatch match;
 	if (std::regex_search(line, match, file_reg))
 	  mr.setRegionFromFile(match[1].str());
