@@ -367,7 +367,9 @@ class MiniRules {
   ~MiniRules() {}
   
   std::string id;
-    
+  
+  bool excluder = false; // this region is for excluding
+
   bool isValid(BamRead &r);
    
   void setRegionFromFile(const std::string& file);
