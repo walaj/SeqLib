@@ -695,6 +695,9 @@ void Range::parseRuleLine(std::string line) {
 		    << startpoint << " endpoint " << endpoint 
 		    << " newlen " << new_len << std::endl;
 	}
+	// read is fine
+      } else {
+	r.AddZTag("GV", r.Sequence());
       }
 
 #ifdef DEBUG_GIVEN_READ

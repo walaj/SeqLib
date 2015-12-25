@@ -68,9 +68,12 @@ namespace SnowTools {
     void writeToBAM(BamWalker& bw) { 
       bw.WriteAlignment(m_align); 
     } 
+
+    int m_max_indel = 2; // max number of mismatches a contig can have to be processed
     
    std::vector<AlignmentFragment> secondaries;
 
+    BamRead m_align; /**< BWA alignment to reference */
     private:
 
     int sub_n = 0; // number of sub optimal alignments
@@ -78,8 +81,6 @@ namespace SnowTools {
     std::vector<BreakPoint> m_indel_breaks; /**< indel variants on this alignment */
     
     Cigar m_cigar; /**< cigar oriented to assembled orientation */
-    
-    BamRead m_align; /**< BWA alignment to reference */
     
     size_t idx = 0; // index of the cigar where the last indel was taken from 
     
@@ -93,6 +94,8 @@ namespace SnowTools {
     bool local = false; /**< boolean to note whether this fragment aligns to same location is was assembled from */
     
     AlignedContig * c; // link to the parent aligned contigs
+
+    int di_count = 0; // number of indels
 
     int num_align = 0;
   };
@@ -275,6 +278,7 @@ namespace SnowTools {
 
   std::unordered_set<std::string> prefixes; // store the sample ids. Needed to create accurate BreakPoint genotypes
 
+  AlignmentFragmentVector m_frag_v; // store all of the individual alignment fragments 
  private:
 
   std::vector<BreakPoint> m_local_breaks; // store all of the multi-map BreakPoints for this contigs 
@@ -286,8 +290,6 @@ namespace SnowTools {
   //ReadVec m_bamreads; // store smart pointers to all of the reads that align to this contig 
 
   bool m_skip = false; // flag to specify that we should minimally process and simply dump to contigs_all.sam 
-
-  AlignmentFragmentVector m_frag_v; // store all of the individual alignment fragments 
 
   GenomicRegion m_window; /**< reference window from where this contig was assembled */
 

@@ -109,6 +109,7 @@ namespace SnowTools {
      __smart_check_free(evidence);
      __smart_check_free(confidence);
      __smart_check_free(repeat);
+     //__smart_check_free(read_names);
    }
    ReducedBreakPoint(const std::string &line, bam_hdr_t* h);
 
@@ -120,6 +121,8 @@ namespace SnowTools {
    char * insertion;
    char * homology;
    char * repeat;
+   //char * read_names;
+   std::string read_names;
 
    std::vector<std::string> format_s;
 
@@ -225,7 +228,7 @@ namespace SnowTools {
 
    void __combine_alleles();
 
-   void __rep(int rep_num, std::string& rseq);
+   void __rep(int rep_num, std::string& rseq, bool fwd = true);
    
    /** Construct a breakpoint from a cluster of discordant reads
     */

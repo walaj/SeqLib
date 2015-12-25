@@ -135,6 +135,19 @@ namespace SnowTools {
     if (!m_global_bp.isEmpty()) 
       m_global_bp.splitCoverage(m_bamreads);
     
+    // set the split coverage for global complexes (jumping over a large insertion)
+    // if not complex, then local breaks should be cleared
+    /*    if (!m_global_bp.isEmpty() && m_local_breaks.size()) {
+	  
+	  assert(m_local_breaks.size() > 1);
+	  // set the allele
+	  m_global_bp.allele = m_local_breaks[0].allele;
+	  
+	  for (auto& i : m_global_bp.allele)
+	  i.second = m_local_breaks[0].allele[i.first] + m_local_breaks.back().allele[i.first];
+	  
+	  }*/
+    
   }
   
   std::ostream& operator<<(std::ostream& out, const AlignedContig &ac) {
@@ -184,13 +197,16 @@ namespace SnowTools {
     for (auto& i : ac.m_frag_v) {
       for (auto& j : i.getIndelBreaks()) {
 	if (j.num_align == 1 && j.insertion == "") // deletion
+	  //std::cerr << j.b1.cpos << " " << j.b2.cpos << " name " << ac.getContigName() << " ins " << j.insertion << std::endl;
 	  out << std::string(j.b1.cpos, ' ') << "|" << std::string(j.b2.cpos-j.b1.cpos-1, ' ') << '|' << "   " << ac.getContigName() << std::endl;	
       }
     }
     
+    //std::string sss = ac.getSequence();
+    //if (ac.m_frag_v.size() && ac.m_frag_v[0].m_align.ReverseFlag())
+    //  SnowTools::rcomplement(sss);
     // print the contig base-pairs
     out << ac.getSequence() << "    " << ac.getContigName() << std::endl; 
-    
     PlottedReadVector plot_vec;
     
     // print out the individual reads
@@ -367,20 +383,22 @@ namespace SnowTools {
     }
     
     // 3+ mappings. If all good, then don't make the "global"
+    // Actually, do make the global
     bool make_locals = true;
     for (size_t i = 1; i < m_frag_v.size() - 1; ++i)
       if (m_frag_v[i].m_align.MapQuality() < 50)
 	make_locals = false;
     
-    if (make_locals) { // intermediates are good, so just leave locals as-is
-      return;
-    }
+    //if (make_locals) { // intermediates are good, so just leave locals as-is
+    //  return;
+    //}
     
     // TODO support 3+ mappings that contain secondary
     
     // go through alignments and find start and end that reach mapq 
     size_t bstart = MAX_CONTIG_SIZE; //1000 is a dummy
     size_t bend = m_frag_v.size() - 1;
+
     for (size_t i = 0; i < m_frag_v.size(); i++)
       if (m_frag_v[i].m_align.MapQuality() >= 60) {
 	bend = i;
@@ -391,14 +409,15 @@ namespace SnowTools {
       bstart = 0;
       bend = m_frag_v.size() -1 ;
     }
+
     assert(bend <= m_frag_v.size());
     assert(bstart <= m_frag_v.size());
     assert(bstart != MAX_CONTIG_SIZE);
     
     // there are 3+ mappings, and middle is not great. Set a global break
     m_global_bp = bp;
-    bp.b1 = m_frag_v[bstart].makeBreakEnd(true);
-    bp.b2 = m_frag_v[bend].makeBreakEnd(false);
+    m_global_bp.b1 = m_frag_v[bstart].makeBreakEnd(true);
+    m_global_bp.b2 = m_frag_v[bend].makeBreakEnd(false);
     
     // set the strands
     //m_global_bp.gr1.strand = m_frag_v[bstart].align.IsReverseStrand() ? '-' : '+';
@@ -412,16 +431,18 @@ namespace SnowTools {
     // order the breakpoint
     m_global_bp.order();
 
-    //std::cerr << m_global_bp << " " << (*this) << std::endl;
-    assert(m_global_bp.valid());
+  // clear out the locals
+  m_local_breaks.clear();
+  //std::cerr << m_global_bp << " " << (*this) << std::endl;
+  assert(m_global_bp.valid());
   }
   
-  std::pair<int,int> AlignedContig::getCoverageAtPosition(int pos) const {
+  //std::pair<int,int> AlignedContig::getCoverageAtPosition(int pos) const {
     //if (pos <= 0 || pos >= (int)tum_cov.size())
     //  return std::pair<int,int>(0,0);
     
     //return std::pair<int,int>(tum_cov[pos], norm_cov[pos]);
-  }
+  //}
 
   //std::unordered_map<std::string, int> AlignedContig::getCoverageAtPosition(int pos) const {
   //for (auto& i : allele) 
@@ -638,9 +659,9 @@ namespace SnowTools {
 
       // do extra check on near neighbors for normal
       std::unordered_map<uint32_t, size_t>::const_iterator it = n_cigpos->find(i.b1.gr.chr * 1e9 + i.b1.gr.pos1);
-      int nn = 0;
-      if (it != n_cigpos->end())
-	nn = it->second;
+      //int nn = 0;
+      //if (it != n_cigpos->end())
+      //nn = it->second;
       //i.ncigar = std::max(i.ncigar, nn);
       //if (it != n_cigpos->end() && it->second i.ncigar < 2)
       // i.ncigar = 2;
@@ -657,11 +678,11 @@ namespace SnowTools {
     }
  
     // reject if too many mismatches
-    size_t di_count = 0;
+    //size_t di_count = 0;
     for (auto& i : m_cigar)
       if (i.Type == 'D' || i.Type == 'I')
-	++di_count;
-    if (di_count > 3)
+    	++di_count;
+    if (di_count > 2 && m_align.Qname().substr(0,2) == "c_") // only trim for snowman assembled contigs
       return false;
 
     // reject if it has small matches, could get confused. Fix later
@@ -826,7 +847,7 @@ namespace SnowTools {
 	for (auto& k : i.m_indel_breaks)
 	  out.push_back(k);
     }
-    
+ 
     if (!m_global_bp.isEmpty())
       out.push_back(m_global_bp);
     
@@ -852,7 +873,16 @@ namespace SnowTools {
     
     if (!m_global_bp.isEmpty())
       return true;
-    
+
+    if (m_local_breaks.size())
+      return true; 
+
+    if (m_global_bp_secondaries.size())
+      return true; 
+
+    if (m_local_breaks_secondaries.size())
+      return true; 
+
     for (auto& i : m_frag_v)
       if (i.local && i.m_indel_breaks.size())
 	return true;
