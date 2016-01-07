@@ -22,7 +22,6 @@ example*
 tabix
 htsfile
 bgzip
-back*
 stamp-h1
 *.a
 *.so*
