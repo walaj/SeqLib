@@ -1,4 +1,4 @@
-#include "SnowTools/AlignedContig.h"
+#include "SnowTools/AlignedContig2.h"
 #include "SnowTools/BamWalker.h"
 
 #include <regex>
@@ -17,8 +17,7 @@ namespace SnowTools {
 					  "GAGAGAGA", "AGAGAGAG"};
   
 
-  AlignedContig::AlignedContig(const BamReadVector& bav) 
-  {
+  AlignedContig::AlignedContig(const BamReadVector& bav) {
     
     if (!bav.size())
       return;
@@ -28,27 +27,27 @@ namespace SnowTools {
     if (bav.begin()->ReverseFlag()) {
       SnowTools::rcomplement(m_seq);
     }
-    
+
     // zero the coverage
-    tum_cov = std::vector<int>(m_seq.length(), 0);
-    norm_cov = std::vector<int>(m_seq.length(), 0);
+    for (auto& i : cov)
+      i.second = std::vector<int>(m_seq.length(), 0);
     
     // find the number of primary alignments
     size_t num_align = 0;
     for (auto& i : bav)
       if (!i.SecondaryFlag())
 	++num_align;
-    
+
     // make the individual alignments and add
     for (auto& i : bav) {
       if (!i.SecondaryFlag()) {
 	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
-	m_frag_v.push_back(AlignmentFragment(i, flip));
+	m_frag_v.push_back(AlignmentFragment(i, flip, prefixes));
 	m_frag_v.back().num_align = num_align;
       } else {
 	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
 	if (m_frag_v.size())
-	  m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip));
+	  m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip, prefixes));
 	//m_frag_v_secondary.push_back(AlignmentFragment(i, flip));
 	//m_frag_v_secondary.back().num_align = bav.size();
       }      
@@ -120,6 +119,12 @@ namespace SnowTools {
   
   void AlignedContig::splitCoverage() { 
     
+    for (auto& i : m_local_breaks_secondaries) 
+      i.splitCoverage(m_bamreads);
+
+    for (auto& i : m_global_bp_secondaries) 
+      i.splitCoverage(m_bamreads);
+
     for (auto& i : m_frag_v) 
       for (auto& j : i.m_indel_breaks) 
       j.splitCoverage(m_bamreads);
@@ -129,6 +134,19 @@ namespace SnowTools {
     
     if (!m_global_bp.isEmpty()) 
       m_global_bp.splitCoverage(m_bamreads);
+    
+    // set the split coverage for global complexes (jumping over a large insertion)
+    // if not complex, then local breaks should be cleared
+    /*    if (!m_global_bp.isEmpty() && m_local_breaks.size()) {
+	  
+	  assert(m_local_breaks.size() > 1);
+	  // set the allele
+	  m_global_bp.allele = m_local_breaks[0].allele;
+	  
+	  for (auto& i : m_global_bp.allele)
+	  i.second = m_local_breaks[0].allele[i.first] + m_local_breaks.back().allele[i.first];
+	  
+	  }*/
     
   }
   
@@ -179,13 +197,16 @@ namespace SnowTools {
     for (auto& i : ac.m_frag_v) {
       for (auto& j : i.getIndelBreaks()) {
 	if (j.num_align == 1 && j.insertion == "") // deletion
+	  //std::cerr << j.b1.cpos << " " << j.b2.cpos << " name " << ac.getContigName() << " ins " << j.insertion << std::endl;
 	  out << std::string(j.b1.cpos, ' ') << "|" << std::string(j.b2.cpos-j.b1.cpos-1, ' ') << '|' << "   " << ac.getContigName() << std::endl;	
       }
     }
     
+    //std::string sss = ac.getSequence();
+    //if (ac.m_frag_v.size() && ac.m_frag_v[0].m_align.ReverseFlag())
+    //  SnowTools::rcomplement(sss);
     // print the contig base-pairs
     out << ac.getSequence() << "    " << ac.getContigName() << std::endl; 
-    
     PlottedReadVector plot_vec;
     
     // print out the individual reads
@@ -303,6 +324,9 @@ namespace SnowTools {
     // if single mapped contig, nothing to do here  
     // initialize the breakpoint, fill with basic info
     BreakPoint bp;
+    for (auto& i : prefixes) 
+      bp.allele[i].indel = false;
+
     bp.seq = getSequence();
     bp.num_align = m_frag_v.size();
     assert(bp.num_align > 0);
@@ -332,10 +356,10 @@ namespace SnowTools {
 	  // order the breakpoint
 	  bp.order();
 
+
 	  if (a.m_align.SecondaryFlag() || b.m_align.SecondaryFlag())
 	    bp.secondary = true;
 	  
-	  //std::cerr << bp << std::endl;
 	  assert(bp.valid());
 
 	  // add the the vector of breakpoints
@@ -359,20 +383,22 @@ namespace SnowTools {
     }
     
     // 3+ mappings. If all good, then don't make the "global"
+    // Actually, do make the global
     bool make_locals = true;
     for (size_t i = 1; i < m_frag_v.size() - 1; ++i)
       if (m_frag_v[i].m_align.MapQuality() < 50)
 	make_locals = false;
     
-    if (make_locals) { // intermediates are good, so just leave locals as-is
-      return;
-    }
+    //if (make_locals) { // intermediates are good, so just leave locals as-is
+    //  return;
+    //}
     
     // TODO support 3+ mappings that contain secondary
     
     // go through alignments and find start and end that reach mapq 
     size_t bstart = MAX_CONTIG_SIZE; //1000 is a dummy
     size_t bend = m_frag_v.size() - 1;
+
     for (size_t i = 0; i < m_frag_v.size(); i++)
       if (m_frag_v[i].m_align.MapQuality() >= 60) {
 	bend = i;
@@ -383,14 +409,15 @@ namespace SnowTools {
       bstart = 0;
       bend = m_frag_v.size() -1 ;
     }
+
     assert(bend <= m_frag_v.size());
     assert(bstart <= m_frag_v.size());
     assert(bstart != MAX_CONTIG_SIZE);
     
     // there are 3+ mappings, and middle is not great. Set a global break
     m_global_bp = bp;
-    bp.b1 = m_frag_v[bstart].makeBreakEnd(true);
-    bp.b2 = m_frag_v[bend].makeBreakEnd(false);
+    m_global_bp.b1 = m_frag_v[bstart].makeBreakEnd(true);
+    m_global_bp.b2 = m_frag_v[bend].makeBreakEnd(false);
     
     // set the strands
     //m_global_bp.gr1.strand = m_frag_v[bstart].align.IsReverseStrand() ? '-' : '+';
@@ -404,16 +431,25 @@ namespace SnowTools {
     // order the breakpoint
     m_global_bp.order();
 
-    //std::cerr << m_global_bp << " " << (*this) << std::endl;
-    assert(m_global_bp.valid());
+  // clear out the locals
+  m_local_breaks.clear();
+  //std::cerr << m_global_bp << " " << (*this) << std::endl;
+  assert(m_global_bp.valid());
   }
   
-  std::pair<int,int> AlignedContig::getCoverageAtPosition(int pos) const {
-    if (pos <= 0 || pos >= (int)tum_cov.size())
-      return std::pair<int,int>(0,0);
+  //std::pair<int,int> AlignedContig::getCoverageAtPosition(int pos) const {
+    //if (pos <= 0 || pos >= (int)tum_cov.size())
+    //  return std::pair<int,int>(0,0);
     
-    return std::pair<int,int>(tum_cov[pos], norm_cov[pos]);
-  }
+    //return std::pair<int,int>(tum_cov[pos], norm_cov[pos]);
+  //}
+
+  //std::unordered_map<std::string, int> AlignedContig::getCoverageAtPosition(int pos) const {
+  //for (auto& i : allele) 
+      //   i.second.cov[pos];
+  //    return std::pair<int,int>(tum_cov[pos], norm_cov[pos]);
+  // }
+
   
   std::string AlignedContig::printDiscordantClusters() const {
     
@@ -450,8 +486,8 @@ namespace SnowTools {
     return false;
   }
 
-  AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip) {
-    
+  AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip, const std::unordered_set<std::string>& prefixes) {
+
     m_align = talign;
 
     sub_n = talign.GetIntTag("SB");
@@ -508,6 +544,9 @@ namespace SnowTools {
     assert(break1 < MAX_CONTIG_SIZE);
     assert(break2 < MAX_CONTIG_SIZE);
 
+    if (break1 < 0 || break2 < 0) {
+      std::cout << (*this) << std::endl;
+    }
     assert(break1 >= 0);
     assert(break2 >= 0);
 
@@ -517,6 +556,8 @@ namespace SnowTools {
     while (parseIndelBreak(bp) && fail_safe_count++ < 100 && !m_align.SecondaryFlag()) {
       //std::cerr << bp << " " << (*this) << std::endl;
       assert(bp.valid());
+      for (auto& i : prefixes)
+	bp.allele[i].indel = true;
       m_indel_breaks.push_back(bp);
       assert(bp.num_align == 1);
     }
@@ -561,7 +602,36 @@ namespace SnowTools {
       i.indelCigarMatches(nmap, tmap, n_cigpos);
     
   }
+
+  void AlignedContig::checkAgainstCigarMatches(const std::unordered_map<std::string, CigarMap>& cmap) {
+
+    for (auto& i : m_frag_v)
+      i.indelCigarMatches(cmap);
+    
+  }
+
   
+  void AlignmentFragment::indelCigarMatches(const std::unordered_map<std::string, CigarMap>& cmap) {
+
+    // loop through the indel breakpoints
+    for (auto& i : m_indel_breaks) {
+      
+      assert(i.getSpan() > 0);
+
+      // get the hash string in same formate as cigar map (eg. pos_3D)
+      std::string st = i.getHashString();
+
+      for (auto& c : cmap) {
+	CigarMap::const_iterator ff = c.second.find(st);
+	// if it is, add it
+	if (ff != c.second.end()) {
+	  i.allele[c.first].cigar = ff->second;	  
+	}
+      }
+    }      
+    
+  }
+
   void AlignmentFragment::indelCigarMatches(const CigarMap &nmap, const CigarMap &tmap, const std::unordered_map<uint32_t, size_t> *n_cigpos) { 
     
     // loop through the indel breakpoints
@@ -572,22 +642,27 @@ namespace SnowTools {
       // get the hash string in same formate as cigar map (eg. pos_3D)
       std::string st = i.getHashString();
 
+      //std::cerr << " hash " << st << " nmap.size() " << nmap.size() << " tmap.size() " << tmap.size() << std::endl;
+
       // check if this breakpoint from assembly is in the cigarmap
       CigarMap::const_iterator ffn = nmap.find(st);
       CigarMap::const_iterator fft = tmap.find(st);
 
       // if it is, add it
-      if (ffn != nmap.end())
-	i.ncigar = ffn->second;
-      if (fft != tmap.end())
-	i.tcigar = fft->second;
+      //if (ffn != nmap.end())
+      //i.ncigar = ffn->second;
+      //if (fft != tmap.end())
+      //i.tcigar = fft->second;
+      
+      if (!n_cigpos)
+	return;
 
       // do extra check on near neighbors for normal
       std::unordered_map<uint32_t, size_t>::const_iterator it = n_cigpos->find(i.b1.gr.chr * 1e9 + i.b1.gr.pos1);
-      int nn = 0;
-      if (it != n_cigpos->end())
-	nn = it->second;
-      i.ncigar = std::max(i.ncigar, nn);
+      //int nn = 0;
+      //if (it != n_cigpos->end())
+      //nn = it->second;
+      //i.ncigar = std::max(i.ncigar, nn);
       //if (it != n_cigpos->end() && it->second i.ncigar < 2)
       // i.ncigar = 2;
       
@@ -596,26 +671,26 @@ namespace SnowTools {
   
   bool AlignmentFragment::parseIndelBreak(BreakPoint &bp) {
     
-    // make sure we have a non-zero cigar
+     // make sure we have a non-zero cigar
     if (m_cigar.size() == 0) {
       std::cerr << "CIGAR of length 0 on " << *this << std::endl;
       return false;
     }
-    
+ 
     // reject if too many mismatches
-    size_t di_count = 0;
+    //size_t di_count = 0;
     for (auto& i : m_cigar)
       if (i.Type == 'D' || i.Type == 'I')
-	++di_count;
-    if (di_count > 3)
+    	++di_count;
+    if (di_count > 2 && m_align.Qname().substr(0,2) == "c_") // only trim for snowman assembled contigs
       return false;
-    
+
     // reject if it has small matches, could get confused. Fix later
     //for (auto& i : m_cigar) 
     //  if (i.Type == 'M' && i.Length < 5)
     //    return false;
     
-    // reject if first alignment is I or D or start with too few M
+     // reject if first alignment is I or D or start with too few M
     if (m_cigar.begin()->Type == 'I' || m_cigar.begin()->Type == 'D' || m_cigar.back().Type == 'D' || m_cigar.back().Type == 'I') {
       //std::cerr << "rejecting cigar for starting in I or D or < 5 M" << std::endl;
       return false;
@@ -634,10 +709,11 @@ namespace SnowTools {
       }
     }
     
+
     // we made it to the end, no more indels to report
     if (loc == m_cigar.size())
       return false;
-    
+
     // clear out the old bp just in case
     bp = BreakPoint();
     bp.num_align = 1;
@@ -735,7 +811,6 @@ namespace SnowTools {
       }
     }
 
-
     assert(bp.valid());
     return true;
   }
@@ -764,15 +839,15 @@ namespace SnowTools {
   */
   //}
   
-  std::vector<BreakPoint> AlignedContig::getAllBreakPoints() const {
+  std::vector<BreakPoint> AlignedContig::getAllBreakPoints(bool local_restrict) const {
     
     std::vector<BreakPoint> out;
     for (auto& i : m_frag_v) {
-      if (i.local) // only output if alignment is local for indels
+      if (i.local || !local_restrict) // only output if alignment is local for indels
 	for (auto& k : i.m_indel_breaks)
 	  out.push_back(k);
     }
-    
+ 
     if (!m_global_bp.isEmpty())
       out.push_back(m_global_bp);
     
@@ -798,7 +873,16 @@ namespace SnowTools {
     
     if (!m_global_bp.isEmpty())
       return true;
-    
+
+    if (m_local_breaks.size())
+      return true; 
+
+    if (m_global_bp_secondaries.size())
+      return true; 
+
+    if (m_local_breaks_secondaries.size())
+      return true; 
+
     for (auto& i : m_frag_v)
       if (i.local && i.m_indel_breaks.size())
 	return true;
@@ -825,7 +909,10 @@ namespace SnowTools {
   }
   
   void AlignedContig::assignSupportCoverage() {
+
     
+
+    /*
     // go through the indel breaks and assign support coverage
     for (auto& j : m_frag_v) {
       for (auto& i : j.m_indel_breaks) {
@@ -848,7 +935,7 @@ namespace SnowTools {
     std::pair<int,int> p2 = getCoverageAtPosition(m_global_bp.b2.cpos);
     m_global_bp.tcov_support = std::min(p1.first, p2.first);
     m_global_bp.ncov_support = std::min(p1.second, p2.second);
-    
+    */
   }
 
   BreakEnd AlignmentFragment::makeBreakEnd(bool left) {

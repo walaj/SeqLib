@@ -16,6 +16,7 @@ config.log
 tmp*
 libhts.*
 libsnowtools.a
+libboost*
 libaho*
 libbwa.a
 example*
@@ -25,5 +26,4 @@ bgzip
 stamp-h1
 *.a
 *.so*
-Makefile
 *.pico

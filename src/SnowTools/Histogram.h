@@ -49,7 +49,7 @@ class Bin {
 
     /** Return the number of counts in this histogram bin 
      */
-    size_t getCount() const { return m_count; }
+    int32_t getCount() const { return m_count; }
     
     /** Check if a value fits within the range of this bin 
      * @param dist Distance value to check if its in this range
@@ -76,7 +76,7 @@ class Bin {
     Bin& operator++();
 
  private:
-    size_t m_count;
+    int32_t m_count;
     std::pair<int32_t, int32_t> bounds; //@! was"bin";
 };
 
@@ -140,8 +140,8 @@ class Histogram {
 
   /** Return the total number of elements in the Histogram
    */
-  size_t totalCount() const {
-    size_t tot = 0;
+  int totalCount() const {
+    int tot = 0;
     for (auto&  i : m_bins)
       tot += i.getCount();
     return tot;

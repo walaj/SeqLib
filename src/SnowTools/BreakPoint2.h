@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <unordered_map>
+#include <map>
 #include "htslib/faidx.h"
 
 #include "SnowTools/GenomicRegion.h"
@@ -19,9 +20,9 @@
 namespace SnowTools {
 
   // forward declares
-struct BreakPoint;
-
-typedef std::vector<BreakPoint> BPVec;
+  struct BreakPoint;
+  
+  typedef std::vector<BreakPoint> BPVec;
  
  struct ReducedBreakEnd {
    
@@ -32,7 +33,7 @@ typedef std::vector<BreakPoint> BPVec;
    std::string chr_name;
    //char * chr_name;
    GenomicRegion gr;
-   uint16_t mapq:8, sub_n:8;
+   uint32_t mapq:8, sub_n:8, nm:16;
 
  };
 
@@ -45,19 +46,22 @@ typedef std::vector<BreakPoint> BPVec;
    
    BreakEnd(const BamRead& b);
 
+   std::string hash() const;
+
    std::string id;
    std::string chr_name;
    GenomicRegion gr;
+
    int mapq = -1;
    int cpos = -1;
    int nm = -1;
    int matchlen = -1;
-   int tsplit = -1;
-   int nsplit = -1;
+
+   std::unordered_map<std::string, int> split;
+   std::unordered_map<std::string, double> af;
+
    int sub_n = -1;
    bool local;
-   double n_af = -1;
-   double t_af = -1;
 
  };
 
@@ -104,6 +108,8 @@ typedef std::vector<BreakPoint> BPVec;
      __smart_check_free(insertion);
      __smart_check_free(evidence);
      __smart_check_free(confidence);
+     __smart_check_free(repeat);
+     //__smart_check_free(read_names);
    }
    ReducedBreakPoint(const std::string &line, bam_hdr_t* h);
 
@@ -114,6 +120,11 @@ typedef std::vector<BreakPoint> BPVec;
    char * confidence;
    char * insertion;
    char * homology;
+   char * repeat;
+   //char * read_names;
+   std::string read_names;
+
+   std::vector<std::string> format_s;
 
    //std::string ref;
    //std::string alt;
@@ -124,7 +135,9 @@ typedef std::vector<BreakPoint> BPVec;
    //std::string homology;
 
    ReducedBreakEnd b1, b2;
-   float somatic_score;
+   double somatic_score = 0;
+   double somatic_lod = 0; // LogOdds that variant not in normal
+   double true_lod = 0;
 
    uint32_t nsplit:8, tsplit:8, af_n:7, num_align:5, secondary:1, dbsnp:1, pass:1, blacklist:1, indel:1, imprecise:1;
    uint32_t tcov_support:8, ncov_support:8, tcov:8, ncov:8;
@@ -134,77 +147,88 @@ typedef std::vector<BreakPoint> BPVec;
    ReducedDiscordantCluster dc;
 
  };
+
+ struct SampleInfo {
+
+   bool indel;
+
+   int split = 0;
+   int cigar = 0;
+   int alt =0;
+   int clip_cov = 0;
+   int cov = 0;
+   int disc = 0;
+   
+   // genotype info
+   double GQ = 0;
+   double PL = 0;
+   std::string genotype;
+
+   double af = 0;
+   double error_rate = 1e-4;
+
+   double LO = 0; // log odds of variant vs error
+   double SLO = 0; // MAPQ scaled log odds of variant vs error
+   double LO_n = 0; // log odds of variant at af=0.5 vs ref (af=0) with errors
+
+   std::set<std::string> supporting_reads;
+
+   friend std::ostream& operator<<(std::ostream& out, const SampleInfo& a);
+
+   friend SampleInfo operator+(const SampleInfo& a1, const SampleInfo& a2);
+
+   double __log_likelihood(int ref, int alt, double f, double e);
+
+   void modelSelection(double err);
+
+   std::string toFileString() const;
+
+   void fromString(const std::string& s);
+   
+ };
  
  struct BreakPoint {
    
    static std::string header() { 
-     return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tref\talt\tspan\tmapq1\tmapq2\tnsplit\ttsplit\tsubn1\tsubn2\tndisc\ttdisc\tdisc_mapq1\tdisc_mapq2\tncigar\ttcigar\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tquality\tsecondary_alignment\tsomatic_score\tpon_samples\trepeat_seq\tnormal_cov\ttumor_cov\tnormal_allelic_fraction\ttumor_allelic_fraction\tgraylist\tDBSNP\treads"; 
+     return "chr1\tpos1\tstrand1\tchr2\tpos2\tstrand2\tref\talt\tspan\tmapq1\tmapq2\tnm1\tnm2\tdisc_mapq1\tdisc_mapq2\tsub_n1\tsub_n2\thomology\tinsertion\tcontig\tnumalign\tconfidence\tevidence\tquality\tsecondary_alignment\tsomatic_score\tsomatic_lod\ttrue_lod\tpon_samples\trepeat_seq\tgraylist\tDBSNP\treads"; 
    }
 
-   std::string ref;
-   std::string alt;
+   double somatic_score = 0;
+   double somatic_lod = 0; // LogOdds that variant not in normal
 
-   // the evidebce per break-end
+   std::string seq, cname, rs, insertion, homology, repeat_seq, evidence, confidence, ref, alt, read_names;   
+
+   // the evidence per break-end
    BreakEnd b1, b2;
    
+   SampleInfo t, n, a;
+
    // reads spanning this breakpoint
    BamReadVector reads;
 
-   // allelic fraction
-   double af_t = -1;
-   double af_n = -1;
-   
+   int t_reads = 0, n_reads = 0;
+
    // discordant reads supporting this aseembly bp
    DiscordantCluster dc;
    
    int quality = 0;
 
-   // string of read names concatenated together
-   std::string read_names;
-   
    // total coverage at that position
-   int tcov = 0;
-   int ncov = 0;
-   int nclip_cov = 0;
-   
-   // total coverage supporting the variant at that position
-   int tcov_support = 0;
-   int ncov_support = 0;
+   std::map<std::string, SampleInfo> allele; // ordered to keep in alphabetical order by prefix (e.g. n001)
 
    bool secondary = false;
 
-   std::unordered_set<std::string> split_reads;
-   std::unordered_set<std::string> qnames;
-   
-   // DBsnp 
-   std::string rs = "";
-   
-   std::string seq;   
-   std::string cname;
-   
-   std::string insertion = "";
-   std::string homology = "";
-   
-   std::string repeat_seq = "";
-   
-   int tcigar = 0;
-   int ncigar = 0;
-   
-   double somatic_score = 0;
+   std::unordered_set<std::string> split_reads, qnames;
    
    int pon = 0;
-   
-   int nsplit = 0;
-   int tsplit = 0;
-   
    int num_align = 0;
-
-   std::string evidence = "";
-   std::string confidence = "";
    
    bool isindel = false;
-   
    bool blacklist = false;
+
+   void __combine_alleles();
+
+   void __rep(int rep_num, std::string& rseq, bool fwd = true);
    
    /** Construct a breakpoint from a cluster of discordant reads
     */
@@ -213,16 +237,17 @@ typedef std::vector<BreakPoint> BPVec;
    BreakPoint() {}
    
    BreakPoint(const std::string &line, bam_hdr_t* h);
+
+   void __set_total_reads();
    
-   /*! Return a string with information useful for printing at the 
-    * command line as Snowman runs 
-    * @return string with minimal information about the BreakPoint.
-    */
-   std::string toPrintString() const;
-   
+   void __score_somatic();
+
+   void addCovs(const std::unordered_map<std::string, STCoverage*>& covs, const std::unordered_map<std::string, STCoverage*>& clip_covs);
+
    /** Retrieve the reference sequence at a breakpoint and determine if 
     * it lands on a repeat */
-   //void repeatFilter(faidx_t * f);
+   void repeatFilter();
+
    void __combine_with_discordant_cluster(DiscordantClusterMap& dmap);
    
    /*! @function determine if the breakpoint has split read support
@@ -292,7 +317,7 @@ typedef std::vector<BreakPoint> BPVec;
    
    // define how to sort these 
    bool operator < (const BreakPoint& bp) const { 
-     
+
      if (b1.gr < bp.b1.gr)
        return true;
      else if (bp.b1.gr < b1.gr)
@@ -303,19 +328,19 @@ typedef std::vector<BreakPoint> BPVec;
      else if (bp.b2.gr < b2.gr)
        return false;
      
-     if (nsplit > bp.nsplit)
+     if (n.split > bp.n.split) 
        return true;
-     else if (nsplit < bp.nsplit)
+     else if (n.split < bp.n.split)
        return false;
      
-     if (tsplit > bp.tsplit)
+     if (t.split > bp.t.split)
        return true;
-     else if (tsplit < bp.tsplit)
+     else if (t.split < bp.t.split)
        return false;
      
-     if (tsplit > bp.tsplit)
+     if (t.split > bp.t.split)
        return true;
-     else if (tsplit < bp.tsplit)
+     else if (t.split < bp.t.split)
        return false;
      
      if (dc.ncount > bp.dc.ncount)
@@ -345,7 +370,6 @@ typedef std::vector<BreakPoint> BPVec;
    std::string __format_readname_string();
    void __set_homologies_insertions();
    void __set_evidence();
-   void __set_allelic_fraction();
    bool valid() const;
    
    double __sv_is_somatic() const;
