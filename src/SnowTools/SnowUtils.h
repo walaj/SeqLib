@@ -15,8 +15,9 @@
 
 namespace SnowTools {
 
-
-
+  /** Get a filename from a file path */
+  std::string getFileName(const std::string& s);
+  
   /** Check if a file is readable and exists
    * @param name Name of a file to test
    * @return File is readable and exists

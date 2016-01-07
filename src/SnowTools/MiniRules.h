@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <boost/regex.hpp>
+//#include <regex>
 
 #include "SnowTools/GenomicRegionCollection.h"
 #include "SnowTools/BamRead.h"
@@ -366,7 +367,9 @@ class MiniRules {
   ~MiniRules() {}
   
   std::string id;
-    
+  
+  bool excluder = false; // this region is for excluding
+
   bool isValid(BamRead &r);
    
   void setRegionFromFile(const std::string& file);

@@ -3,9 +3,8 @@
 #include <cassert>
 #include "htslib/khash.h"
 
-//#define DEBUG_GIVEN_READ
-//#define QNAME "H23LHALXX150312:2:2213:7526:64141"
-//#define QFLAG 89
+//#define QNAME "D0UK2ACXX120515:7:1111:5448:49616"
+//#define QFLAG 163
 
 //#define DEBUG_MINI 1
 
@@ -91,6 +90,11 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
     //exit(EXIT_FAILURE);
   }
 
+  // need to run all rules if there is an excluder
+  if (!m_fall_through)
+    for (auto& i : m_regions)
+      m_fall_through = m_fall_through || i.excluder;
+
   size_t which_region = 0;
   size_t which_rule = 0;
   
@@ -98,6 +102,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
   // lower number rules dominate
 
   bool is_valid = false;
+  bool exclude_hit = false; // did we hit excluder rule
 
   for (auto& it : m_regions) {
     which_rule = 0;
@@ -115,8 +120,14 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
       // non-empty, need to check
       for (auto& jt : it.m_abstract_rules) { 
 	if (jt.isValid(r)) {
-	  // this whole read is valid
-	  is_valid = true;
+
+	  // this whole read is valid or not valid
+	  // depending on if this is an excluder region
+	  if (it.excluder)
+	    exclude_hit = true;
+	  // if it excluded already, can never be included
+	  // if its a normal rule, then exclude_hit is F, it.excluder is F and is_valid get T
+	  is_valid = !exclude_hit && !it.excluder; 
 
 	  // update the region counter
 	  if (!rule_hit) // first hit for this region?
@@ -129,13 +140,13 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 	  
 	  if (!m_fall_through)
 	    break;
-	}
+	} 
 	++which_rule;
       } // end rules loop
     }
     
     // found a hit in a rule
-    if (rule_hit && !m_fall_through)
+    if ( (rule_hit && !m_fall_through) || exclude_hit)
       break;
     
     // didnt find hit (or fall through checking), move it up one
@@ -284,7 +295,7 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       if (line.find("@WG") != std::string::npos) {
 	  mr.m_whole_genome = true;
       } else {
-	boost::regex file_reg("region@(.*?)(;|$)");
+	boost::regex file_reg(".*?region@(.*?)(;|$)");
 	boost::cmatch match;
 	if (boost::regex_match(line.c_str(), match, file_reg))
 	  mr.setRegionFromFile(match[1].str());
@@ -294,6 +305,10 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
 	}
       }
 
+      // is this an excluder region?
+      if (line.find("!region") != std::string::npos || line.find("!mlregion") != std::string::npos)
+	mr.excluder = true;
+      
       mr.m_level = level++;
       mr.id = line;
       m_regions.push_back(mr);
@@ -324,24 +339,37 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
     }
     
   } // end \n parse
-  
-  // check that the last region has at least one reuls
-  // if it it doesn't, give it the global
-  if (m_regions.size() > 0)
-    if (m_regions.back().m_abstract_rules.size() == 0) {
-      m_regions.back().m_abstract_rules.push_back(rule_all);
-    }
+ 
+  // check that the regions have at least one  rule
+  // if it it doesn't, give it the global WG all
+  for (auto& i : m_regions)
+    if (!i.m_abstract_rules.size())
+      i.m_abstract_rules.push_back(rule_all);
+
+  // check that there is at least one non-excluder rule. 
+  // if not, give global includer
+  bool has_includer = false;
+  for (auto& kk : m_regions)
+    if (!kk.excluder)
+      has_includer = true;
+  if (!has_includer) {
+      MiniRules mr;
+      mr.m_whole_genome = true;
+      mr.m_abstract_rules.push_back(rule_all);
+      mr.mrc = this; // set the pointer to the collection
+      m_regions.push_back(mr);
+  }
   
 }
 
 // print the MiniRulesCollection
 std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
 
-  std::cerr << "----------MiniRulesCollection-------------" << std::endl;
-  std::cerr << "--- counting all rules: " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
+  out << "----------MiniRulesCollection-------------" << std::endl;
+  out << "--- counting all rules (fall through): " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
   for (auto& it : mr.m_regions)
     out << it;
-  std::cerr << "------------------------------------------";
+  out << "------------------------------------------";
   /*  std::cerr << "--- Rule counts " << std::endl;
   for (auto& g : mr.m_regions)
     for (auto& r : g.m_abstract_rules)
@@ -355,7 +383,7 @@ std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
 std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
   
   std::string file_print = mr.m_whole_genome ? "WHOLE GENOME" : mr.m_region_file;
-  out << "--Region: " << file_print;
+  out << (mr.excluder ? "--Exclude Region: " : "--Region:") << file_print;
   if (!mr.m_whole_genome) {
     //out << " --Size: " << AddCommas<int>(mr.m_width); 
     out << " --Pad: " << mr.pad;
@@ -575,7 +603,7 @@ void Range::parseRuleLine(std::string line) {
   bool AbstractRule::isValid(BamRead &r) {
     
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES Read seen " << " ID " << id << " " << r << std::endl;
 #endif
@@ -599,7 +627,7 @@ void Range::parseRuleLine(std::string line) {
     // check if is discordant
     bool isize_pass = isize.isValid(abs(r.InsertSize()));
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES isize_pass " << isize_pass << " " << " ID " << id << " " << r << std::endl;
 #endif
@@ -613,7 +641,7 @@ void Range::parseRuleLine(std::string line) {
       if (!mapq.isValid(r.MapQuality())) 
 	return false;
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES mapq pass " << " ID " << id << " " << r << std::endl;
 #endif
@@ -622,7 +650,7 @@ void Range::parseRuleLine(std::string line) {
     if (!fr.isValid(r))
       return false;
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES flag pass " << " " << id << " " << r << std::endl;
 #endif
@@ -636,7 +664,7 @@ void Range::parseRuleLine(std::string line) {
     }
 
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES cigar pass " << " ID " << id << " "  << r << std::endl;
 #endif
@@ -647,7 +675,7 @@ void Range::parseRuleLine(std::string line) {
     if (!need_to_continue)
       return true;
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME  && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES moving on. ID " << id << " " << r << std::endl;
 #endif
@@ -660,7 +688,7 @@ void Range::parseRuleLine(std::string line) {
 	return false;
     }
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES pre-phred filter clip pass. ID " << id  << " " << r << std::endl;
 #endif
@@ -695,9 +723,12 @@ void Range::parseRuleLine(std::string line) {
 		    << startpoint << " endpoint " << endpoint 
 		    << " newlen " << new_len << std::endl;
 	}
+	// read is fine
+      } else {
+	r.AddZTag("GV", r.Sequence());
       }
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES pre-phred filter. ID " << id << " start " << startpoint << " endpoint " << endpoint << " " << r << std::endl;
 #endif
@@ -728,7 +759,7 @@ void Range::parseRuleLine(std::string line) {
 	return false;
     }
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES NBASES PASS. id: " << id << r << " new_len " << new_len << " new_clipnum" << new_clipnum << std::endl;
 #endif
@@ -738,7 +769,7 @@ void Range::parseRuleLine(std::string line) {
     if (!len.isValid(new_len))
       return false;
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES LENGTH PASS. id: " << id << r << " newlen " << new_len << std::endl;
 #endif
@@ -747,7 +778,7 @@ void Range::parseRuleLine(std::string line) {
     if (!clip.isValid(new_clipnum))
       return false;
 
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES CLIP AND LEN PASS. ID " << id << " "  << r << std::endl;
 #endif
@@ -767,7 +798,7 @@ void Range::parseRuleLine(std::string line) {
     }
 #endif
     
-#ifdef DEBUG_GIVEN_READ
+#ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
       std::cerr << "MINIRULES PASS EVERYTHING. ID " << id << " " << r << std::endl;
 #endif
@@ -851,7 +882,7 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
 
   out << "  Rule: " << ar.name << " -- ";;
   if (ar.isEvery()) {
-    out << "  KEEPING ALL";
+    out << "  ALL";
   } else if (ar.isNone()) {
     out << "  KEEPING NONE";  
   } else {
