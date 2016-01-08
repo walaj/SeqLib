@@ -25,9 +25,12 @@ AC_ARG_WITH(boost, AS_HELP_STRING([--with-boost=PATH],
 	[specify directory containing the boost library)]))
 if test "$with_boost" -a -d "$with_boost"; then
     boost_include="-I$with_boost"
-else
-    boostr=/xchip/gistic/Jeremiah/boost_1_58_0
-    boost_include="-I$boostr"
+    AC_CHECK_FILE("$with_boost/stage/lib", STAGE_PATH=1, STAGE_PATH=0)
+    if test ${STAGE_PATH} = 1; then
+        boost_lib="-L$with_boost/stage/lib"  
+    else
+        boost_lib="-L$with_boost/lib"        
+    fi
 fi
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -43,16 +46,10 @@ AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "-O3")
 AC_SUBST(CFLAGS, "-O3")
 AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $boost_include")
-AC_SUBST(LDFLAGS, "$LDFLAGS")
+AC_SUBST(LDFLAGS, "$LDFLAGS $boost_lib")
 
 # We always need to specify to link in bamtools
 AC_SUBST(LIBS, "$LIBS")
-
-# Make sure the bamtools headers can be found
-##AC_CHECK_HEADERS([api/BamReader.h],,[AC_MSG_ERROR([The bamtools library must be installed (http://github.com/pezmaster31/bamtools). You can specify its path with the --with-bamtools=PATH option])])
-
-# Make sure the ahocorasick headers can be found
-##AC_CHECK_HEADERS([ahocorasick/ahocorasick.h],,[AC_MSG_WARN([The Aho-Corasick library must be installed (http://sourceforge.net/projects/multifast/). You can specify its path with the --with-aho=PATH option])])
 
 # Make sure the HTSlib headers can be found
 ##AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
@@ -61,7 +58,7 @@ AC_SUBST(LIBS, "$LIBS")
 ##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
 
 # Make sure the boost headers can be found
-##AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_WARN([The Boost library must be installed for a few of the interval operations. NOT REQUIRED for VariantBam. Specify its path with the --with-boost=PATH option])])
+AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile
 	         src/Makefile])

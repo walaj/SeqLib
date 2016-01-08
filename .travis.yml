@@ -15,6 +15,7 @@ before_install:
  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 20
  - sudo update-alternatives --config gcc
  - sudo update-alternatives --config g++
+ - sudo apt-get install libboost-regex-dev libboost-test-dev
 
 script:
  - ./configure && make

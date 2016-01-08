@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the <boost/icl/interval_set.hpp> header file. */
+#undef HAVE_BOOST_ICL_INTERVAL_SET_HPP
+
 /* clock_getttime found */
 #undef HAVE_CLOCK_GETTIME
 
