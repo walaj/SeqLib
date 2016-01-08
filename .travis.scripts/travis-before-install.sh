@@ -13,3 +13,4 @@ if [ -n "${BOOST_VERSION}" ]; then
   wget --no-verbose --output-document=- \
     http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//./_}.tar.bz2/download \
     | tar jxf - --strip-components=1 -C "${BOOST_ROOT}"
+fi
