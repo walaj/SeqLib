@@ -4,6 +4,11 @@ compiler:
  - gcc
  - clang
 
+apt:
+  sources:
+  - ubuntu-toolchain-r-test
+  - boost-latest
+
 before_install:
  - sudo pip install cpp-coveralls
  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -15,7 +20,7 @@ before_install:
  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 20
  - sudo update-alternatives --config gcc
  - sudo update-alternatives --config g++
- - sudo apt-get install libboost1.59.0-regex-dev libboost1.59.0-test-dev libboost1.59.0-system-dev
+# - sudo apt-get install libboost1.59.0-regex-dev libboost1.59.0-test-dev libboost1.59.0-system-dev
 
 script:
  - ./configure && make
