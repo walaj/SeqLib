@@ -4,14 +4,24 @@ compiler:
  - gcc
  - clang
 
-apt:
-  sources:
-  - ubuntu-toolchain-r-test
-  - boost-latest
-  packages:
-  - libboost-test1.55-dev
-  - libboost-regex1.55-dev
-  - libboost-system1.55-dev
+env:
+  global:
+      # Boost version to use:
+      # _MIN is used when building the master branch
+      # _MAX is used when building any other branch
+    - BOOST_VERSION_MIN="1.55.0"
+    - BOOST_VERSION_MAX="1.60.0"
+      # List of required boost libraries to build
+    - BOOST_LIBS="regex,system,test"
+
+#apt:
+#  sources:
+#  - ubuntu-toolchain-r-test
+#  - boost-latest
+#  packages:
+#  - libboost-test1.55-dev
+#  - libboost-regex1.55-dev
+#  - libboost-system1.55-dev#
 
 before_install:
  - sudo pip install cpp-coveralls
@@ -24,7 +34,13 @@ before_install:
  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 20
  - sudo update-alternatives --config gcc
  - sudo update-alternatives --config g++
-# - sudo apt-get install libboost1.59.0-regex-dev libboost1.59.0-test-dev libboost1.59.0-system-dev
+ - if [ "${TRAVIS_BRANCH}" = "master" ]; then export BOOST_VERSION="${BOOST_VERSION_MIN}"; else export BOOST_VERSION="${BOOST_VERSION_MAX}"; fi
+ - if [ -n "${BOOST_VERSION}" ]; then export BOOST_ROOT="${TRAVIS_BUILD_DIR}/../boost-trunk"; export CMAKE_MODULE_PATH="${BOOST_ROOT}"; fi
+ - if [ "${CXX}" = "g++" ]; then export CXX="$(which g++-4.8)"; export CC="$(which gcc-4.8)"; fi
+ - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"; fi
+    # c++ is a symlink to clang++, but the compiler behaves differently when invoked as c++
+ - if [ "${TRAVIS_OS_NAME}" = "osx" -a "${CXX}" = "clang++" ]; then export CXX="$(which c++)"; export CC="$(which cc)"; fi
+ - .travis.scripts/travis.install.sh
 
 script:
  - ./configure && make
