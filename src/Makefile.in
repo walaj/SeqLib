@@ -39,14 +39,14 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
+CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
 libsnowtools_a_AR = $(AR) $(ARFLAGS)
-libsnowtools_a_DEPENDENCIES = ../bwa/libbwa.a ../htslib/libhts.a \
-	../modular-boost/stage/lib/libboost_regex.a
+libsnowtools_a_DEPENDENCIES = ../bwa/libbwa.a ../htslib/libhts.a
 am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-Histogram.$(OBJEXT) \
 	libsnowtools_a-BamWalker.$(OBJEXT) \
@@ -73,7 +73,7 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-ahocorasick.$(OBJEXT) \
 	libsnowtools_a-node.$(OBJEXT)
 libsnowtools_a_OBJECTS = $(am_libsnowtools_a_OBJECTS)
-DEFAULT_INCLUDES = -I.@am__isrc@
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
@@ -187,10 +187,9 @@ noinst_LIBRARIES = libsnowtools.a
 libsnowtools_a_CPPFLAGS = \
         -I.. \
 	-I../multifast-v1.4.2 \
-        -I../htslib \
-	-I../modular-boost
+        -I../htslib 
 
-libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ../modular-boost/stage/lib/libboost_regex.a
+libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \

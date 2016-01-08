@@ -297,9 +297,9 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       } else {
 	boost::regex file_reg(".*?region@(.*?)(;|$)");
 	boost::cmatch match;
-	if (boost::regex_match(line.c_str(), match, file_reg))
+	if (boost::regex_match(line.c_str(), match, file_reg)) {
 	  mr.setRegionFromFile(match[1].str());
-	else {
+	} else {
 	  std::cerr << "Could not parse line: " << line << " to grab region " << std::endl;
 	  exit(EXIT_FAILURE);
 	}
