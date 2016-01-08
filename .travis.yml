@@ -46,7 +46,7 @@ install:
   - .travis.scripts/travis-install.sh
 
 script:
- - ./configure && make
+ - ./configure --with-boost=${BOOST_ROOT} && make
 
 branches:
     only:
