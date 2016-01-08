@@ -526,7 +526,7 @@ namespace SnowTools {
       confidence = "MULTIMATCH";
     //else if (n.cov > 500 || t.cov==0 || n.cov == 0)
     //  confidence = "BADREGION";
-    else if (secondary)
+    else if (secondary && std::min(b1.mapq, b2.mapq) < 30)
       confidence = "SECONDARY";
     else if (repeat_seq.length() >= 10 && std::max(t.split, n.split) < 7)
       confidence = "WEAKASSEMBLY";
@@ -641,7 +641,7 @@ namespace SnowTools {
       confidence = "WEAKASSEMBLY";
     else if ((b1.sub_n && dc.mapq1 < 1) || (b2.sub_n && dc.mapq2 < 1))
       confidence = "MULTIMATCH";
-    else if (secondary)
+    else if (secondary && std::min(b1.mapq, b2.mapq) < 30)
       confidence = "SECONDARY";
     else if (b1.gr.chr != b2.gr.chr && std::max(t.split, n.split) < 5)
       confidence = "WEAKASSEMBLY";
