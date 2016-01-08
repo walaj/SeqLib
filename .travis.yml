@@ -40,10 +40,10 @@ before_install:
  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"; fi
     # c++ is a symlink to clang++, but the compiler behaves differently when invoked as c++
  - if [ "${TRAVIS_OS_NAME}" = "osx" -a "${CXX}" = "clang++" ]; then export CXX="$(which c++)"; export CC="$(which cc)"; fi
- - .travis.scripts/travis.install.sh
+ - .travis.scripts/travis-before-install.sh
 
 install:
-  - .travis.scripts/travis.install.sh
+  - .travis.scripts/travis-install.sh
 
 script:
  - ./configure && make
