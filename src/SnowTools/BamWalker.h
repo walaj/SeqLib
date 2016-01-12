@@ -33,8 +33,8 @@ namespace SnowTools {
 //////////////
 struct ReadCount {
 
-  int keep = 0;
-  int total = 0;
+  uint64_t keep = 0;
+  uint64_t total = 0;
   
   int percent () const {
     int perc  = SnowTools::percentCalc<int>(keep, total); 
@@ -120,7 +120,7 @@ class BamWalker {
   bool OpenReadBam(const std::string& bam);
 
   /** Open an NGS file direct from stdin */
-  bool OpenReadBam(FILE * stdin);
+  //bool OpenReadBam(FILE * stdin);
 
   /** Open a BAM file for streaming out
    */
