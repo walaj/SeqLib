@@ -1,4 +1,3 @@
-s#                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59) ## specificy version of autoconf
 AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
@@ -27,10 +26,11 @@ if test "$with_boost" -a -d "$with_boost"; then
     boost_include="-I$with_boost"
     AC_CHECK_FILE("$with_boost/stage/lib", STAGE_PATH=1, STAGE_PATH=0)
     if test ${STAGE_PATH} = 1; then
-        boost_lib="-L$with_boost/stage/lib"  
+        boost_lib="$with_boost/stage/lib"  
     else
-        boost_lib="-L$with_boost/lib"        
+        boost_lib="$with_boost/lib"        
     fi
+    AC_SUBST(boost_lib)	
 fi
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -43,10 +43,10 @@ fi
 # Set compiler flags.
 ##AC_SUBST(AM_CXXFLAGS, "-g -Wall -Wextra $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
-AC_SUBST(CXXFLAGS, "-O3")
-AC_SUBST(CFLAGS, "-O3")
+AC_SUBST(CXXFLAGS, "$CXXFLAGS -O3")
+AC_SUBST(CFLAGS, "$CFLAGS -O3")
 AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $boost_include")
-AC_SUBST(LDFLAGS, "$LDFLAGS $boost_lib")
+AC_SUBST(LDFLAGS, "$LDFLAGS")
 
 # We always need to specify to link in bamtools
 AC_SUBST(LIBS, "$LIBS")
@@ -57,10 +57,14 @@ AC_SUBST(LIBS, "$LIBS")
 # Make sure the HTSlib headers can be found
 ##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
 
+# Make sure the bamtools headers can be found
+AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
+
 # Make sure the boost headers can be found
-AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
+#AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile
+	         snow_test/Makefile
 	         src/Makefile])
 
 AC_OUTPUT
