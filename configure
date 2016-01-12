@@ -642,6 +642,7 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 AM_CXXFLAGS
+boost_lib
 EGREP
 GREP
 CXXCPP
@@ -5095,10 +5096,11 @@ else
 fi
 
     if test ${STAGE_PATH} = 1; then
-        boost_lib="-L$with_boost/stage/lib"
+        boost_lib="$with_boost/stage/lib"
     else
-        boost_lib="-L$with_boost/lib"
+        boost_lib="$with_boost/lib"
     fi
+
 fi
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -5115,13 +5117,13 @@ fi
 ##AC_SUBST(AM_CXXFLAGS, "-g -Wall -Wextra $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AM_CXXFLAGS="-g $fail_on_warning -Wno-unknown-pragmas -std=c++11"
 
-CXXFLAGS="-O3"
+CXXFLAGS="$CXXFLAGS -O3"
 
-CFLAGS="-O3"
+CFLAGS="$CFLAGS -O3"
 
 CPPFLAGS="$CPPFLAGS -I. $boost_include"
 
-LDFLAGS="$LDFLAGS $boost_lib"
+LDFLAGS="$LDFLAGS"
 
 
 # We always need to specify to link in bamtools
@@ -5134,9 +5136,9 @@ LIBS="$LIBS"
 # Make sure the HTSlib headers can be found
 ##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
 
-# Make sure the boost headers can be found
+# Make sure the bamtools headers can be found
 
-for ac_header in boost/icl/interval_set.hpp
+for ac_header in boost/regex.hpp
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -5283,15 +5285,18 @@ as_val=`eval 'as_val=${'$as_ac_Header'}
 _ACEOF
 
 else
-  { { $as_echo "$as_me:$LINENO: error: The Boost library must be installed. Specify its path with the --with-boost=PATH option" >&5
-$as_echo "$as_me: error: The Boost library must be installed. Specify its path with the --with-boost=PATH option" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option" >&5
+$as_echo "$as_me: error: The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 done
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile"
+# Make sure the boost headers can be found
+#AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
+
+ac_config_files="$ac_config_files Makefile snow_test/Makefile src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -5938,6 +5943,7 @@ do
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "snow_test/Makefile") CONFIG_FILES="$CONFIG_FILES snow_test/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
