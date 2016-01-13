@@ -31,10 +31,10 @@ class GenomicRegion {
   /** Construct a GenomicRegion at a specific start and end location 
    * @param t_chr Chromosome id  (chr1 = 0, etc)
    * @param t_pos1 Start position
-   * @param t_pos2 End position
+   * @param t_pos2 End position. Must be >= start position.
    * @param strand true for positive, false for negative
   */
-  GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, char t_strand = true);
+  GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char t_strand = true);
 
   /** Construct a GenomicRegion from a string
    */
@@ -64,7 +64,7 @@ class GenomicRegion {
    * Creates a GenomicRegion with pos1 = pos2. Simulates a random value
    * with val <= genome_size_XY and then converts to GenomicRegion
    */
-  void random(uint32_t seed = 0);
+  void random(int32_t seed = 0);
 
   /** Does this GenomicRegion represent a valid region? */
   bool valid() const { return chr >= 0; }
@@ -85,7 +85,13 @@ class GenomicRegion {
   // determine if something overlaps with centromere 
   int centromereOverlap() const;
 
-  // check if there is an overlap
+  /** Check if the GenomicRegion has a complete or partial overlap
+   * If the argument contains the calling object, returns 3
+   * If the argument is contained in the calling object, returns 2
+   * If the argument overlaps partially the calling object, returns 1
+   * If the argument and calling object do not overlap, returns 0
+   * @param gr GenomicRegion to compare against
+   */
   int getOverlap(const GenomicRegion gr) const;
 
   friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr);
