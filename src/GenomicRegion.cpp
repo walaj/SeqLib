@@ -132,64 +132,27 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
 
 }
 
-// constructor for SnowTools::GenomicRegion that takes strings. Assumes chr string is in 
-// natural (1, ..., X) or (chr1, ..., chrX) format. That is, it converts to
-// BamTools format with a -1 operation.
-/*GenomicRegion::GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2) {
-
-  chr = GenomicRegion::chrToNumber(t_chr);
-  try {
-    t_pos1 = SnowTools::scrubString(t_pos1, ",");
-    t_pos2 = SnowTools::scrubString(t_pos2, ",");
-    pos1 = std::stoi(t_pos1);
-    pos2 = std::stoi(t_pos2);
-  } catch (...) { 
-    std::cerr << "stoi failed in GenomicRegion constructor. Tried: " << t_pos1 << " " << t_pos2 << std::endl;
-  }
-}
-*/
-
 // constructor to take a pair of coordinates to define the genomic interval
 GenomicRegion::GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char t_strand) {
 
   if (t_pos2 < t_pos1 )
     throw std::invalid_argument( "GenomicRegion constructor: end pos must be >= start pos" );
 
+  if ( !(t_strand == '+' || t_strand == '-' || t_strand == '*') )
+    throw std::invalid_argument( "GenomicRegion constructor: strand must be one of +, -, *" );
+
   chr = t_chr;
   pos1 = t_pos1;
   pos2 = t_pos2;
   strand = t_strand;
+
 }
 
-// convert a chromosome string into a number
-int GenomicRegion::chrToNumber(std::string ref) {
-
-  // remove the chr identifier if it is there
-  if (ref.find("chr") != std::string::npos)
-    ref = ref.substr(3, ref.size() - 3);
-
-  std::string ref_id = ref;
-  if (ref_id == "X")
-    ref_id = "23";
-  else if (ref_id == "Y")
-    ref_id = "24";
-  else if (ref_id == "M" || ref_id == "MT")
-    ref_id = "25";
-  
-  int out = -1;
-  try {
-    out = std::stoi(ref_id);
-  } catch (...) {
-    //cerr << "Caught error trying to convert " << ref << " to number" << endl;
-  }
-
-  //assert(out > 0);
-  return (out-1); // offset by one becuase chr1 = 0 in BamAlignment coords
-}
-
-// convert a chromosome number to a string. Assumes 
-// a natural ordering (1, ...), not BamTools ordering (0, ...)
 std::string GenomicRegion::chrToString(int32_t ref) {
+
+  if (ref < 0)
+    throw std::invalid_argument( "GenomicRegion::chrToString - ref id must be >= 0" );
+  
   std::string ref_id;
   if (ref == 22)
     ref_id = "X";
@@ -207,17 +170,6 @@ std::string GenomicRegion::chrToString(int32_t ref) {
 bool GenomicRegion::isEmpty() const {
   return chr == -1 && pos1 == 0 && pos2 == 0;
 }
-
-
-//
-/*uint32_t GenomicRegion::posToBigPos(int refid, int pos) {
-  
-  if (refid < 25)
-    return 0;
-  
-  return CHR_CLEN[refid] + pos;
-  
-  }*/
 
 
 int GenomicRegion::distance(const GenomicRegion &gr) const {
@@ -243,6 +195,7 @@ void GenomicRegion::random(int32_t seed) {
       pos2 = pos1;
       return;
     }
+  
   std::cerr << "Value of " << big << " outside of expected range."  << std::endl;
   exit(EXIT_FAILURE);
   

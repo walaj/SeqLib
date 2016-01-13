@@ -32,14 +32,12 @@ class GenomicRegion {
    * @param t_chr Chromosome id  (chr1 = 0, etc)
    * @param t_pos1 Start position
    * @param t_pos2 End position. Must be >= start position.
-   * @param strand true for positive, false for negative
+   * @param strand. +, -, or * (default is *)
+   * @exception throws an invalid_argument exception if pos2 < pos1
+   * @exception throws an invalid_argument exception if char not one of +, - , *
   */
-  GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char t_strand = true);
+  GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char t_strand = '*');
 
-  /** Construct a GenomicRegion from a string
-   */
-  //GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2);
-  
   /** Construct a GenomicRegion from a set of strings */
   GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, bam_hdr_t* h = NULL);
 
@@ -48,29 +46,37 @@ class GenomicRegion {
    * This calls the samtools-like parser, which accepts in form "chr7:10,000-11,100".
    * Note that this requires that a pointer to the BAM header be provided as well 
    * to convert the text representation of the chr to the id number.
+   * @param reg Samtools-style string (e.g. "1:1,000,000-2,000,000")
+   * @param h Pointer to BAM header that will be used to convert chr string to ref id
    */
   GenomicRegion(const std::string& reg, bam_hdr_t* h);
 
   /** Return a string representation of just the first base-pair 
+   * e.g. 1:10,000
    */
   std::string pointString() const;
 
-  static int32_t chrToNumber(std::string ref);
-
+  /** Convert a chromosome number to a string using default ordering (1-Y)
+   * Assumes a 1-based ordering (1, ...), not zero-based.
+   * e.g. chrToString(10) return "11"
+   * @param ref Reference ID to convert
+   * @exception throws an invalid_argument exception if ref < 0
+   */
   static std::string chrToString(int32_t ref);
 
   /** Randomize the position of this GenomicRegion on the genome
    * 
    * Creates a GenomicRegion with pos1 = pos2. Simulates a random value
    * with val <= genome_size_XY and then converts to GenomicRegion
+   * @ param seed Set the random seed. Seed = 0 creates random seed
    */
   void random(int32_t seed = 0);
 
-  /** Does this GenomicRegion represent a valid region? */
+  /** Returns true if chr id >= 0, false otherwise
+   */
   bool valid() const { return chr >= 0; }
 
-  /** Check if the GenomicRegion is empty (aka chr -1)
-   */
+  /** Check if the GenomicRegion is empty (aka chr -1 and pos1=pos2=0)   */
   bool isEmpty() const;
 
   /** Find the distance between two GenomicRegion objects

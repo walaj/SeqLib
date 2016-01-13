@@ -30,13 +30,37 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
   BOOST_CHECK_EQUAL(grn.pos1, -11);
   BOOST_CHECK_EQUAL(grn.pos2, -10);
 
+  // check strand constructions
+  SnowTools::GenomicRegion gra(0,0,0);
+  SnowTools::GenomicRegion grb(0,10000,10001, '+');
+  SnowTools::GenomicRegion grc(0,0,3, '-');
+  BOOST_CHECK_EQUAL(gra.strand, '*');
+  BOOST_CHECK_EQUAL(grb.strand, '+');
+  BOOST_CHECK_EQUAL(grc.strand, '-');
+
+  // check point string
+  BOOST_CHECK_EQUAL(grb.pointString(), "1:10,000(+)");
+
 }
 
 BOOST_AUTO_TEST_CASE( genomic_region_bad_inputs ) {
 
   BOOST_CHECK_THROW(SnowTools::GenomicRegion(0, 10, 9), std::invalid_argument);
 
+  BOOST_CHECK_THROW(SnowTools::GenomicRegion::chrToString(-1), std::invalid_argument);
+
+  BOOST_CHECK_THROW(SnowTools::GenomicRegion(0,0,0,'P'), std::invalid_argument);
+
 }
+
+BOOST_AUTO_TEST_CASE( genomic_region_random ) {
+
+  SnowTools::GenomicRegion gr; 
+  gr.random(42);
+  BOOST_CHECK_EQUAL(gr.pointString(), "9:69,477,830(*)");
+  
+}
+
 
 BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
 
@@ -58,6 +82,8 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors_with_headers ) {
 
   // and that it can query the header
   BOOST_CHECK_EQUAL(grh.ChrName(bw.header()), "GL000207.1");
+
+  // check for samtools string
   
 }
 

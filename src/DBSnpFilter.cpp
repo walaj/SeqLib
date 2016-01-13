@@ -9,7 +9,8 @@ namespace SnowTools {
     
     // make the genomic region
     try { 
-      chr = chrToNumber(tchr);
+      GenomicRegion gr(tchr, pos, pos);
+      chr = gr.chr; 
       pos1 = std::stoi(pos);
     } catch (...) {
       std::cerr << "DBSnpSite: Error trying to convert " << tchr << ":" << pos << " to number" << std::endl;
