@@ -19,14 +19,24 @@ int GenomicRegion::getOverlap(const GenomicRegion gr) const {
   if (gr.chr != chr)
     return 0;
   
+  // argument pos1 is in
   bool gr1_in = gr.pos1 >= pos1 && gr.pos1 <= pos2;
+  // argument pos2 is in
   bool gr2_in = gr.pos2 >= pos1 && gr.pos2 <= pos2;
+  // object pos1 is in
   bool pos1_in = pos1 >= gr.pos1 && pos1 <= gr.pos2;
+  // object pos2 is in
   bool pos2_in = pos2 >= gr.pos1 && pos2 <= gr.pos2;
 
-  if ( (gr1_in && gr2_in) || (pos1_in && pos2_in) )
+  // object is in the argument
+  if (pos1_in && pos2_in) 
+    return 3;
+
+  // argument is in the oboject
+  if ( gr1_in && gr2_in)
     return 2;
 
+  // partial overlap
   if (gr1_in || gr2_in || pos1_in || pos2_in)
     return 1;
 
@@ -35,18 +45,19 @@ int GenomicRegion::getOverlap(const GenomicRegion gr) const {
 }
 
 
-  std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
-    std::string cc;
-    if (h) {
-      if (chr >= h->n_targets)
-	std::cerr << "chr " << chr << " is bigger than provided targets of " << h->n_targets << std::endl;
-      else
-	cc = std::string(h->target_name[chr]);
-    } else {
-      cc = chrToString(chr);
-    }
-    return cc;
+std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
+
+  std::string cc;
+  if (h) {
+    if (chr >= h->n_targets)
+      std::cerr << "chr " << chr << " is bigger than provided targets of " << h->n_targets << std::endl;
+    else
+      cc = std::string(h->target_name[chr]);
+  } else {
+    cc = chrToString(chr);
   }
+  return cc;
+}
   
 // write genomic region to a string
 std::string GenomicRegion::toString() const {
@@ -139,7 +150,11 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
 */
 
 // constructor to take a pair of coordinates to define the genomic interval
-GenomicRegion::GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, char t_strand) {
+GenomicRegion::GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char t_strand) {
+
+  if (t_pos2 < t_pos1 )
+    throw std::invalid_argument( "GenomicRegion constructor: end pos must be >= start pos" );
+
   chr = t_chr;
   pos1 = t_pos1;
   pos2 = t_pos2;
@@ -214,7 +229,7 @@ int GenomicRegion::distance(const GenomicRegion &gr) const {
 
 }
 
-void GenomicRegion::random(uint32_t seed) {
+void GenomicRegion::random(int32_t seed) {
   
   uint32_t big;
   SnowTools::genRandomValue(big, SnowTools::genome_size_XY, seed);
