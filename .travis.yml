@@ -9,6 +9,7 @@ env:
   - BOOST_VERSION_MAX="1.60.0" # List of required boost libraries to build"
   - BOOST_LIBS="regex,system,test"
   - secure: c7M47d76dYyjOsYiRWdJ7DaKyV6qo9tUk1l+QlSTX5AgfWGGIsI3eWxHrSid/b1PXTVCOQTBwJKlM13gNPO5kLEAxrT/Bl8rtFUQdBwqA5gZaY1Yyt7h51hRR9GADwUY4lmudLBiPRDp8Pd3WSiP+gOud7hA8U/AP0BPBfbhDkhvUC6GqvHzEp28NIHB0nhOv4r4yl7C2UeNk358ipDmYqs89m17TNTmbReYjqiaswYSkhCjikUT33QyDTLwl502NBRIJZpZZZ3imxorSM4A1uQmuq5Ggx4PyODgt8MpzH/bCHeamNFzYCi/JSh+MsuOv6tD6xsM9p1MzI5Fg7eQk+FtdmfQhgyTYjg24Ugyn0rrnu2i26FjLqkX3jqdgIldncoerJZly92+M0wRv4IrjjQLCrNLT2Wv4WRElKR5W2dRSnKBT/vIrfJQU9HwYPvISLS3yhpm9NcZnP09Mfoe3xU1mrWnSfbsbXAQ6tfQ14ysOD2/8RhxG3+0lLqS5s5DWefqtz1ouXviLKPcO08kdlcKgTkbh8nZPJNm8byh01tJe0DRPY7z6TJJRMdE/+Yz9VsKjxs9KautacdJmYruVL6AlHb97FlzhvQhaCU5LpOkw2wO5AHpFfgvaygWvi9RQksrr4AulnAcIE7aikcXJnpEqzgup3AyNzlVFu/s1Fo=
+  - secure: IR0O5HtMRDbEj0x7wHqXuLADszJcXLBUHeuMqm9K9oqzs0ne/ZAqNBODQVLvxAwcxsLRgiuBCuCTuJdalxusycZuAn5tD43RhAv6OhWIG4w+jh6elr2jmLsMb2VxTXto/VX1wQ4X9lLC4+q9p/vlZzIxwza8ZN//jGIlHNx7h896+euEIBy4F28yqk6Ua3V4Td5mg99uVWjiHeIiwIOmE+ClrYfdFXzLdWKDBmmkZTqPRfw16iVaSBKpkSd9rneQoKSyalFx0OGURADxabO1N5uTCRlK06JTx5220zma29w9BuhniaNmxbjf7gD1pcFZr7da7dZekKaxXy6d0nu/hci7UNsolti13a6bQCLj4AjxjY6GxGjX9dZxtjGvIPxiJKIDfQznwyfiaQYFhLb+Ieyv67lN6quDTuVuRdxxqnQprOz3JAvzTbyHatcKvvDfgWcxUGUCmOiLAWiQan8RuxZHt/+8kCQnySVGXmlGm0TbYwM2w99pMdwRCT6uQHyCKPH7cvnbFG+XHGSccDGazuzhHnRJLR2uz2dhDQ/dophTeNJugeaFSEFbO6lbLOBmoh+fD7ULWYFzXMjwMcv7kLqasGCHojp+Kya9foqj5hqwPTGQHllyfMFxDJWmytov2lc20rdZLT9H2sXriXHa0AtY5ZKvy9Y9tj5gO7YIvsE=
 
 before_install: 
 - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -20,6 +21,7 @@ before_install:
 - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 20
 - sudo update-alternatives --config gcc
 - sudo update-alternatives --config g++
+- sudo apt-get install --yes doxygen graphviz
 - if [ "${TRAVIS_BRANCH}" = "master" ]; then export BOOST_VERSION="${BOOST_VERSION_MIN}"; else export BOOST_VERSION="${BOOST_VERSION_MAX}"; fi
 - if [ -n "${BOOST_VERSION}" ]; then export BOOST_ROOT="${TRAVIS_BUILD_DIR}/../boost-trunk"; export CMAKE_MODULE_PATH="${BOOST_ROOT}"; fi
 - if [ "${CXX}" = "g++" ]; then export CXX="$(which g++-4.8)"; export CC="$(which gcc-4.8)"; fi
@@ -35,6 +37,7 @@ script:
 
 after_success: 
 - .travis.scripts/coveralls.sh
+- .travis.scripts/publish-doxygen.sh
 
 branches: 
   only: 
