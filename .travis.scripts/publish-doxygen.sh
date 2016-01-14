@@ -7,7 +7,6 @@
   cd ${HOME};
   wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/travis/doxygen_1.8.8-1_amd64.deb
   sudo dpkg --install doxygen_1.8.8-1_amd64.deb
-  cd ${HOME}/docs;
   doxygen
 
   echo -e "Publishing doxygen...\n";
@@ -16,7 +15,7 @@
   git clone --branch=gh-pages https://${GH_TOKEN}@github.com/jwalabroad/SnowTools gh-pages;
   cd gh-pages;
   rm -rf doxygen/;
-  mv ../dox/html doxygen/;
+  mv ../docs/html doxygen/;
   git add doxygen/;
   git commit -am "Latest doxygen documentation on successful travis build ${TRAVIS_BUILD_NUMBER} auto-pushed";
   git push origin gh-pages 

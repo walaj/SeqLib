@@ -21,7 +21,6 @@ before_install:
 - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 20
 - sudo update-alternatives --config gcc
 - sudo update-alternatives --config g++
-- sudo apt-get install --yes doxygen graphviz
 - if [ "${TRAVIS_BRANCH}" = "master" ]; then export BOOST_VERSION="${BOOST_VERSION_MIN}"; else export BOOST_VERSION="${BOOST_VERSION_MAX}"; fi
 - if [ -n "${BOOST_VERSION}" ]; then export BOOST_ROOT="${TRAVIS_BUILD_DIR}/../boost-trunk"; export CMAKE_MODULE_PATH="${BOOST_ROOT}"; fi
 - if [ "${CXX}" = "g++" ]; then export CXX="$(which g++-4.8)"; export CC="$(which gcc-4.8)"; fi
