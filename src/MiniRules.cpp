@@ -1190,8 +1190,9 @@ GRC MiniRulesCollection::getAllRegions() const
 {
 
   // check for "discordant" shortcut
-  boost::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)");
+  boost::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\].*$");
   boost::cmatch omatch;
+
   if (boost::regex_match(line.c_str(), omatch, regex_disc)) {
     bool isneg = line.find("!discordant[") != std::string::npos;
     try {
