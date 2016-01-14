@@ -7,6 +7,7 @@
   cd ${HOME};
   wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/travis/doxygen_1.8.8-1_amd64.deb
   sudo dpkg --install doxygen_1.8.8-1_amd64.deb
+  cd ${HOME}/build/jwalabroad/SnowTools;
   doxygen
 
   echo -e "Publishing doxygen...\n";
