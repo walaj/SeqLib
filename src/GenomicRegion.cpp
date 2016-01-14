@@ -50,7 +50,7 @@ std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
   std::string cc;
   if (h) {
     if (chr >= h->n_targets)
-      std::cerr << "chr " << chr << " is bigger than provided targets of " << h->n_targets << std::endl;
+      throw std::invalid_argument( "GenomicRegion::ChrName - not enough targets in BAM hdr to cover ref id");
     else
       cc = std::string(h->target_name[chr]);
   } else {
@@ -75,13 +75,21 @@ std::string GenomicRegion::toString() const {
   }
 
 void GenomicRegion::pad(int32_t pad) {
-  if (pad > pos1)
-    pos1 = 1;
-  else
-    pos1 = pos1-pad;
 
-  const int32_t maxpos = 250000000;
-  pos2 = std::min(pos2+pad, maxpos); // 2500000000 is dummy for now. should be chr end
+  if (-pad*2 > width())
+    throw std::out_of_range("GenomicRegion::pad - negative pad values can't obliterate GenomicRegion");
+
+  pos1 -= pad;
+  pos2 += pad;
+
+  //if (pad > pos1)
+  //  pos1 = 1;
+  //else
+  //  pos1 = pos1-pad;
+
+  //const int32_t maxpos = 250000000;
+  //pos2 = std::min(pos2+pad, maxpos); // 2500000000 is dummy for now. should be chr end
+
 }
 
 bool GenomicRegion::operator<(const GenomicRegion& b) const {
@@ -103,7 +111,7 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
 
 GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h) 
 {
-  // scrubtString
+  // scrub String
   std::string reg2 = SnowTools::scrubString(reg, "chr");
 
   // use htslib region parsing code
@@ -115,17 +123,17 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
     tmp[q - reg2.c_str()] = 0;
     tid = bam_name2id(h, tmp);
     if (tid < 0) {
-      std::cerr << "Failed to set region for region string " << reg << std::endl;
-      std::cerr << "chr-id " << tid << " pos1 " << beg << " pos2 " << end << std::endl;
-      exit(EXIT_FAILURE);
+      std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
+      throw std::invalid_argument(inv);
     }
   } else {
-    tid = bam_name2id(h, reg2.c_str());
-    beg = 0;
-    end = END_MAX;
-    std::cerr << "LTID " << tid << std::endl;
+    std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
+    throw std::invalid_argument(inv);
+    //tid = bam_name2id(h, reg2.c_str());
+    //beg = 0;
+    //end = END_MAX;
   }
-
+  
   chr = tid;
   pos1 = beg+1;
   pos2 = end;
@@ -172,7 +180,7 @@ bool GenomicRegion::isEmpty() const {
 }
 
 
-int GenomicRegion::distance(const GenomicRegion &gr) const {
+int32_t GenomicRegion::distance(const GenomicRegion &gr) const {
 
   if (gr.chr != chr)
     return -1;

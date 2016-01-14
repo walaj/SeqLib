@@ -48,8 +48,9 @@ class GenomicRegion {
    * to convert the text representation of the chr to the id number.
    * @param reg Samtools-style string (e.g. "1:1,000,000-2,000,000")
    * @param h Pointer to BAM header that will be used to convert chr string to ref id
+   * @exception throws an invalid_argument exception if cannot parse correctly
    */
-  GenomicRegion(const std::string& reg, bam_hdr_t* h);
+  GenomicRegion(const std::string& reg, bam_hdr_t* h = nullptr);
 
   /** Return a string representation of just the first base-pair 
    * e.g. 1:10,000
@@ -80,8 +81,9 @@ class GenomicRegion {
   bool isEmpty() const;
 
   /** Find the distance between two GenomicRegion objects
+   * If chr1 != chr2, 
    */
-  int distance(const GenomicRegion &gr) const;
+  int32_t distance(const GenomicRegion &gr) const;
 
   // define how these are to be sorted
   bool operator < (const GenomicRegion& b) const;
@@ -104,8 +106,16 @@ class GenomicRegion {
 
   std::string toString() const;
 
-  std::string ChrName(const bam_hdr_t* h) const;
+  /** Extract the chromosome name as a string 
+   * @param h BAM header with h->target_name field
+   * @exception throws an invalid_argument exception if ref id >= h->n_targets
+   */
+  std::string ChrName(const bam_hdr_t* h = nullptr) const;
 
+  /** Pad the object to make larger or smaller
+   * @param pad Amount to pad by.
+   * @exception throws an out_of_bounds if for pad < -width/2
+   */
   void pad(int32_t pad);
   
   int width() const;
