@@ -61,6 +61,38 @@ BOOST_AUTO_TEST_CASE( genomic_region_random ) {
   
 }
 
+BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
+
+  SnowTools::GenomicRegion gr("1:1-10");
+  SnowTools::GenomicRegion gr2("1:1-10");
+  gr.pad(3);
+  gr2.pad(-3);
+  BOOST_CHECK_EQUAL(gr.pos1,-2);
+  BOOST_CHECK_EQUAL(gr.pos2,13);
+  BOOST_CHECK_EQUAL(gr2.pos1,4);
+  BOOST_CHECK_EQUAL(gr2.pos2,7);
+
+  BOOST_CHECK_THROW(gr.pad(-10), std::invalid_argument);
+
+}
+
+BOOST_AUTO_TEST_CASE ( genomic_region_comparisons ) {
+
+  SnowTools::GenomicRegion gr1("1:1-10");
+  SnowTools::GenomicRegion gr2("1:2-11");
+  SnowTools::GenomicRegion gr3("2:2-11");
+
+  BOOST_CHECK_EQUAL(gr1 < gr2, true);
+  //BOOST_CHECK_EQUAL(gr2 > gr1, false);
+  BOOST_CHECK_EQUAL(gr1 <= gr2, true);
+  //BOOST_CHECK_EQUAL(gr2 >= gr1, false);
+  BOOST_CHECK_EQUAL(gr1 <= gr1, true);
+  //BOOST_CHECK_EQUAL(gr1 >= gr1, true);
+  BOOST_CHECK_EQUAL(gr1 < gr3, false);
+  //BOOST_CHECK_EQUAL(gr3 > gr1, true);
+
+}
+
 
 BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
 
@@ -69,6 +101,9 @@ BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
 
   SnowTools::GenomicRegion g2(0, 1, 10, '-');
   BOOST_CHECK_EQUAL(g2.toString(), "1:1-10(-)");
+
+  // check default ref to string conversion (no header)
+  BOOST_CHECK_EQUAL(gr.ChrName(), "X");
 }
 
 BOOST_AUTO_TEST_CASE( genomic_region_constructors_with_headers ) {
@@ -80,10 +115,18 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors_with_headers ) {
   SnowTools::GenomicRegion grh("GL000207.1", "0", "10", bw.header());
   BOOST_CHECK_EQUAL(grh.chr, 25);
 
+  // check that it can handle standard if no header
+  BOOST_CHECK_EQUAL(SnowTools::GenomicRegion("Y", "0", "10").chr, 23);
+
   // and that it can query the header
   BOOST_CHECK_EQUAL(grh.ChrName(bw.header()), "GL000207.1");
 
   // check for samtools string
+  BOOST_CHECK_EQUAL(SnowTools::GenomicRegion("1:1,000,000-2,000,000", bw.header()).chr,0);
+  BOOST_CHECK_EQUAL(SnowTools::GenomicRegion("1:1,000,000-2,000,000", bw.header()).pos1, 1000000);
+
+  // check that it handles bad input
+  BOOST_CHECK_THROW(SnowTools::GenomicRegion("1,000,000-2,000,000"), std::invalid_argument);
   
 }
 
