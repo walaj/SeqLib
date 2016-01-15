@@ -92,6 +92,10 @@ class BWAWrapper {
   /** Return the index */
   bwaidx_t* getIndex() const { return idx; }
 
+  /** Get the number of reference contigs in current index
+   */
+  int refCount() const;
+
  private:
 
   mem_opt_t * memopt;
