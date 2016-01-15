@@ -241,8 +241,7 @@ void GenomicRegion::random(int32_t seed) {
 	  else 
 	    chr = std::stoi(SnowTools::scrubString(tchr, "chr")) - 1;
 	} catch(...) {
-	  if (h > 0)
-	    std::cerr << "GenomicRegion: error making chr from string " << tchr << std::endl;
+	  std::cerr << "GenomicRegion: error making chr from string " << tchr << std::endl;
 	}
 	return;
       }
