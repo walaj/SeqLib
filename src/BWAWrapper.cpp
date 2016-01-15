@@ -14,6 +14,15 @@ extern "C" {
 
 namespace SnowTools {
 
+  int refCount() const {
+    
+    if (!idx)
+      return 0;
+
+    return idx->bns->n_seqs;
+    
+  }
+
   std::string BWAWrapper::ChrIDToName(int id) const {
     assert(idx);
     assert(id >= 0);
