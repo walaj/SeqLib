@@ -50,7 +50,7 @@ class GenomicRegion {
    * @param h Pointer to BAM header that will be used to convert chr string to ref id
    * @exception throws an invalid_argument exception if cannot parse correctly
    */
-  GenomicRegion(const std::string& reg, bam_hdr_t* h = nullptr);
+  GenomicRegion(const std::string& reg, bam_hdr_t* h);
 
   /** Return a string representation of just the first base-pair 
    * e.g. 1:10,000

@@ -434,14 +434,6 @@ class MiniRulesCollection {
   
   void sendToBed(std::string file);
 
-  // check if we should do the whole genome
-  bool hasWholeGenome() const {
-    for (auto it : m_regions)
-      if (it.m_whole_genome)
-	return true;
-    return false;
-  }
-
   size_t m_count = 0; // passed
   size_t m_count_seen = 0; // tested
 
