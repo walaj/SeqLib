@@ -99,6 +99,11 @@ class BWAWrapper {
    */
   int refCount() const;
 
+  /** Get information about the index
+   * @return string containing summary of index
+   */
+  std::string getInfo() const;
+
  private:
 
   mem_opt_t * memopt;
@@ -122,7 +127,7 @@ class BWAWrapper {
 
   void __write_pac_to_file(const std::string& file);
 
-  std::string __print_bns();
+  std::string print_bns();
 };
 
 }
