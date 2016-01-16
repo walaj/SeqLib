@@ -14,10 +14,23 @@ extern "C" {
 
 namespace SnowTools {
 
+  int BWAWrapper::refCount() const {
+    
+    if (!idx)
+      return 0;
+
+    return idx->bns->n_seqs;
+    
+  }
+
   std::string BWAWrapper::ChrIDToName(int id) const {
+
     assert(idx);
     assert(id >= 0);
-    assert(id < idx->bns->n_seqs);
+
+    if (id < 0 || id >= idx->bns->n_seqs) 
+      throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index");
+
     return std::string(idx->bns->anns[id].name);
   }
 
@@ -593,7 +606,7 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   }
 
 
-  void BWAWrapper::writeIndexToFiles(const std::string& index_name)
+  void BWAWrapper::writeIndex(const std::string& index_name)
   {
     
     if (!idx) {

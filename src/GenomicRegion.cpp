@@ -19,14 +19,24 @@ int GenomicRegion::getOverlap(const GenomicRegion gr) const {
   if (gr.chr != chr)
     return 0;
   
+  // argument pos1 is in
   bool gr1_in = gr.pos1 >= pos1 && gr.pos1 <= pos2;
+  // argument pos2 is in
   bool gr2_in = gr.pos2 >= pos1 && gr.pos2 <= pos2;
+  // object pos1 is in
   bool pos1_in = pos1 >= gr.pos1 && pos1 <= gr.pos2;
+  // object pos2 is in
   bool pos2_in = pos2 >= gr.pos1 && pos2 <= gr.pos2;
 
-  if ( (gr1_in && gr2_in) || (pos1_in && pos2_in) )
+  // object is in the argument
+  if (pos1_in && pos2_in) 
+    return 3;
+
+  // argument is in the oboject
+  if ( gr1_in && gr2_in)
     return 2;
 
+  // partial overlap
   if (gr1_in || gr2_in || pos1_in || pos2_in)
     return 1;
 
@@ -35,18 +45,19 @@ int GenomicRegion::getOverlap(const GenomicRegion gr) const {
 }
 
 
-  std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
-    std::string cc;
-    if (h) {
-      if (chr >= h->n_targets)
-	std::cerr << "chr " << chr << " is bigger than provided targets of " << h->n_targets << std::endl;
-      else
-	cc = std::string(h->target_name[chr]);
-    } else {
-      cc = chrToString(chr);
-    }
-    return cc;
+std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
+
+  std::string cc;
+  if (h) {
+    if (chr >= h->n_targets)
+      throw std::invalid_argument( "GenomicRegion::ChrName - not enough targets in BAM hdr to cover ref id");
+    else
+      cc = std::string(h->target_name[chr]);
+  } else {
+    cc = chrToString(chr);
   }
+  return cc;
+}
   
 // write genomic region to a string
 std::string GenomicRegion::toString() const {
@@ -64,13 +75,21 @@ std::string GenomicRegion::toString() const {
   }
 
 void GenomicRegion::pad(int32_t pad) {
-  if (pad > pos1)
-    pos1 = 1;
-  else
-    pos1 = pos1-pad;
 
-  const int32_t maxpos = 250000000;
-  pos2 = std::min(pos2+pad, maxpos); // 2500000000 is dummy for now. should be chr end
+  if (-pad*2 > width())
+    throw std::out_of_range("GenomicRegion::pad - negative pad values can't obliterate GenomicRegion");
+
+  pos1 -= pad;
+  pos2 += pad;
+
+  //if (pad > pos1)
+  //  pos1 = 1;
+  //else
+  //  pos1 = pos1-pad;
+
+  //const int32_t maxpos = 250000000;
+  //pos2 = std::min(pos2+pad, maxpos); // 2500000000 is dummy for now. should be chr end
+
 }
 
 bool GenomicRegion::operator<(const GenomicRegion& b) const {
@@ -92,7 +111,7 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
 
 GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h) 
 {
-  // scrubtString
+  // scrub String
   std::string reg2 = SnowTools::scrubString(reg, "chr");
 
   // use htslib region parsing code
@@ -104,77 +123,44 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
     tmp[q - reg2.c_str()] = 0;
     tid = bam_name2id(h, tmp);
     if (tid < 0) {
-      std::cerr << "Failed to set region for region string " << reg << std::endl;
-      std::cerr << "chr-id " << tid << " pos1 " << beg << " pos2 " << end << std::endl;
-      exit(EXIT_FAILURE);
+      std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
+      throw std::invalid_argument(inv);
     }
   } else {
-    tid = bam_name2id(h, reg2.c_str());
-    beg = 0;
-    end = END_MAX;
-    std::cerr << "LTID " << tid << std::endl;
+    std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
+    throw std::invalid_argument(inv);
+    //tid = bam_name2id(h, reg2.c_str());
+    //beg = 0;
+    //end = END_MAX;
   }
-
+  
   chr = tid;
   pos1 = beg+1;
   pos2 = end;
 
 }
 
-// constructor for SnowTools::GenomicRegion that takes strings. Assumes chr string is in 
-// natural (1, ..., X) or (chr1, ..., chrX) format. That is, it converts to
-// BamTools format with a -1 operation.
-/*GenomicRegion::GenomicRegion(std::string t_chr, std::string t_pos1, std::string t_pos2) {
-
-  chr = GenomicRegion::chrToNumber(t_chr);
-  try {
-    t_pos1 = SnowTools::scrubString(t_pos1, ",");
-    t_pos2 = SnowTools::scrubString(t_pos2, ",");
-    pos1 = std::stoi(t_pos1);
-    pos2 = std::stoi(t_pos2);
-  } catch (...) { 
-    std::cerr << "stoi failed in GenomicRegion constructor. Tried: " << t_pos1 << " " << t_pos2 << std::endl;
-  }
-}
-*/
-
 // constructor to take a pair of coordinates to define the genomic interval
-GenomicRegion::GenomicRegion(int32_t t_chr, uint32_t t_pos1, uint32_t t_pos2, char t_strand) {
+GenomicRegion::GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char t_strand) {
+
+  if (t_pos2 < t_pos1 )
+    throw std::invalid_argument( "GenomicRegion constructor: end pos must be >= start pos" );
+
+  if ( !(t_strand == '+' || t_strand == '-' || t_strand == '*') )
+    throw std::invalid_argument( "GenomicRegion constructor: strand must be one of +, -, *" );
+
   chr = t_chr;
   pos1 = t_pos1;
   pos2 = t_pos2;
   strand = t_strand;
+
 }
 
-// convert a chromosome string into a number
-int GenomicRegion::chrToNumber(std::string ref) {
-
-  // remove the chr identifier if it is there
-  if (ref.find("chr") != std::string::npos)
-    ref = ref.substr(3, ref.size() - 3);
-
-  std::string ref_id = ref;
-  if (ref_id == "X")
-    ref_id = "23";
-  else if (ref_id == "Y")
-    ref_id = "24";
-  else if (ref_id == "M" || ref_id == "MT")
-    ref_id = "25";
-  
-  int out = -1;
-  try {
-    out = std::stoi(ref_id);
-  } catch (...) {
-    //cerr << "Caught error trying to convert " << ref << " to number" << endl;
-  }
-
-  //assert(out > 0);
-  return (out-1); // offset by one becuase chr1 = 0 in BamAlignment coords
-}
-
-// convert a chromosome number to a string. Assumes 
-// a natural ordering (1, ...), not BamTools ordering (0, ...)
 std::string GenomicRegion::chrToString(int32_t ref) {
+
+  if (ref < 0)
+    throw std::invalid_argument( "GenomicRegion::chrToString - ref id must be >= 0" );
+  
   std::string ref_id;
   if (ref == 22)
     ref_id = "X";
@@ -194,18 +180,7 @@ bool GenomicRegion::isEmpty() const {
 }
 
 
-//
-/*uint32_t GenomicRegion::posToBigPos(int refid, int pos) {
-  
-  if (refid < 25)
-    return 0;
-  
-  return CHR_CLEN[refid] + pos;
-  
-  }*/
-
-
-int GenomicRegion::distance(const GenomicRegion &gr) const {
+int32_t GenomicRegion::distance(const GenomicRegion &gr) const {
 
   if (gr.chr != chr)
     return -1;
@@ -214,7 +189,7 @@ int GenomicRegion::distance(const GenomicRegion &gr) const {
 
 }
 
-void GenomicRegion::random(uint32_t seed) {
+void GenomicRegion::random(int32_t seed) {
   
   uint32_t big;
   SnowTools::genRandomValue(big, SnowTools::genome_size_XY, seed);
@@ -228,6 +203,7 @@ void GenomicRegion::random(uint32_t seed) {
       pos2 = pos1;
       return;
     }
+  
   std::cerr << "Value of " << big << " outside of expected range."  << std::endl;
   exit(EXIT_FAILURE);
   
@@ -265,8 +241,7 @@ void GenomicRegion::random(uint32_t seed) {
 	  else 
 	    chr = std::stoi(SnowTools::scrubString(tchr, "chr")) - 1;
 	} catch(...) {
-	  if (h > 0)
-	    std::cerr << "GenomicRegion: error making chr from string " << tchr << std::endl;
+	  std::cerr << "GenomicRegion: error making chr from string " << tchr << std::endl;
 	}
 	return;
       }

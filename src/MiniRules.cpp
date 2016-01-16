@@ -297,9 +297,9 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       } else {
 	boost::regex file_reg(".*?region@(.*?)(;|$)");
 	boost::cmatch match;
-	if (boost::regex_match(line.c_str(), match, file_reg))
+	if (boost::regex_match(line.c_str(), match, file_reg)) {
 	  mr.setRegionFromFile(match[1].str());
-	else {
+	} else {
 	  std::cerr << "Could not parse line: " << line << " to grab region " << std::endl;
 	  exit(EXIT_FAILURE);
 	}
@@ -1190,8 +1190,9 @@ GRC MiniRulesCollection::getAllRegions() const
 {
 
   // check for "discordant" shortcut
-  boost::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\]($|;)");
+  boost::regex  regex_disc( ".*?discordant\\[([0-9]+),([0-9]+)\\].*$");
   boost::cmatch omatch;
+
   if (boost::regex_match(line.c_str(), omatch, regex_disc)) {
     bool isneg = line.find("!discordant[") != std::string::npos;
     try {

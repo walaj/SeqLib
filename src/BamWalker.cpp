@@ -145,11 +145,11 @@ void BamWalker::MakeIndex() {
 
 }
 
-bool BamWalker::OpenReadBam(FILE * stdin) 
+/*bool BamWalker::OpenReadBam(FILE * stdin) 
 {
   
   return __open_BAM_for_reading();
-}
+  }*/
 
 
 bool BamWalker::OpenReadBam(const std::string& bam) 
