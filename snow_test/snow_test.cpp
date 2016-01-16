@@ -5,8 +5,12 @@
 #include "SnowTools/GenomicRegion.h"
 #include "SnowTools/BamWalker.h"
 #include "SnowTools/BWAWrapper.h"
+#include "SnowTools/GenomicRegionCollection.h"
 
 #define SBAM "test_data/small.bam"
+#define OBAM "test_data/small_out.bam"
+#define OCRAM "test_data/small_out.cram"
+#define HGREF "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta"
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp.fa"
 
@@ -183,13 +187,15 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
   SnowTools::USeqVector usv = {
     {"ref3", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
-    {"ref4", "CTACTTTATCATCTACACACTGCTACTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"}};
+    {"ref4", "CTACTTTATCATCTACACACTGCTACTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"},
+    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
 
   bwa.constructIndex(usv);
 
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(0), "ref3");
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref4");
-  BOOST_CHECK_THROW(bwa.ChrIDToName(2), std::out_of_range);
+  BOOST_CHECK_EQUAL(bwa.ChrIDToName(2), "ref5");
+  BOOST_CHECK_THROW(bwa.ChrIDToName(3), std::out_of_range);
 
   // write the index
   bwa.writeIndex(OREF);
@@ -198,7 +204,9 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   std::ofstream os;
   os.open(OREF);
   os << "<" << usv[0].name << std::endl << usv[0].seq <<
-    std::endl << usv[1].name << std::endl << usv[1].seq << std::endl;
+    std::endl << usv[1].name << std::endl << usv[1].seq << 
+    std::endl << usv[2].name << std::endl << usv[2].seq << 
+    std::endl;
 
   // read it back
   bwa.retrieveIndex(OREF);
@@ -208,14 +216,84 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref4");
   
   // try aligning a sequence
-  SnowTools::BamReadVector brv;
+  SnowTools::BamReadVector brv, brv2;
   bwa.alignSingleSequence("ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCG", "name", brv, 0.9, 1);
+  // reverse complement
+  bwa.alignSingleSequence("CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGC", "name", brv2, 0.9, 2);
 
   BOOST_CHECK_EQUAL(brv[0].Qname(), "name");
-  BOOST_CHECK_EQUAL(brv[0].ChrID(), 0);
-  BOOST_CHECK_EQUAL(brv[0].Sequence(), "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCG");
+  BOOST_CHECK_EQUAL(brv[0].ChrID(), 2);
+  BOOST_CHECK_EQUAL(brv[0].Sequence(), "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT");
   BOOST_CHECK_EQUAL(brv[0].GetCigar()[0].Type, 'M');
   BOOST_CHECK_EQUAL(brv[0].GetCigar()[0].Length, 38);
+
+  // check that it got both alignments
+  BOOST_CHECK_EQUAL(brv2.size(), 2);
+
+  // print info 
+  std::cerr << bwa.getInfo() << std::endl;
   
+}
+
+BOOST_AUTO_TEST_CASE( bam_walker ) {
+
+  SnowTools::BamWalker bw(SBAM);
+
+  // open index
+  bw.setBamWalkerRegion(SnowTools::GenomicRegion(22, 1000000, 1001000));
+
+  // make a set of locations
+  SnowTools::GRC grc;
+  grc.add(SnowTools::GenomicRegion(0, 1, 100));
+  grc.add(SnowTools::GenomicRegion(1, 1, 100));
+
+  // set regions
+  bw.setBamWalkerRegions(grc.asGenomicRegionVector());
+
+  // write index of new bam
+  // should print a warning since no write bam is specified
+  bw.makeIndex();
+
+  // open an output BAM
+  bw.OpenWriteBam(OBAM);
+
+  // set tags to strip
+  bw.setStripTags("OQ,BI");
+
+  // loop through and grab some reads
+  SnowTools::BamRead r;
+  bool rule;
+  size_t count = 0;
+  while (bw.GetNextRead(r, rule)) {
+    if (++count % 10 == 0)
+      bw.writeAlignment(r);
+  }
+  
+  // display info about BAM
+  std::cerr << bw << std::endl;
+
+  // write index of new bam
+  bw.makeIndex();
+
+  // reset the walker
+  bw.resetAll();
+
+  // write as a cram
+  bw.OpenWriteBam(OCRAM);
+    
+  //
+  bw.setCram(OCRAM, HGREF);
+
+  // print cram writer
+  std::cerr << bw << std::endl;
+  // write the CRAM
+  while (bw.GetNextRead(r, rule)) {
+    if (++count % 10 == 0) {
+      std::cerr << count << std::endl;
+      bw.writeAlignment(r);
+    }
+  }
+
+
 
 }

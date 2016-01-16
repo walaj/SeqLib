@@ -8,6 +8,7 @@ echo "...trying coveralls"
 #then
   sudo pip install cpp-coveralls
   cd snow_test
+  rm snow_test-snow-test.gcno ## dont get cov on test prog
   ./snow_test
   cpp-coveralls -r ../ -e examples -e doxy -e R -e rtdocs -t ${COVERALLS_TOKEN}
 #fi
