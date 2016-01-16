@@ -384,10 +384,10 @@ namespace SnowTools {
     
     // 3+ mappings. If all good, then don't make the "global"
     // Actually, do make the global
-    bool make_locals = true;
-    for (size_t i = 1; i < m_frag_v.size() - 1; ++i)
-      if (m_frag_v[i].m_align.MapQuality() < 50)
-	make_locals = false;
+    //bool make_locals = true;
+    //for (size_t i = 1; i < m_frag_v.size() - 1; ++i)
+    //  if (m_frag_v[i].m_align.MapQuality() < 50)
+    //	make_locals = false;
     
     //if (make_locals) { // intermediates are good, so just leave locals as-is
     //  return;
@@ -804,13 +804,13 @@ namespace SnowTools {
     } catch (...) { 
       std::cerr << "Caught substring error for string: " << bp.seq << " start " << rstart << " len " << rlen << std::endl;
     }
-    for (auto& i : repr) {
+    /*for (auto& i : repr) {
       if (rr.find(i) != std::string::npos) {
 	bp.repeat_seq = i;
 	break;
       }
     }
-
+    */
     assert(bp.valid());
     return true;
   }
