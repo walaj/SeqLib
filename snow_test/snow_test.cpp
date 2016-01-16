@@ -6,6 +6,10 @@
 #include "SnowTools/BamWalker.h"
 #include "SnowTools/BWAWrapper.h"
 
+#define SBAM "test_data/small.bam"
+#define TREF "test_data/test_ref.fa"
+#define OREF "tmp.fa"
+
 BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
 
   // GenomicRegion Constructors
@@ -80,7 +84,8 @@ BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 BOOST_AUTO_TEST_CASE ( genomic_region_comparisons ) {
 
   // grab a header 
-  SnowTools::BamWalker bw("small.bam");
+  BOOST_TEST(SnowTools::read_access_test(SBAM));
+  SnowTools::BamWalker bw(SBAM);
 
   SnowTools::GenomicRegion gr1("1:1-10", bw.header());
   SnowTools::GenomicRegion gr2("1:2-11", bw.header());
@@ -112,7 +117,8 @@ BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
 BOOST_AUTO_TEST_CASE( genomic_region_constructors_with_headers ) {
 
   // grab a header 
-  SnowTools::BamWalker bw("small.bam");
+  BOOST_TEST(SnowTools::read_access_test(SBAM));
+  SnowTools::BamWalker bw(SBAM);
 
   // check that it sets the chr number correctly
   SnowTools::GenomicRegion grh("GL000207.1", "0", "10", bw.header());
@@ -163,7 +169,8 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   SnowTools::BWAWrapper bwa;
 
   // load a test index
-  bwa.retrieveIndex("test_ref.fa");
+  BOOST_TEST(SnowTools::read_access_test(TREF));
+  bwa.retrieveIndex(TREF);
 
   BOOST_CHECK_EQUAL(bwa.refCount(), 2);
 
@@ -185,16 +192,16 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_THROW(bwa.ChrIDToName(2), std::out_of_range);
 
   // write the index
-  bwa.writeIndex("tmp.fa");
+  bwa.writeIndex(OREF);
 
   // write the fasta
   std::ofstream os;
-  os.open("tmp.fa");
+  os.open(OREF);
   os << "<" << usv[0].name << std::endl << usv[0].seq <<
     std::endl << usv[1].name << std::endl << usv[1].seq << std::endl;
 
   // read it back
-  bwa.retrieveIndex("tmp.fa");
+  bwa.retrieveIndex(OREF);
 
   // check that its good
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(0), "ref3");
