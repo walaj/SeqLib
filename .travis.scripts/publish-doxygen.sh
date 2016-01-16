@@ -16,7 +16,10 @@
   git clone --branch=gh-pages https://${GH_TOKEN}@github.com/jwalabroad/SnowTools gh-pages;
   cd gh-pages;
   rm -rf doxygen/;
+  ls
   mv ../docs/html doxygen/;
+  echo "...listing doc" 
+  cd doxygen && ls && cd ..
   git add doxygen/;
   git commit -am "Latest doxygen documentation on successful travis build ${TRAVIS_BUILD_NUMBER} auto-pushed";
   git push origin gh-pages 
