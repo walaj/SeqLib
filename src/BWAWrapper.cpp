@@ -14,7 +14,7 @@ extern "C" {
 
 namespace SnowTools {
 
-  int refCount() const {
+  int BWAWrapper::refCount() const {
     
     if (!idx)
       return 0;
