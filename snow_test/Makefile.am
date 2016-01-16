@@ -34,7 +34,6 @@ libsnowtest_a_SOURCES = $(top_builddir)/src/GenomicRegion.cpp \
 	$(top_builddir)/src/Histogram.cpp $(top_builddir)/src/BamWalker.cpp $(top_builddir)/src/BamStats.cpp \
 	$(top_builddir)/src/MiniRules.cpp $(top_builddir)/src/SnowUtils.cpp $(top_builddir)/src/BamRead.cpp \
 	$(top_builddir)/src/BWAWrapper.cpp $(top_builddir)/src/STCoverage.cpp \
-        $(top_builddir)/src/DiscordantCluster.cpp $(top_builddir)/src/Fractions.cpp \
-	$(top_builddir)/src/BreakPoint2.cpp $(top_builddir)/src/AlignedContig2.cpp 
+        $(top_builddir)/src/Fractions.cpp
 
 snow_test_SOURCES = snow_test.cpp snow_test_main.cpp 

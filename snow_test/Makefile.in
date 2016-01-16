@@ -62,10 +62,7 @@ am_libsnowtest_a_OBJECTS = libsnowtest_a-GenomicRegion.$(OBJEXT) \
 	libsnowtest_a-BamRead.$(OBJEXT) \
 	libsnowtest_a-BWAWrapper.$(OBJEXT) \
 	libsnowtest_a-STCoverage.$(OBJEXT) \
-	libsnowtest_a-DiscordantCluster.$(OBJEXT) \
-	libsnowtest_a-Fractions.$(OBJEXT) \
-	libsnowtest_a-BreakPoint2.$(OBJEXT) \
-	libsnowtest_a-AlignedContig2.$(OBJEXT)
+	libsnowtest_a-Fractions.$(OBJEXT)
 libsnowtest_a_OBJECTS = $(am_libsnowtest_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -218,8 +215,7 @@ libsnowtest_a_SOURCES = $(top_builddir)/src/GenomicRegion.cpp \
 	$(top_builddir)/src/Histogram.cpp $(top_builddir)/src/BamWalker.cpp $(top_builddir)/src/BamStats.cpp \
 	$(top_builddir)/src/MiniRules.cpp $(top_builddir)/src/SnowUtils.cpp $(top_builddir)/src/BamRead.cpp \
 	$(top_builddir)/src/BWAWrapper.cpp $(top_builddir)/src/STCoverage.cpp \
-        $(top_builddir)/src/DiscordantCluster.cpp $(top_builddir)/src/Fractions.cpp \
-	$(top_builddir)/src/BreakPoint2.cpp $(top_builddir)/src/AlignedContig2.cpp 
+        $(top_builddir)/src/Fractions.cpp
 
 snow_test_SOURCES = snow_test.cpp snow_test_main.cpp 
 all: all-am
@@ -310,13 +306,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-AlignedContig2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-BamRead.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-BamStats.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-BamWalker.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-BreakPoint2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-DiscordantCluster.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-Fractions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-GenomicRegion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtest_a-Histogram.Po@am__quote@
@@ -466,20 +459,6 @@ libsnowtest_a-STCoverage.obj: $(top_builddir)/src/STCoverage.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-STCoverage.obj `if test -f '$(top_builddir)/src/STCoverage.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/STCoverage.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/STCoverage.cpp'; fi`
 
-libsnowtest_a-DiscordantCluster.o: $(top_builddir)/src/DiscordantCluster.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtest_a-DiscordantCluster.o -MD -MP -MF $(DEPDIR)/libsnowtest_a-DiscordantCluster.Tpo -c -o libsnowtest_a-DiscordantCluster.o `test -f '$(top_builddir)/src/DiscordantCluster.cpp' || echo '$(srcdir)/'`$(top_builddir)/src/DiscordantCluster.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtest_a-DiscordantCluster.Tpo $(DEPDIR)/libsnowtest_a-DiscordantCluster.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/src/DiscordantCluster.cpp' object='libsnowtest_a-DiscordantCluster.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-DiscordantCluster.o `test -f '$(top_builddir)/src/DiscordantCluster.cpp' || echo '$(srcdir)/'`$(top_builddir)/src/DiscordantCluster.cpp
-
-libsnowtest_a-DiscordantCluster.obj: $(top_builddir)/src/DiscordantCluster.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtest_a-DiscordantCluster.obj -MD -MP -MF $(DEPDIR)/libsnowtest_a-DiscordantCluster.Tpo -c -o libsnowtest_a-DiscordantCluster.obj `if test -f '$(top_builddir)/src/DiscordantCluster.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/DiscordantCluster.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/DiscordantCluster.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtest_a-DiscordantCluster.Tpo $(DEPDIR)/libsnowtest_a-DiscordantCluster.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/src/DiscordantCluster.cpp' object='libsnowtest_a-DiscordantCluster.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-DiscordantCluster.obj `if test -f '$(top_builddir)/src/DiscordantCluster.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/DiscordantCluster.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/DiscordantCluster.cpp'; fi`
-
 libsnowtest_a-Fractions.o: $(top_builddir)/src/Fractions.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtest_a-Fractions.o -MD -MP -MF $(DEPDIR)/libsnowtest_a-Fractions.Tpo -c -o libsnowtest_a-Fractions.o `test -f '$(top_builddir)/src/Fractions.cpp' || echo '$(srcdir)/'`$(top_builddir)/src/Fractions.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtest_a-Fractions.Tpo $(DEPDIR)/libsnowtest_a-Fractions.Po
@@ -493,34 +472,6 @@ libsnowtest_a-Fractions.obj: $(top_builddir)/src/Fractions.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/src/Fractions.cpp' object='libsnowtest_a-Fractions.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-Fractions.obj `if test -f '$(top_builddir)/src/Fractions.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/Fractions.cpp'; fi`
-
-libsnowtest_a-BreakPoint2.o: $(top_builddir)/src/BreakPoint2.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtest_a-BreakPoint2.o -MD -MP -MF $(DEPDIR)/libsnowtest_a-BreakPoint2.Tpo -c -o libsnowtest_a-BreakPoint2.o `test -f '$(top_builddir)/src/BreakPoint2.cpp' || echo '$(srcdir)/'`$(top_builddir)/src/BreakPoint2.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtest_a-BreakPoint2.Tpo $(DEPDIR)/libsnowtest_a-BreakPoint2.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/src/BreakPoint2.cpp' object='libsnowtest_a-BreakPoint2.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-BreakPoint2.o `test -f '$(top_builddir)/src/BreakPoint2.cpp' || echo '$(srcdir)/'`$(top_builddir)/src/BreakPoint2.cpp
-
-libsnowtest_a-BreakPoint2.obj: $(top_builddir)/src/BreakPoint2.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtest_a-BreakPoint2.obj -MD -MP -MF $(DEPDIR)/libsnowtest_a-BreakPoint2.Tpo -c -o libsnowtest_a-BreakPoint2.obj `if test -f '$(top_builddir)/src/BreakPoint2.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/BreakPoint2.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/BreakPoint2.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtest_a-BreakPoint2.Tpo $(DEPDIR)/libsnowtest_a-BreakPoint2.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/src/BreakPoint2.cpp' object='libsnowtest_a-BreakPoint2.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-BreakPoint2.obj `if test -f '$(top_builddir)/src/BreakPoint2.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/BreakPoint2.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/BreakPoint2.cpp'; fi`
-
-libsnowtest_a-AlignedContig2.o: $(top_builddir)/src/AlignedContig2.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtest_a-AlignedContig2.o -MD -MP -MF $(DEPDIR)/libsnowtest_a-AlignedContig2.Tpo -c -o libsnowtest_a-AlignedContig2.o `test -f '$(top_builddir)/src/AlignedContig2.cpp' || echo '$(srcdir)/'`$(top_builddir)/src/AlignedContig2.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtest_a-AlignedContig2.Tpo $(DEPDIR)/libsnowtest_a-AlignedContig2.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/src/AlignedContig2.cpp' object='libsnowtest_a-AlignedContig2.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-AlignedContig2.o `test -f '$(top_builddir)/src/AlignedContig2.cpp' || echo '$(srcdir)/'`$(top_builddir)/src/AlignedContig2.cpp
-
-libsnowtest_a-AlignedContig2.obj: $(top_builddir)/src/AlignedContig2.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtest_a-AlignedContig2.obj -MD -MP -MF $(DEPDIR)/libsnowtest_a-AlignedContig2.Tpo -c -o libsnowtest_a-AlignedContig2.obj `if test -f '$(top_builddir)/src/AlignedContig2.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/AlignedContig2.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/AlignedContig2.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtest_a-AlignedContig2.Tpo $(DEPDIR)/libsnowtest_a-AlignedContig2.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/src/AlignedContig2.cpp' object='libsnowtest_a-AlignedContig2.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtest_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtest_a-AlignedContig2.obj `if test -f '$(top_builddir)/src/AlignedContig2.cpp'; then $(CYGPATH_W) '$(top_builddir)/src/AlignedContig2.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/AlignedContig2.cpp'; fi`
 
 snow_test-snow_test.o: snow_test.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-snow_test.o -MD -MP -MF $(DEPDIR)/snow_test-snow_test.Tpo -c -o snow_test-snow_test.o `test -f 'snow_test.cpp' || echo '$(srcdir)/'`snow_test.cpp
