@@ -1,3 +1,3 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = modular-boost bwa htslib src
+SUBDIRS = bwa htslib src snow_test
 

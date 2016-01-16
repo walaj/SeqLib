@@ -62,14 +62,13 @@ class BWAWrapper {
       free(memopt);
   }
   
-  /** Retrieve the sequence name from its ID */
+  /** Retrieve the sequence name from its ID 
+   * @exception throws an out_of_bounds if id not found
+   */
   std::string ChrIDToName(int id) const;
 
   /** Create a bam_hdr_t from the loaded index files */
   bam_hdr_t * HeaderFromIndex() const;
-
-  /** Convert a bns to a header string */
-  std::string bwa_print_sam_hdr2(const bntseq_t *bns, const char *hdr_line) const;
 
   /** Construct a bam_hdr_t from a header string */
   bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;
@@ -78,25 +77,36 @@ class BWAWrapper {
 			   double keep_sec_with_frac_of_primary_score, int max_secondary);
 
   /** Construct a new bwa index for this object. 
+   * @param v vector of references to input (e.g. v = {{"r1", "AT"}};)
    */
   void constructIndex(const USeqVector& v);
 
   /** Retrieve a bwa index object from disk
+   * @param file path a to an index fasta (index with bwa index)
    */
   void retrieveIndex(const std::string& file);
 
   /** Dump the stored index to files 
+   * Note that this does not write the fasta itself
+   * @param index_name write index files (*.sai, *.pac, *.ann, *.bwt, *.amb)
    */
-  void writeIndexToFiles(const std::string& index_name);
+  void writeIndex(const std::string& index_name);
 
   /** Return the index */
   bwaidx_t* getIndex() const { return idx; }
+
+  /** Get the number of reference contigs in current index
+   */
+  int refCount() const;
 
  private:
 
   mem_opt_t * memopt;
 
   bwaidx_t* idx = 0;
+
+  // Convert a bns to a header string 
+  std::string bwa_print_sam_hdr2(const bntseq_t *bns, const char *hdr_line) const;
 
   // overwrite the bwa bwt_pac2pwt function
   bwt_t *__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr);
