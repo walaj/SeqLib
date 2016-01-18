@@ -5296,7 +5296,7 @@ done
 # Make sure the boost headers can be found
 #AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
 
-ac_config_files="$ac_config_files Makefile snow_test/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile snow_test/Makefile htslib/Makefile src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -5944,6 +5944,7 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "snow_test/Makefile") CONFIG_FILES="$CONFIG_FILES snow_test/Makefile" ;;
+    "htslib/Makefile") CONFIG_FILES="$CONFIG_FILES htslib/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
