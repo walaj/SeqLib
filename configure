@@ -5100,6 +5100,7 @@ fi
     else
         boost_lib="$with_boost/lib"
     fi
+    boost_lib_flag="-L/$boost_lib"
 
 fi
 
@@ -5123,11 +5124,11 @@ CFLAGS="$CFLAGS -O3"
 
 CPPFLAGS="$CPPFLAGS -I. $boost_include"
 
-LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $boost_lib_flag"
 
 
 # We always need to specify to link in bamtools
-LIBS="$LIBS"
+LIBS="$LIBS -lboost_regex"
 
 
 # Make sure the HTSlib headers can be found
