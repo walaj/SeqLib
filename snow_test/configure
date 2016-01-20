@@ -600,7 +600,7 @@ PACKAGE_VERSION='1.0'
 PACKAGE_STRING='snowtools 1.0'
 PACKAGE_BUGREPORT='jwala@broadinstitute.org'
 
-ac_unique_file="src/SnowTools.cpp"
+ac_unique_file="snow_test.cpp"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -5100,7 +5100,6 @@ fi
     else
         boost_lib="$with_boost/lib"
     fi
-    boost_lib_flag="-L/$boost_lib"
 
 fi
 
@@ -5124,20 +5123,14 @@ CFLAGS="$CFLAGS -O3"
 
 CPPFLAGS="$CPPFLAGS -I. $boost_include"
 
-LDFLAGS="$LDFLAGS $boost_lib_flag"
+LDFLAGS="$LDFLAGS"
 
 
 # We always need to specify to link in bamtools
-LIBS="$LIBS -lboost_regex"
+LIBS="$LIBS"
 
 
-# Make sure the HTSlib headers can be found
-##AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
-
-# Make sure the HTSlib headers can be found
-##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
-
-# Make sure the bamtools headers can be found
+# Make sure the boost headers can be found
 
 for ac_header in boost/regex.hpp
 do
@@ -5294,10 +5287,7 @@ fi
 done
 
 
-# Make sure the boost headers can be found
-#AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
-
-ac_config_files="$ac_config_files Makefile snow_test/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -5944,8 +5934,6 @@ do
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "snow_test/Makefile") CONFIG_FILES="$CONFIG_FILES snow_test/Makefile" ;;
-    "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 $as_echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

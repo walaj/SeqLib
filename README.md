@@ -11,6 +11,33 @@ API Documentation
 -----------------
 [API Documentation][htmldoc]
 
+Installation
+------------
+
+#######
+```bash
+### if on Broad Institute servers, add GCC-4.9
+reuse -q GCC-4.9
+
+############## DOWNLOAD AND INSTALL BOOST ###############
+############## (only if not already installed) ##########
+git clone --recursive https://github.com/boostorg/boost.git
+cd boost
+./bootstrap.sh --with-libraries=regex
+./b2
+
+
+############### DOWNLOAD SNOWTOOLS ############### 
+git clone https://github.com/jwalabroad/SnowTools.git
+cd SnowTools
+
+############### COMPILE AND INSTALL ###############
+./configure --with-boost=<path_to_boost>
+make
+```
+ 
+I have successfully compiled with GCC-4.8+ on Linux.
+
 Description
 -----------
 
@@ -55,16 +82,6 @@ SnowTools/BamTools differences
 > 4. SnowTools contains a built in interface to BWA-MEM for in-memory indexing and querying.
 > 5. SnowTools supports reading and writing CRAM files
 
-Installation
-------------
-```bash
- git clone https://github.com/broadinstitute/isva.git
- cd isva/SnowTools/src
- ./configure
- make
-```
- 
-I have successfully compiled with GCC-4.9 on Linux.
 
 Support
 -------
