@@ -65,7 +65,8 @@ AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be ins
 #AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile
-	         snow_test/Makefile
+	         snow_test/Makefile	
+		 htslib/Makefile
 	         src/Makefile])
 
 AC_OUTPUT
