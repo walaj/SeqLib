@@ -30,7 +30,7 @@ CPPFLAGS = -I/broad/hptmp/HCC1143 -I. -I/xchip/gistic/Jeremiah/GIT/boost ##$(AM_
 # TODO: probably update cram code to make it compile cleanly with -Wc++-compat
 CFLAGS   = -g -Wall -O3
 EXTRA_CFLAGS_PIC = -fpic
-LDFLAGS  = 
+LDFLAGS  =  -L//xchip/gistic/Jeremiah/GIT/boost/stage/lib
 LDLIBS   =
 
 # For now these don't work too well as samtools also needs to know to

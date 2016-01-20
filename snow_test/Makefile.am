@@ -5,6 +5,7 @@ bin_PROGRAMS = snow_test
 snow_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
+     -I.. \
      -I$(top_srcdir)/../multifast-v1.4.2 --coverage
 
 snow_test_LDADD = \
