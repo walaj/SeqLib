@@ -531,7 +531,7 @@ void AbstractRule::parseRuleLine(std::string line) {
   // parse the line for flag rules (also checks syntax)
   fr.parseRuleLine(noname);
 
-#ifndef __xAPPLE__
+#ifndef __APPLE__
   // parse aho corasick file, if not already inheretid
   if (!atm) {
     std::istringstream iss_m(noname);
