@@ -136,8 +136,11 @@ void BamWalker::__close_write_bam()
   
 }
 // closes the BamWriter and makes an index file
-void BamWalker::MakeIndex() {
+void BamWalker::makeIndex() {
   
+  if (!fop)
+    std::cerr << "WARNING: Trying to close write BAM when none specified" << std::endl;
+
   __close_write_bam();
   
   // call to htslib to buiild bai index
@@ -335,7 +338,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
   return true;
 }
 
-void BamWalker::WriteAlignment(BamRead &r)
+void BamWalker::writeAlignment(BamRead &r)
 {
 
   if (m_strip_all_tags)

@@ -193,7 +193,6 @@ namespace SnowTools {
 
 #ifdef DEBUG_BWATOOLS
     std::cout << "num hits: " << ar.n << std::endl;
-    //std::cout << __print_bns() << std::endl;
 #endif    
 
     double primary_score = 0;
@@ -206,9 +205,7 @@ namespace SnowTools {
       
       // get forward-strand position and CIGAR
       mem_aln_t a;
-#ifdef DEBUG_BWATOOLS
-      std::cerr << "awdlfkajsdf" << std::endl;
-#endif
+
       a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
 
       //if (name == "c_1_1453100_1473100_12")
@@ -509,8 +506,8 @@ uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only, bool write_f
 	_set_pac(pac, bns->l_pac, 3-_get_pac(pac, l));
     }
 
-  if (write_file)
-  { // finalize .pac file
+  /*
+  if (write_file) { // finalize .pac file
     FILE *fp;
     fp = xopen("mem_test.pac", "wb");
     ubyte_t ct;
@@ -526,6 +523,7 @@ uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only, bool write_f
     err_fflush(fp);
     err_fclose(fp);
   }
+  */
 
   bns_destroy(bns);
   
@@ -645,7 +643,7 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
     err_fclose(fp);
   }
 
-  std::string BWAWrapper::__print_bns()
+  std::string BWAWrapper::getInfo() const
   {
     std::stringstream  ss;
     

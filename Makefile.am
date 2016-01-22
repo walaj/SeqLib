@@ -1,3 +1,3 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib src snow_test
+SUBDIRS = bwa htslib src
 

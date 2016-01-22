@@ -2,7 +2,7 @@
 AC_PREREQ(2.59) ## specificy version of autoconf
 AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
 AM_INIT_AUTOMAKE(foreign)
-AC_CONFIG_SRCDIR([src/SnowTools.cpp])
+AC_CONFIG_SRCDIR([snow_test.cpp])
 AC_CONFIG_HEADER([config.h])
 AM_MAINTAINER_MODE([disable])
 ##m4_include([m4/m4_ax_openmp.m4])
@@ -30,7 +30,6 @@ if test "$with_boost" -a -d "$with_boost"; then
     else
         boost_lib="$with_boost/lib"        
     fi
-    boost_lib_flag="-L/$boost_lib"
     AC_SUBST(boost_lib)	
 fi
 
@@ -47,26 +46,14 @@ AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "$CXXFLAGS -O3")
 AC_SUBST(CFLAGS, "$CFLAGS -O3")
 AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $boost_include")
-AC_SUBST(LDFLAGS, "$LDFLAGS $boost_lib_flag")
+AC_SUBST(LDFLAGS, "$LDFLAGS")
 
 # We always need to specify to link in bamtools
-AC_SUBST(LIBS, "$LIBS -lboost_regex")
-
-# Make sure the HTSlib headers can be found
-##AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
-
-# Make sure the HTSlib headers can be found
-##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
-
-# Make sure the bamtools headers can be found
-AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
+AC_SUBST(LIBS, "$LIBS")
 
 # Make sure the boost headers can be found
-#AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
+AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
 
-AC_CONFIG_FILES([Makefile
-	         snow_test/Makefile	
-		 htslib/Makefile
-	         src/Makefile])
+AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT
