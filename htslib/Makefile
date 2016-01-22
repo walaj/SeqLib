@@ -26,7 +26,7 @@ CC     = gcc
 AR     = ar
 RANLIB = ranlib
 
-CPPFLAGS = -I/broad/hptmp/HCC1143 -I. -I/xchip/gistic/Jeremiah/GIT/boost ##$(AM_CPPFLAGS) $(CPPFLAGS)
+CPPFLAGS =  -I. -I/xchip/gistic/Jeremiah/GIT/boost ##$(AM_CPPFLAGS) $(CPPFLAGS)
 # TODO: probably update cram code to make it compile cleanly with -Wc++-compat
 CFLAGS   = -g -Wall -O3
 EXTRA_CFLAGS_PIC = -fpic
