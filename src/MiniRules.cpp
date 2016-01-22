@@ -713,7 +713,7 @@ void Range::parseRuleLine(std::string line) {
       r.QualityTrimmedSequence(phred.min, startpoint, endpoint);
       new_len = endpoint - startpoint;
       
-      if (endpoint != -1 && new_len < r.Length() && new_len > 0 && new_len - startpoint >= 0 && startpoint + new_len < r.Length()) { 
+      if (endpoint != -1 && new_len < r.Length() && new_len > 0 && new_len - startpoint >= 0 && startpoint + new_len <= r.Length()) { 
 	try { 
 	  r.AddZTag("GV", r.Sequence().substr(startpoint, new_len));
 	  assert(r.GetZTag("GV").length());
