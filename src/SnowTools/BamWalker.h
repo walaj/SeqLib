@@ -101,7 +101,7 @@ class BamWalker {
    *
    * This will make a call to HTSlib bam_index_build for the output file.
    */
-  void MakeIndex();
+  void makeIndex();
 
   /** Print a run-time message to stdout.
    *
@@ -155,7 +155,7 @@ class BamWalker {
   /** Write an alignment to the output BAM file 
    * @param r The BamRead to save
    */
-  void WriteAlignment(BamRead &r);
+  void writeAlignment(BamRead &r);
 
   /** Return the MiniRulesCollection object used by this BamWalker
    */
