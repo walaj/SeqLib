@@ -3,7 +3,9 @@ noinst_LIBRARIES = libsnowtools.a
 libsnowtools_a_CPPFLAGS = \
         -I.. \
 	-I../multifast-v1.4.2 \
-        -I../htslib 
+        -I../htslib \
+	-I../SGA/Util -I../SGA/Bigraph -I../SGA/SuffixTools \
+	-I../SGA/Algorithm -I../SGA/SQG -I../SGA/SGA
 
 libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
 

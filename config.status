@@ -322,7 +322,7 @@ on `(hostname || uname -n) 2>/dev/null | sed 1q`
 "
 
 # Files that config.status was made for.
-config_files=" Makefile snow_test/Makefile htslib/Makefile src/Makefile"
+config_files=" Makefile snow_test/Makefile htslib/Makefile SGA/Util/Makefile SGA/Bigraph/Makefile SGA/Algorithm/Makefile SGA/StringGraph/Makefile SGA/SuffixTools/Makefile SGA/SGA/Makefile src/Makefile"
 config_headers=" config.h"
 config_commands=" depfiles"
 
@@ -471,6 +471,12 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "snow_test/Makefile") CONFIG_FILES="$CONFIG_FILES snow_test/Makefile" ;;
     "htslib/Makefile") CONFIG_FILES="$CONFIG_FILES htslib/Makefile" ;;
+    "SGA/Util/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/Util/Makefile" ;;
+    "SGA/Bigraph/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/Bigraph/Makefile" ;;
+    "SGA/Algorithm/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/Algorithm/Makefile" ;;
+    "SGA/StringGraph/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/StringGraph/Makefile" ;;
+    "SGA/SuffixTools/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/SuffixTools/Makefile" ;;
+    "SGA/SGA/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/SGA/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
