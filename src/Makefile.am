@@ -3,11 +3,14 @@ noinst_LIBRARIES = libsnowtools.a
 libsnowtools_a_CPPFLAGS = \
         -I.. \
 	-I../multifast-v1.4.2 \
-        -I../htslib 
+        -I../htslib \
+	-I../SGA/Util -I../SGA/Bigraph -I../SGA/SuffixTools \
+	-I../SGA/Algorithm -I../SGA/SQG -I../SGA/SGA
 
 libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
 
-libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp \
+libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
+			AlignedContig.cpp BreakPoint.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
 			STCoverage.cpp Fractions.cpp \

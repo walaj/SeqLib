@@ -67,6 +67,12 @@ AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be ins
 AC_CONFIG_FILES([Makefile
 	         snow_test/Makefile	
 		 htslib/Makefile
+		 SGA/Util/Makefile
+		 SGA/Bigraph/Makefile
+		 SGA/Algorithm/Makefile
+		 SGA/StringGraph/Makefile
+		 SGA/SuffixTools/Makefile
+		 SGA/SGA/Makefile
 	         src/Makefile])
 
 AC_OUTPUT
