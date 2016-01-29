@@ -82,6 +82,7 @@ AC_CONFIG_FILES([Makefile
 	         snow_test/Makefile	
 		 htslib/Makefile
 		 SGA/Util/Makefile
+		 SGA/SQG/Makefile
 		 SGA/Bigraph/Makefile
 		 SGA/Algorithm/Makefile
 		 SGA/StringGraph/Makefile
