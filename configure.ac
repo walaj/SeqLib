@@ -58,6 +58,12 @@ AC_SUBST(LIBS, "$LIBS -lboost_regex")
 # Make sure the HTSlib headers can be found
 ##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
 
+# Check for hash table headers
+AC_CHECK_HEADERS([ \
+	google/sparse_hash_set google/sparse_hash_map \
+	unordered_map tr1/unordered_map ext/hash_map \
+	unordered_set tr1/unordered_set ext/hash_set \
+])
 # Make sure the bamtools headers can be found
 AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
 
@@ -71,6 +77,7 @@ AC_CONFIG_FILES([Makefile
 		 SGA/Bigraph/Makefile
 		 SGA/Algorithm/Makefile
 		 SGA/StringGraph/Makefile
+		 SGA/Concurrency/Makefile
 		 SGA/SuffixTools/Makefile
 		 SGA/SGA/Makefile
 	         src/Makefile])
