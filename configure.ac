@@ -64,6 +64,14 @@ AC_CHECK_HEADERS([ \
 	unordered_map tr1/unordered_map ext/hash_map \
 	unordered_set tr1/unordered_set ext/hash_set \
 ])
+
+# Check for hash table headers
+AC_CHECK_HEADERS([ \
+	google/sparse_hash_set google/sparse_hash_map \
+	unordered_map tr1/unordered_map ext/hash_map \
+	unordered_set tr1/unordered_set ext/hash_set \
+])
+
 # Make sure the bamtools headers can be found
 AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
 
