@@ -9,8 +9,8 @@
 #include <cstring>
 #include <memory>
 
-#include "SnowTools/SnowUtils.h"
 #include "SnowTools/SnowToolsCommon.h"
+#include "SnowTools/SnowUtils.h"
 
 #include "htslib/sam.h"
 
