@@ -32,7 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-subdir = src/SGA/SQG
+subdir = SGA/SQG
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -162,9 +162,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libsqg.a
 libsqg_a_CPPFLAGS = \
-	-I$(top_srcdir)/src/SGA/Bigraph \
-	-I$(top_srcdir)/src/SGA/Thirdparty \
-	-I$(top_srcdir)/src/SGA/Util
+	-I$(top_srcdir)/SGA/Bigraph \
+	-I$(top_srcdir)/SGA/Thirdparty \
+	-I$(top_srcdir)/SGA/Util
 
 libsqg_a_SOURCES = \
         SQG.h SQG.cpp \
@@ -183,9 +183,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/SGA/SQG/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign SGA/SQG/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/SGA/SQG/Makefile
+	  $(AUTOMAKE) --foreign SGA/SQG/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
