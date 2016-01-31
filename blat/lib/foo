@@ -1,0 +1,287 @@
+9c1dccaa (kent           2001-03-01 18:21:16 +0000   1) /* lineFile - stuff to rapidly read text files and parse them into
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700   2)  * lines.
+1ac42cff (kent           2002-09-02 04:07:51 +0000   3)  *
+1ac42cff (kent           2002-09-02 04:07:51 +0000   4)  * This file is copyright 2002 Jim Kent, but license is hereby
+1ac42cff (kent           2002-09-02 04:07:51 +0000   5)  * granted for all use - public, private or commercial. */
+1ac42cff (kent           2002-09-02 04:07:51 +0000   6) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000   7) #ifndef LINEFILE_H
+9c1dccaa (kent           2001-03-01 18:21:16 +0000   8) #define LINEFILE_H
+9c1dccaa (kent           2001-03-01 18:21:16 +0000   9) 
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700  10) #include "dystring.h"
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700  11) 
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  12) #ifdef USE_TABIX
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  13) #include "tabix.h"
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  14) #endif
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  15) 
+628e2c36 (galt           2005-05-17 23:40:23 +0000  16) enum nlType {
+628e2c36 (galt           2005-05-17 23:40:23 +0000  17)  nlt_undet, /* undetermined */
+628e2c36 (galt           2005-05-17 23:40:23 +0000  18)  nlt_unix,  /* lf   */
+628e2c36 (galt           2005-05-17 23:40:23 +0000  19)  nlt_dos,   /* crlf */
+91bc56fa (galt           2005-08-11 18:05:08 +0000  20)  nlt_mac    /* cr   */
+628e2c36 (galt           2005-05-17 23:40:23 +0000  21) };
+628e2c36 (galt           2005-05-17 23:40:23 +0000  22) 
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  23) struct metaOutput
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700  24) /* struct to store list of file handles to output meta data to
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  25)  * meta data is text after # */
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  26)     {
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  27)     struct metaOutput *next;    /* next file handle */
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  28)     FILE *metaFile;             /* file to write metadata to */
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  29)     };
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  30) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  31) struct lineFile
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  32) /* Structure to handle fast, line oriented
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  33)  * fileIo. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  34)     {
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  35)     struct lineFile *next;	/* Might need to be on a list. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  36)     char *fileName;		/* Name of file. */
+6581afbc (kent           2004-04-15 07:28:29 +0000  37)     int fd;			/* File handle.  -1 for 'memory' files. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  38)     int bufSize;		/* Size of buffer. */
+b868b7db (markd          2002-12-08 17:09:36 +0000  39)     off_t bufOffsetInFile;	/* Offset in file of first buffer byte. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  40)     int bytesInBuf;		/* Bytes read into buffer. */
+6581afbc (kent           2004-04-15 07:28:29 +0000  41)     int reserved;		/* Reserved (zero for now). */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  42)     int lineIx;			/* Current line. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  43)     int lineStart;		/* Offset of line in buffer. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  44)     int lineEnd;		/* End of line in buffer. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  45)     bool zTerm;			/* Replace '\n' with zero? */
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700  46)     enum nlType nlType;         /* type of line endings: dos, unix, mac or undet */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  47)     bool reuse;			/* Set if reusing input. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  48)     char *buf;			/* Buffer. */
+303319a1 (markd          2004-08-09 17:08:17 +0000  49)     struct pipeline *pl;        /* pipeline if reading compressed */
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000  50)     struct metaOutput *metaOutput;   /* list of FILE handles to write metaData to */
+8fc35c67 (kate           2006-06-18 23:07:43 +0000  51)     bool isMetaUnique;          /* if set, do not repeat comments in output */
+8fc35c67 (kate           2006-06-18 23:07:43 +0000  52)     struct hash *metaLines;     /* save lines to suppress repetition */
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  53) #ifdef USE_TABIX
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  54)     tabix_t *tabix;		/* A tabix-compressed file and its binary index file (.tbi) */
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  55)     ti_iter_t tabixIter;	/* An iterator to get decompressed indexed lines of text */
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800  56) #endif
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700  57)     struct dyString *fullLine;  // Filled with full line when a lineFileNextFull is called
+13f82230 (Tim Dreszer    2011-04-18 14:12:51 -0700  58)     struct dyString *rawLines;  // Filled with raw lines used to create the full line
+8cec4ba1 (Tim Dreszer    2011-04-15 22:52:50 -0700  59)     boolean fullLineReuse;      // If TRUE, next call to lineFileNextFull will get already built fullLine
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  60) 
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  61)     struct bbiFile *bbiHandle;                            // BigBed handle
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  62)     struct bbiChromInfo *bbiChrom, *bbiChromList;         // BigBed chrom info
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  63)     struct lm *bbiLm;                                     // BigBed local memory
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  64)     struct bigBedInterval *bbiInterval, *bbiIntervalList; // BigBed intervals
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  65)     };
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  66) 
+d22435c7 (galt           2005-10-10 20:18:36 +0000  67) char *getFileNameFromHdrSig(char *m);
+d22435c7 (galt           2005-10-10 20:18:36 +0000  68) /* Check if header has signature of supported compression stream,
+d22435c7 (galt           2005-10-10 20:18:36 +0000  69)    and return a phoney filename for it, or NULL if no sig found. */
+d22435c7 (galt           2005-10-10 20:18:36 +0000  70) 
+d22435c7 (galt           2005-10-10 20:18:36 +0000  71) struct lineFile *lineFileDecompressFd(char *name, bool zTerm, int fd);
+d36fc7ed (galt           2005-09-30 20:59:20 +0000  72) /* open a linefile with decompression from a file or socket descriptor */
+d36fc7ed (galt           2005-09-30 20:59:20 +0000  73) 
+d22435c7 (galt           2005-10-10 20:18:36 +0000  74) struct lineFile *lineFileDecompressMem(bool zTerm, char *mem, long size);
+d22435c7 (galt           2005-10-10 20:18:36 +0000  75) /* open a linefile with decompression from a memory stream */
+d22435c7 (galt           2005-10-10 20:18:36 +0000  76) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  77) struct lineFile *lineFileMayOpen(char *fileName, bool zTerm);
+303319a1 (markd          2004-08-09 17:08:17 +0000  78) /* Try and open up a lineFile. If fileName ends in .gz, .Z, or .bz2,
+303319a1 (markd          2004-08-09 17:08:17 +0000  79)  * it will be read from a decompress pipeline. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  80) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  81) struct lineFile *lineFileOpen(char *fileName, bool zTerm);
+303319a1 (markd          2004-08-09 17:08:17 +0000  82) /* Open up a lineFile or die trying If fileName ends in .gz, .Z, or .bz2,
+303319a1 (markd          2004-08-09 17:08:17 +0000  83)  * it will be read from a decompress pipeline.. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  84) 
+7c0c46b2 (galt           2005-08-17 03:01:30 +0000  85) struct lineFile *lineFileAttach(char *fileName, bool zTerm, int fd);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  86) /* Wrap a line file around an open'd file. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  87) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  88) struct lineFile *lineFileStdin(bool zTerm);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  89) /* Wrap a line file around stdin. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  90) 
+6581afbc (kent           2004-04-15 07:28:29 +0000  91) struct lineFile *lineFileOnString(char *name, bool zTerm, char *s);
+6581afbc (kent           2004-04-15 07:28:29 +0000  92) /* Wrap a line file object around string in memory. This buffer
+6581afbc (kent           2004-04-15 07:28:29 +0000  93)  * have zeroes written into it if zTerm is non-zero.  It will
+6581afbc (kent           2004-04-15 07:28:29 +0000  94)  * be freed when the line file is closed. */
+6581afbc (kent           2004-04-15 07:28:29 +0000  95) 
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  96) struct lineFile *lineFileOnBigBed(char *bigBedFileName);
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  97) /* Wrap a line file object around a BigBed. */
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700  98) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000  99) void lineFileClose(struct lineFile **pLf);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 100) /* Close up a line file. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 101) 
+31ad0dd6 (kent           2006-07-26 06:03:00 +0000 102) void lineFileCloseList(struct lineFile **pList);
+31ad0dd6 (kent           2006-07-26 06:03:00 +0000 103) /* Close up a list of line files. */
+31ad0dd6 (kent           2006-07-26 06:03:00 +0000 104) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 105) boolean lineFileNext(struct lineFile *lf, char **retStart, int *retSize);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 106) /* Fetch next line from file. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 107) 
+13f82230 (Tim Dreszer    2011-04-18 14:12:51 -0700 108) boolean lineFileNextFull(struct lineFile *lf, char **retFull, int *retFullSize,
+13f82230 (Tim Dreszer    2011-04-18 14:12:51 -0700 109)                         char **retRaw, int *retRawSize);
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 110) // Fetch next line from file joining up any that are continued by ending '\'
+13f82230 (Tim Dreszer    2011-04-18 14:12:51 -0700 111) // If requested, and was joined, the unjoined raw lines are also returned
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 112) // NOTE: comment lines can't be continued!  ("# comment \ \n more comment" is 2 lines.)
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 113) 
+0899b85e (kent           2002-11-27 05:07:56 +0000 114) boolean lineFileNextReal(struct lineFile *lf, char **retStart);
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 115) /* Fetch next line from file that is not blank and
+0899b85e (kent           2002-11-27 05:07:56 +0000 116)  * does not start with a '#'. */
+0899b85e (kent           2002-11-27 05:07:56 +0000 117) 
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 118) boolean lineFileNextFullReal(struct lineFile *lf, char **retStart);
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 119) // Fetch next line from file that is not blank and does not start with a '#'.
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 120) // Continuation lines (ending in '\') are joined into a single line.
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 121) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 122) void lineFileNeedNext(struct lineFile *lf, char **retStart, int *retSize);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 123) /* Fetch next line from file.  Squawk and die if it's not there. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 124) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 125) void lineFileReuse(struct lineFile *lf);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 126) /* Reuse current line. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 127) 
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 128) void lineFileReuseFull(struct lineFile *lf);
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 129) // Reuse last full line read.  Unlike lineFileReuse,
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 130) // lineFileReuseFull only works with previous lineFileNextFull call
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 131) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 132) #define lineFileString(lf) ((lf)->buf + (lf)->lineStart)
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 133) /* Current string in line file. */
+5d795f18 (kent           2002-05-31 05:32:44 +0000 134) 
+5d795f18 (kent           2002-05-31 05:32:44 +0000 135) #define lineFileTell(lf) ((lf)->bufOffsetInFile + (lf)->lineStart)
+5d795f18 (kent           2002-05-31 05:32:44 +0000 136) /* Current offset (of string start) in file. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 137) 
+7f5b93f3 (kent           2002-09-21 01:33:06 +0000 138) void lineFileSeek(struct lineFile *lf, off_t offset, int whence);
+7f5b93f3 (kent           2002-09-21 01:33:06 +0000 139) /* Seek to read next line from given position. */
+de97fc85 (kent           2006-08-07 15:48:05 +0000 140) 
+c338ba5f (kent           2009-06-23 23:39:10 +0000 141) void lineFileRewind(struct lineFile *lf);
+c338ba5f (kent           2009-06-23 23:39:10 +0000 142) /* Return lineFile to start. */
+c338ba5f (kent           2009-06-23 23:39:10 +0000 143) 
+18c663e6 (kent           2006-08-07 15:57:47 +0000 144) void lineFileAbort(struct lineFile *lf, char *format, ...)
+de97fc85 (kent           2006-08-07 15:48:05 +0000 145) /* Print file name, line number, and error message, and abort. */
+251ee519 (markd          2008-02-21 02:13:26 +0000 146) #if defined(__GNUC__)
+d660d0ab (kent           2006-08-07 15:55:04 +0000 147) __attribute__((format(printf, 2, 3)))
+d660d0ab (kent           2006-08-07 15:55:04 +0000 148) #endif
+d660d0ab (kent           2006-08-07 15:55:04 +0000 149) ;
+de97fc85 (kent           2006-08-07 15:48:05 +0000 150) 
+18c663e6 (kent           2006-08-07 15:57:47 +0000 151) void lineFileVaAbort(struct lineFile *lf, char *format, va_list args);
+de97fc85 (kent           2006-08-07 15:48:05 +0000 152) /* Print file name, line number, and error message, and abort. */
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 153) 
+d8f1c532 (kent           2004-03-11 07:03:07 +0000 154) void lineFileUnexpectedEnd(struct lineFile *lf);
+d8f1c532 (kent           2004-03-11 07:03:07 +0000 155) /* Complain about unexpected end of file. */
+d8f1c532 (kent           2004-03-11 07:03:07 +0000 156) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 157) void lineFileExpectWords(struct lineFile *lf, int expecting, int got);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 158) /* Check line has right number of words. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 159) 
+0899b85e (kent           2002-11-27 05:07:56 +0000 160) void lineFileExpectAtLeast(struct lineFile *lf, int expecting, int got);
+0899b85e (kent           2002-11-27 05:07:56 +0000 161) /* Check line has right number of words. */
+0899b85e (kent           2002-11-27 05:07:56 +0000 162) 
+ef5728a9 (kent           2003-10-01 23:12:53 +0000 163) void lineFileShort(struct lineFile *lf);
+ef5728a9 (kent           2003-10-01 23:12:53 +0000 164) /* Complain that line is too short. */
+ef5728a9 (kent           2003-10-01 23:12:53 +0000 165) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 166) boolean lineFileNextRow(struct lineFile *lf, char *words[], int wordCount);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 167) /* Return next non-blank line that doesn't start with '#' chopped into words.
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 168)  * Returns FALSE at EOF.  Aborts on error. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 169) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 170) #define lineFileRow(lf, words) lineFileNextRow(lf, words, ArraySize(words))
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 171) /* Read in line chopped into fixed size word array. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 172) 
+c0ce3b27 (sugnet         2003-04-29 17:39:17 +0000 173) boolean lineFileNextCharRow(struct lineFile *lf, char sep, char *words[], int wordCount);
+c0ce3b27 (sugnet         2003-04-29 17:39:17 +0000 174) /* Return next non-blank line that doesn't start with '#' chopped into words
+c0ce3b27 (sugnet         2003-04-29 17:39:17 +0000 175)  * delimited by sep. Returns FALSE at EOF.  Aborts on error. */
+c0ce3b27 (sugnet         2003-04-29 17:39:17 +0000 176) 
+b868b7db (markd          2002-12-08 17:09:36 +0000 177) boolean lineFileNextRowTab(struct lineFile *lf, char *words[], int wordCount);
+b868b7db (markd          2002-12-08 17:09:36 +0000 178) /* Return next non-blank line that doesn't start with '#' chopped into words
+b868b7db (markd          2002-12-08 17:09:36 +0000 179)  * at tabs. Returns FALSE at EOF.  Aborts on error. */
+b868b7db (markd          2002-12-08 17:09:36 +0000 180) 
+f7358a0d (kent           2003-12-01 20:09:31 +0000 181) #define lineFileRowTab(lf, words) \
+f7358a0d (kent           2003-12-01 20:09:31 +0000 182) 	lineFileNextRowTab(lf, words, ArraySize(words))
+f7358a0d (kent           2003-12-01 20:09:31 +0000 183) /* Read in line chopped by tab into fixed size word array. */
+f7358a0d (kent           2003-12-01 20:09:31 +0000 184) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 185) int lineFileChopNext(struct lineFile *lf, char *words[], int maxWords);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 186) /* Return next non-blank line that doesn't start with '#' chopped into words. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 187) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 188) #define lineFileChop(lf, words) lineFileChopNext(lf, words, ArraySize(words))
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 189) /* Ease-of-usef macro for lineFileChopNext above. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 190) 
+1ebd589d (hartera        2005-04-14 21:20:48 +0000 191) int lineFileChopCharNext(struct lineFile *lf, char sep, char *words[], int maxWords);
+72f32693 (hartera        2005-04-14 21:17:52 +0000 192) /* Return next non-blank line that doesn't start with '#' chopped into
+72f32693 (hartera        2005-04-14 21:17:52 +0000 193)    words delimited by sep. */
+72f32693 (hartera        2005-04-14 21:17:52 +0000 194) 
+b868b7db (markd          2002-12-08 17:09:36 +0000 195) int lineFileChopNextTab(struct lineFile *lf, char *words[], int maxWords);
+b868b7db (markd          2002-12-08 17:09:36 +0000 196) /* Return next non-blank line that doesn't start with '#' chopped into words
+b868b7db (markd          2002-12-08 17:09:36 +0000 197)  * on tabs */
+b868b7db (markd          2002-12-08 17:09:36 +0000 198) 
+5260dc3e (kent           2004-01-31 02:59:17 +0000 199) #define lineFileChopTab(lf, words) lineFileChopNextTab(lf, words, ArraySize(words))
+5260dc3e (kent           2004-01-31 02:59:17 +0000 200) /* Ease-of-usef macro for lineFileChopNext above. */
+5260dc3e (kent           2004-01-31 02:59:17 +0000 201) 
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 202) int lineFileCheckAllIntsNoAbort(char *s, void *val, 
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 203)     boolean isSigned, int byteCount, char *typeString, boolean noNeg, 
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 204)     char *errMsg, int errMsgSize);
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 205) /* Convert string to (signed) integer of the size specified.  
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 206)  * Unlike atol assumes all of string is number, no trailing trash allowed.
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 207)  * Returns 0 if conversion possible, and value is returned in 'val'
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 208)  * Otherwise 1 for empty string or trailing chars, and 2 for numeric overflow,
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 209)  * and 3 for (-) sign in unsigned number.
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 210)  * Error messages if any are written into the provided buffer.
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 211)  * Pass NULL val if you only want validation.
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 212)  * Use noNeg if negative values are not allowed despite the type being signed,
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 213)  * returns 4. */
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 214) 
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 215) void lineFileAllInts(struct lineFile *lf, char *words[], int wordIx, void *val,
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 216)   boolean isSigned,  int byteCount, char *typeString, boolean noNeg);
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 217) /* Returns long long integer from converting the input string. Aborts on error. */
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 218) 
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 219) int lineFileAllIntsArray(struct lineFile *lf, char *words[], int wordIx, void *array, int arraySize,
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 220)   boolean isSigned,  int byteCount, char *typeString, boolean noNeg);
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 221) /* Convert comma separated list of numbers to an array.  Pass in
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 222)  * array and max size of array. Aborts on error. Returns number of elements in parsed array. */
+2866dd07 (Galt Barber    2012-04-13 17:08:01 -0700 223) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 224) int lineFileNeedNum(struct lineFile *lf, char *words[], int wordIx);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 225) /* Make sure that words[wordIx] is an ascii integer, and return
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 226)  * binary representation of it. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 227) 
+5df439c5 (kate           2004-04-22 16:35:21 +0000 228) int lineFileNeedFullNum(struct lineFile *lf, char *words[], int wordIx);
+5df439c5 (kate           2004-04-22 16:35:21 +0000 229) /* Make sure that words[wordIx] is an ascii integer, and return
+5df439c5 (kate           2004-04-22 16:35:21 +0000 230)  * binary representation of it. Require all chars in word to be digits.*/
+5df439c5 (kate           2004-04-22 16:35:21 +0000 231) 
+9b941573 (hiram          2003-12-10 00:26:33 +0000 232) double lineFileNeedDouble(struct lineFile *lf, char *words[], int wordIx);
+9b941573 (hiram          2003-12-10 00:26:33 +0000 233) /* Make sure that words[wordIx] is an ascii double value, and return
+9b941573 (hiram          2003-12-10 00:26:33 +0000 234)  * binary representation of it. */
+9b941573 (hiram          2003-12-10 00:26:33 +0000 235) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 236) void lineFileSkip(struct lineFile *lf, int lineCount);
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 237) /* Skip a number of lines. */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 238) 
+a043bcae (kent           2007-03-23 08:12:42 +0000 239) char *lineFileSkipToLineStartingWith(struct lineFile *lf, char *start, int maxCount);
+a043bcae (kent           2007-03-23 08:12:42 +0000 240) /* Skip to next line that starts with given string.  Return NULL
+a043bcae (kent           2007-03-23 08:12:42 +0000 241)  * if no such line found, otherwise return the line. */
+a043bcae (kent           2007-03-23 08:12:42 +0000 242) 
+1f1ad773 (Jim Kent       2011-02-01 12:38:07 -0800 243) char *lineFileReadAll(struct lineFile *lf);
+1f1ad773 (Jim Kent       2011-02-01 12:38:07 -0800 244) /* Read remainder of lineFile and return it as a string. */
+1f1ad773 (Jim Kent       2011-02-01 12:38:07 -0800 245) 
+542f0592 (angie          2002-06-29 00:30:15 +0000 246) boolean lineFileParseHttpHeader(struct lineFile *lf, char **hdr,
+542f0592 (angie          2002-06-29 00:30:15 +0000 247) 				boolean *chunked, int *contentLength);
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 248) /* Extract HTTP response header from lf into hdr, tell if it's
+542f0592 (angie          2002-06-29 00:30:15 +0000 249)  * "Transfer-Encoding: chunked" or if it has a contentLength. */
+542f0592 (angie          2002-06-29 00:30:15 +0000 250) 
+542f0592 (angie          2002-06-29 00:30:15 +0000 251) struct dyString *lineFileSlurpHttpBody(struct lineFile *lf,
+542f0592 (angie          2002-06-29 00:30:15 +0000 252) 				       boolean chunked, int contentLength);
+fcd12f2b (Tim Dreszer    2011-04-15 17:42:16 -0700 253) /* Return a dyString that contains the http response body in lf.  Handle
+542f0592 (angie          2002-06-29 00:30:15 +0000 254)  * chunk-encoding and content-length. */
+542f0592 (angie          2002-06-29 00:30:15 +0000 255) 
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000 256) void lineFileSetMetaDataOutput(struct lineFile *lf, FILE *f);
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000 257) /* set file to write meta data to,
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000 258)  * should be called before reading from input file */
+b472c1b9 (baertsch       2005-08-18 07:16:11 +0000 259) 
+8fc35c67 (kate           2006-06-18 23:07:43 +0000 260) void lineFileSetUniqueMetaData(struct lineFile *lf);
+8fc35c67 (kate           2006-06-18 23:07:43 +0000 261) /* suppress duplicate lines in metadata */
+8fc35c67 (kate           2006-06-18 23:07:43 +0000 262) 
+6a5809bc (braney         2010-06-10 20:12:00 +0000 263) 
+6a5809bc (braney         2010-06-10 20:12:00 +0000 264) void lineFileRemoveInitialCustomTrackLines(struct lineFile *lf);
+6a5809bc (braney         2010-06-10 20:12:00 +0000 265) /* remove initial browser and track lines */
+6a5809bc (braney         2010-06-10 20:12:00 +0000 266) 
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 267) /*----- Optionally-compiled wrapper on tabix (compression + indexing): -----*/
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 268) 
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 269) #define COMPILE_WITH_TABIX "%s: Sorry, this functionality is available only when\n" \
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 270)     "you have installed the tabix library from\n" \
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 271)      "http://samtools.sourceforge.net/ and rebuilt kent/src with USE_TABIX=1\n" \
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 272)      "(see http://genomewiki.ucsc.edu/index.php/Build_Environment_Variables)."
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 273) 
+84f9843f (Angie Hinrichs 2011-03-22 10:57:28 -0700 274) struct lineFile *lineFileTabixMayOpen(char *fileOrUrl, bool zTerm);
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 275) /* Wrap a line file around a data file that has been compressed and indexed
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 276)  * by the tabix command line program.  The index file <fileName>.tbi must be
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 277)  * readable in addition to fileName. If there's a problem, warn & return NULL.
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 278)  * This works only if kent/src has been compiled with USE_TABIX=1 and linked
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 279)  * with the tabix C library. */
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 280) 
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 281) boolean lineFileSetTabixRegion(struct lineFile *lf, char *seqName, int start, int end);
+84f9843f (Angie Hinrichs 2011-03-22 10:57:28 -0700 282) /* Assuming lf was created by lineFileTabixMayOpen, tell tabix to seek to the specified region
+19eaeb4d (Angie Hinrichs 2011-02-11 10:52:15 -0800 283)  * and return TRUE (or if there are no items in region, return FALSE). */
+16439684 (Angie Hinrichs 2011-02-22 11:36:43 -0800 284) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 285) #endif /* LINEFILE_H */
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 286) 
+9c1dccaa (kent           2001-03-01 18:21:16 +0000 287) 
