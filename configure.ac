@@ -71,6 +71,7 @@ AC_CONFIG_FILES([Makefile
 		 SGA/StringGraph/Makefile
 		 SGA/SuffixTools/Makefile
 		 SGA/SQG/Makefile
-	         src/Makefile])
+	         src/Makefile
+		 tools/Makefile])
 
 AC_OUTPUT

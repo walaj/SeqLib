@@ -46,10 +46,12 @@ LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
 libsnowtools_a_AR = $(AR) $(ARFLAGS)
-libsnowtools_a_DEPENDENCIES = ../bwa/libbwa.a ../htslib/libhts.a
+libsnowtools_a_DEPENDENCIES = ../bwa/libbwa.a ../htslib/libhts.a \
+	../blat/lib/jkweb.a ../blat/lib/jkOwnLib.a
 am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-Histogram.$(OBJEXT) \
 	libsnowtools_a-RefGenome.$(OBJEXT) \
+	libsnowtools_a-BLATWrapper.$(OBJEXT) \
 	libsnowtools_a-AlignedContig.$(OBJEXT) \
 	libsnowtools_a-BreakPoint.$(OBJEXT) \
 	libsnowtools_a-BamWalker.$(OBJEXT) \
@@ -188,10 +190,10 @@ libsnowtools_a_CPPFLAGS = \
 	-I../multifast-v1.4.2 \
         -I../htslib \
 	-I../SGA/Util -I../SGA/Bigraph -I../SGA/SuffixTools \
-	-I../SGA/Algorithm -I../SGA/SQG -I../SGA/SGA
+	-I../SGA/Algorithm -I../SGA/SQG -I../blat/inc
 
-libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
-libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
+libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ../blat/lib/jkweb.a ../blat/lib/jkOwnLib.a
+libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp BLATWrapper.cpp \
 			AlignedContig.cpp BreakPoint.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
@@ -251,6 +253,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-AlignedContig.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BLATWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamRead.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamStats.Po@am__quote@
@@ -329,6 +332,20 @@ libsnowtools_a-RefGenome.obj: RefGenome.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='RefGenome.cpp' object='libsnowtools_a-RefGenome.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-RefGenome.obj `if test -f 'RefGenome.cpp'; then $(CYGPATH_W) 'RefGenome.cpp'; else $(CYGPATH_W) '$(srcdir)/RefGenome.cpp'; fi`
+
+libsnowtools_a-BLATWrapper.o: BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BLATWrapper.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-BLATWrapper.Tpo -c -o libsnowtools_a-BLATWrapper.o `test -f 'BLATWrapper.cpp' || echo '$(srcdir)/'`BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-BLATWrapper.Tpo $(DEPDIR)/libsnowtools_a-BLATWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BLATWrapper.cpp' object='libsnowtools_a-BLATWrapper.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BLATWrapper.o `test -f 'BLATWrapper.cpp' || echo '$(srcdir)/'`BLATWrapper.cpp
+
+libsnowtools_a-BLATWrapper.obj: BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BLATWrapper.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-BLATWrapper.Tpo -c -o libsnowtools_a-BLATWrapper.obj `if test -f 'BLATWrapper.cpp'; then $(CYGPATH_W) 'BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BLATWrapper.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-BLATWrapper.Tpo $(DEPDIR)/libsnowtools_a-BLATWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BLATWrapper.cpp' object='libsnowtools_a-BLATWrapper.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BLATWrapper.obj `if test -f 'BLATWrapper.cpp'; then $(CYGPATH_W) 'BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BLATWrapper.cpp'; fi`
 
 libsnowtools_a-AlignedContig.o: AlignedContig.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-AlignedContig.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-AlignedContig.Tpo -c -o libsnowtools_a-AlignedContig.o `test -f 'AlignedContig.cpp' || echo '$(srcdir)/'`AlignedContig.cpp

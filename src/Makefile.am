@@ -5,11 +5,11 @@ libsnowtools_a_CPPFLAGS = \
 	-I../multifast-v1.4.2 \
         -I../htslib \
 	-I../SGA/Util -I../SGA/Bigraph -I../SGA/SuffixTools \
-	-I../SGA/Algorithm -I../SGA/SQG -I../SGA/SGA
+	-I../SGA/Algorithm -I../SGA/SQG -I../blat/inc
 
-libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a 
+libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ../blat/lib/jkweb.a ../blat/lib/jkOwnLib.a
 
-libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
+libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp BLATWrapper.cpp \
 			AlignedContig.cpp BreakPoint.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
