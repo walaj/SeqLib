@@ -16,6 +16,7 @@
 #include "htslib/faidx.h"
 
 #include "SnowTools/GenomicRegion.h"
+//#include "SnowTools/BLATWrapper.h"
 
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
@@ -55,6 +56,7 @@ typedef std::unordered_map<std::string, size_t> CigarMap;
  */
 class BamRead {
 
+  friend class BLATWraper;
   friend class BWAWrapper;
 
  public:
@@ -452,12 +454,13 @@ class BamRead {
   inline bam1_t* raw() const { return b.get(); }
   
   //std::string toSam(bam_hdr_t* h) const;
-  
+
+  std::shared_ptr<bam1_t> b; // need to move this to private  
   private:
 
   //bam_hdr_h *hdr;
   //bam1_t * b;
-  std::shared_ptr<bam1_t> b;
+
   std::shared_ptr<bam_hdr_t> m_hdr;
 };
 

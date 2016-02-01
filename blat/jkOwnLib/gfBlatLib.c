@@ -17,8 +17,6 @@
 #include "twoBit.h"
 #include "trans3.h"
 
-
-
 static int ssAliCount = 16;	/* Number of alignments returned by ssStitch. */
 
 #ifdef DEBUG
@@ -487,6 +485,7 @@ for (ffi = bun->ffList; ffi != NULL; ffi = ffi->next)
     struct ffAli *ff = ffi->ff;
     struct trans3 *t3List = NULL;
     int score;
+
     if (t3Hash != NULL)
 	t3List = hashMustFindVal(t3Hash, tSeq->name);
     score = scoreAli(ff, bun->isProt, stringency, tSeq, t3List);
@@ -1477,6 +1476,9 @@ void gfLongDnaInMem(struct dnaSeq *query, struct genoFind *gf,
 /* Chop up query into pieces, align each, and stitch back
  * together again. */
 {
+
+  //printf("query: %s  name: %s  fastMap: %d   band: %d\n", query->dna, query->name, fastMap, band);
+
 int hitCount;
 int maxSize = MAXSINGLEPIECESIZE;
 int preferredSize = 4500;
@@ -1490,6 +1492,7 @@ struct hash *bunHash = newHash(8);
 
 for (subOffset = 0; subOffset<query->size; subOffset = nextOffset)
     {
+
     struct gfClump *clumpList;
     struct gfRange *rangeList = NULL;
 
@@ -1541,17 +1544,125 @@ for (subOffset = 0; subOffset<query->size; subOffset = nextOffset)
 #ifdef DEBUG
 dumpBunList(bigBunList);
 #endif /* DEBUG */
-for (bun = bigBunList; bun != NULL; bun = bun->next)
-    {
-    ssStitch(bun, ffCdna, minScore, ssAliCount);
-    if (!fastMap && !band)
-	refineSmallExonsInBundle(bun);
-    saveAlignments(bun->genoSeq->name, bun->genoSeq->size, 0, 
-	bun, NULL, isRc, FALSE, ffCdna, minScore, out);
-    }
-ssBundleFreeList(&bigBunList);
-freeHash(&bunHash);
-lmCleanup(&lm);
+
+ for (bun = bigBunList; bun != NULL; bun = bun->next)
+   {
+     ssStitch(bun, ffCdna, minScore, ssAliCount);
+     if (!fastMap && !band)
+       refineSmallExonsInBundle(bun);
+
+     //jeremiah
+     //printf("bigBunList. Name: %s size: %d\n", bun->genoSeq->name, bun->genoSeq->size); //jeremiah      
+
+     //jeremiah score it
+     struct ssFfItem *ffi;
+     for (ffi = bun->ffList; ffi != NULL; ffi = ffi->next) 
+       {
+	 struct ffAli *ff_loop = ffi->ff;
+	 struct trans3 *t3List = NULL;
+	 int score;
+	 struct dnaSeq *tSeq = bun->genoSeq; 
+	 struct dnaSeq *qSeq = bun->qSeq;
+	 score = scoreAli(ff_loop, bun->isProt, ffCdna, tSeq, NULL);
+
+	 boolean qIsRc = FALSE;
+	 boolean tIsRc = FALSE;
+
+     //jeremiah
+     //////////////////
+     //////////////////
+     struct ffAli *ali = ff_loop; //jeremiah
+     struct ffAli *ff, *nextFf;
+     struct ffAli *right = ffRightmost(ali);
+     enum ffStringency stringency = ffCdna; //jeremiah
+     int minMatch = minScore; // jeremiah
+     DNA *needle = bun->qSeq->dna;
+     DNA *hay = tSeq->dna;
+     int nStart = ali->nStart - needle;
+     int nEnd = right->nEnd - needle;
+     int hStart, hEnd; 
+     int nInsertBaseCount = 0;
+     int nInsertCount = 0;
+     int hInsertBaseCount = 0;
+     int hInsertCount = 0;
+     int matchCount = 0;
+     int mismatchCount = 0;
+     int repMatch = 0;
+     int countNs = 0;
+     DNA *np, *hp, n, h;
+     int blockSize;
+     int i;
+     Bits *maskBits = NULL;
+     int chromOffset = 0; //jeremiah
+
+
+     /* Count up matches, mismatches, inserts, etc. */
+     for (ff = ali; ff != NULL; ff = nextFf)
+       {
+	 nextFf = ff->right;
+	 blockSize = ff->nEnd - ff->nStart;
+	 np = ff->nStart;
+	 hp = ff->hStart;
+	 for (i=0; i<blockSize; ++i)
+	   {
+	     n = np[i];
+	     h = hp[i];
+	     if (n == 'n' || h == 'n')
+	       ++countNs;
+	     else
+	       {
+		 if (n == h)
+		   {
+		     if (maskBits != NULL)
+		       {
+			 int seqOff = hp + i - hay;
+			 if (bitReadOne(maskBits, seqOff))
+			   ++repMatch;
+			 else
+			   ++matchCount;
+		       }
+		     else
+		       ++matchCount;
+		   }
+		 else
+		   ++mismatchCount;
+	       }
+	   }
+	 if (nextFf != NULL)
+	   {
+	     int nhStart = trans3GenoPos(nextFf->hStart, tSeq, t3List, FALSE) + chromOffset;
+	     int ohEnd = trans3GenoPos(ff->hEnd, tSeq, t3List, TRUE) + chromOffset;
+	     int hGap = nhStart - ohEnd;
+	     int nGap = nextFf->nStart - ff->nEnd;
+	     
+	     if (nGap != 0)
+	       {
+		 ++nInsertCount;
+		 nInsertBaseCount += nGap;
+	       }
+	if (hGap != 0)
+	  {
+	    ++hInsertCount;
+	    hInsertBaseCount += hGap;
+	  }
+	   }
+       }
+     
+     //printf("%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d\n", score, mismatchCount, repMatch, countNs,
+     printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\n", score, mismatchCount, repMatch, countNs,
+     	    nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount, (qIsRc ? '-' : '+'),
+     qSeq->name, qSeq->size, nStart, nEnd); //, bun->genoSeq->name, hStart, hEnd);
+     
+       }
+     ///////////////
+     ///////////////
+     
+     //saveAlignments(bun->genoSeq->name, bun->genoSeq->size, 0, bun, NULL, isRc, FALSE, ffCdna, minScore, out);
+   }
+ 
+ ssBundleFreeList(&bigBunList);
+ freeHash(&bunHash);
+ lmCleanup(&lm);
 }
 
 

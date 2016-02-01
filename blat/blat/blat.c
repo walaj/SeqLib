@@ -193,17 +193,16 @@ struct optionSpec options[] = {
 struct gfOutput *gvo;		/* Overall output controller */
 
 void searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, FILE *psl, 
-	boolean isRc, struct hash *maskHash, Bits *qMaskBits)
+		     boolean isRc, struct hash *maskHash, Bits *qMaskBits)
 /* Search for seq in index, align it, and write results to psl. */
 {
-if (fastMap && (seq->size > MAXSINGLEPIECESIZE))
+  if (fastMap && (seq->size > MAXSINGLEPIECESIZE))
     errAbort("Maximum single piece size (%d) exceeded by query %s of size (%d). "
-	"Larger pieces will have to be split up until no larger than this limit "
-	"when the -fastMap option is used."	
-	, MAXSINGLEPIECESIZE, seq->name, seq->size);
-gfLongDnaInMem(seq, gf, isRc, minScore, qMaskBits, gvo, fastMap, optionExists("fine"));
+	     "Larger pieces will have to be split up until no larger than this limit "
+	     "when the -fastMap option is used."	
+	     , MAXSINGLEPIECESIZE, seq->name, seq->size);
+  gfLongDnaInMem(seq, gf, isRc, minScore, qMaskBits, gvo, fastMap, optionExists("fine"));
 }
-
 
 void searchOneProt(aaSeq *seq, struct genoFind *gf, FILE *f)
 /* Search for protein seq in index and write results to psl. */
@@ -561,10 +560,10 @@ boolean tIsProt = (tType == gftProt);
 boolean qIsProt = (qType == gftProt);
 boolean bothSimpleNuc = (tType == gftDna && (qType == gftDna || qType == gftRna));
 boolean bothSimpleProt = (tIsProt && qIsProt);
- printf("J: open this\n");
+
 FILE *f = mustOpen(outName, "w");
 boolean showStatus = (f != stdout);
- printf("J: open this2\n");
+
 databaseName = dbFile;
 gfClientFileArray(dbFile, &dbFiles, &dbCount);
 if (makeOoc != NULL)
@@ -574,25 +573,22 @@ if (makeOoc != NULL)
 	printf("Done making %s\n", makeOoc);
     exit(0);
     }
- printf("J: open this3\n");
+
 gfClientFileArray(queryFile, &queryFiles, &queryCount);
- printf("J: open this4\n");
 dbSeqList = gfClientSeqList(dbCount, dbFiles, tIsProt, tType == gftDnaX, repeats, 
 	minRepDivergence, showStatus);
- printf("J: open this5\n");
 databaseSeqCount = slCount(dbSeqList);
- printf("J: open this6\n");
+
 for (seq = dbSeqList; seq != NULL; seq = seq->next)
     databaseLetters += seq->size;
- printf("J: open this7\n");
+
 gvo = gfOutputAny(outputFormat, minIdentity*10, qIsProt, tIsProt, noHead, 
 	databaseName, databaseSeqCount, databaseLetters, minIdentity, f);
 
- printf("J: here1\n");
 if (bothSimpleNuc || bothSimpleProt)
     {
     struct hash *maskHash = NULL;
- printf("J: here2\n");
+
     /* Save away masking info for output. */
     if (repeats != NULL)
 	{
@@ -620,12 +616,10 @@ if (bothSimpleNuc || bothSimpleProt)
     }
 else if (tType == gftDnaX && qType == gftProt)
     {
- printf("J: here3\n");
     bigBlat(dbSeqList, queryCount, queryFiles, outName, FALSE, TRUE, f, showStatus);
     }
 else if (tType == gftDnaX && (qType == gftDnaX || qType == gftRnaX))
     {
- printf("J: here\n");
     bigBlat(dbSeqList, queryCount, queryFiles, outName, TRUE, qType == gftDnaX, f, showStatus);
     }
 else
@@ -757,8 +751,6 @@ setFfExtendThroughN(optionExists("extendThroughN"));
 
 
 /* Call routine that does the work. */
-
-printf("Calling routine\n");
 
 blat(argv[1], argv[2], argv[3]);
 return 0;

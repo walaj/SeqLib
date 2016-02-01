@@ -149,6 +149,7 @@ for (ff = ali; ff != NULL; ff = nextFf)
 		hStart = chromSize - hEnd;
 		hEnd = chromSize - temp;
 		}
+	    //printf("...matchCOunt: %d, mismatchcount: %d\n", matchCount, mismatchCount);
 	    fprintf(f, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c",
 		matchCount, mismatchCount, repMatch, countNs, nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount,
 		(isRc ? '-' : '+'));
