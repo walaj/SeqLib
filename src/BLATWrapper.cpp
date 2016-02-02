@@ -282,7 +282,8 @@ namespace SnowTools {
 	    
 	    int blockCount = ffAliCount(ali);
 
-	    std::string cig;
+	    //std::string cig;
+	    Cigar cigv;
 	    for (int i = 1; i < blockCount; ++i)
 	      {
 		int ly = y[i] - y[i-1] - x[i-1];
@@ -291,8 +292,10 @@ namespace SnowTools {
 		  {
 		    ++gap_open;
 		    gap_ext += lz - ly;
-		    cig += std::to_string(y[i] - y0) + "M";
-		    cig += std::to_string(lz - ly) + "D";
+		    cigv.push_back(CigarField('M', y[i] - y0));
+		    cigv.push_back(CigarField('D', lz - ly));
+		    //cig += std::to_string(y[i] - y0) + "M";
+		    //cig += std::to_string(lz - ly) + "D";
 		    y0 = y[i];
 		    z0 = z[i];
 		  }
@@ -300,22 +303,26 @@ namespace SnowTools {
 		  {
 		    ++gap_open;
 		    gap_ext += ly - lz;
-		    cig += std::to_string(z[i] - z0) + "M";
-		    cig += std::to_string(ly - lz) + "I";
+		    cigv.push_back(CigarField('M', z[i] - z0));
+		    cigv.push_back(CigarField('I', ly - lz));
+		    //cig += std::to_string(z[i] - z0) + "M";
+		    //cig += std::to_string(ly - lz) + "I";
 		    y0 = y[i];
 		    z0 = z[i];
 		  }
 	      }
-	    cig += std::to_string(nEnd - y0) + "M";
-	    if (query->size != nEnd) // 3'-end clipping
-	      cig += std::to_string(query->size - nEnd); + "S";
+	    cigv.push_back(CigarField('M', nEnd - y0));
+	    //cig += std::to_string(nEnd - y0) + "M";
+	    if (query->size != nEnd) { // 3'-end clipping
+	      cigv.push_back(CigarField('S', query->size - nEnd));
+	      //cig += std::to_string(query->size - nEnd) + "S";
+	    }
 
 	    int aopt = 1, bopt = 3, qopt = 5, ropt = 2;
 	    int myscore = aopt * score - bopt * mismatchCount - qopt * gap_open - ropt * gap_ext;
 	    if (myscore < 0)
 	      myscore = 0;
 
-	    std::cerr << " CIGAR: " << cig << " score " << myscore << std::endl;
 	    // make the read (jeremiah)
 	    BamRead b;
 	    b.init();
@@ -326,7 +333,7 @@ namespace SnowTools {
 	    b.b->core.pos = hStart;
 	    b.b->core.qual = 0; //a.mapq; // TODO
 	    b.b->core.flag = 0; //a.flag;
-	    b.b->core.n_cigar = 1; //a.n_cigar;
+	    b.b->core.n_cigar = cigv.size(); //a.n_cigar;
 	    
 	    // set dumy mate
 	    b.b->core.mtid = -1;
@@ -394,23 +401,16 @@ namespace SnowTools {
 	    uint8_t* s = bam_get_qual(b.b);
 	    s[0] = 0xff;
 	    
+	    // allocate the cigar. 32 bits per elem (4 type, 28 length)
+	    uint32_t * cigr = bam_get_cigar(b.b);
+	    for (size_t i = 0; i < cigv.size(); ++i)
+	      cigr[i] = cigv[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
+
 	    brv.push_back(b);
 
-	    printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d", score, mismatchCount, repMatch, countNs,
-
-	    //printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\n", score, mismatchCount, repMatch, countNs,
-		   nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount, (qIsRc ? '-' : '+'),
-		   qSeq->name, qSeq->size, nStart, nEnd, bun->genoSeq->name, hStart, hEnd);
-
-	    for (auto& i : x) 
-	      std::cerr << i << ",";
-	    std::cerr << "\t";
-	    for (auto& i : y) 
-	      std::cerr << i << ",";
-	    std::cerr << "\t";
-	    for (auto& i : z) 
-	      std::cerr << i << ",";
-	    std::cerr << std::endl;
+	    //printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d", score, mismatchCount, repMatch, countNs,
+	    //nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount, (qIsRc ? '-' : '+'),
+	    //   qSeq->name, qSeq->size, nStart, nEnd, bun->genoSeq->name, hStart, hEnd);
 	  }
 	///////////////
 	///////////////
