@@ -26,11 +26,11 @@ CC     = gcc
 AR     = ar
 RANLIB = ranlib
 
-CPPFLAGS = -I/broad/hptmp/HCC1143 -I. -I/xchip/gistic/Jeremiah/GIT/boost ##$(AM_CPPFLAGS) $(CPPFLAGS)
+CPPFLAGS =  -I/xchip/gistic/Jeremiah/GIT/boost ##$(AM_CPPFLAGS) $(CPPFLAGS)
 # TODO: probably update cram code to make it compile cleanly with -Wc++-compat
 CFLAGS   = -g -Wall -O3
 EXTRA_CFLAGS_PIC = -fpic
-LDFLAGS  = 
+LDFLAGS  =  -L. -L//xchip/gistic/Jeremiah/GIT/boost/stage/lib
 LDLIBS   =
 
 # For now these don't work too well as samtools also needs to know to
@@ -357,7 +357,7 @@ install-so: libhts.so installdirs
 # Substitute these pseudo-autoconf variables only at install time
 # so that "make install prefix=/prefix/path" etc continue to work.
 install-pkgconfig: installdirs
-	sed -e 's#${prefix}/include#$(includedir)#g;s#${exec_prefix}/lib#$(libdir)#g;s#1.0#$(PACKAGE_VERSION)#g' htslib.pc.in > $(DESTDIR)$(pkgconfigdir)/htslib.pc
+	sed -e 's#${prefix}/include#$(includedir)#g;s#${exec_prefix}/lib#$(libdir)#g;s#0.0#$(PACKAGE_VERSION)#g' htslib.pc.in > $(DESTDIR)$(pkgconfigdir)/htslib.pc
 	chmod 644 $(DESTDIR)$(pkgconfigdir)/htslib.pc
 
 # A pkg-config file (suitable for copying to $PKG_CONFIG_PATH) that provides
