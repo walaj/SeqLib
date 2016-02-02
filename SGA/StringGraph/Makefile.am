@@ -1,10 +1,10 @@
 noinst_LIBRARIES = libstringgraph.a
 
 libstringgraph_a_CPPFLAGS = \
-	-I$(top_srcdir)/SGA/Bigraph \
-	-I$(top_srcdir)/SGA/Util \
-	-I$(top_srcdir)/SGA/Algorithm \
-	-I$(top_srcdir)/SGA/SQG
+	-I../Bigraph \
+	-I../Util \
+	-I../Algorithm \
+	-I../SQG
 
 libstringgraph_a_SOURCES = \
         SGUtil.cpp SGUtil.h \

@@ -1,8 +1,8 @@
 noinst_LIBRARIES = libsuffixtools.a
 
 libsuffixtools_a_CPPFLAGS = \
-	-I$(top_srcdir)/SGA/Util \
-	-I$(top_srcdir)/SGA/Bigraph 
+	-I../Util \
+	-I../Bigraph 
 
 libsuffixtools_a_SOURCES = STCommon.cpp STCommon.h \
                            STGlobals.h \

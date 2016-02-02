@@ -580,7 +580,6 @@ namespace SnowTools {
 	      }
 	    else
 	      {
-		/*
 		  struct twoBitIndex *index = NULL;
 		  for (index = tbf->indexList; index != NULL; index = index->next)
 		  {

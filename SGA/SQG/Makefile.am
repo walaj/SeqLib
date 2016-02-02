@@ -1,9 +1,8 @@
 noinst_LIBRARIES = libsqg.a
 
 libsqg_a_CPPFLAGS = \
-	-I$(top_srcdir)/SGA/Bigraph \
-	-I$(top_srcdir)/SGA/Thirdparty \
-	-I$(top_srcdir)/SGA/Util
+	-I../Bigraph \
+	-I../Util
 
 
 libsqg_a_SOURCES = \

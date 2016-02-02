@@ -1,8 +1,8 @@
 noinst_LIBRARIES = libbigraph.a
 
 libbigraph_a_CPPFLAGS = \
-	-I$(top_srcdir)/SGA/Util \
-	-I$(top_srcdir)/SGA/SQG
+	-I../Util \
+	-I../SQG
 
 libbigraph_a_SOURCES = \
                        Bigraph.h Bigraph.cpp \

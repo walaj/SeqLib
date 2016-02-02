@@ -9,7 +9,7 @@ libsnowtools_a_CPPFLAGS = \
 
 libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ##../blat/lib/jkweb.a ../blat/lib/jkOwnLib.a
 
-libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
+libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp \
 			AlignedContig.cpp BreakPoint.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \

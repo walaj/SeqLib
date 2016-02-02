@@ -23,6 +23,15 @@ static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'T', ' ', ' ', ' ', 
                                ' ', ' ', ' ', 'N'};
 
+static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 //#include "SnowTools/HTSTools.h"
 
 namespace SnowTools {
@@ -31,19 +40,62 @@ enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
 
 /*! Basic container for cigar data. 
  */
-struct CigarField {
-  
-  char Type; /**< The cigar operation (MIDSHPN) */
-  uint32_t Length; /**< The associated length */
+class CigarField {
 
-  CigarField(char t, uint32_t l) : Type(t), Length(l) {}
+ public:
 
-  friend std::ostream& operator<<(std::ostream& out, const CigarField& c) { out << c.Type << c.Length; return out; }
+  CigarField(char t, uint32_t l); 
+
+  CigarField(uint32_t f) : data(f) {}
+
+  uint32_t raw() const { return data; }
+
+  friend std::ostream& operator<<(std::ostream& out, const CigarField& c);
+
+  char Type() const { return bam_cigar_opchr(data); } 
+
+  uint8_t RawType() const { return bam_cigar_op(data); } 
+
+  uint32_t Length() const { return bam_cigar_oplen(data); } 
+
+  bool ConsumesReference() const { return bam_cigar_type(bam_cigar_op(data))&2;  }
+  bool ConsumesQuery()     const { return bam_cigar_type(bam_cigar_op(data))&1;  }
+
+ private:
+
+  uint32_t data;
   
 };
 
+/*
+ class Cigar {
+   
+ public:
 
-typedef std::vector<CigarField> Cigar;
+   typename std::vector<CigarField>::iterator begin() { return m_data.begin(); } 
+
+   typename std::vector<CigarField>::iterator end() { return m_data.end(); }
+
+   typename std::vector<CigarField>::iterator begin() { return m_data.begin(); } 
+
+   typename std::vector<CigarField>::iterator end() { return m_data.end(); }
+
+
+   size_t size() const { return m_data.size(); }
+
+   void add(const CigarField& c) { 
+     m_data.push_back(c); 
+   }
+   
+ private:
+   
+   //size_t m_len;
+   std::vector<CigarField> m_data; // should make this simpler
+
+ };
+*/
+
+ typedef std::vector<CigarField> Cigar;
 typedef std::unordered_map<std::string, size_t> CigarMap;
 
 /** Class to store and interact with an HTSLib bam1_t read.
@@ -60,6 +112,10 @@ class BamRead {
   friend class BWAWrapper;
 
  public:
+
+  /** Construct a BamRead with perfect "alignment"
+   */
+  BamRead(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
   
   /** Construct an empty BamRead by calling bam_init1() 
    */
@@ -206,7 +262,8 @@ class BamRead {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
     for (int k = 0; k < b->core.n_cigar; ++k) 
-      cig.push_back(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
+      cig.push_back(CigarField(c[k]));
+    //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
     return cig;
   }
 
@@ -215,7 +272,8 @@ class BamRead {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
     for (int k = b->core.n_cigar - 1; k >= 0; --k) 
-      cig.push_back(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
+      cig.push_back(CigarField(c[k]));
+    //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
     return cig;
   }
 

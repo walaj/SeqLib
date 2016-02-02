@@ -69,7 +69,7 @@ namespace SnowTools {
     for (auto& i : m_frag_v) 
       for (auto& j : i.secondaries) {
 	if (draw_divider) {
-	  out << std::string(m_seq.length(), 'S') << std::endl;
+	  out << std::string(m_seq.length(), BAM_CSOFT_CLIP) << std::endl;
 	  draw_divider = false;
 	}
       }
@@ -95,13 +95,8 @@ namespace SnowTools {
       //bool was_trimmed = false;
       //std::string seq = i.QualityTrimmedSequence(4, dum, was_trimmed);
       //std::string seq = ""; // dummy
-      std::string seq = i.QualitySequence();
+      std::string seq = i.Sequence(); //i.QualitySequence(); // they don't have qual scores, since they are artifically created from alignSingleSequence
       std::string sr = i.GetZTag("SR");
-      
-      // reverse complement if need be
-      //int32_t rc = i.GetIntTag("RC");
-      //if (rc/* && false*/)
-      //  SnowTools::rcomplement(seq);
       
       // get the more complex tags (since there can be multiple annotations per tag)
       std::vector<int> posvec = i.GetSmartIntTag("SL"); // start positions ON CONTIG
@@ -109,13 +104,15 @@ namespace SnowTools {
       std::vector<int> rcvec = i.GetSmartIntTag("RC"); // read reverse complmented relative to contig
       std::vector<std::string> cigvec = i.GetSmartStringTag("SC"); // read against contig CIGAR
       std::vector<std::string> cnvec = i.GetSmartStringTag("CN");
-      
+      std::vector<std::string> hcvec = i.GetSmartStringTag("HC"); // hard-clipped seq on CONTIG      
+
       if (posvec.size() != alnvec.size() ||
 	  posvec.size() != rcvec.size() ||
 	  cigvec.size() != posvec.size() ||
 	  cnvec.size() != posvec.size())
 	continue;
       
+      std::string hc;
       assert(cnvec.size() == posvec.size());
       size_t kk = 0;
       for (; kk < cnvec.size(); kk++) 
@@ -124,9 +121,21 @@ namespace SnowTools {
 	  aln = alnvec[kk];
 	  rc = rcvec[kk];
 	  this_cig = cigvec[kk];
+	  if (hcvec.size()) {
+	    hc = hcvec[kk];
+	    // bump up the alignments if starts with hardclip
+	    boost::regex reg("([0-9]+)H.*"); 
+	    boost::cmatch match;
+	    if (boost::regex_match(this_cig.c_str(), match, reg))
+	      pos += std::stoi(match[1].str());
+	  }
 	  break;
 	}
       
+      // if we have harclip of read to contig, use that
+      if (!hc.empty())
+	seq = hc;
+
       // reverse complement if need be
       if (rc)
 	SnowTools::rcomplement(seq);      
@@ -337,8 +346,8 @@ namespace SnowTools {
     // find the start position of alignment ON CONTIG
     start = 0; 
     for (auto& i : /*m_align.GetCigar()*/ m_cigar) {
-      if (i.Type != 'M')
-	start += i.Length;
+      if (i.RawType() != BAM_CMATCH)
+	start += i.Length();
       else
 	break;
     }
@@ -353,11 +362,11 @@ namespace SnowTools {
       
       // SET THE CONTIG BREAK (treats deletions and leading S differently)
       // the first M gets the break1, pos on the left
-      if (i.Type == 'M' && break1 == -1)
+      if (i.RawType() == BAM_CMATCH && break1 == -1)
 	break1 = currlen;
-      if (i.Type != 'D') // m_skip deletions but not leading S, but otherwise update
-	currlen += i.Length;
-      if (i.Type == 'M') // keeps triggering every M, with pos at the right
+      if (i.RawType() != BAM_CDEL) // m_skip deletions but not leading S, but otherwise update
+	currlen += i.Length();
+      if (i.RawType() == BAM_CMATCH) // keeps triggering every M, with pos at the right
 	break2 = currlen;
     }
 
@@ -408,12 +417,12 @@ namespace SnowTools {
     
     // print the cigar value per base
     for (auto& j : /*m_align.GetCigar()*/ m_cigar) { //align.CigarData) { // print releative to forward strand
-      if (j.Type == 'M')
-	out << std::string(j.Length, jsign);
-      else if (j.Type == 'I') 
-	out << std::string(j.Length, 'I');
-      else if (j.Type == 'S' || j.Type == 'H')
-	out << std::string(j.Length, '.');
+      if (j.RawType() == BAM_CMATCH)
+	out << std::string(j.Length(), jsign);
+      else if (j.RawType() == BAM_CINS) 
+	out << std::string(j.Length(), BAM_CINS);
+      else if (j.RawType() == BAM_CSOFT_CLIP || j.RawType() == BAM_CHARD_CLIP)
+	out << std::string(j.Length(), '.');
     }
     
     // print contig and genome breaks
@@ -423,7 +432,7 @@ namespace SnowTools {
     std::string chr_name = m_align.GetZTag("MC");
     if (!chr_name.length())
       chr_name = std::to_string(m_align.ChrID()+1);
-    out << "\tAligned to: " << chr_name << ":" << m_align.Position() << "(" << (m_align.ReverseFlag() ? "-" : "+") << ") CIG: " << m_align.CigarString() << " MAPQ: " << m_align.MapQuality() << " SUBN " << sub_n;
+    out << "\tAligned to: " << chr_name << ":" << m_align.Position() << "(" << (m_align.ReverseFlag() ? "-" : "+") << ") CIG: " << m_align.CigarString() << " MAPQ: " << m_align.MapQuality() << " SUBN " << sub_n << " ";
   
     return out.str();
   }
@@ -439,18 +448,18 @@ namespace SnowTools {
     // reject if too many mismatches
     //size_t di_count = 0;
     for (auto& i : m_cigar)
-      if (i.Type == 'D' || i.Type == 'I')
+      if (i.RawType() == BAM_CDEL || i.RawType() == BAM_CINS)
     	++di_count;
     if (di_count > 2 && m_align.Qname().substr(0,2) == "c_") // only trim for snowman assembled contigs
       return false;
 
     // reject if it has small matches, could get confused. Fix later
     //for (auto& i : m_cigar) 
-    //  if (i.Type == 'M' && i.Length < 5)
+    //  if (i.RawType() == BAM_CMATCH && i.Length() < 5)
     //    return false;
     
      // reject if first alignment is I or D or start with too few M
-    if (m_cigar.begin()->Type == 'I' || m_cigar.begin()->Type == 'D' || m_cigar.back().Type == 'D' || m_cigar.back().Type == 'I') {
+    if (m_cigar.begin()->RawType() == BAM_CINS || m_cigar.begin()->RawType() == BAM_CDEL || m_cigar.back().RawType() == BAM_CDEL || m_cigar.back().RawType() == BAM_CINS) {
       //std::cerr << "rejecting cigar for starting in I or D or < 5 M" << std::endl;
       return false;
     }
@@ -459,7 +468,7 @@ namespace SnowTools {
     size_t loc = 0; // keep track of which cigar field
     for (auto& i : m_cigar) {
       ++loc;
-      if (i.Type == 'D' || i.Type == 'I') {
+      if (i.RawType() == BAM_CDEL || i.RawType() == BAM_CINS) {
 	assert (loc != 1 && loc != m_cigar.size()); // shuldn't start with I or D
 	if (loc > idx) {
 	  idx = loc;
@@ -494,30 +503,30 @@ namespace SnowTools {
       count++;
       
       // set the contig breakpoint
-      if (i.Type == 'M' || i.Type == 'I' || i.Type == 'S') 
-	curr += i.Length;
-      if (i.Type == 'D' && bp.b1.cpos == -1 && count == idx) {
+      if (i.RawType() == BAM_CMATCH || i.RawType() == BAM_CINS || i.RawType() == BAM_CSOFT_CLIP) 
+	curr += i.Length();
+      if (i.RawType() == BAM_CDEL && bp.b1.cpos == -1 && count == idx) {
 	
 	bp.b1.cpos = curr-1;
 	bp.b2.cpos = curr;
       } 
-      if (i.Type == 'I' && bp.b1.cpos == -1 && count == idx) {
-	bp.b1.cpos = curr - i.Length - 1; // -1 because cpos is last MATCH
+      if (i.RawType() == BAM_CINS && bp.b1.cpos == -1 && count == idx) {
+	bp.b1.cpos = curr - i.Length() - 1; // -1 because cpos is last MATCH
 	bp.b2.cpos = curr/* - 1*/; 
-	bp.insertion = m_align.Sequence().substr(bp.b1.cpos+1, i.Length); // +1 because cpos is last MATCH.
+	bp.insertion = m_align.Sequence().substr(bp.b1.cpos+1, i.Length()); // +1 because cpos is last MATCH.
       }
       
       // set the genome breakpoint
       if (bp.b1.cpos > 0) {
-	if (i.Type == 'D') {
+	if (i.RawType() == BAM_CDEL) {
 	  if (!m_align.ReverseFlag()) {
 	    bp.b1.gr.pos1 =  m_align.Position() + gcurrlen; // dont count this one//bp.b1.cpos + align.Position; //gcurrlen + align.Position;
-	    bp.b2.gr.pos1 = bp.b1.gr.pos1 + i.Length + 1;
+	    bp.b2.gr.pos1 = bp.b1.gr.pos1 + i.Length() + 1;
 	  } else {
 	    bp.b2.gr.pos1 =  (m_align.PositionEnd()-1) - gcurrlen; //bp.b1.cpos + align.Position; //gcurrlen + align.Position;
-	    bp.b1.gr.pos1 =  bp.b2.gr.pos1 - i.Length - 1;
+	    bp.b1.gr.pos1 =  bp.b2.gr.pos1 - i.Length() - 1;
 	  }
-	} else if (i.Type == 'I') {
+	} else if (i.RawType() == BAM_CINS) {
 	  if (!m_align.ReverseFlag()) {
 	    bp.b1.gr.pos1 = m_align.Position() + gcurrlen; //gcurrlen + align.Position;
 	    bp.b2.gr.pos1 = bp.b1.gr.pos1 + 1;	
@@ -531,8 +540,8 @@ namespace SnowTools {
       }
       
       // update the position on the genome
-      if (i.Type == 'M' || i.Type == 'D') {
-	gcurrlen += i.Length;
+      if (i.RawType() == BAM_CMATCH || i.RawType() == BAM_CDEL) {
+	gcurrlen += i.Length();
       } 
       
       

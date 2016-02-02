@@ -1,11 +1,11 @@
 noinst_LIBRARIES = libalgorithm.a
 
 libalgorithm_a_CPPFLAGS = \
-	-I$(top_srcdir)/SGA/Bigraph \
-	-I$(top_srcdir)/SGA/Util \
-	-I$(top_srcdir)/SGA/StringGraph \
-	-I$(top_srcdir)/SGA/SQG \
-	-I$(top_srcdir)/SGA/SuffixTools
+	-I../Bigraph \
+	-I../Util \
+	-I../StringGraph \
+	-I../SQG \
+	-I../SuffixTools
 
 libalgorithm_a_SOURCES = \
         OverlapAlgorithm.h OverlapAlgorithm.cpp \
