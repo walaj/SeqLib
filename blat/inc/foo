@@ -1,0 +1,361 @@
+80ad2e61 (kent          2009-02-02 06:05:52 +0000   1) /* bbiFile - Big Binary Indexed file.  Stuff that's common between bigWig and bigBed. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000   2) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000   3) #ifndef BBIFILE_H
+80ad2e61 (kent          2009-02-02 06:05:52 +0000   4) #define BBIFILE_H
+80ad2e61 (kent          2009-02-02 06:05:52 +0000   5) 
+e875bb30 (angie         2009-07-27 19:55:17 +0000   6) #include "cirTree.h"
+e875bb30 (angie         2009-07-27 19:55:17 +0000   7) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000   8) /* bigWig/bigBed file structure:
+18e51ee9 (kent          2009-02-03 00:39:44 +0000   9)  *     fixedWidthHeader
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  10)  *         magic# 		4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  11)  *         version              2 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  12)  *	   zoomLevels		2 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  13)  *         chromosomeTreeOffset	8 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  14)  *         fullDataOffset	8 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  15)  *	   fullIndexOffset	8 bytes
+0eb44740 (kent          2009-11-05 19:35:01 +0000  16)  *         fieldCount           2 bytes (for bigWig 0)
+0eb44740 (kent          2009-11-05 19:35:01 +0000  17)  *         definedFieldCount    2 bytes (for bigWig 0)
+0eb44740 (kent          2009-11-05 19:35:01 +0000  18)  *         autoSqlOffset        8 bytes (for bigWig 0) (0 if no autoSql information)
+0eb44740 (kent          2009-11-05 19:35:01 +0000  19)  *         totalSummaryOffset   8 bytes (0 in earlier versions of file lacking totalSummary)
+fe6b431f (kent          2009-11-12 23:15:52 +0000  20)  *         uncompressBufSize    4 bytes (Size of uncompression buffer.  0 if uncompressed.)
+fe6b431f (kent          2009-11-12 23:15:52 +0000  21)  *         reserved             8 bytes (0 for now)
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  22)  *     zoomHeaders		there are zoomLevels number of these
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  23)  *         reductionLevel	4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  24)  *	   reserved		4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  25)  *	   dataOffset		8 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  26)  *         indexOffset          8 bytes
+0442310c (kent          2009-11-05 19:46:58 +0000  27)  *     autoSql string (zero terminated - only present if autoSqlOffset non-zero)
+0442310c (kent          2009-11-05 19:46:58 +0000  28)  *     totalSummary - summary of all data in file - only present if totalSummaryOffset non-zero
+0eb44740 (kent          2009-11-05 19:35:01 +0000  29)  *         basesCovered        8 bytes
+0eb44740 (kent          2009-11-05 19:35:01 +0000  30)  *         minVal              8 bytes float (for bigBed minimum depth of coverage)
+0eb44740 (kent          2009-11-05 19:35:01 +0000  31)  *         maxVal              8 bytes float (for bigBed maximum depth of coverage)
+0eb44740 (kent          2009-11-05 19:35:01 +0000  32)  *         sumData             8 bytes float (for bigBed sum of coverage)
+0eb44740 (kent          2009-11-05 19:35:01 +0000  33)  *         sumSquared          8 bytes float (for bigBed sum of coverage squared)
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  34)  *     chromosome b+ tree       bPlusTree index
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  35)  *     full data
+0eb44740 (kent          2009-11-05 19:35:01 +0000  36)  *         sectionCount		8 bytes (item count for bigBeds)
+820a9b65 (kent          2009-03-17 20:46:33 +0000  37)  *         section data		section count sections, of three types (bed data for bigBeds)
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  38)  *     full index               cirTree index
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  39)  *     zoom info             one of these for each zoom level
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  40)  *         zoom data
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  41)  *             zoomCount	4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  42)  *             zoom data	there are zoomCount of these items
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  43)  *                 chromId	4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  44)  *	           chromStart	4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  45)  *                 chromEnd     4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  46)  *                 validCount	4 bytes
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  47)  *                 minVal       4 bytes float 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  48)  *                 maxVal       4 bytes float
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  49)  *                 sumData      4 bytes float
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  50)  *                 sumSquares   4 bytes float
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  51)  *         zoom index        	cirTree index
+dc806d5e (kent          2010-04-06 23:42:59 +0000  52)  *     magic# 		4 bytes - same as magic number at start of header
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  53)  */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  54) 
+9dcefc8f (kent          2009-07-28 03:06:18 +0000  55) #ifndef CIRTREE_H
+9dcefc8f (kent          2009-07-28 03:06:18 +0000  56) #include "cirTree.h"
+9dcefc8f (kent          2009-07-28 03:06:18 +0000  57) #endif
+9dcefc8f (kent          2009-07-28 03:06:18 +0000  58) 
+be2e056e (kent          2010-04-06 23:06:42 +0000  59) #define bbiCurrentVersion 4
+0eb44740 (kent          2009-11-05 19:35:01 +0000  60) /* Version history (of file format, not utilities - corresponds to version field in header)
+0eb44740 (kent          2009-11-05 19:35:01 +0000  61)  *    1 - Initial release
+0eb44740 (kent          2009-11-05 19:35:01 +0000  62)  *    1 - Unfortunately when attempting a transparent change to encoders, made the sectionCount 
+0eb44740 (kent          2009-11-05 19:35:01 +0000  63)  *        field inconsistent, sometimes not present, sometimes 32 bits.  Since offset positions
+0eb44740 (kent          2009-11-05 19:35:01 +0000  64)  *        in index were still accurate this did not break most applications, but it did show
+0eb44740 (kent          2009-11-05 19:35:01 +0000  65)  *        up in the summary section of the Table Browser.
+0eb44740 (kent          2009-11-05 19:35:01 +0000  66)  *    2 - Made sectionCount consistently 64 bits. Also fixed missing zoomCount in first level of
+0eb44740 (kent          2009-11-05 19:35:01 +0000  67)  *        zoom in files made by bedToBigBed and bedGraphToBigWig.  (The older wigToBigWig was fine.)
+fe6b431f (kent          2009-11-12 23:15:52 +0000  68)  *        Added totalSummary section.
+fe6b431f (kent          2009-11-12 23:15:52 +0000  69)  *    3 - Adding zlib compression.  Only active if uncompressBufSize is non-zero in header.
+be2e056e (kent          2010-04-06 23:06:42 +0000  70)  *    4 - Fixed problem in encoder for the max field in zoom levels higher than the first one.
+dc806d5e (kent          2010-04-06 23:42:59 +0000  71)  *        Added an extra sig at end of file.
+0eb44740 (kent          2009-11-05 19:35:01 +0000  72)  */
+0eb44740 (kent          2009-11-05 19:35:01 +0000  73) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  74) struct bbiZoomLevel
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  75) /* A zoom level in bigWig file. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  76)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  77)     struct bbiZoomLevel *next;		/* Next in list. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  78)     bits32 reductionLevel;		/* How many bases per item */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  79)     bits32 reserved;			/* Zero for now. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  80)     bits64 dataOffset;			/* Offset of data for this level in file. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  81)     bits64 indexOffset;			/* Offset of index for this level in file. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  82)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  83) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  84) struct bbiZoomLevel *bbiBestZoom(struct bbiZoomLevel *levelList, int desiredReduction);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  85) /* Return zoom level that is the closest one that is less than or equal to 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  86)  * desiredReduction. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  87) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  88) struct bbiFile 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  89) /* An open bbiFile */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  90)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  91)     struct bbiFile *next;	/* Next in list. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  92)     char *fileName;		/* Name of file - for better error reporting. */
+7ccdade4 (kent          2009-02-09 02:43:23 +0000  93)     struct udcFile *udc;	/* Open UDC file handle. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  94)     bits32 typeSig;		/* bigBedSig or bigWigSig for now. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  95)     boolean isSwapped;		/* If TRUE need to byte swap everything. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  96)     struct bptFile *chromBpt;	/* Index of chromosomes. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  97)     bits16 version;		/* Version number - initially 1. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000  98)     bits16 zoomLevels;		/* Number of zoom levels. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000  99)     bits64 chromTreeOffset;	/* Offset to chromosome index. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 100)     bits64 unzoomedDataOffset;	/* Start of unzoomed data. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 101)     bits64 unzoomedIndexOffset;	/* Start of unzoomed index. */
+223c4619 (kent          2009-02-10 22:11:00 +0000 102)     bits16 fieldCount;		/* Number of columns in bed version. */
+223c4619 (kent          2009-02-10 22:11:00 +0000 103)     bits16 definedFieldCount;   /* Number of columns using bed standard definitions. */
+ad1a80b0 (kent          2009-03-15 00:17:52 +0000 104)     bits64 asOffset;		/* Offset to embedded null-terminated AutoSQL file. */
+0eb44740 (kent          2009-11-05 19:35:01 +0000 105)     bits64 totalSummaryOffset;	/* Offset to total summary information if any.  (On older files have to calculate) */
+fe6b431f (kent          2009-11-12 23:15:52 +0000 106)     bits32 uncompressBufSize;	/* Size of uncompression buffer, 0 if uncompressed */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 107)     struct cirTreeFile *unzoomedCir;	/* Unzoomed data index in memory - may be NULL. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 108)     struct bbiZoomLevel *levelList;	/* List of zoom levels. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 109)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 110) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 111) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 112) struct bbiFile *bbiFileOpen(char *fileName, bits32 sig, char *typeName);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 113) /* Open up big wig or big bed file. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 114) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 115) void bbiFileClose(struct bbiFile **pBwf);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 116) /* Close down a big wig/big bed file. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 117) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 118) struct fileOffsetSize *bbiOverlappingBlocks(struct bbiFile *bbi, struct cirTreeFile *ctf,
+adcb838d (kent          2009-02-03 08:18:53 +0000 119) 	char *chrom, bits32 start, bits32 end, bits32 *retChromId);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 120) /* Fetch list of file blocks that contain items overlapping chromosome range. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 121)  
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 122) struct bbiChromIdSize
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 123) /* We store an id/size pair in chromBpt bPlusTree */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 124)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 125)     bits32 chromId;	/* Chromosome ID */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 126)     bits32 chromSize;	/* Chromosome Size */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 127)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 128) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 129) struct bbiChromInfo
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 130) /* Pair of a name and a 32-bit integer. Used to assign IDs to chromosomes. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 131)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 132)     struct bbiChromInfo *next;
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 133)     char *name;		/* Chromosome name */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 134)     bits32 id;		/* Chromosome ID - a small number usually */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 135)     bits32 size;	/* Chromosome size in bases */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 136)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 137) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 138) struct bbiChromInfo *bbiChromList(struct bbiFile *bbi);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 139) /* Return all chromosomes in file.  Dispose of this with bbiChromInfoFreeList. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 140) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 141) void bbiChromInfoFreeList(struct bbiChromInfo **pList);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 142) /* Free a list of bbiChromInfo's */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 143) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 144) bits32 bbiChromSize(struct bbiFile *bbi, char *chrom);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 145) /* Returns size of given chromosome. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 146) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 147) void bbiChromInfoKey(const void *va, char *keyBuf);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 148) /* Get key field out of bbiChromInfo. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 149) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 150) void *bbiChromInfoVal(const void *va);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 151) /* Get val field out of bbiChromInfo. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 152) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 153) struct bbiChromUsage
+bf087c11 (kent          2009-07-27 18:02:11 +0000 154) /* Information on how many items per chromosome etc.  Used by multipass bbiFile writers. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 155)     {
+bf087c11 (kent          2009-07-27 18:02:11 +0000 156)     struct bbiChromUsage *next;
+bf087c11 (kent          2009-07-27 18:02:11 +0000 157)     char *name;	/* chromosome name. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 158)     bits32 itemCount;	/* Number of items for this chromosome. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 159)     bits32 id;	/* Unique ID for chromosome. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 160)     bits32 size;	/* Size of chromosome. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 161)     };
+bf087c11 (kent          2009-07-27 18:02:11 +0000 162) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 163) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 164) enum bbiSummaryType
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 165) /* Way to summarize data. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 166)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 167)     bbiSumMean = 0,	/* Average value */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 168)     bbiSumMax = 1,	/* Maximum value */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 169)     bbiSumMin = 2,	/* Minimum value */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 170)     bbiSumCoverage = 3,  /* Bases in region containing actual data. */
+7497c149 (kent          2009-11-20 17:12:17 +0000 171)     bbiSumStandardDeviation = 4, /* Standard deviation in window. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 172)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 173) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 174) enum bbiSummaryType bbiSummaryTypeFromString(char *string);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 175) /* Return summary type given a descriptive string. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 176) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 177) char *bbiSummaryTypeToString(enum bbiSummaryType type);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 178) /* Convert summary type from enum to string representation. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 179) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 180) struct bbiSummary
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 181) /* A summary type item. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 182)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 183)     struct bbiSummary *next;
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 184)     bits32 chromId;		/* ID of associated chromosome. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 185)     bits32 start,end;		/* Range of chromosome covered. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 186)     bits32 validCount;		/* Count of (bases) with actual data. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 187)     float minVal;		/* Minimum value of items */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 188)     float maxVal;		/* Maximum value of items */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 189)     float sumData;		/* sum of values for each base. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 190)     float sumSquares;		/* sum of squares for each base. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 191)     bits64 fileOffset;		/* Offset of summary in file. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 192)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 193) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 194) #define bbiSummaryFreeList slFreeList
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 195) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 196) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 197) struct bbiSummaryOnDisk
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 198) /* The part of the summary that ends up on disk - in the same order written to disk. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 199)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 200)     bits32 chromId;		/* ID of associated chromosome. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 201)     bits32 start,end;		/* Range of chromosome covered. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 202)     bits32 validCount;		/* Count of (bases) with actual data. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 203)     float minVal;		/* Minimum value of items */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 204)     float maxVal;		/* Maximum value of items */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 205)     float sumData;		/* sum of values for each base. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 206)     float sumSquares;		/* sum of squares for each base. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 207)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 208) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 209) struct bbiInterval
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 210) /* Data on a single interval. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 211)     {
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 212)     struct bbiInterval *next;	/* Next in list. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 213)     bits32 start, end;			/* Position in chromosome, half open. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 214)     double val;				/* Value at that position. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 215)     };
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 216) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 217) typedef struct bbiInterval *(*BbiFetchIntervals)(struct bbiFile *bbi, char *chrom, 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 218) 					    bits32 start, bits32 end, struct lm *lm);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 219) /* A callback function that returns a bbiInterval list. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 220) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 221) void bbiAttachUnzoomedCir(struct bbiFile *bbi);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 222) /* Make sure unzoomed cir is attached. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 223) 
+82c38150 (kent          2009-02-03 02:50:39 +0000 224) struct bbiSummaryElement
+82c38150 (kent          2009-02-03 02:50:39 +0000 225) /* An element of a summary from the user side. */
+82c38150 (kent          2009-02-03 02:50:39 +0000 226)     {
+82c38150 (kent          2009-02-03 02:50:39 +0000 227)     bits64 validCount;		/* Count of (bases) with actual data. */
+82c38150 (kent          2009-02-03 02:50:39 +0000 228)     double minVal;		/* Minimum value of items */
+82c38150 (kent          2009-02-03 02:50:39 +0000 229)     double maxVal;		/* Maximum value of items */
+82c38150 (kent          2009-02-03 02:50:39 +0000 230)     double sumData;		/* sum of values for each base. */
+82c38150 (kent          2009-02-03 02:50:39 +0000 231)     double sumSquares;		/* sum of squares for each base. */
+82c38150 (kent          2009-02-03 02:50:39 +0000 232)     };
+82c38150 (kent          2009-02-03 02:50:39 +0000 233) 
+82c38150 (kent          2009-02-03 02:50:39 +0000 234) boolean bbiSummaryArrayExtended(struct bbiFile *bbi, char *chrom, bits32 start, bits32 end,
+82c38150 (kent          2009-02-03 02:50:39 +0000 235) 	BbiFetchIntervals fetchIntervals,
+82c38150 (kent          2009-02-03 02:50:39 +0000 236) 	int summarySize, struct bbiSummaryElement *summary);
+5726fd60 (kent          2009-06-17 15:19:03 +0000 237) /* Fill in summary with  data from indicated chromosome range in bigWig/bigBed file. 
+82c38150 (kent          2009-02-03 02:50:39 +0000 238)  * Returns FALSE if no data at that position. */
+82c38150 (kent          2009-02-03 02:50:39 +0000 239) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 240) boolean bbiSummaryArray(struct bbiFile *bbi, char *chrom, bits32 start, bits32 end,
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 241) 	BbiFetchIntervals fetchIntervals,
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 242) 	enum bbiSummaryType summaryType, int summarySize, double *summaryValues);
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 243) /* Fill in summaryValues with  data from indicated chromosome range in bigWig file.
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 244)  * Be sure to initialize summaryValues to a default value, which will not be touched
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 245)  * for regions without data in file.  (Generally you want the default value to either
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 246)  * be 0.0 or nan("") depending on the application.)  Returns FALSE if no data
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 247)  * at that position. */
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 248) 
+0442310c (kent          2009-11-05 19:46:58 +0000 249) struct bbiSummaryElement bbiTotalSummary(struct bbiFile *bbi);
+0442310c (kent          2009-11-05 19:46:58 +0000 250) /* Return summary of entire file! */
+0442310c (kent          2009-11-05 19:46:58 +0000 251) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 252) /****** Write side of things - implemented in bbiWrite.c ********/
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 253) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 254) struct bbiBoundsArray
+bf087c11 (kent          2009-07-27 18:02:11 +0000 255) /* Minimum info needed for r-tree indexer - where a section lives on disk and the
+bf087c11 (kent          2009-07-27 18:02:11 +0000 256)  * range it covers. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 257)     {
+bf087c11 (kent          2009-07-27 18:02:11 +0000 258)     bits64 offset;		/* Offset within file. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 259)     struct cirTreeRange range;	/* What is covered. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 260)     };
+bf087c11 (kent          2009-07-27 18:02:11 +0000 261) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 262) struct cirTreeRange bbiBoundsArrayFetchKey(const void *va, void *context);
+bf087c11 (kent          2009-07-27 18:02:11 +0000 263) /* Fetch bbiBoundsArray key for r-tree */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 264) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 265) bits64 bbiBoundsArrayFetchOffset(const void *va, void *context);
+bf087c11 (kent          2009-07-27 18:02:11 +0000 266) /* Fetch bbiBoundsArray file offset for r-tree */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 267) 
+ced62f42 (kent          2009-11-13 19:02:39 +0000 268) struct bbiSumOutStream
+ced62f42 (kent          2009-11-13 19:02:39 +0000 269) /* Buffer output to file so have a chance to compress. */
+ced62f42 (kent          2009-11-13 19:02:39 +0000 270)     {
+ced62f42 (kent          2009-11-13 19:02:39 +0000 271)     struct bbiSummaryOnDisk *array;
+ced62f42 (kent          2009-11-13 19:02:39 +0000 272)     int elCount;
+ced62f42 (kent          2009-11-13 19:02:39 +0000 273)     int allocCount;
+ced62f42 (kent          2009-11-13 19:02:39 +0000 274)     FILE *f;
+ced62f42 (kent          2009-11-13 19:02:39 +0000 275)     boolean doCompress;
+ced62f42 (kent          2009-11-13 19:02:39 +0000 276)     };
+ced62f42 (kent          2009-11-13 19:02:39 +0000 277) 
+ced62f42 (kent          2009-11-13 19:02:39 +0000 278) struct bbiSumOutStream *bbiSumOutStreamOpen(int allocCount, FILE *f, boolean doCompress);
+ced62f42 (kent          2009-11-13 19:02:39 +0000 279) /* Open new bbiSumOutStream. */
+ced62f42 (kent          2009-11-13 19:02:39 +0000 280) 
+ced62f42 (kent          2009-11-13 19:02:39 +0000 281) void bbiSumOutStreamClose(struct bbiSumOutStream **pStream);
+ced62f42 (kent          2009-11-13 19:02:39 +0000 282) /* Free up bbiSumOutStream */
+ced62f42 (kent          2009-11-13 19:02:39 +0000 283) 
+ced62f42 (kent          2009-11-13 19:02:39 +0000 284) void bbiSumOutStreamWrite(struct bbiSumOutStream *stream, struct bbiSummary *sum);
+ced62f42 (kent          2009-11-13 19:02:39 +0000 285) /* Write out next one to stream. */
+ced62f42 (kent          2009-11-13 19:02:39 +0000 286) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 287) void bbiOutputOneSummaryFurtherReduce(struct bbiSummary *sum, 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 288) 	struct bbiSummary **pTwiceReducedList, 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 289) 	int doubleReductionSize, struct bbiBoundsArray **pBoundsPt, 
+ced62f42 (kent          2009-11-13 19:02:39 +0000 290) 	struct bbiBoundsArray *boundsEnd, bits32 chromSize, struct lm *lm, 
+ced62f42 (kent          2009-11-13 19:02:39 +0000 291) 	struct bbiSumOutStream *stream);
+bf087c11 (kent          2009-07-27 18:02:11 +0000 292) /* Write out sum to file, keeping track of minimal info on it in *pBoundsPt, and also adding
+bf087c11 (kent          2009-07-27 18:02:11 +0000 293)  * it to second level summary. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 294) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 295) struct bbiSummary *bbiSummarySimpleReduce(struct bbiSummary *list, int reduction, struct lm *lm);
+bf087c11 (kent          2009-07-27 18:02:11 +0000 296) /* Do a simple reduction - where among other things the reduction level is an integral
+bf087c11 (kent          2009-07-27 18:02:11 +0000 297)  * multiple of the previous reduction level, and the list is sorted. Allocate result out of lm. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 298) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 299) #define bbiMaxZoomLevels 10	/* Maximum zoom levels produced by writers. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 300) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 301) void bbiWriteDummyHeader(FILE *f);
+bf087c11 (kent          2009-07-27 18:02:11 +0000 302) /* Write out all-zero header, just to reserve space for it. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 303) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 304) void bbiWriteDummyZooms(FILE *f);
+bf087c11 (kent          2009-07-27 18:02:11 +0000 305) /* Write out zeroes to reserve space for ten zoom levels. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 306) 
+681b584b (kent          2009-11-07 17:38:19 +0000 307) void bbiSummaryElementWrite(FILE *f, struct bbiSummaryElement *sum);
+681b584b (kent          2009-11-07 17:38:19 +0000 308) /* Write out summary element to file. */
+681b584b (kent          2009-11-07 17:38:19 +0000 309) 
+bf087c11 (kent          2009-07-27 18:02:11 +0000 310) void bbiWriteChromInfo(struct bbiChromUsage *usageList, int blockSize, FILE *f);
+bf087c11 (kent          2009-07-27 18:02:11 +0000 311) /* Write out information on chromosomes to file. */
+bf087c11 (kent          2009-07-27 18:02:11 +0000 312) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 313) void bbiWriteFloat(FILE *f, float val);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 314) /* Write out floating point val to file.  Mostly to convert from double... */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 315) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 316) struct hash *bbiChromSizesFromFile(char *fileName);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 317) /* Read two column file into hash keyed by chrom. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 318) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 319) bits64 bbiTotalSummarySize(struct bbiSummary *list);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 320) /* Return size on disk of all summaries. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 321) 
+feca5961 (braney        2009-08-13 21:48:17 +0000 322) void bbiChromUsageFree(struct bbiChromUsage **pUsage);
+feca5961 (braney        2009-08-13 21:48:17 +0000 323) /* free a single bbiChromUsage structure */
+feca5961 (braney        2009-08-13 21:48:17 +0000 324) 
+feca5961 (braney        2009-08-13 21:48:17 +0000 325) void bbiChromUsageFreeList(struct bbiChromUsage **pList);
+feca5961 (braney        2009-08-13 21:48:17 +0000 326) /* free a list of bbiChromUsage structures */
+feca5961 (braney        2009-08-13 21:48:17 +0000 327) 
+5b1b1663 (kent          2009-08-12 21:36:26 +0000 328) struct bbiChromUsage *bbiChromUsageFromBedFile(struct lineFile *lf, 
+0eb44740 (kent          2009-11-05 19:35:01 +0000 329) 	struct hash *chromSizesHash, int *retMinDiff, double *retAveSize, bits64 *retBedCount);
+feca5961 (braney        2009-08-13 21:48:17 +0000 330) /* Go through bed file and collect chromosomes and statistics. Free with bbiChromUsageFreeList */
+5b1b1663 (kent          2009-08-12 21:36:26 +0000 331) 
+5b1b1663 (kent          2009-08-12 21:36:26 +0000 332) int bbiCountSectionsNeeded(struct bbiChromUsage *usageList, int itemsPerSlot);
+5b1b1663 (kent          2009-08-12 21:36:26 +0000 333) /* Count up number of sections needed for data. */
+5b1b1663 (kent          2009-08-12 21:36:26 +0000 334) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 335) void bbiAddToSummary(bits32 chromId, bits32 chromSize, bits32 start, bits32 end, 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 336) 	bits32 validCount, double minVal, double maxVal, double sumData, double sumSquares,  
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 337) 	int reduction, struct bbiSummary **pOutList);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 338) /* Add data range to summary - putting it onto top of list if possible, otherwise
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 339)  * expanding list. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 340) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 341) void bbiAddRangeToSummary(bits32 chromId, bits32 chromSize, bits32 start, bits32 end, 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 342) 	double val, int reduction, struct bbiSummary **pOutList);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 343) /* Add chromosome range to summary - putting it onto top of list if possible, otherwise
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 344)  * expanding list. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 345) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 346) struct bbiSummary *bbiReduceSummaryList(struct bbiSummary *inList, 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 347) 	struct bbiChromInfo *chromInfoArray, int reduction);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 348) /* Reduce summary list to another summary list. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 349) 
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 350) bits64 bbiWriteSummaryAndIndex(struct bbiSummary *summaryList, 
+fe6b431f (kent          2009-11-12 23:15:52 +0000 351) 	int blockSize, int itemsPerSlot, boolean doCompress, FILE *f);
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 352) /* Write out summary and index to summary, returning start position of
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 353)  * summary index. */
+18e51ee9 (kent          2009-02-03 00:39:44 +0000 354) 
+3d890482 (Brian Raney   2010-12-15 13:13:52 -0800 355) boolean bbiFileCheckSigs(char *fileName, bits32 sig, char *typeName);
+3d890482 (Brian Raney   2010-12-15 13:13:52 -0800 356) /* check file signatures at beginning and end of file */
+3d890482 (Brian Raney   2010-12-15 13:13:52 -0800 357) 
+044b178a (Hiram Clawson 2011-02-08 11:54:30 -0800 358) time_t bbiUpdateTime(struct bbiFile *bbi);
+044b178a (Hiram Clawson 2011-02-08 11:54:30 -0800 359) /* return bbi->udc->updateTime */
+044b178a (Hiram Clawson 2011-02-08 11:54:30 -0800 360) 
+80ad2e61 (kent          2009-02-02 06:05:52 +0000 361) #endif /* BBIFILE_H */

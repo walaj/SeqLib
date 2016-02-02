@@ -1,6 +1,7 @@
 #include "SnowTools/BamRead.h"
 
 #include <cassert>
+#include <bitset>
 
 namespace SnowTools {
 
@@ -360,5 +361,102 @@ namespace SnowTools {
     
   }
   
+  BamRead::BamRead(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig) {
+
+    // make sure cigar fits with sequence
+    size_t clen = 0;
+    for (auto& i : cig)
+      if (i.ConsumesQuery())
+	//if (i.RawType() == BAM_CMATCH || i.RawType() == BAM_CSOFT_CLIP || i.RawType() == BAM_CINS)
+	clen += i.Length();
+    assert(seq.length() == clen);
+
+    init();
+    b->core.tid = gr->chr;
+    b->core.pos = gr->pos1 + 1;
+    b->core.qual = 60;
+    b->core.flag = 0;
+    b->core.n_cigar = cig.size();
+    
+    // set dumy mate
+    b->core.mtid = -1;
+    b->core.mpos = -1;
+    b->core.isize = 0;
+      
+    // if alignment is reverse, set it
+    if (gr->strand == '-') // just choose this convention to reverse
+      b->core.flag |= BAM_FREVERSE;
+
+      // allocate all the data
+      b->core.l_qname = name.length() + 1;
+      b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+      b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
+      b.get()->data = (uint8_t*)malloc(b.get()->l_data);
+
+      // allocate all the data
+      b->core.l_qname = name.length() + 1;
+      b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+      b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
+      b.get()->data = (uint8_t*)malloc(b.get()->l_data);
+
+      // allocate the qname
+      memcpy(b->data, name.c_str(), name.length() + 1);
+      
+      // allocate the cigar. 32 bits per elem (4 type, 28 length)
+      uint32_t * cigr = bam_get_cigar(b);
+      for (size_t i = 0; i < cig.size(); ++i)
+	cigr[i] = cig[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
+      
+      // allocate the sequence
+      uint8_t* m_bases = b->data + b->core.l_qname + (b->core.n_cigar<<2);
+
+      // TODO move this out of bigger loop
+      int slen = seq.length();
+      for (int i = 0; i < slen; ++i) {
+	// bad idea but works for now
+	uint8_t base = 15;
+	if (seq.at(i) == 'A')
+	  base = 1;
+	else if (seq.at(i) == 'C')
+	  base = 2;
+	else if (seq.at(i) == 'G')
+	  base = 4;
+	else if (seq.at(i) == 'T')
+	  base = 8;
+	
+	m_bases[i >> 1] &= ~(0xF << ((~i & 1) << 2));   ///< zero out previous 4-bit base encoding
+	m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
+	
+      }
+      
+      
+  }
+  
+
+  CigarField::CigarField(char  t, uint32_t len) {
+    
+    int op = 0;
+
+    // should use a table for this
+    if (t == 'M')
+      op = BAM_CMATCH;
+    else if (t == 'D')
+      op = BAM_CDEL;
+    else if (t == 'I')
+      op = BAM_CINS;
+    else if (t == 'S')
+      op = BAM_CSOFT_CLIP;
+    else if (t == 'N')
+      op = BAM_CREF_SKIP;
+    else
+      assert(false);
+    data = len << BAM_CIGAR_SHIFT | op;
+
+  }
+
+  std::ostream& operator<<(std::ostream& out, const CigarField& c) { 
+    out << bam_cigar_opchr(c.data) << bam_cigar_oplen(c.data); 
+    return out; 
+  }
   
 }
