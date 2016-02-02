@@ -11,7 +11,6 @@
 #include <algorithm>
 
 #include "SnowTools/gzstream.h"
-#include "SnowTools/GenomicRegion.h"
 
 namespace SnowTools {
 

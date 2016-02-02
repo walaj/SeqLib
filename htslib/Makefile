@@ -26,11 +26,19 @@ CC     = gcc
 AR     = ar
 RANLIB = ranlib
 
+<<<<<<< HEAD
 CPPFLAGS =  -I/xchip/gistic/Jeremiah/GIT/boost ##$(AM_CPPFLAGS) $(CPPFLAGS)
 # TODO: probably update cram code to make it compile cleanly with -Wc++-compat
 CFLAGS   = -g -Wall -O3
 EXTRA_CFLAGS_PIC = -fpic
 LDFLAGS  =  -L. -L//xchip/gistic/Jeremiah/GIT/boost/stage/lib
+=======
+CPPFLAGS =  -I. -I/xchip/gistic/Jeremiah/GIT/boost ##$(AM_CPPFLAGS) $(CPPFLAGS)
+# TODO: probably update cram code to make it compile cleanly with -Wc++-compat
+CFLAGS   = -g -Wall -O3
+EXTRA_CFLAGS_PIC = -fpic
+LDFLAGS  =  -L//xchip/gistic/Jeremiah/GIT/boost/stage/lib
+>>>>>>> efe92f3d90404b8b05678937151d4de77d50f7d5
 LDLIBS   =
 
 # For now these don't work too well as samtools also needs to know to
