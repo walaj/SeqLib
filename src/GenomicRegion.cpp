@@ -158,17 +158,18 @@ GenomicRegion::GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char
 
 std::string GenomicRegion::chrToString(int32_t ref) {
 
-  if (ref < 0)
-    throw std::invalid_argument( "GenomicRegion::chrToString - ref id must be >= 0" );
-  
   std::string ref_id;
+  if (ref < 0)
+    ref_id = std::to_string(ref);
+  //throw std::invalid_argument( "GenomicRegion::chrToString - ref id must be >= 0" );
+
   if (ref == 22)
     ref_id = "X";
   else if (ref == 23)
     ref_id = "Y";
   else if (ref == 24)
     ref_id = "M";
-  else
+  else if (ref >= 0)
     ref_id = std::to_string(ref+1);
   assert(ref_id != "23");
   return ref_id;

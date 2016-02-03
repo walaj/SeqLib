@@ -1,5 +1,6 @@
 #include "SnowTools/RefGenome.h"
 
+#include <stdexcept>
 #include "SnowTools/SnowUtils.h"
 
 namespace SnowTools {

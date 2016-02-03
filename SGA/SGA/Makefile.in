@@ -48,7 +48,7 @@ ARFLAGS = cru
 libsga_a_AR = $(AR) $(ARFLAGS)
 libsga_a_LIBADD =
 am_libsga_a_OBJECTS = libsga_a-index.$(OBJEXT) \
-	libsga_a-overlap.$(OBJEXT) libsga_a-OverlapCommon.$(OBJEXT)
+	libsga_a-OverlapCommon.$(OBJEXT)
 libsga_a_OBJECTS = $(am_libsga_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -163,19 +163,17 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libsga.a
 libsga_a_CPPFLAGS = \
-	-I$(top_srcdir)/sga/SGA/Util \
-	-I$(top_srcdir)/sga/SGA/Bigraph \
-	-I$(top_srcdir)/sga/SGA/SuffixTools \
-	-I$(top_srcdir)/sga/SGA/StringGraph \
-	-I$(top_srcdir)/sga/SGA/Concurrency \
-	-I$(top_srcdir)/sga/SGA/Algorithm \
-	-I$(top_srcdir)/sga/SGA/SQG \
-	-I$(top_srcdir)/sga/SGA/Scaffold \
-	-I$(top_srcdir)/sga/SGA/GraphDiff \
-	-I$(top_srcdir)/sga/SGA/Thirdparty
+	-I$(top_srcdir)/SGA/Util \
+	-I$(top_srcdir)/SGA/Bigraph \
+	-I$(top_srcdir)/SGA/SuffixTools \
+	-I$(top_srcdir)/SGA/StringGraph \
+	-I$(top_srcdir)/SGA/Concurrency \
+	-I$(top_srcdir)/SGA/Algorithm \
+	-I$(top_srcdir)/SGA/SQG \
+	-I$(top_srcdir)/SGA/Scaffold \
+	-I$(top_srcdir)/SGA/GraphDiff 
 
 libsga_a_SOURCES = index.cpp index.h \
-              overlap.cpp overlap.h \
               OverlapCommon.h OverlapCommon.cpp \
               SGACommon.h 
 
@@ -229,7 +227,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsga_a-OverlapCommon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsga_a-index.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsga_a-overlap.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -258,20 +255,6 @@ libsga_a-index.obj: index.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='index.cpp' object='libsga_a-index.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsga_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsga_a-index.obj `if test -f 'index.cpp'; then $(CYGPATH_W) 'index.cpp'; else $(CYGPATH_W) '$(srcdir)/index.cpp'; fi`
-
-libsga_a-overlap.o: overlap.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsga_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsga_a-overlap.o -MD -MP -MF $(DEPDIR)/libsga_a-overlap.Tpo -c -o libsga_a-overlap.o `test -f 'overlap.cpp' || echo '$(srcdir)/'`overlap.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsga_a-overlap.Tpo $(DEPDIR)/libsga_a-overlap.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='overlap.cpp' object='libsga_a-overlap.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsga_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsga_a-overlap.o `test -f 'overlap.cpp' || echo '$(srcdir)/'`overlap.cpp
-
-libsga_a-overlap.obj: overlap.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsga_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsga_a-overlap.obj -MD -MP -MF $(DEPDIR)/libsga_a-overlap.Tpo -c -o libsga_a-overlap.obj `if test -f 'overlap.cpp'; then $(CYGPATH_W) 'overlap.cpp'; else $(CYGPATH_W) '$(srcdir)/overlap.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsga_a-overlap.Tpo $(DEPDIR)/libsga_a-overlap.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='overlap.cpp' object='libsga_a-overlap.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsga_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsga_a-overlap.obj `if test -f 'overlap.cpp'; then $(CYGPATH_W) 'overlap.cpp'; else $(CYGPATH_W) '$(srcdir)/overlap.cpp'; fi`
 
 libsga_a-OverlapCommon.o: OverlapCommon.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsga_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsga_a-OverlapCommon.o -MD -MP -MF $(DEPDIR)/libsga_a-OverlapCommon.Tpo -c -o libsga_a-OverlapCommon.o `test -f 'OverlapCommon.cpp' || echo '$(srcdir)/'`OverlapCommon.cpp

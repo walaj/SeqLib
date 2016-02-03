@@ -1,0 +1,38 @@
+CONTENTS AND COPYRIGHT
+
+This archive contains the entire source tree for BLAT and
+associated utilities.  All files are copyrighted, but license 
+is hereby granted for personal, academic, and non-profit use.  
+A license is also granted for the contents of the top level 
+lib and inc directories for commercial users.  Commercial 
+users should contact jim_kent@pacbell.net for access to other modules.
+
+INSTALL INSTRUCTIONS
+
+1. Unzip this to create a blatSrc directory.
+2. Check that the environment variable MACHTYPE
+   exists on your system.  It should on Unix.  
+   (And making this on non-Unix systems is beyond
+   the scope of this README).  For a Linux 
+   system MACHTYPE will probably be 'i386', for
+   and Alpha it will be 'alpha', for a Sun
+   probably 'sparc'.  If necessary set up
+   this environment variable.  Do this under the
+   bash shell as so:
+       MACHTYPE=something
+       export MACHTYPE
+   or under tcsh as so:
+       setenv MACHTYPE something
+3. Make the directory ~/bin/$MACHTYPE which is
+   where the (non-web) executables will go.
+   Add this directory to your path.
+4. Go to the lib directory.  If it doesn't
+   already exist do a mkdir $MACHTYPE.
+5. If you're on an alpha system do a:
+     setenv SOCKETLIB -lxnet
+   on Solaris do
+     setenv SOCKETLIB "-lsocket -lnsl"
+   on SunOS do
+     setenv SOCKETLIB "-lsocket -lnsl -lresolv"
+   on Linux you can skip this step.
+6. At the blatSrc directory type 'make'
