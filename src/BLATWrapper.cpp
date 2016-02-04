@@ -105,10 +105,11 @@ namespace SnowTools {
     DNA saveEnd, *endPos;
     struct ssBundle *oneBunList = NULL, *bigBunList = NULL, *bun;
     struct hash *bunHash = newHash(8);
+
+    printf("calling gf long with rc: %d  band: %d   minScore: %d\n", isRc, band, minScore);
     
     for (subOffset = 0; subOffset<query->size; subOffset = nextOffset)
       {
-	
 	struct gfClump *clumpList;
 	struct gfRange *rangeList = NULL;
 	
@@ -143,6 +144,7 @@ namespace SnowTools {
 	else
 	  {
 	    clumpList = gfFindClumpsWithQmask(gf, &subQuery, qMaskBits, subOffset, lm, &hitCount);
+	    printf("HIT COUNT: %d   qMaskMits==null: %d   fastMap: %d\n", hitCount, qMaskBits == NULL, fastMap);
 	    if (fastMap)
 	      {
 		oneBunList = __fastMapClumpsToBundles(gf, clumpList, &subQuery);
@@ -168,7 +170,7 @@ namespace SnowTools {
 	  __refineSmallExonsInBundle(bun);
 	
 	//jeremiah
-	//printf("bigBunList. Name: %s size: %d\n", bun->genoSeq->name, bun->genoSeq->size); //jeremiah      
+	printf("bigBunList. Name: %s size: %d\n", bun->genoSeq->name, bun->genoSeq->size); //jeremiah
 	
 	//jeremiah score it
 	struct ssFfItem *ffi;
@@ -408,9 +410,9 @@ namespace SnowTools {
 
 	    brv.push_back(b);
 
-	    //printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d", score, mismatchCount, repMatch, countNs,
-	    //nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount, (qIsRc ? '-' : '+'),
-	    //   qSeq->name, qSeq->size, nStart, nEnd, bun->genoSeq->name, hStart, hEnd);
+	    printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d\n", score, mismatchCount, repMatch, countNs,
+	    nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount, (qIsRc ? '-' : '+'),
+	       qSeq->name, qSeq->size, nStart, nEnd, bun->genoSeq->name, hStart, hEnd);
 	  }
 	///////////////
 	///////////////
