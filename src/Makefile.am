@@ -7,8 +7,6 @@ libsnowtools_a_CPPFLAGS = \
 	-I../SGA/Util -I../SGA/Bigraph -I../SGA/SuffixTools \
 	-I../SGA/Algorithm -I../SGA/SQG -I../blat/inc -I../blat/jkOwnLib -Wno-write-strings
 
-libsnowtools_a_LIBADD = ../bwa/libbwa.a ../htslib/libhts.a ##../blat/lib/jkweb.a ../blat/lib/jkOwnLib.a
-
 libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp \
 			AlignedContig.cpp BreakPoint.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
@@ -16,9 +14,7 @@ libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp
 			STCoverage.cpp Fractions.cpp BLATWrapper.cpp \
 			../bwa/is.c ../bwa/bwtindex.c \
 			../bwa/bwt_gen.c ../bwa/QSufSort.c \
-                        ../bwa/bwt.c ../bwa/bwamem_extra.c \
-			../multifast-v1.4.2/ahocorasick/ahocorasick.c \
-			../multifast-v1.4.2/ahocorasick/node.c 
+                        ../bwa/bwt.c ../bwa/bwamem_extra.c 
 
 ##bin_PROGRAMS = snowtools
 
