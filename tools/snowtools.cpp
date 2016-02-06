@@ -25,10 +25,21 @@ int main(int argc, char** argv) {
   */
 
   seq = "TGGTGCAACTTAAATCATACTTGTTATATTTGAAAAAGACTGAATATCTCTACAGAAGAAAAAGGATAGAAATAATTCACACCTAACACCTGTAAGTTGTT";
-  std::string seq2 = "CGTCTCCACTAAAAATACAAAAATTAAGCCGGGCATGGTGGCACACGCCTGTAATCCCAGC";
-  bw.querySequence("test2", seq + seq2, brv2);
+  std::string seq2 = seq + "CGTCTCCACTAAAAATACAAAAATTAAGCCGGGCATGGTGGCACACGCCTGTAATCCCAGC";
+  
 
-  for (auto& i : brv2) 
-    std::cerr<< i << std::endl;
+  for (int i = 0; i < 100000; ++i) {
+    
+    bw.querySequence("test2", seq2, brv2);
+    
+    if (i % 100 == 0)
+      std::cerr << i << std::endl;
+
+    brv2.clear();
+
+    //for (auto& i : brv2) 
+    //  std::cerr<< i << std::endl;
+
+  }
 
 }

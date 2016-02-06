@@ -1,7 +1,7 @@
 #include "SnowTools/SnowUtils.h"
 #include <random>
 
-std::vector<double> SnowTools::getWeightedSum(const std::vector<double>& c) {
+/*std::vector<double> SnowTools::getWeightedSum(const std::vector<double>& c) {
 
   double sum = 0;
   for (auto& i : c)
@@ -20,7 +20,7 @@ std::vector<double> SnowTools::getWeightedSum(const std::vector<double>& c) {
   return wsum;
   
 
-}
+  }*/
 
 int SnowTools::weightedRandom(const std::vector<double>& cs) {
 
@@ -63,6 +63,7 @@ void SnowTools::genRandomValue(uint32_t &i, const uint32_t &max, uint32_t seed) 
 
 
 std::string SnowTools::getFileName(const std::string& s) {
+
     char sep = '/';
 #ifdef _WIN32
     sep = '\\';
@@ -75,3 +76,33 @@ std::string SnowTools::getFileName(const std::string& s) {
     return("");
   }
  
+
+
+ /*! @function Loops through a text file to count the number of lines.
+  * @param file The file to count
+  * @param exclude String which, if present in line, causes line to not be counted.
+  * @param include String which must be present in the line to be counted.
+  * @return Number of valid lines in file
+  */
+ /*size_t SnowTools::countLines(const std::string &file, const std::string &exclude = "", const std::string &include = "") {
+   
+   //open the file
+   igzstream inFile(file.c_str());
+   if (!inFile) 
+     return 0;
+   
+   bool has_include = !include.empty();
+   bool has_exclude = !exclude.empty();
+
+   // loop through the file
+   size_t count = 0;
+   std::string dum;
+   while (std::getline(inFile, dum)) {
+     if (!include.length() || (dum.find(include) != std::string::npos)) // file must have include
+       if (!exclude.length() || (dum.find(exclude) == std::string::npos)) // and not have exclude
+	 count++;
+     
+   }
+   
+   return count;
+   } */

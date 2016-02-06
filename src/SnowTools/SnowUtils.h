@@ -92,63 +92,32 @@ namespace SnowTools {
       return in.substr(0, in.length() - 1);
   }
   
-  // assign A to B and B to A
-  template<typename T> 
-    void flip(T& a, T& b) {
-    T tmp_a = a;
-    a = b;
-    b = tmp_a;
-  }
-  
   // remove substrings from a string
- inline std::string scrubString(const std::string& toscrub, const std::string& toremove) {
-
-   std::string::size_type i = toscrub.find(toremove);
-   if (i == std::string::npos)
-     return toscrub;
-
-   std::string ts = toscrub;
-   while (i != std::string::npos) {
-     ts.erase(i, toremove.length());
-     i = ts.find(toremove);
-   }
-   return ts;
- }
+  inline std::string scrubString(const std::string& toscrub, const std::string& toremove) {
+    
+    std::string::size_type i = toscrub.find(toremove);
+    if (i == std::string::npos)
+      return toscrub;
+    
+    std::string ts = toscrub;
+    while (i != std::string::npos) {
+      ts.erase(i, toremove.length());
+      i = ts.find(toremove);
+    }
+    return ts;
+  }
 
  /** Generate a weighed random value */
  int weightedRandom(const std::vector<double>& cs);
 
- std::vector<double> getWeightedSum(const std::vector<double>& c);
+ //std::vector<double> getWeightedSum(const std::vector<double>& c);
 
  void genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max, uint32_t seed = 0);
 
  void genRandomValue(uint32_t &i, const uint32_t &max, uint32_t seed = 0);
 
- /*! @function Loops through a text file to count the number of lines.
-  * @param file The file to count
-  * @param exclude String which, if present in line, causes line to not be counted.
-  * @param include String which must be present in the line to be counted.
-  * @return Number of valid lines in file
-  */
- inline size_t countLines(const std::string &file, const std::string &exclude = "", const std::string &include = "") {
-   
-   //open the file
-   igzstream inFile(file.c_str());
-   if (!inFile) 
-     return 0;
-   
-   // loop through the file
-   size_t count = 0;
-   std::string dum;
-   while (std::getline(inFile, dum)) {
-     if (!include.length() || (dum.find(include) != std::string::npos)) // file must have include
-       if (!exclude.length() || (dum.find(exclude) == std::string::npos)) // and not have exclude
-	 count++;
-     
-   }
-   
-   return count;
- } 
+ //size_t countLines(const std::string &file, const std::string &exclude = "", const std::string &include = "");
+
 
 }
 
