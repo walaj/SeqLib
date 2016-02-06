@@ -63,7 +63,7 @@ class BLATWrapper {
   int minMatch = 2;
   int minScore = 30;
   int maxGap = 2;
-  int repMatch = 1024*4;
+  int repMatch = 1024; //*4;
   int dotEvery = 0;
   boolean oneOff = false;
   boolean noHead = false;

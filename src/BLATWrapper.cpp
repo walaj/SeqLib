@@ -95,7 +95,7 @@ namespace SnowTools {
     
     //printf("query: %s  name: %s  fastMap: %d   band: %d\n", query->dna, query->name, fastMap, band);
     
-    int hitCount;
+    int hitCount = 0;
     int maxSize = MAXSINGLEPIECESIZE;
     int preferredSize = 4500;
     int overlapSize = 250;
@@ -106,8 +106,6 @@ namespace SnowTools {
     struct ssBundle *oneBunList = NULL, *bigBunList = NULL, *bun;
     struct hash *bunHash = newHash(8);
 
-    printf("calling gf long with rc: %d  band: %d   minScore: %d\n", isRc, band, minScore);
-    
     for (subOffset = 0; subOffset<query->size; subOffset = nextOffset)
       {
 	struct gfClump *clumpList;
@@ -137,6 +135,9 @@ namespace SnowTools {
 	endPos = &subQuery.dna[subSize];
 	saveEnd = *endPos;
 	*endPos = 0;
+	
+	//gf->maxPat = 1024; // jeremiah
+
 	if (band)
 	  {
 	    oneBunList = ffSeedExtInMem(gf, &subQuery, qMaskBits, subOffset, lm, minScore, isRc);
@@ -144,7 +145,10 @@ namespace SnowTools {
 	else
 	  {
 	    clumpList = gfFindClumpsWithQmask(gf, &subQuery, qMaskBits, subOffset, lm, &hitCount);
-	    printf("HIT COUNT: %d   qMaskMits==null: %d   fastMap: %d\n", hitCount, qMaskBits == NULL, fastMap);
+	    //printf("HIT COUNT: %d   qMaskMits==null: %d   fastMap: %d, subQuery.dna: %s    offset: %d   gf->tileSize : %d  gf->minMatch+1   %d\n", hitCount, qMaskBits == NULL, fastMap, 
+	    //       subQuery.dna, subOffset, gf->tileSize, gf->minMatch+1);
+	    //printf("maxPat: %d  minMatch: %d   maxGap: %d  tileSize :%d  stepsize %d tileSpaceSize: %d  tileMask %d  sourceCount: %d isPep %d  allowOneMismatch %d   segSize %d\n",
+	    //	   gf->maxPat, gf->minMatch, gf->maxGap, gf->tileSize, gf->stepSize, gf->tileSpaceSize, gf->tileMask, gf->sourceCount, gf->isPep, gf->allowOneMismatch, gf->segSize);
 	    if (fastMap)
 	      {
 		oneBunList = __fastMapClumpsToBundles(gf, clumpList, &subQuery);
@@ -170,7 +174,7 @@ namespace SnowTools {
 	  __refineSmallExonsInBundle(bun);
 	
 	//jeremiah
-	printf("bigBunList. Name: %s size: %d\n", bun->genoSeq->name, bun->genoSeq->size); //jeremiah
+	//printf("bigBunList. Name: %s size: %d\n", bun->genoSeq->name, bun->genoSeq->size); //jeremiah
 	
 	//jeremiah score it
 	struct ssFfItem *ffi;
@@ -269,6 +273,8 @@ namespace SnowTools {
 		  }
 	      }
 
+	    Cigar cigv;
+
 	    // make the cigar (idea from Heng Li's psl2sam.pl)
 	    std::vector<long> x, y, z;
 	    for (ff = ali; ff != NULL; ff = ff->right)
@@ -278,14 +284,16 @@ namespace SnowTools {
 	    for (ff = ali; ff != NULL; ff = ff->right)
 	      z.push_back(trans3GenoPos(ff->hStart, tSeq, t3List, FALSE) + chromOffset);
 
+	    // 5' clipping
+	    if (nStart > 0)
+	      cigv.push_back(CigarField('S', nStart));
+
 	    int gap_open = 0;
 	    int gap_ext = 0;
 	    int y0 = y[0], z0 = z[0]; 
 	    
 	    int blockCount = ffAliCount(ali);
 
-	    //std::string cig;
-	    Cigar cigv;
 	    for (int i = 1; i < blockCount; ++i)
 	      {
 		int ly = y[i] - y[i-1] - x[i-1];
@@ -410,9 +418,9 @@ namespace SnowTools {
 
 	    brv.push_back(b);
 
-	    printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d\n", score, mismatchCount, repMatch, countNs,
-	    nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount, (qIsRc ? '-' : '+'),
-	       qSeq->name, qSeq->size, nStart, nEnd, bun->genoSeq->name, hStart, hEnd);
+	    //printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d\n", score, mismatchCount, repMatch, countNs,
+	    //nInsertCount, nInsertBaseCount, hInsertCount, hInsertBaseCount, (qIsRc ? '-' : '+'),
+	    //   qSeq->name, qSeq->size, nStart, nEnd, bun->genoSeq->name, hStart, hEnd);
 	  }
 	///////////////
 	///////////////
@@ -630,8 +638,6 @@ namespace SnowTools {
     dbSeqList = gfClientSeqList(dbCount, dbFiles, tIsProt, false, repeats,
 				minRepDivergence, showStatus);
 
-    std::cerr << "...making index" << std::endl;
-
     int databaseSeqCount = slCount(dbSeqList);
     bool qIsProt = false;
     char *databaseName = dbFile;
@@ -650,7 +656,6 @@ namespace SnowTools {
     gf = gfIndexSeq(dbSeqList, minMatch, maxGap, tileSize, repMatch, ooc, 
 		    tIsProt, oneOff, false, stepSize);
 
-    
   }
   
   void BLATWrapper::querySequence(const std::string& name, const std::string& sequence, BamReadVector& brv) {
