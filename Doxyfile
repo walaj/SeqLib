@@ -488,6 +488,8 @@ EXCLUDE                = bwa \
 		         figs \ 
 		         htslib \
 		         multifast-v1.4.2 \
+		         blat \
+		         SGA \
 		         snow_test \ 
 		         .git \
 			 .travis.scripts \
