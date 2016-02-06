@@ -6,13 +6,14 @@ snow_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
      -I.. \
-     -I../multifast-v1.4.2 --coverage
+     -I../blat/jkOwnLib -I../blat/inc \
+     -I../multifast-v1.4.2 --coverage -Wno-write-strings
 
 snow_test_LDADD = \
 	../src/libsnowtools.a \
 	../bwa/libbwa.a \
 	../multifast-v1.4.2/ahocorasick/build/libahocorasick.a \
-	../htslib/libhts.a \
+	../htslib/libhts.a ../blat/lib/jkOwnLib.a ../blat/lib/jkweb.a \
 	@boost_lib@/libboost_regex.a @boost_lib@/libboost_unit_test_framework.a \
 	@boost_lib@/libboost_system.a #libsnowtest
 
@@ -23,4 +24,6 @@ snow_test_SOURCES = snow_test.cpp snow_test_main.cpp \
 	$(top_builddir)/../src/Histogram.cpp $(top_builddir)/../src/BamWalker.cpp $(top_builddir)/../src/BamStats.cpp \
 	$(top_builddir)/../src/MiniRules.cpp $(top_builddir)/../src/SnowUtils.cpp $(top_builddir)/../src/BamRead.cpp \
 	$(top_builddir)/../src/BWAWrapper.cpp $(top_builddir)/../src/STCoverage.cpp \
-        $(top_builddir)/../src/Fractions.cpp
+        $(top_builddir)/../src/Fractions.cpp $(top_builddir)/../src/AlignedContig.cpp \
+	$(top_builddir)/../src/BreakPoint.cpp $(top_builddir)/../src/RefGenome.cpp \
+	$(top_builddir)/../src/BLATWrapper.cpp $(top_builddir)/../src/SVVCF.cpp

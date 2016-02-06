@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59) ## specificy version of autoconf
-AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
+AC_INIT(snowtoolsg, 1.0, jwala@broadinstitute.org)
 AM_INIT_AUTOMAKE(foreign)
 AC_CONFIG_SRCDIR([snow_test.cpp])
 AC_CONFIG_HEADER([config.h])
@@ -48,7 +48,6 @@ AC_SUBST(CFLAGS, "$CFLAGS -O3")
 AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $boost_include")
 AC_SUBST(LDFLAGS, "$LDFLAGS")
 
-# We always need to specify to link in bamtools
 AC_SUBST(LIBS, "$LIBS")
 
 # Make sure the boost headers can be found
