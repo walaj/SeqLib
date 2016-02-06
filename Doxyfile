@@ -501,13 +501,18 @@ EXCLUDE                = bwa \
 
 EXCLUDE_SYMLINKS       = NO
 
+EXCLUDE_SYMBOLS	       = atm_free_delete
+
 # If the value of the INPUT tag contains directories, you can use the 
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude 
 # certain files from those directories. Note that the wildcards are matched 
 # against the file with absolute path, so to exclude all test directories 
 # for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       = */.git/*
+EXCLUDE_PATTERNS       = */.git/* \
+		         */gzstream.h \
+		         */gzstream.C \
+		         */IntervalTree.h  
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or 
 # directories that contain example code fragments that are included (see 
