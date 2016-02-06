@@ -64,6 +64,7 @@
  * \section attribution Attributions
  * - Jeremiah Wala - Harvard MD-PhD candidate, Bioinformatics and Integrative Genomics
  * - Steve Schumacher - Research Scientist, Dana Farber Cancer Institute
+ * - Steve Huange - Research Scientist, Broad Institute
  * - Cheng-Zhong Zhang - Research Scientist, Broad Institute
  * - Marcin Imielinski - Asst Prof, Cornell University
  */
@@ -73,6 +74,14 @@
 #include <cstdint>
 
 namespace SnowTools {
+
+  static const char RCOMPLEMENT_TABLE[128] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+					      ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+					      ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+					      ' ',' ',' ',' ',' ','T',' ','G',' ',' ',' ','C',' ',' ',' ',' ',' ',' ','N',' ',
+					      ' ',' ',' ',' ','A',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','t',' ','g',
+					      ' ',' ',' ','c',' ',' ',' ',' ',' ',' ','n',' ',' ',' ',' ',' ','a',' ',' ',' ',
+					      ' ',' ',' ',' ',' ',' ',' ',' '};
   
   static const std::vector<std::string> CHR_NAME {"1", "2", "3", "4", "5", "6", "7", "8", "9",
       "10", "11", "12", "13", "14", "15", "16", "17", 

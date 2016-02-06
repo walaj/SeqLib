@@ -65,7 +65,9 @@ std::string Histogram::toFileString() const {
   for (auto& i : m_bins)
     if (i.m_count)
       ss << i.bounds.first << "_" << i.bounds.second << "_" << i.m_count << ",";
-  return(cutLastChar(ss.str())); // trim off last comma
+  std::string out = ss.str();
+  out.pop_back(); // trim off last comma
+  return(out);
   
 }
 

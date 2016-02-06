@@ -22,7 +22,6 @@ typedef uint32_t S;
 
 namespace SnowTools {
 
-  class Matrix;
   class Histogram;
 
 /** Stores one bin in a Histogram

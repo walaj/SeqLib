@@ -6,12 +6,13 @@ snow_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
      -I.. \
-     -I$(top_srcdir)/../multifast-v1.4.2 --coverage
+     -I../multifast-v1.4.2 --coverage
 
 snow_test_LDADD = \
-	$(top_builddir)/../src/libsnowtools.a \
-	$(top_builddir)/../bwa/libbwa.a \
-	$(top_builddir)/../htslib/libhts.a \
+	../src/libsnowtools.a \
+	../bwa/libbwa.a \
+	../multifast-v1.4.2/ahocorasick/build/libahocorasick.a \
+	../htslib/libhts.a \
 	@boost_lib@/libboost_regex.a @boost_lib@/libboost_unit_test_framework.a \
 	@boost_lib@/libboost_system.a #libsnowtest
 

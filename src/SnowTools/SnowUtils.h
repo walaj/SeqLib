@@ -1,5 +1,5 @@
-#ifndef SNOWUTILS_H
-#define SNOWUTILS_H
+#ifndef SNOWUTILS_H__
+#define SNOWUTILS_H__
 
 #include <string>
 #include <time.h>
@@ -11,12 +11,10 @@
 #include <algorithm>
 
 #include "SnowTools/gzstream.h"
+#include "SnowTools/SnowToolsCommon.h"
 
 namespace SnowTools {
 
-  /** Get a filename from a file path */
-  std::string getFileName(const std::string& s);
-  
   /** Check if a file is readable and exists
    * @param name Name of a file to test
    * @return File is readable and exists
@@ -25,9 +23,9 @@ namespace SnowTools {
     return (access (name.c_str(), R_OK) == 0); 
   }
 
-  /** Format a number to include commas
+  /** Format an integer to include commas
    * @param data Number to format
-   * @param Formatted number
+   * @return String with formatted number containing commas
    */
   template <typename T> 
     std::string AddCommas(T data) { 
@@ -39,7 +37,13 @@ namespace SnowTools {
 	s.insert(i,",");
     return s;
   }
-  
+
+  /** Display the runtime (CPU and Wall)
+   * 
+   * @param start Running timer
+   * @return Time formatted as "CPU: XmYs Wall: XmYs"
+   * @note Does not work on OSX or Windows (returns "not configured")
+   */
   inline std::string displayRuntime(const timespec start) {
     
 #ifndef __APPLE__
@@ -59,24 +63,22 @@ namespace SnowTools {
 #endif
   }
 
-  /** Deprecated
+  /** Reverse complement in-place sequence containg upper/lower case ACTGN
+   * @param a Sequence to be reverse complmented
    */
   inline void rcomplement(std::string &a) {
     
     std::reverse(&a[0], &a[a.size()]);
     std::string::iterator it = a.begin();
     for (; it != a.end(); it++)
-      if (*it == 'A')
-	*it = 'T';
-      else if (*it == 'T')
-	*it = 'A';
-      else if (*it == 'C')
-	*it = 'G';
-      else
-	*it = 'C';
+      *it = RCOMPLEMENT_TABLE[*it];
   }
   
-  // calculate the percentage
+  /** Calculate the percentage and return as integer
+   * @param numer Numerator
+   * @param denom Denominator
+   * @return Integer with the percentage floored
+   */
   template <typename T> inline int percentCalc(T numer, T denom) {
     if (denom <= 0)
       return 0;
@@ -84,40 +86,18 @@ namespace SnowTools {
     return perc;
   }
 
-  // remove the last character from a string
-  inline std::string cutLastChar(const std::string& in) {
-    if (in.length() == 0)
-      return in;
-    else 
-      return in.substr(0, in.length() - 1);
-  }
-  
-  // remove substrings from a string
-  inline std::string scrubString(const std::string& toscrub, const std::string& toremove) {
-    
-    std::string::size_type i = toscrub.find(toremove);
-    if (i == std::string::npos)
-      return toscrub;
-    
-    std::string ts = toscrub;
-    while (i != std::string::npos) {
-      ts.erase(i, toremove.length());
-      i = ts.find(toremove);
-    }
-    return ts;
-  }
+  /** Remove substrings from a string
+   * @param toscrub Input string to clean
+   * @param toremove Substring to remove from input
+   * @return Scrubbed string
+   */
+  std::string scrubString(const std::string& toscrub, const std::string& toremove);
 
- /** Generate a weighed random value */
+ /** Generate a weighed random integer 
+  * @param cs Weighting for each integer (values must sum to one) 
+  * @return Random integer bounded on [0,cs.size())
+  */
  int weightedRandom(const std::vector<double>& cs);
-
- //std::vector<double> getWeightedSum(const std::vector<double>& c);
-
- void genRandomVals(uint32_t &i1, uint32_t &i2, const uint32_t &max, uint32_t seed = 0);
-
- void genRandomValue(uint32_t &i, const uint32_t &max, uint32_t seed = 0);
-
- //size_t countLines(const std::string &file, const std::string &exclude = "", const std::string &include = "");
-
 
 }
 
