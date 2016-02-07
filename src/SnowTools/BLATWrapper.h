@@ -38,6 +38,13 @@ extern "C" {
 
 namespace SnowTools {
 
+  /** Call BLAT on a single sequence
+   * 
+   * BLATWrapper is an interface to the BLAT program (Jim Kent, UCSC, 2002). 
+   * The purpose of this class is to allow rapid querying of a sequence
+   * against a reference entirely in memory, with no file intermediates
+   * or the need to call BLAT externally. 
+   */
 class BLATWrapper {
 
  public:

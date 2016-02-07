@@ -20,10 +20,10 @@ snow_test_LDADD = \
 snow_test_LDFLAGS = --coverage ##-BOOST_TEST_DYN_LINK
 
 snow_test_SOURCES = snow_test.cpp snow_test_main.cpp \
-	$(top_builddir)/../src/GenomicRegion.cpp \
-	$(top_builddir)/../src/Histogram.cpp $(top_builddir)/../src/BamWalker.cpp $(top_builddir)/../src/BamStats.cpp \
-	$(top_builddir)/../src/MiniRules.cpp $(top_builddir)/../src/SnowUtils.cpp $(top_builddir)/../src/BamRead.cpp \
-	$(top_builddir)/../src/BWAWrapper.cpp $(top_builddir)/../src/STCoverage.cpp \
-        $(top_builddir)/../src/Fractions.cpp $(top_builddir)/../src/AlignedContig.cpp \
-	$(top_builddir)/../src/BreakPoint.cpp $(top_builddir)/../src/RefGenome.cpp \
-	$(top_builddir)/../src/BLATWrapper.cpp $(top_builddir)/../src/SVVCF.cpp
+	../src/GenomicRegion.cpp \
+	../src/Histogram.cpp ../src/BamWalker.cpp ../src/BamStats.cpp \
+	../src/MiniRules.cpp ../src/SnowUtils.cpp ../src/BamRead.cpp \
+	../src/BWAWrapper.cpp ../src/STCoverage.cpp \
+        ../src/Fractions.cpp ../src/AlignedContig.cpp \
+	../src/BreakPoint.cpp ../src/RefGenome.cpp \
+	../src/BLATWrapper.cpp ../src/SVVCF.cpp

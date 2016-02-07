@@ -38,7 +38,9 @@ namespace SnowTools {
 
 enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
 
-/*! Basic container for cigar data. 
+/** Basic container for cigar data. 
+ *
+ * Stores a single cigar element in a compact 32bit form (same as HTSlib).
  */
 class CigarField {
 
@@ -526,9 +528,12 @@ class BamRead {
  
  typedef std::vector<BamReadVector> BamReadClusterVector;
 
+ /** @brief Sort methods for reads
+  */
  namespace BamReadSort {
 
-   // sort by read position
+   /** @brief Sort by read position 
+    */
    struct ByReadPosition
    {
      bool operator()( const BamRead& lx, const BamRead& rx ) const {
@@ -536,7 +541,8 @@ class BamRead {
      }
    };
 
-   // sort by read mate position
+   /** @brief Sort by read-mate position 
+    */
    struct ByMatePosition
    {
      bool operator()( const BamRead& lx, const BamRead& rx ) const {
