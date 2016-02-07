@@ -10,6 +10,10 @@
 
 namespace SnowTools {
 
+  /** Represent a VCF containing structural variants.
+   *
+   * [In development]
+   */
   class SVVCF {
 
   public:

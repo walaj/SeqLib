@@ -10,8 +10,10 @@
 namespace SnowTools {
 
   class AlignedContig;
-  
-  /*! This class contains a single alignment fragment from a contig to
+
+  /** A single alignment of a contig to the reference 
+   * 
+   * This class contains a single alignment fragment from a contig to
    * the reference. For a multi-part mapping of a contig to the reference,
    * an object of this class represents just a single fragment from that alignment.
    */
@@ -79,7 +81,10 @@ namespace SnowTools {
   //! vector of AlignmentFragment objects
   typedef std::vector<AlignmentFragment> AlignmentFragmentVector;
   
-  /*! Contains the mapping of an aligned contig to the reference genome,
+  
+  /** A contig with 1 or more mappings to the genome
+   * 
+   * Contains the mapping of an aligned contig to the reference genome,
    * along with pointer to all of the reads aligned to this contig, and a 
    * store of all of the breakpoints associated with this contig
    */
@@ -205,6 +210,8 @@ namespace SnowTools {
 
 };
 
+  /** @brief Small container for a read and its position in an ASCII read plot
+   */
 struct PlottedRead {
 
   int pos;
@@ -219,6 +226,8 @@ struct PlottedRead {
 
 typedef std::vector<PlottedRead> PlottedReadVector;
 
+/** @brief A single line of an ASCII read plot
+ */
 struct PlottedReadLine {
 
   std::vector<PlottedRead*> read_vec;

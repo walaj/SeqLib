@@ -7,8 +7,14 @@
 
 #include "htslib/faidx.h"
 
-namespace SnowTools {
 
+namespace SnowTools {
+  
+  /** Stores an indexed reference genome
+   *
+   * RefGenome is currently used as an interface to obtain
+   * sequences from the reference given an interval.
+   */
   class RefGenome {
 
   public:
