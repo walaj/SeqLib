@@ -196,6 +196,9 @@ namespace SnowTools {
 #endif    
 
     double primary_score = 0;
+
+    int secondary_count = 0;
+
     //size_t num_secondary = 0;
     // loop through the hits
     for (size_t i = 0; i < ar.n; ++i) {
@@ -371,6 +374,12 @@ namespace SnowTools {
       b.AddIntTag("SB", ar.a[i].sub_n);
       b.AddIntTag("AS", a.score);
 
+      // count num secondaries
+      if (b.SecondaryFlag())
+	++secondary_count;
+
+      //std::cerr << "BWAWrapper::cname "  << name << " sub_n " << ar.a[i].sub_n << " secondary flag " << b.SecondaryFlag() << std::endl;
+      
       vec.push_back(b);
 
       //#ifdef DEBUG_BWATOOLS
@@ -387,6 +396,11 @@ namespace SnowTools {
       free(a.cigar); // don't forget to deallocate CIGAR
     }
     free (ar.a); // dealloc the hit list
+
+    // add the secondary counts
+    for (auto& i : vec)
+      i.AddIntTag("SQ", secondary_count);
+    
 }
 
   //void BWAWrapper::alignReads(const std::vector<BamRead>& reads){}
