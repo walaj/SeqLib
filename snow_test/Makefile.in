@@ -57,11 +57,14 @@ am_snow_test_OBJECTS = snow_test-snow_test.$(OBJEXT) \
 	snow_test-BamStats.$(OBJEXT) snow_test-MiniRules.$(OBJEXT) \
 	snow_test-SnowUtils.$(OBJEXT) snow_test-BamRead.$(OBJEXT) \
 	snow_test-BWAWrapper.$(OBJEXT) snow_test-STCoverage.$(OBJEXT) \
-	snow_test-Fractions.$(OBJEXT)
+	snow_test-Fractions.$(OBJEXT) \
+	snow_test-AlignedContig.$(OBJEXT) \
+	snow_test-BreakPoint.$(OBJEXT) snow_test-RefGenome.$(OBJEXT) \
+	snow_test-BLATWrapper.$(OBJEXT) snow_test-SVVCF.$(OBJEXT)
 snow_test_OBJECTS = $(am_snow_test_OBJECTS)
-snow_test_DEPENDENCIES = $(top_builddir)/../src/libsnowtools.a \
-	$(top_builddir)/../bwa/libbwa.a \
-	$(top_builddir)/../htslib/libhts.a \
+snow_test_DEPENDENCIES = ../src/libsnowtools.a ../bwa/libbwa.a \
+	../multifast-v1.4.2/ahocorasick/build/libahocorasick.a \
+	../htslib/libhts.a ../blat/lib/jkOwnLib.a ../blat/lib/jkweb.a \
 	@boost_lib@/libboost_regex.a \
 	@boost_lib@/libboost_unit_test_framework.a \
 	@boost_lib@/libboost_system.a
@@ -190,22 +193,26 @@ snow_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
      -I.. \
-     -I$(top_srcdir)/../multifast-v1.4.2 --coverage
+     -I../blat/jkOwnLib -I../blat/inc \
+     -I../multifast-v1.4.2 --coverage -Wno-write-strings
 
 snow_test_LDADD = \
-	$(top_builddir)/../src/libsnowtools.a \
-	$(top_builddir)/../bwa/libbwa.a \
-	$(top_builddir)/../htslib/libhts.a \
+	../src/libsnowtools.a \
+	../bwa/libbwa.a \
+	../multifast-v1.4.2/ahocorasick/build/libahocorasick.a \
+	../htslib/libhts.a ../blat/lib/jkOwnLib.a ../blat/lib/jkweb.a \
 	@boost_lib@/libboost_regex.a @boost_lib@/libboost_unit_test_framework.a \
 	@boost_lib@/libboost_system.a #libsnowtest
 
 snow_test_LDFLAGS = --coverage ##-BOOST_TEST_DYN_LINK
 snow_test_SOURCES = snow_test.cpp snow_test_main.cpp \
-	$(top_builddir)/../src/GenomicRegion.cpp \
-	$(top_builddir)/../src/Histogram.cpp $(top_builddir)/../src/BamWalker.cpp $(top_builddir)/../src/BamStats.cpp \
-	$(top_builddir)/../src/MiniRules.cpp $(top_builddir)/../src/SnowUtils.cpp $(top_builddir)/../src/BamRead.cpp \
-	$(top_builddir)/../src/BWAWrapper.cpp $(top_builddir)/../src/STCoverage.cpp \
-        $(top_builddir)/../src/Fractions.cpp
+	../src/GenomicRegion.cpp \
+	../src/Histogram.cpp ../src/BamWalker.cpp ../src/BamStats.cpp \
+	../src/MiniRules.cpp ../src/SnowUtils.cpp ../src/BamRead.cpp \
+	../src/BWAWrapper.cpp ../src/STCoverage.cpp \
+        ../src/Fractions.cpp ../src/AlignedContig.cpp \
+	../src/BreakPoint.cpp ../src/RefGenome.cpp \
+	../src/BLATWrapper.cpp ../src/SVVCF.cpp
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -310,15 +317,20 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-AlignedContig.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-BLATWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-BamRead.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-BamStats.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-BamWalker.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-BreakPoint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-Fractions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-GenomicRegion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-Histogram.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-MiniRules.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-RefGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-STCoverage.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-SVVCF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-SnowUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-snow_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snow_test-snow_test_main.Po@am__quote@
@@ -365,145 +377,215 @@ snow_test-snow_test_main.obj: snow_test_main.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-snow_test_main.obj `if test -f 'snow_test_main.cpp'; then $(CYGPATH_W) 'snow_test_main.cpp'; else $(CYGPATH_W) '$(srcdir)/snow_test_main.cpp'; fi`
 
-snow_test-GenomicRegion.o: $(top_builddir)/../src/GenomicRegion.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-GenomicRegion.o -MD -MP -MF $(DEPDIR)/snow_test-GenomicRegion.Tpo -c -o snow_test-GenomicRegion.o `test -f '$(top_builddir)/../src/GenomicRegion.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/GenomicRegion.cpp
+snow_test-GenomicRegion.o: ../src/GenomicRegion.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-GenomicRegion.o -MD -MP -MF $(DEPDIR)/snow_test-GenomicRegion.Tpo -c -o snow_test-GenomicRegion.o `test -f '../src/GenomicRegion.cpp' || echo '$(srcdir)/'`../src/GenomicRegion.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-GenomicRegion.Tpo $(DEPDIR)/snow_test-GenomicRegion.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/GenomicRegion.cpp' object='snow_test-GenomicRegion.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/GenomicRegion.cpp' object='snow_test-GenomicRegion.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-GenomicRegion.o `test -f '$(top_builddir)/../src/GenomicRegion.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/GenomicRegion.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-GenomicRegion.o `test -f '../src/GenomicRegion.cpp' || echo '$(srcdir)/'`../src/GenomicRegion.cpp
 
-snow_test-GenomicRegion.obj: $(top_builddir)/../src/GenomicRegion.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-GenomicRegion.obj -MD -MP -MF $(DEPDIR)/snow_test-GenomicRegion.Tpo -c -o snow_test-GenomicRegion.obj `if test -f '$(top_builddir)/../src/GenomicRegion.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/GenomicRegion.cpp'; fi`
+snow_test-GenomicRegion.obj: ../src/GenomicRegion.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-GenomicRegion.obj -MD -MP -MF $(DEPDIR)/snow_test-GenomicRegion.Tpo -c -o snow_test-GenomicRegion.obj `if test -f '../src/GenomicRegion.cpp'; then $(CYGPATH_W) '../src/GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/GenomicRegion.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-GenomicRegion.Tpo $(DEPDIR)/snow_test-GenomicRegion.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/GenomicRegion.cpp' object='snow_test-GenomicRegion.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/GenomicRegion.cpp' object='snow_test-GenomicRegion.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-GenomicRegion.obj `if test -f '$(top_builddir)/../src/GenomicRegion.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/GenomicRegion.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-GenomicRegion.obj `if test -f '../src/GenomicRegion.cpp'; then $(CYGPATH_W) '../src/GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/GenomicRegion.cpp'; fi`
 
-snow_test-Histogram.o: $(top_builddir)/../src/Histogram.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Histogram.o -MD -MP -MF $(DEPDIR)/snow_test-Histogram.Tpo -c -o snow_test-Histogram.o `test -f '$(top_builddir)/../src/Histogram.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/Histogram.cpp
+snow_test-Histogram.o: ../src/Histogram.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Histogram.o -MD -MP -MF $(DEPDIR)/snow_test-Histogram.Tpo -c -o snow_test-Histogram.o `test -f '../src/Histogram.cpp' || echo '$(srcdir)/'`../src/Histogram.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-Histogram.Tpo $(DEPDIR)/snow_test-Histogram.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/Histogram.cpp' object='snow_test-Histogram.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/Histogram.cpp' object='snow_test-Histogram.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Histogram.o `test -f '$(top_builddir)/../src/Histogram.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/Histogram.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Histogram.o `test -f '../src/Histogram.cpp' || echo '$(srcdir)/'`../src/Histogram.cpp
 
-snow_test-Histogram.obj: $(top_builddir)/../src/Histogram.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Histogram.obj -MD -MP -MF $(DEPDIR)/snow_test-Histogram.Tpo -c -o snow_test-Histogram.obj `if test -f '$(top_builddir)/../src/Histogram.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/Histogram.cpp'; fi`
+snow_test-Histogram.obj: ../src/Histogram.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Histogram.obj -MD -MP -MF $(DEPDIR)/snow_test-Histogram.Tpo -c -o snow_test-Histogram.obj `if test -f '../src/Histogram.cpp'; then $(CYGPATH_W) '../src/Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/Histogram.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-Histogram.Tpo $(DEPDIR)/snow_test-Histogram.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/Histogram.cpp' object='snow_test-Histogram.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/Histogram.cpp' object='snow_test-Histogram.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Histogram.obj `if test -f '$(top_builddir)/../src/Histogram.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/Histogram.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Histogram.obj `if test -f '../src/Histogram.cpp'; then $(CYGPATH_W) '../src/Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/Histogram.cpp'; fi`
 
-snow_test-BamWalker.o: $(top_builddir)/../src/BamWalker.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamWalker.o -MD -MP -MF $(DEPDIR)/snow_test-BamWalker.Tpo -c -o snow_test-BamWalker.o `test -f '$(top_builddir)/../src/BamWalker.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BamWalker.cpp
+snow_test-BamWalker.o: ../src/BamWalker.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamWalker.o -MD -MP -MF $(DEPDIR)/snow_test-BamWalker.Tpo -c -o snow_test-BamWalker.o `test -f '../src/BamWalker.cpp' || echo '$(srcdir)/'`../src/BamWalker.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BamWalker.Tpo $(DEPDIR)/snow_test-BamWalker.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BamWalker.cpp' object='snow_test-BamWalker.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamWalker.cpp' object='snow_test-BamWalker.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamWalker.o `test -f '$(top_builddir)/../src/BamWalker.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BamWalker.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamWalker.o `test -f '../src/BamWalker.cpp' || echo '$(srcdir)/'`../src/BamWalker.cpp
 
-snow_test-BamWalker.obj: $(top_builddir)/../src/BamWalker.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamWalker.obj -MD -MP -MF $(DEPDIR)/snow_test-BamWalker.Tpo -c -o snow_test-BamWalker.obj `if test -f '$(top_builddir)/../src/BamWalker.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BamWalker.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BamWalker.cpp'; fi`
+snow_test-BamWalker.obj: ../src/BamWalker.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamWalker.obj -MD -MP -MF $(DEPDIR)/snow_test-BamWalker.Tpo -c -o snow_test-BamWalker.obj `if test -f '../src/BamWalker.cpp'; then $(CYGPATH_W) '../src/BamWalker.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamWalker.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BamWalker.Tpo $(DEPDIR)/snow_test-BamWalker.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BamWalker.cpp' object='snow_test-BamWalker.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamWalker.cpp' object='snow_test-BamWalker.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamWalker.obj `if test -f '$(top_builddir)/../src/BamWalker.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BamWalker.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BamWalker.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamWalker.obj `if test -f '../src/BamWalker.cpp'; then $(CYGPATH_W) '../src/BamWalker.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamWalker.cpp'; fi`
 
-snow_test-BamStats.o: $(top_builddir)/../src/BamStats.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamStats.o -MD -MP -MF $(DEPDIR)/snow_test-BamStats.Tpo -c -o snow_test-BamStats.o `test -f '$(top_builddir)/../src/BamStats.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BamStats.cpp
+snow_test-BamStats.o: ../src/BamStats.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamStats.o -MD -MP -MF $(DEPDIR)/snow_test-BamStats.Tpo -c -o snow_test-BamStats.o `test -f '../src/BamStats.cpp' || echo '$(srcdir)/'`../src/BamStats.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BamStats.Tpo $(DEPDIR)/snow_test-BamStats.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BamStats.cpp' object='snow_test-BamStats.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamStats.cpp' object='snow_test-BamStats.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamStats.o `test -f '$(top_builddir)/../src/BamStats.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BamStats.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamStats.o `test -f '../src/BamStats.cpp' || echo '$(srcdir)/'`../src/BamStats.cpp
 
-snow_test-BamStats.obj: $(top_builddir)/../src/BamStats.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamStats.obj -MD -MP -MF $(DEPDIR)/snow_test-BamStats.Tpo -c -o snow_test-BamStats.obj `if test -f '$(top_builddir)/../src/BamStats.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BamStats.cpp'; fi`
+snow_test-BamStats.obj: ../src/BamStats.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamStats.obj -MD -MP -MF $(DEPDIR)/snow_test-BamStats.Tpo -c -o snow_test-BamStats.obj `if test -f '../src/BamStats.cpp'; then $(CYGPATH_W) '../src/BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamStats.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BamStats.Tpo $(DEPDIR)/snow_test-BamStats.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BamStats.cpp' object='snow_test-BamStats.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamStats.cpp' object='snow_test-BamStats.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamStats.obj `if test -f '$(top_builddir)/../src/BamStats.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BamStats.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamStats.obj `if test -f '../src/BamStats.cpp'; then $(CYGPATH_W) '../src/BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamStats.cpp'; fi`
 
-snow_test-MiniRules.o: $(top_builddir)/../src/MiniRules.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-MiniRules.o -MD -MP -MF $(DEPDIR)/snow_test-MiniRules.Tpo -c -o snow_test-MiniRules.o `test -f '$(top_builddir)/../src/MiniRules.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/MiniRules.cpp
+snow_test-MiniRules.o: ../src/MiniRules.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-MiniRules.o -MD -MP -MF $(DEPDIR)/snow_test-MiniRules.Tpo -c -o snow_test-MiniRules.o `test -f '../src/MiniRules.cpp' || echo '$(srcdir)/'`../src/MiniRules.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-MiniRules.Tpo $(DEPDIR)/snow_test-MiniRules.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/MiniRules.cpp' object='snow_test-MiniRules.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/MiniRules.cpp' object='snow_test-MiniRules.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-MiniRules.o `test -f '$(top_builddir)/../src/MiniRules.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/MiniRules.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-MiniRules.o `test -f '../src/MiniRules.cpp' || echo '$(srcdir)/'`../src/MiniRules.cpp
 
-snow_test-MiniRules.obj: $(top_builddir)/../src/MiniRules.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-MiniRules.obj -MD -MP -MF $(DEPDIR)/snow_test-MiniRules.Tpo -c -o snow_test-MiniRules.obj `if test -f '$(top_builddir)/../src/MiniRules.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/MiniRules.cpp'; fi`
+snow_test-MiniRules.obj: ../src/MiniRules.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-MiniRules.obj -MD -MP -MF $(DEPDIR)/snow_test-MiniRules.Tpo -c -o snow_test-MiniRules.obj `if test -f '../src/MiniRules.cpp'; then $(CYGPATH_W) '../src/MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/MiniRules.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-MiniRules.Tpo $(DEPDIR)/snow_test-MiniRules.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/MiniRules.cpp' object='snow_test-MiniRules.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/MiniRules.cpp' object='snow_test-MiniRules.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-MiniRules.obj `if test -f '$(top_builddir)/../src/MiniRules.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/MiniRules.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-MiniRules.obj `if test -f '../src/MiniRules.cpp'; then $(CYGPATH_W) '../src/MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/MiniRules.cpp'; fi`
 
-snow_test-SnowUtils.o: $(top_builddir)/../src/SnowUtils.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-SnowUtils.o -MD -MP -MF $(DEPDIR)/snow_test-SnowUtils.Tpo -c -o snow_test-SnowUtils.o `test -f '$(top_builddir)/../src/SnowUtils.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/SnowUtils.cpp
+snow_test-SnowUtils.o: ../src/SnowUtils.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-SnowUtils.o -MD -MP -MF $(DEPDIR)/snow_test-SnowUtils.Tpo -c -o snow_test-SnowUtils.o `test -f '../src/SnowUtils.cpp' || echo '$(srcdir)/'`../src/SnowUtils.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-SnowUtils.Tpo $(DEPDIR)/snow_test-SnowUtils.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/SnowUtils.cpp' object='snow_test-SnowUtils.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SnowUtils.cpp' object='snow_test-SnowUtils.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-SnowUtils.o `test -f '$(top_builddir)/../src/SnowUtils.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/SnowUtils.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-SnowUtils.o `test -f '../src/SnowUtils.cpp' || echo '$(srcdir)/'`../src/SnowUtils.cpp
 
-snow_test-SnowUtils.obj: $(top_builddir)/../src/SnowUtils.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-SnowUtils.obj -MD -MP -MF $(DEPDIR)/snow_test-SnowUtils.Tpo -c -o snow_test-SnowUtils.obj `if test -f '$(top_builddir)/../src/SnowUtils.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/SnowUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/SnowUtils.cpp'; fi`
+snow_test-SnowUtils.obj: ../src/SnowUtils.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-SnowUtils.obj -MD -MP -MF $(DEPDIR)/snow_test-SnowUtils.Tpo -c -o snow_test-SnowUtils.obj `if test -f '../src/SnowUtils.cpp'; then $(CYGPATH_W) '../src/SnowUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SnowUtils.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-SnowUtils.Tpo $(DEPDIR)/snow_test-SnowUtils.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/SnowUtils.cpp' object='snow_test-SnowUtils.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SnowUtils.cpp' object='snow_test-SnowUtils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-SnowUtils.obj `if test -f '$(top_builddir)/../src/SnowUtils.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/SnowUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/SnowUtils.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-SnowUtils.obj `if test -f '../src/SnowUtils.cpp'; then $(CYGPATH_W) '../src/SnowUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SnowUtils.cpp'; fi`
 
-snow_test-BamRead.o: $(top_builddir)/../src/BamRead.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamRead.o -MD -MP -MF $(DEPDIR)/snow_test-BamRead.Tpo -c -o snow_test-BamRead.o `test -f '$(top_builddir)/../src/BamRead.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BamRead.cpp
+snow_test-BamRead.o: ../src/BamRead.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamRead.o -MD -MP -MF $(DEPDIR)/snow_test-BamRead.Tpo -c -o snow_test-BamRead.o `test -f '../src/BamRead.cpp' || echo '$(srcdir)/'`../src/BamRead.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BamRead.Tpo $(DEPDIR)/snow_test-BamRead.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BamRead.cpp' object='snow_test-BamRead.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamRead.cpp' object='snow_test-BamRead.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamRead.o `test -f '$(top_builddir)/../src/BamRead.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BamRead.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamRead.o `test -f '../src/BamRead.cpp' || echo '$(srcdir)/'`../src/BamRead.cpp
 
-snow_test-BamRead.obj: $(top_builddir)/../src/BamRead.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamRead.obj -MD -MP -MF $(DEPDIR)/snow_test-BamRead.Tpo -c -o snow_test-BamRead.obj `if test -f '$(top_builddir)/../src/BamRead.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BamRead.cpp'; fi`
+snow_test-BamRead.obj: ../src/BamRead.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BamRead.obj -MD -MP -MF $(DEPDIR)/snow_test-BamRead.Tpo -c -o snow_test-BamRead.obj `if test -f '../src/BamRead.cpp'; then $(CYGPATH_W) '../src/BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamRead.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BamRead.Tpo $(DEPDIR)/snow_test-BamRead.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BamRead.cpp' object='snow_test-BamRead.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamRead.cpp' object='snow_test-BamRead.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamRead.obj `if test -f '$(top_builddir)/../src/BamRead.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BamRead.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BamRead.obj `if test -f '../src/BamRead.cpp'; then $(CYGPATH_W) '../src/BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamRead.cpp'; fi`
 
-snow_test-BWAWrapper.o: $(top_builddir)/../src/BWAWrapper.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BWAWrapper.o -MD -MP -MF $(DEPDIR)/snow_test-BWAWrapper.Tpo -c -o snow_test-BWAWrapper.o `test -f '$(top_builddir)/../src/BWAWrapper.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BWAWrapper.cpp
+snow_test-BWAWrapper.o: ../src/BWAWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BWAWrapper.o -MD -MP -MF $(DEPDIR)/snow_test-BWAWrapper.Tpo -c -o snow_test-BWAWrapper.o `test -f '../src/BWAWrapper.cpp' || echo '$(srcdir)/'`../src/BWAWrapper.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BWAWrapper.Tpo $(DEPDIR)/snow_test-BWAWrapper.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BWAWrapper.cpp' object='snow_test-BWAWrapper.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BWAWrapper.cpp' object='snow_test-BWAWrapper.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BWAWrapper.o `test -f '$(top_builddir)/../src/BWAWrapper.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/BWAWrapper.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BWAWrapper.o `test -f '../src/BWAWrapper.cpp' || echo '$(srcdir)/'`../src/BWAWrapper.cpp
 
-snow_test-BWAWrapper.obj: $(top_builddir)/../src/BWAWrapper.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BWAWrapper.obj -MD -MP -MF $(DEPDIR)/snow_test-BWAWrapper.Tpo -c -o snow_test-BWAWrapper.obj `if test -f '$(top_builddir)/../src/BWAWrapper.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BWAWrapper.cpp'; fi`
+snow_test-BWAWrapper.obj: ../src/BWAWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BWAWrapper.obj -MD -MP -MF $(DEPDIR)/snow_test-BWAWrapper.Tpo -c -o snow_test-BWAWrapper.obj `if test -f '../src/BWAWrapper.cpp'; then $(CYGPATH_W) '../src/BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BWAWrapper.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BWAWrapper.Tpo $(DEPDIR)/snow_test-BWAWrapper.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/BWAWrapper.cpp' object='snow_test-BWAWrapper.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BWAWrapper.cpp' object='snow_test-BWAWrapper.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BWAWrapper.obj `if test -f '$(top_builddir)/../src/BWAWrapper.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/BWAWrapper.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BWAWrapper.obj `if test -f '../src/BWAWrapper.cpp'; then $(CYGPATH_W) '../src/BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BWAWrapper.cpp'; fi`
 
-snow_test-STCoverage.o: $(top_builddir)/../src/STCoverage.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-STCoverage.o -MD -MP -MF $(DEPDIR)/snow_test-STCoverage.Tpo -c -o snow_test-STCoverage.o `test -f '$(top_builddir)/../src/STCoverage.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/STCoverage.cpp
+snow_test-STCoverage.o: ../src/STCoverage.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-STCoverage.o -MD -MP -MF $(DEPDIR)/snow_test-STCoverage.Tpo -c -o snow_test-STCoverage.o `test -f '../src/STCoverage.cpp' || echo '$(srcdir)/'`../src/STCoverage.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-STCoverage.Tpo $(DEPDIR)/snow_test-STCoverage.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/STCoverage.cpp' object='snow_test-STCoverage.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/STCoverage.cpp' object='snow_test-STCoverage.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-STCoverage.o `test -f '$(top_builddir)/../src/STCoverage.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/STCoverage.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-STCoverage.o `test -f '../src/STCoverage.cpp' || echo '$(srcdir)/'`../src/STCoverage.cpp
 
-snow_test-STCoverage.obj: $(top_builddir)/../src/STCoverage.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-STCoverage.obj -MD -MP -MF $(DEPDIR)/snow_test-STCoverage.Tpo -c -o snow_test-STCoverage.obj `if test -f '$(top_builddir)/../src/STCoverage.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/STCoverage.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/STCoverage.cpp'; fi`
+snow_test-STCoverage.obj: ../src/STCoverage.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-STCoverage.obj -MD -MP -MF $(DEPDIR)/snow_test-STCoverage.Tpo -c -o snow_test-STCoverage.obj `if test -f '../src/STCoverage.cpp'; then $(CYGPATH_W) '../src/STCoverage.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/STCoverage.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-STCoverage.Tpo $(DEPDIR)/snow_test-STCoverage.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/STCoverage.cpp' object='snow_test-STCoverage.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/STCoverage.cpp' object='snow_test-STCoverage.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-STCoverage.obj `if test -f '$(top_builddir)/../src/STCoverage.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/STCoverage.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/STCoverage.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-STCoverage.obj `if test -f '../src/STCoverage.cpp'; then $(CYGPATH_W) '../src/STCoverage.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/STCoverage.cpp'; fi`
 
-snow_test-Fractions.o: $(top_builddir)/../src/Fractions.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Fractions.o -MD -MP -MF $(DEPDIR)/snow_test-Fractions.Tpo -c -o snow_test-Fractions.o `test -f '$(top_builddir)/../src/Fractions.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/Fractions.cpp
+snow_test-Fractions.o: ../src/Fractions.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Fractions.o -MD -MP -MF $(DEPDIR)/snow_test-Fractions.Tpo -c -o snow_test-Fractions.o `test -f '../src/Fractions.cpp' || echo '$(srcdir)/'`../src/Fractions.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-Fractions.Tpo $(DEPDIR)/snow_test-Fractions.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/Fractions.cpp' object='snow_test-Fractions.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/Fractions.cpp' object='snow_test-Fractions.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Fractions.o `test -f '$(top_builddir)/../src/Fractions.cpp' || echo '$(srcdir)/'`$(top_builddir)/../src/Fractions.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Fractions.o `test -f '../src/Fractions.cpp' || echo '$(srcdir)/'`../src/Fractions.cpp
 
-snow_test-Fractions.obj: $(top_builddir)/../src/Fractions.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Fractions.obj -MD -MP -MF $(DEPDIR)/snow_test-Fractions.Tpo -c -o snow_test-Fractions.obj `if test -f '$(top_builddir)/../src/Fractions.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/Fractions.cpp'; fi`
+snow_test-Fractions.obj: ../src/Fractions.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-Fractions.obj -MD -MP -MF $(DEPDIR)/snow_test-Fractions.Tpo -c -o snow_test-Fractions.obj `if test -f '../src/Fractions.cpp'; then $(CYGPATH_W) '../src/Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/Fractions.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-Fractions.Tpo $(DEPDIR)/snow_test-Fractions.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(top_builddir)/../src/Fractions.cpp' object='snow_test-Fractions.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/Fractions.cpp' object='snow_test-Fractions.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Fractions.obj `if test -f '$(top_builddir)/../src/Fractions.cpp'; then $(CYGPATH_W) '$(top_builddir)/../src/Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/../src/Fractions.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-Fractions.obj `if test -f '../src/Fractions.cpp'; then $(CYGPATH_W) '../src/Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/Fractions.cpp'; fi`
+
+snow_test-AlignedContig.o: ../src/AlignedContig.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-AlignedContig.o -MD -MP -MF $(DEPDIR)/snow_test-AlignedContig.Tpo -c -o snow_test-AlignedContig.o `test -f '../src/AlignedContig.cpp' || echo '$(srcdir)/'`../src/AlignedContig.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-AlignedContig.Tpo $(DEPDIR)/snow_test-AlignedContig.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/AlignedContig.cpp' object='snow_test-AlignedContig.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-AlignedContig.o `test -f '../src/AlignedContig.cpp' || echo '$(srcdir)/'`../src/AlignedContig.cpp
+
+snow_test-AlignedContig.obj: ../src/AlignedContig.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-AlignedContig.obj -MD -MP -MF $(DEPDIR)/snow_test-AlignedContig.Tpo -c -o snow_test-AlignedContig.obj `if test -f '../src/AlignedContig.cpp'; then $(CYGPATH_W) '../src/AlignedContig.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/AlignedContig.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-AlignedContig.Tpo $(DEPDIR)/snow_test-AlignedContig.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/AlignedContig.cpp' object='snow_test-AlignedContig.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-AlignedContig.obj `if test -f '../src/AlignedContig.cpp'; then $(CYGPATH_W) '../src/AlignedContig.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/AlignedContig.cpp'; fi`
+
+snow_test-BreakPoint.o: ../src/BreakPoint.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BreakPoint.o -MD -MP -MF $(DEPDIR)/snow_test-BreakPoint.Tpo -c -o snow_test-BreakPoint.o `test -f '../src/BreakPoint.cpp' || echo '$(srcdir)/'`../src/BreakPoint.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BreakPoint.Tpo $(DEPDIR)/snow_test-BreakPoint.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BreakPoint.cpp' object='snow_test-BreakPoint.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BreakPoint.o `test -f '../src/BreakPoint.cpp' || echo '$(srcdir)/'`../src/BreakPoint.cpp
+
+snow_test-BreakPoint.obj: ../src/BreakPoint.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BreakPoint.obj -MD -MP -MF $(DEPDIR)/snow_test-BreakPoint.Tpo -c -o snow_test-BreakPoint.obj `if test -f '../src/BreakPoint.cpp'; then $(CYGPATH_W) '../src/BreakPoint.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BreakPoint.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BreakPoint.Tpo $(DEPDIR)/snow_test-BreakPoint.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BreakPoint.cpp' object='snow_test-BreakPoint.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BreakPoint.obj `if test -f '../src/BreakPoint.cpp'; then $(CYGPATH_W) '../src/BreakPoint.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BreakPoint.cpp'; fi`
+
+snow_test-RefGenome.o: ../src/RefGenome.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-RefGenome.o -MD -MP -MF $(DEPDIR)/snow_test-RefGenome.Tpo -c -o snow_test-RefGenome.o `test -f '../src/RefGenome.cpp' || echo '$(srcdir)/'`../src/RefGenome.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-RefGenome.Tpo $(DEPDIR)/snow_test-RefGenome.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/RefGenome.cpp' object='snow_test-RefGenome.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-RefGenome.o `test -f '../src/RefGenome.cpp' || echo '$(srcdir)/'`../src/RefGenome.cpp
+
+snow_test-RefGenome.obj: ../src/RefGenome.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-RefGenome.obj -MD -MP -MF $(DEPDIR)/snow_test-RefGenome.Tpo -c -o snow_test-RefGenome.obj `if test -f '../src/RefGenome.cpp'; then $(CYGPATH_W) '../src/RefGenome.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/RefGenome.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-RefGenome.Tpo $(DEPDIR)/snow_test-RefGenome.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/RefGenome.cpp' object='snow_test-RefGenome.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-RefGenome.obj `if test -f '../src/RefGenome.cpp'; then $(CYGPATH_W) '../src/RefGenome.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/RefGenome.cpp'; fi`
+
+snow_test-BLATWrapper.o: ../src/BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BLATWrapper.o -MD -MP -MF $(DEPDIR)/snow_test-BLATWrapper.Tpo -c -o snow_test-BLATWrapper.o `test -f '../src/BLATWrapper.cpp' || echo '$(srcdir)/'`../src/BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BLATWrapper.Tpo $(DEPDIR)/snow_test-BLATWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BLATWrapper.cpp' object='snow_test-BLATWrapper.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BLATWrapper.o `test -f '../src/BLATWrapper.cpp' || echo '$(srcdir)/'`../src/BLATWrapper.cpp
+
+snow_test-BLATWrapper.obj: ../src/BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-BLATWrapper.obj -MD -MP -MF $(DEPDIR)/snow_test-BLATWrapper.Tpo -c -o snow_test-BLATWrapper.obj `if test -f '../src/BLATWrapper.cpp'; then $(CYGPATH_W) '../src/BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BLATWrapper.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-BLATWrapper.Tpo $(DEPDIR)/snow_test-BLATWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BLATWrapper.cpp' object='snow_test-BLATWrapper.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-BLATWrapper.obj `if test -f '../src/BLATWrapper.cpp'; then $(CYGPATH_W) '../src/BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BLATWrapper.cpp'; fi`
+
+snow_test-SVVCF.o: ../src/SVVCF.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-SVVCF.o -MD -MP -MF $(DEPDIR)/snow_test-SVVCF.Tpo -c -o snow_test-SVVCF.o `test -f '../src/SVVCF.cpp' || echo '$(srcdir)/'`../src/SVVCF.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-SVVCF.Tpo $(DEPDIR)/snow_test-SVVCF.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SVVCF.cpp' object='snow_test-SVVCF.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-SVVCF.o `test -f '../src/SVVCF.cpp' || echo '$(srcdir)/'`../src/SVVCF.cpp
+
+snow_test-SVVCF.obj: ../src/SVVCF.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT snow_test-SVVCF.obj -MD -MP -MF $(DEPDIR)/snow_test-SVVCF.Tpo -c -o snow_test-SVVCF.obj `if test -f '../src/SVVCF.cpp'; then $(CYGPATH_W) '../src/SVVCF.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SVVCF.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/snow_test-SVVCF.Tpo $(DEPDIR)/snow_test-SVVCF.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SVVCF.cpp' object='snow_test-SVVCF.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(snow_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o snow_test-SVVCF.obj `if test -f '../src/SVVCF.cpp'; then $(CYGPATH_W) '../src/SVVCF.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SVVCF.cpp'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

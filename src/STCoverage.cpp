@@ -58,13 +58,13 @@ namespace SnowTools {
     if (full_length) {
       Cigar c = r.GetCigar();
       // get beginning
-      if (c.size() && c[0].Type == 'S')
-	p = std::max((int32_t)0, r.Position() - (int32_t)c[0].Length); // get prefixing S
+      if (c.size() && c[0].RawType() == BAM_CSOFT_CLIP)
+	p = std::max((int32_t)0, r.Position() - (int32_t)c[0].Length()); // get prefixing S
       else
 	p = r.Position();
       // get end
-      if (c.size() && c.back().Type == 'S')
-	e = r.PositionEnd() + c.back().Length;
+      if (c.size() && c.back().RawType() == BAM_CSOFT_CLIP)
+	e = r.PositionEnd() + c.back().Length();
       else
 	e = r.PositionEnd();
     }

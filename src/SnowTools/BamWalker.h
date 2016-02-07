@@ -28,25 +28,32 @@ inline char *samfaipath(const char *fn_ref)
 
 namespace SnowTools {
 
-/////////////// 
-// Hold read counts
-//////////////
+  /** Small class to store a counter to measure BamWalker progress.
+   *
+   * Currently only stores number of reads seen / kept. 
+   */
 struct ReadCount {
 
   uint64_t keep = 0;
   uint64_t total = 0;
   
+  /** Return the percent of total reads kept
+   */
   int percent () const {
-    int perc  = SnowTools::percentCalc<int>(keep, total); 
+    int perc  = SnowTools::percentCalc<uint64_t>(keep, total); 
     return perc;
   }
 
+  /** Return the total reads visited as a comma-formatted string
+   */
   std::string totalString() const {
-    return SnowTools::AddCommas<int>(total);
+    return SnowTools::AddCommas<uint64_t>(total);
   }
 
+  /** Return the kept reads as a comma-formatted string
+   */
   std::string keepString() const {
-    return SnowTools::AddCommas<int>(keep);
+    return SnowTools::AddCommas<uint64_t>(keep);
   }
 
 };

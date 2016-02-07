@@ -22,6 +22,11 @@ typedef IntervalTree<int32_t> GenomicIntervalTree;
 typedef std::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
 typedef std::vector<GenomicInterval> GenomicIntervalVector;
 
+  /** @brief Template class for a collection of children of GenomicRegion objects.
+   *
+   * Contains a set of GenomicRegion objects (or their children), and allows
+   * interval queries, reading/writing BED files, etc.
+   */
 template<typename T=GenomicRegion>
 class GenomicRegionCollection {
 

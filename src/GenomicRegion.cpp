@@ -14,7 +14,7 @@ int GenomicRegion::width() const {
 }
 
 // returns 0 for no overlaps, 1 for partial and 2 for complete
-int GenomicRegion::getOverlap(const GenomicRegion gr) const {
+int GenomicRegion::getOverlap(const GenomicRegion& gr) const {
 
   if (gr.chr != chr)
     return 0;
@@ -158,17 +158,18 @@ GenomicRegion::GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char
 
 std::string GenomicRegion::chrToString(int32_t ref) {
 
-  if (ref < 0)
-    throw std::invalid_argument( "GenomicRegion::chrToString - ref id must be >= 0" );
-  
   std::string ref_id;
+  if (ref < 0)
+    ref_id = std::to_string(ref);
+  //throw std::invalid_argument( "GenomicRegion::chrToString - ref id must be >= 0" );
+
   if (ref == 22)
     ref_id = "X";
   else if (ref == 23)
     ref_id = "Y";
   else if (ref == 24)
     ref_id = "M";
-  else
+  else if (ref >= 0)
     ref_id = std::to_string(ref+1);
   assert(ref_id != "23");
   return ref_id;
@@ -180,7 +181,7 @@ bool GenomicRegion::isEmpty() const {
 }
 
 
-int32_t GenomicRegion::distance(const GenomicRegion &gr) const {
+int32_t GenomicRegion::distanceBetweenStarts(const GenomicRegion &gr) const {
 
   if (gr.chr != chr)
     return -1;
@@ -189,12 +190,22 @@ int32_t GenomicRegion::distance(const GenomicRegion &gr) const {
 
 }
 
-void GenomicRegion::random(int32_t seed) {
+int32_t GenomicRegion::distanceBetweenEnds(const GenomicRegion &gr) const {
+
+  if (gr.chr != chr)
+    return -1;
+  else
+    return std::abs(pos2 - gr.pos2);
+
+}
+
+
+void GenomicRegion::random() {
   
-  uint32_t big;
-  SnowTools::genRandomValue(big, SnowTools::genome_size_XY, seed);
+  uint32_t big = rand() % SnowTools::genome_size_XY;
+  //SnowTools::genRandomValue(big, SnowTools::genome_size_XY, seed);
   
-  for (size_t k = 0; k < 25; k++)
+  for (size_t k = 0; k < 25; ++k)
     if (big < SnowTools::CHR_CLEN[k]) {
       assert(k > 0);
       chr = --k;

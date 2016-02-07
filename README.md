@@ -101,4 +101,4 @@ Attributions
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
-[htmldoc]: http://www.broadinstitute.org/~jwala/SnowToolsDocs/index.html
+[htmldoc]: http://jwalabroad.github.io/SnowTools/doxygen

@@ -2,7 +2,7 @@
 AC_PREREQ(2.59) ## specificy version of autoconf
 AC_INIT(snowtools, 1.0, jwala@broadinstitute.org)
 AM_INIT_AUTOMAKE(foreign)
-AC_CONFIG_SRCDIR([src/SnowTools.cpp])
+AC_CONFIG_SRCDIR([src/SnowUtils.cpp])
 AC_CONFIG_HEADER([config.h])
 AM_MAINTAINER_MODE([disable])
 ##m4_include([m4/m4_ax_openmp.m4])
@@ -50,23 +50,28 @@ AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $boost_include")
 AC_SUBST(LDFLAGS, "$LDFLAGS $boost_lib_flag")
 
 # We always need to specify to link in bamtools
-AC_SUBST(LIBS, "$LIBS -lboost_regex")
+AC_SUBST(LIBS, "$LIBS -lboost_regex -pthread")
 
-# Make sure the HTSlib headers can be found
-##AC_CHECK_HEADERS([htslib/hts.h],,[AC_MSG_ERROR([The HTSlib library must be installed. You can specify its path with the --with-htslib=PATH option])])
-
-# Make sure the HTSlib headers can be found
-##AC_CHECK_HEADERS([bwa/bwa.h],,[AC_MSG_ERROR([The BWA library must be installed. You can specify its path with the --with-bwa=PATH option])])
-
-# Make sure the bamtools headers can be found
-AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
+# Check for hash table headers
+AC_CHECK_HEADERS([ \
+		   google/sparse_hash_set google/sparse_hash_map \
+		   unordered_map tr1/unordered_map ext/hash_map \
+		   unordered_set tr1/unordered_set ext/hash_set \
+])
 
 # Make sure the boost headers can be found
-#AC_CHECK_HEADERS([boost/icl/interval_set.hpp],,[AC_MSG_ERROR([The Boost library must be installed. Specify its path with the --with-boost=PATH option])])
+AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile
 	         snow_test/Makefile	
 		 htslib/Makefile
-	         src/Makefile])
+		 SGA/Util/Makefile
+		 SGA/Bigraph/Makefile
+		 SGA/Algorithm/Makefile
+		 SGA/StringGraph/Makefile
+		 SGA/SuffixTools/Makefile
+		 SGA/SQG/Makefile
+	         src/Makefile
+		 tools/Makefile])
 
 AC_OUTPUT

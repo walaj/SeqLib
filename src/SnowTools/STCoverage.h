@@ -27,8 +27,10 @@ namespace SnowTools {
 
 
   
-/*! Class to hold base-pair or binned coverage across the genome
- */
+  /** Hold base-pair or binned coverage across an interval or genome
+   *
+   * Currently stores coverage as an unordered_map.
+   */
 class STCoverage {
   
  private:
