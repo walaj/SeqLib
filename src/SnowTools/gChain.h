@@ -5,6 +5,8 @@
 
 namespace SnowTools {
 
+  /** @brief [In development] Store a transformation between two genomic coordinate systems.
+   */
 template <typename T>
 class gChain {
 

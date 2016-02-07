@@ -18,6 +18,8 @@
  */
 namespace SnowTools {
 
+  /** @brief Container for an interval on the genome 
+   */
 class GenomicRegion {
 
   template<typename T> friend class GenomicRegionCollection;
