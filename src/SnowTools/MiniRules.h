@@ -140,7 +140,11 @@ struct Range {
 
 };
 
-// a container to hold boolean rules based mostly on alignment flag
+/** Stores a set of Flag objects for filtering alignment flags
+ *
+ * An alignment can be queried against a FlagRule to check if it 
+ * satisfies the requirements for its alignment flag.
+ */
 struct FlagRule {
   
   FlagRule() {
@@ -234,7 +238,11 @@ struct FlagRule {
 
 };
 
-//
+/** Stores a full rule (Flag + Range + motif etc)
+ *
+ * An alignment can be queried with an AbstractRule object
+ * to check if it passes that rule.
+ */
 class AbstractRule {
 
  public:
@@ -343,21 +351,12 @@ class AbstractRule {
 
 class MiniRulesCollection;
 
-/** Define a set of rules for creating a variant bam. The syntax is:
-   all@!isize:[0,800],mapq:[0,60]
-   region@REGION_FILE
-   rule1@isize:[0,800],mapq:[0,60]
-   rule2@!isize[0,800]:mapq[0,60],:ardclip:supplementary:duplicate:qcfail
-   rule3@
-   
-   A file of NA indicates that the rule should be applied genome-wide.
-   The ordering of the lines sets the hierarchical rule. For instance, a rule on line 2 will be applied 
-   before a rule on line 3 for all regions that are the union of regions in level 3 and below.
-   
-   e.g. Level 3 region file has region chr1   100   1000
-        Level 2 region file has region chr1   150   1200
-	The union of these will produce a new region chr1   100   1200, with level 2
-*/
+/** 
+ * A set of AbstractRules on a region united by logi rules.
+ *
+ * MiniRules stores an arbitrarily complex collection of AbstractRules
+ * (e.g. (Mapped && Clipped) || (Unmapped)).
+ */
 class MiniRules {
   
   friend class MiniRulesCollection;
@@ -410,7 +409,13 @@ class MiniRules {
 
 };
 
-// a hierarchy of mini rules to operate on
+/** A full set of rules across any number of regions
+ *
+ * Stores the entire set of MiniRules, each defined on a unique interval.
+ * A single MiniRulesCollection object is sufficient to store any combination of rules,
+ * and is the highest in the rule hierarchy. (MiniRulesCollection stores MiniRules 
+ * stores AbstractRules stores FlagRule/Ranges).
+ */
 class MiniRulesCollection {
 
  public: 

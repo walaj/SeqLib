@@ -6,6 +6,10 @@
 
 namespace SnowTools {
 
+  /** @brief Extension of GenomicRegion with a fraction of reads to keep on an interval
+   * 
+   * Used in conjunction with Fractions and used for selectively sub-sampling BAM files.
+   */
 class FracRegion : public SnowTools::GenomicRegion {
 
  public:
@@ -19,6 +23,8 @@ class FracRegion : public SnowTools::GenomicRegion {
   double frac;
 };
 
+  /** @brief Genomic intervals and associated sampling fractions
+   */
 class Fractions {
 
  public:

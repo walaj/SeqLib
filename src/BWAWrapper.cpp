@@ -186,7 +186,7 @@ namespace SnowTools {
     
   }
 
-  void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, 
+  void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, bool hardclip, 
 				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
@@ -215,19 +215,11 @@ namespace SnowTools {
       //std::cerr << name << " secondary " << ar.a[i].secondary << " primary_score " << primary_score << " a.score " << ar.a[i].score << " sub_N " << ar.a[i].sub_n << 
       //	" frac_rep " << ar.a[i].frac_rep << " flag " << a.flag << std::endl;
 
-#ifdef DEBUG_BWATOOLS
-      std::cerr << "DDDDDDDDDDDDDawdlfkajsdf" << std::endl;
-#endif
 
       // if score not sufficient or past cap, continue
       bool sec_and_low_score =  ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score;
       bool sec_and_cap_hit = ar.a[i].secondary >= 0 && i > max_secondary;
       if (sec_and_low_score || sec_and_cap_hit) {
-
-#ifdef DEBUG_BWATOOLS
-      std::cerr << "freeing cigar" << std::endl;
-#endif
-
 	free(a.cigar);
 	continue;
       } else if (ar.a[i].secondary < 0) {
@@ -261,9 +253,25 @@ namespace SnowTools {
       if (a.is_rev) 
 	b.b->core.flag |= BAM_FREVERSE;
 
+      std::string new_seq = seq;
+      // if hardclip, figure out what to clip
+      if (hardclip) {
+	size_t tstart = 0;
+	size_t len = 0;
+	for (int i = 0; i < a.n_cigar; ++i) {
+	  if (i == 0 && bam_cigar_op(a.cigar[i]) == BAM_CREF_SKIP) // first N (e.g. 20N50M)
+	    tstart = bam_cigar_oplen(a.cigar[i]);
+	  else if (bam_cigar_type(bam_cigar_op(a.cigar[i]))&1) // consumes query, but not N
+	    len += bam_cigar_oplen(a.cigar[i]);
+	}
+	assert(len > 0);
+	assert(tstart + len <= seq.length());
+	new_seq = seq.substr(tstart, len);
+      }
+
       // allocate all the data
       b.b->core.l_qname = name.length() + 1;
-      b.b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+      b.b->core.l_qseq = new_seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
       b.b->l_data = b.b->core.l_qname + (a.n_cigar<<2) + ((b.b->core.l_qseq+1)>>1) + (b.b->core.l_qseq);
       b.b.get()->data = (uint8_t*)malloc(b.b.get()->l_data);
 
@@ -278,10 +286,6 @@ namespace SnowTools {
       // cigars relative to referemce string oreiatnion, not forward alignment
       memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a.cigar, a.n_cigar<<2);
       //std::cerr << "ORIGINAL CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
-
-#ifdef DEBUG_BWATOOLS
-      std::cerr << "memcpy2" << std::endl;
-#endif
 
       /*      if (a.is_rev != first_is_rev) {
 	uint32_t temp;
@@ -299,12 +303,13 @@ namespace SnowTools {
 
       //std::cerr << "NEW CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
       
-      // convert N to S
+      // convert N to S or H
+      int new_val = hardclip ? BAM_CHARD_CLIP : BAM_CSOFT_CLIP;
       uint32_t * cigr = bam_get_cigar(b.b);
       for (int k = 0; k < b.b->core.n_cigar; ++k) {
 	if ( (cigr[k] & BAM_CIGAR_MASK) == BAM_CREF_SKIP) {
 	  cigr[k] &= ~BAM_CIGAR_MASK;
-	  cigr[k] |= BAM_CSOFT_CLIP;
+	  cigr[k] |= new_val;
 	}
       }
 	
@@ -312,7 +317,7 @@ namespace SnowTools {
       uint8_t* m_bases = b.b->data + b.b->core.l_qname + (b.b->core.n_cigar<<2);
 
       // TODO move this out of bigger loop
-      int slen = seq.length();
+      int slen = new_seq.length();
       int j = 0;
       if (a.is_rev/* && false*/) {
 	for (int i = slen-1; i >= 0; --i) {
@@ -320,13 +325,13 @@ namespace SnowTools {
 	  // bad idea but works for now
 	  // this is REV COMP things
 	  uint8_t base = 15;
-	  if (seq.at(i) == 'T')
+	  if (new_seq.at(i) == 'T')
 	    base = 1;
-	  else if (seq.at(i) == 'G')
+	  else if (new_seq.at(i) == 'G')
 	    base = 2;
-	  else if (seq.at(i) == 'C')
+	  else if (new_seq.at(i) == 'C')
 	    base = 4;
-	  else if (seq.at(i) == 'A')
+	  else if (new_seq.at(i) == 'A')
 	    base = 8;
 
 	  m_bases[j >> 1] &= ~(0xF << ((~j & 1) << 2));   ///< zero out previous 4-bit base encoding
@@ -337,13 +342,13 @@ namespace SnowTools {
 	for (int i = 0; i < slen; ++i) {
 	// bad idea but works for now
 	  uint8_t base = 15;
-	  if (seq.at(i) == 'A')
+	  if (new_seq.at(i) == 'A')
 	    base = 1;
-	  else if (seq.at(i) == 'C')
+	  else if (new_seq.at(i) == 'C')
 	    base = 2;
-	  else if (seq.at(i) == 'G')
+	  else if (new_seq.at(i) == 'G')
 	    base = 4;
-	  else if (seq.at(i) == 'T')
+	  else if (new_seq.at(i) == 'T')
 	    base = 8;
 	  
 	  m_bases[i >> 1] &= ~(0xF << ((~i & 1) << 2));   ///< zero out previous 4-bit base encoding
@@ -359,9 +364,6 @@ namespace SnowTools {
       // allocate the quality to NULL
       uint8_t* s = bam_get_qual(b.b);
       s[0] = 0xff;
-
-      //b.SetQname(name);
-      //b.SetSequence(seq);
 
       b.AddIntTag("NA", ar.n); // number of matches
       //std::cerr << a.NM << std::endl;
