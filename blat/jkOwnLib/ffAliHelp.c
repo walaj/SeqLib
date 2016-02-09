@@ -129,8 +129,8 @@ for (mid = aliList->right; mid != NULL; mid = mid->right)
 	{
 	char *nStart, *nEnd;
 	int nOverlap;
-	nStart = max(ali->nStart, mid->nStart);
-	nEnd = min(ali->nEnd, mid->nStart);
+	nStart = Blatmax(ali->nStart, mid->nStart);
+	nEnd = Blatmin(ali->nEnd, mid->nStart);
 	nOverlap = nEnd - nStart;
 	/* Overlap or perfectly abut in needle, and needle/hay
 	 * offset the same. */
@@ -141,10 +141,10 @@ for (mid = aliList->right; mid != NULL; mid = mid->right)
 	    if (aliDiag == midDiag)
 		{
 		/* Make mid encompass both, and make ali empty. */
-		mid->nStart = min(ali->nStart, mid->nStart);
-		mid->nEnd = max(ali->nEnd, mid->nEnd);
-		mid->hStart = min(ali->hStart, mid->hStart);
-		mid->hEnd = max(ali->hEnd, mid->hEnd);
+		mid->nStart = Blatmin(ali->nStart, mid->nStart);
+		mid->nEnd = Blatmax(ali->nEnd, mid->nEnd);
+		mid->hStart = Blatmin(ali->hStart, mid->hStart);
+		mid->hEnd = Blatmax(ali->hEnd, mid->hEnd);
 		ali->hStart = ali->hEnd = mid->hStart;
 		ali->nEnd = ali->nStart = mid->nStart;;
 		}

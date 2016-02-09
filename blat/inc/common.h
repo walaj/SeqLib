@@ -742,8 +742,8 @@ int differentStringNullOk(char *a, char *b);
 #define sameStringN(a,b,c) (strncmp(a,b,c)==0)
 /* Returns TRUE if two strings start with the same c characters. */
 
-#define isEmpty(string) ((string) == NULL || (string)[0] == 0)
-#define isNotEmpty(string) (! isEmpty(string))
+#define BlatisEmpty(string) ((string) == NULL || (string)[0] == 0)
+#define BlatisNotEmpty(string) (! BlatisEmpty(string))
 
 int cmpStringsWithEmbeddedNumbers(const char *a, const char *b);
 /* Compare strings such as gene names that may have embedded numbers,
@@ -1174,12 +1174,12 @@ int intAbs(int a);
 /* Round floating point val to nearest long long. */
 
 #ifndef min
-#define min(a,b) ( (a) < (b) ? (a) : (b) )
+#define Blatmin(a,b) ( (a) < (b) ? (a) : (b) )
 /* Return min of a and b. */
 #endif
 
-#ifndef max
-#define max(a,b) ( (a) > (b) ? (a) : (b) )
+#ifndef Blatmax
+#define Blatmax(a,b) ( (a) > (b) ? (a) : (b) )
 /* Return max of a and b. */
 #endif
 

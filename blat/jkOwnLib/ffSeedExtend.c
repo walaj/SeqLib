@@ -16,7 +16,7 @@
 static void extendExactRight(int qMax, int tMax, char **pEndQ, char **pEndT)
 /* Extend endQ/endT as much to the right as possible. */
 {
-int last = min(qMax, tMax);
+int last = Blatmin(qMax, tMax);
 int i;
 char *q = *pEndQ, *t = *pEndT;
 
@@ -34,7 +34,7 @@ for (i=0; i<last; ++i)
 static void extendExactLeft(int qMax, int tMax, char **pStartQ, char **pStartT)
 /* Extend startQ/startT as much to the left as possible. */
 {
-int last = min(qMax, tMax);
+int last = Blatmin(qMax, tMax);
 int i;
 char *q = *pStartQ - 1, *t = *pStartT - 1;
 
@@ -53,7 +53,7 @@ static void extendGaplessRight(int qMax, int tMax, int maxDrop, char **pEndQ, ch
 /* Extend endQ/endT as much to the right as possible allowing mismatches
  * but not gaps. */
 {
-int last = min(qMax, tMax);
+int last = Blatmin(qMax, tMax);
 int i;
 char *q = *pEndQ, *t = *pEndT;
 int score = 0, bestScore = -1, bestPos = -1;
@@ -86,7 +86,7 @@ static void extendGaplessLeft(int qMax, int tMax, int maxDrop, char **pStartQ, c
  * but not gaps. */
 {
 int score = 0, bestScore = -1, bestPos = 0;
-int last = -min(qMax, tMax);
+int last = -Blatmin(qMax, tMax);
 int i;
 char *q = *pStartQ, *t = *pStartT;
 
@@ -427,7 +427,7 @@ static void bandExtBefore(struct axtScoreScheme *ss, struct ffAli *ff,
  * and append results if any to *pExtraList. */
 {
 struct ffAli *ext;
-int minGap = min(qGap, tGap);
+int minGap = Blatmin(qGap, tGap);
 int maxGap = minGap * 2;
 if (minGap > 0)
     {
@@ -445,7 +445,7 @@ static void bandExtAfter(struct axtScoreScheme *ss, struct ffAli *ff,
  * and append results if any to *pExtraList. */
 {
 struct ffAli *ext;
-int minGap = min(qGap, tGap);
+int minGap = Blatmin(qGap, tGap);
 int maxGap = minGap * 2;
 if (minGap > 0)
     {
@@ -598,7 +598,7 @@ struct ffAli *ff = NULL;
 char *hPos = NULL;
 int nGap = nEnd - nStart;
 int hGap = hEnd - hStart;
-int minGap = min(nGap, hGap);
+int minGap = Blatmin(nGap, hGap);
 
 if (minGap <= 2)
     return NULL;

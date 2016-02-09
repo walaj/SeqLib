@@ -25,7 +25,7 @@ namespace SnowTools {
      * @param const reference to an aligned sequencing read
      * @param flip If the contig sequence was flipped (rev of BAM record), need to track this. This flipping occurs in AlignedContig::AlignedContig
      */
-    AlignmentFragment(const BamRead &talign, bool flip, const std::unordered_set<std::string>& prefixes);
+    AlignmentFragment(const BamRead &talign, bool flip);
     
     //! sort AlignmentFragment objects by start position
     bool operator < (const AlignmentFragment& str) const { return (start < str.start); }

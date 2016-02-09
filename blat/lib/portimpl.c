@@ -122,7 +122,7 @@ while (*s++ == '/')
 
 /* Step through it one slash at a time 
  * making directory if possible, else dying. */
-for (; !isEmpty(s); s = e)
+for (; !BlatisEmpty(s); s = e)
     {
     /* Find end of this section and terminate string there. */
     e = strchr(s, '/');

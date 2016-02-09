@@ -193,7 +193,8 @@ namespace SnowTools {
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
         << r.b->core.isize 
-	<< "\t" << r.Sequence()/* << "\t" << r.Qualities()*/;
+	<< "\t" << r.Sequence() << "\t*" << 
+      "\tAS:" << r.GetIntTag("AS");/* << "\t" << r.Qualities()*/;
     return out;
       
     
@@ -359,6 +360,23 @@ namespace SnowTools {
     assert(out.size());
     return out;
     
+  }
+
+  bool BamRead::coveredBase(int pos) const {
+
+    if (pos < 0 || pos >= Length())
+      return false;
+
+    if (NumClip() == 0) 
+      return true;
+    
+    Cigar cig = GetCigar();
+    assert(cig.size() > 1); // are clips, so has to be at least two fields
+    if (cig[0].Type() == 'S' || cig[0].Type() == 'H') {
+      return pos >= cig[0].Length();
+    }
+    if (cig[cig.size() - 1].Type() == 'S' || cig[cig.size() - 1].Type() == 'H')
+      return pos < (Length() - cig[cig.size() - 1].Length());
   }
   
   BamRead::BamRead(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig) {

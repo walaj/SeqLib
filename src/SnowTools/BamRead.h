@@ -492,7 +492,6 @@ class BamRead {
       return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
   }
 
-
   /** Strip a particular alignment tag 
    * @param tag Tag to remove
    */
@@ -512,6 +511,9 @@ class BamRead {
 
   /** Return the raw pointer */
   inline bam1_t* raw() const { return b.get(); }
+
+  /** Check if bases is covered by match (not clip) at loc N on read */
+  bool coveredBase(int pos) const;
   
   //std::string toSam(bam_hdr_t* h) const;
 
