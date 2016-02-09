@@ -554,7 +554,7 @@ static int findOverlap(struct cBlock *a, struct cBlock *b)
 {
 int dq = b->qStart - a->qEnd;
 int dt = b->tStart - a->tEnd;
-return -min(dq, dt);
+return -Blatmin(dq, dt);
 }
 
 static int ssConnectCost(struct cBlock *a, struct cBlock *b, void *data)

@@ -31,12 +31,12 @@ namespace SnowTools {
     for (auto& i : bav) {
       if (!i.SecondaryFlag()) {
 	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
-	m_frag_v.push_back(AlignmentFragment(i, flip, prefixes));
+	m_frag_v.push_back(AlignmentFragment(i, flip));
 	m_frag_v.back().num_align = num_align;
       } else {
 	bool flip = (m_seq != i.Sequence()); // if the seq was flipped, need to flip the AlignmentFragment
 	if (m_frag_v.size())
-	  m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip, prefixes));
+	  m_frag_v.back().secondaries.push_back(AlignmentFragment(i, flip));
 	//m_frag_v_secondary.push_back(AlignmentFragment(i, flip));
 	//m_frag_v_secondary.back().num_align = bav.size();
       }      
@@ -326,7 +326,7 @@ namespace SnowTools {
   // }
 
   
-  AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip, const std::unordered_set<std::string>& prefixes) {
+  AlignmentFragment::AlignmentFragment(const BamRead &talign, bool flip) {
 
     m_align = talign;
 

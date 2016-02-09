@@ -128,7 +128,7 @@ void Histogram::initialSpans(size_t num_bins, std::vector<S>* pspanv, size_t min
     if (i != INTERCHR)
       intra++;
 
-  size_t bin_cut = 0;
+  int bin_cut = 0;
   try {
     bin_cut = floor((double)intra / (double)num_bins);
     if (bin_cut == 0)

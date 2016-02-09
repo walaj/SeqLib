@@ -255,18 +255,20 @@ void GenomicRegion::random() {
 	  std::cerr << "GenomicRegion: error making chr from string " << tchr << std::endl;
 	}
 	return;
+      } else {
+	chr = bam_name2id(h, tchr.c_str());
       }
 
       // TODO slow.
       //bool found = false;
-      for (int i = 0; i < h->n_targets; ++i)
+      /*for (int i = 0; i < h->n_targets; ++i)
 	if (strcmp(tchr.c_str(), h->target_name[i]) == 0)
 	  {
 	    chr = i;
 	    //	    found = true;
 	    break;
 	  }
-
+      */
       //debug turn this back on
       //if (!found) 
       //	std::cerr << "GenomicRegion: error, could not find matching chr in header for chr string " << tchr << std::endl;

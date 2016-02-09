@@ -71,7 +71,7 @@ namespace SnowTools {
     std::reverse(&a[0], &a[a.size()]);
     std::string::iterator it = a.begin();
     for (; it != a.end(); it++)
-      *it = RCOMPLEMENT_TABLE[*it];
+      *it = RCOMPLEMENT_TABLE[(unsigned char)*it];
   }
   
   /** Calculate the percentage and return as integer

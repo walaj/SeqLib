@@ -670,7 +670,7 @@ for (i=0; i<hash->size; ++i)
     if (hash->table[i] != NULL)
         occupiedCnt++;
     int sz = bucketLen(hash->table[i]);
-    maxBucket = max(maxBucket, sz);
+    maxBucket = Blatmax(maxBucket, sz);
     }
 
 fprintf(fh, "hashTable\t%s\n", label);

@@ -221,7 +221,7 @@ if (axt->tStrand == '-')
     tDig = digitsBaseTen(tSize - axt->tStart + 1);
 else
     tDig = digitsBaseTen(axt->tEnd);
-return max(tDig, qDig);
+return Blatmax(tDig, qDig);
 }
 
 static void blastiodAxtOutput(FILE *f, struct axt *axt, int tSize, int qSize, 

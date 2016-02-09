@@ -123,7 +123,7 @@ if (buf == NULL)
 bits64 remaining = size, total = 0;
 while (remaining > 0)
     {
-    bits64 chunkSize = min(remaining, udcBlockSize);
+    bits64 chunkSize = Blatmin(remaining, udcBlockSize);
     bits64 rd = read(sd, buf, chunkSize);
     if (rd < 0)
 	errnoAbort("readAndIgnore: error reading socket after %lld bytes", total);
@@ -1016,7 +1016,7 @@ for (sl = slList;  sl != NULL;  sl = sl->next)
     if (endsWith(sl->name, bitmapName))
 	{
 	if (fileExists(sl->name))
-	    oldestTime = min(fileModTime(sl->name), oldestTime);
+	    oldestTime = Blatmin(fileModTime(sl->name), oldestTime);
 	else
 	    return now;
 	}
@@ -1153,8 +1153,8 @@ return FALSE;
 static boolean rangeIntersectOrTouch64(bits64 start1, bits64 end1, bits64 start2, bits64 end2)
 /* Return true if two 64-bit ranges intersect or touch. */
 {  // cannot use the version of this function that is in common.c since it only handles integers.
-bits64 s = max(start1,start2);
-bits64 e = min(end1,end2);
+bits64 s = Blatmax(start1,start2);
+bits64 e = Blatmin(end1,end2);
 return e >= s;
 }
 
@@ -1241,7 +1241,7 @@ while(TRUE)
 	if (start >= raStart && start < raEnd)
 	    {
 	    // copy bytes out of rabuf
-	    bits64 endInBuf = min(raEnd, end);
+	    bits64 endInBuf = Blatmin(raEnd, end);
 	    bits64 sizeInBuf = endInBuf - start;
 	    memcpy(cbuf, file->sparseReadAheadBuf + (start-raStart), sizeInBuf);
 	    cbuf += sizeInBuf;

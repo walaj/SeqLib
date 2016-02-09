@@ -149,8 +149,8 @@ else
     /* Recurse on each side. */
     branch->lo = kdBuild(nodeCount - newCount, lists, nextDim, lm);
     branch->hi = kdBuild(newCount, newLists, nextDim, lm);
-    branch->maxQ = max(branch->lo->maxQ, branch->hi->maxQ);
-    branch->maxT = max(branch->lo->maxT, branch->hi->maxT);
+    branch->maxQ = Blatmax(branch->lo->maxQ, branch->hi->maxQ);
+    branch->maxT = Blatmax(branch->lo->maxT, branch->hi->maxT);
     }
 return branch;
 }

@@ -123,7 +123,7 @@ class BWAWrapper {
   uint8_t* __add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q);
 
   // make the pac structure (2-bit encoded packed sequence)
-  uint8_t* __make_pac(const USeqVector& v, bool for_only, bool write_file);
+  uint8_t* __make_pac(const USeqVector& v, bool for_only);
 
   void __write_pac_to_file(const std::string& file);
 
