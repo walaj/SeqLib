@@ -154,7 +154,18 @@ class BLATWrapper {
   void __extendHitRight(int qMax, int tMax,
 			char **pEndQ, char **pEndT, int (*scoreMatch)(char a, char b), 
 			int maxDown);
+
+  struct gfHit* __gfFindHitsWithQmask(struct genoFind *gf, bioSeq *seq,
+				      Bits *qMaskBits, int qMaskOffset, struct lm *lm, int *retHitCount, 
+				      struct gfSeqSource *target, int tMin, int tMax);
   
+
+  struct gfHit* __gfFastFindDnaHits(struct genoFind *gf, struct dnaSeq *seq, 
+				    Bits *qMaskBits,  int qMaskOffset, struct lm *lm, int *retHitCount,
+				    struct gfSeqSource *target, int tMin, int tMax);
+    
+
+  struct gfSeqSource* __findSource(struct genoFind *gf, bits32 targetPos);
   
 };
  
