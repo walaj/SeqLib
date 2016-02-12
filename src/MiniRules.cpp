@@ -173,6 +173,7 @@ void MiniRules::setRegionFromFile(const std::string& file) {
   else {
     if (mrc->h) {
       GenomicRegion gr(file, mrc->h);
+      gr.pad(pad);
       m_grv.add(gr);
     } else {
       std::cerr << "!!!!!!!!MiniRules region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
@@ -383,11 +384,15 @@ std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
 std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
   
   std::string file_print = mr.m_whole_genome ? "WHOLE GENOME" : mr.m_region_file;
-  out << (mr.excluder ? "--Exclude Region: " : "--Region:") << file_print;
+  out << (mr.excluder ? "--Exclude Region: " : "--RegionInput:") << file_print;
   if (!mr.m_whole_genome) {
     //out << " --Size: " << AddCommas<int>(mr.m_width); 
     out << " --Pad: " << mr.pad;
-    out << " --Include Mate: " << (mr.m_applies_to_mate ? "ON" : "OFF") << std::endl;
+    out << " --Include Mate: " << (mr.m_applies_to_mate ? "ON" : "OFF");
+    if (mr.m_grv.size() == 1)
+      out << " --Region : " << mr.m_grv[0] << std::endl;
+    else
+      out << " --Region: " << mr.m_grv.size() << " regions" << std::endl;      
   } else {
     out << std::endl;
   }

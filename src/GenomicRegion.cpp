@@ -126,6 +126,11 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
       std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
       throw std::invalid_argument(inv);
     }
+    
+    // check that it wasn't a single region, but if so, fix (e.g. 1:1 gets fixed to 1:1-1)
+    if (end == 2147483647) // at max size = not set. set to pos1
+      end = beg+1;
+
   } else {
     std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
     throw std::invalid_argument(inv);
