@@ -21,6 +21,12 @@ namespace SnowTools {
   
   typedef std::vector<BreakPoint> BPVec;
  
+  /** Minimalist BreakEnd used to reduce memory
+   *
+   * ReducedBreakEnd contains a subset of BreakEnd. 
+   * Its principle use is for reading in large files
+   * of BreakPoint lines, and de-duping and sending to VCF
+   */
  struct ReducedBreakEnd {
    
    ReducedBreakEnd() {}
@@ -34,7 +40,13 @@ namespace SnowTools {
 
  };
 
-
+ /** Represents a single break-end of a structural variant
+  *
+  * Created from a contig alignment or directly, stores the 
+  * location of a single break-end, and the alignment details
+  * of the contig used to create it. A BreakPoint typically consistents
+  * of a pair of BreakEnd objects.
+  */
  struct BreakEnd {
    
    BreakEnd() {}
@@ -58,6 +70,8 @@ namespace SnowTools {
 
  };
 
+ /** Minimalist BreakPoint used for reading large breakpoint files
+  */
  struct ReducedBreakPoint {
 
    // some helper functions
@@ -136,6 +150,12 @@ namespace SnowTools {
  };
 
  
+ /** A structural variation (connnecting A->B) on the genome
+  *
+  * BreakPoint stores information about an alignment of a contig
+  * that indicates a structural variation. It is composed of 
+  * two BreakEnd objects and support for the variant
+  */
  struct BreakPoint {
 
    std::string seq, cname, insertion, homology; 

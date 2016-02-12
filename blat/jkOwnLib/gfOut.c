@@ -276,7 +276,7 @@ for (sAli = ali; sAli != NULL; sAli = eAli)
 	    int ohEnd = trans3GenoPos(ff->hEnd, tSeq, t3List, TRUE) 
 	    	+ chromOffset;
 	    int hGap = nhStart - ohEnd;
-	    int gap = max(nGap, hGap);
+	    int gap = Blatmax(nGap, hGap);
 	    if (nGap < 0 || hGap < 0)
 		{
 	        errAbort("Negative gap size in %s vs %s", tSeq->name, qSeq->name);

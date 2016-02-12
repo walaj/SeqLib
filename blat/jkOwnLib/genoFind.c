@@ -231,15 +231,17 @@ bits32 *listSizes = gf->listSizes;
 int i, lastTile = seq->size - tileSize;
 int (*makeTile)(char *poly, int n) = (gf->isPep ? gfPepTile : gfDnaTile);
 
+ printf("...counting seq for: %s\n", seq->name);
+
 initNtLookup();
 for (i=0; i<=lastTile; i += stepSize)
     {
     if ((tile = makeTile(poly, tileHeadSize)) >= 0)
 	{
         if (listSizes[tile] < maxPat)
-	    {
-	    listSizes[tile] += 1;
-	    }
+	  {
+	    listSizes[tile] += 1; 
+	  }
 	}
     poly += stepSize;
     }
@@ -393,7 +395,10 @@ int tile;
 bits32 *listSizes = gf->listSizes;
 bits32 **lists = gf->lists;
 
+ printf("Adding seq %s\n", seq->name);
+
 initNtLookup();
+
 for (i=0; i<=lastTile; i += stepSize)
     {
     tile = makeTile(poly, tileSize);
@@ -846,8 +851,9 @@ struct gfSeqSource *ss;
 
 if (isPep)
     maskSimplePepRepeat(gf);
-for (seq = seqList; seq != NULL; seq = seq->next)
-    gfCountSeq(gf, seq);
+ for (seq = seqList; seq != NULL; seq = seq->next) {
+   gfCountSeq(gf, seq);
+ }
 gfAllocLists(gf);
 gfZeroNonOverused(gf);
 if (seqCount > 0)
@@ -880,12 +886,14 @@ int i;
 bits32 offset = 0;
 struct gfSeqSource *ss;
 
-for (seq = seqList; seq != NULL; seq = seq->next)
+ for (seq = seqList; seq != NULL; seq = seq->next) {
     gfCountSeq(gf, seq);
+ }
 gfAllocLargeLists(gf);
 gfZeroNonOverused(gf);
 AllocArray(gf->sources, seqCount);
 gf->sourceCount = seqCount;
+
 for (i=0, seq = seqList; i<seqCount; ++i, seq = seq->next)
     {
     gfAddLargeSeq(gf, seq, offset);
@@ -927,6 +935,12 @@ struct genoFind *gfIndexSeq(bioSeq *seqList,
 checkUniqueNames(seqList);
 struct genoFind *gf = gfNewEmpty(minMatch, maxGap, tileSize, stepSize, maxPat, 
 				oocFile, isPep, allowOneMismatch);
+
+// jeremiah add this to zero it out. some weird C to C++ mem issue
+ int i = 0;
+ for (; i < gf->tileSpaceSize; ++i)
+   gf->listSizes[i] = 0;
+
 if (stepSize == 0)
     stepSize = tileSize;
 if (gf->segSize > 0)
@@ -955,6 +969,7 @@ return 0;
 static struct gfSeqSource *findSource(struct genoFind *gf, bits32 targetPos)
 /* Find source given target position. */
 {
+  //printf("running find source on pos: %d\n");
 struct gfSeqSource *ss =  bsearch(&targetPos, gf->sources, gf->sourceCount, 
 	sizeof(gf->sources[0]), bCmpSeqSource);
 if (ss == NULL)
@@ -1086,7 +1101,7 @@ if (list != NULL && list->next != NULL)
     int i;
     int byteSize = count*sizeof(*array);
     array = needLargeMem(byteSize);
-    nosTemp = needLargeMem(byteSize);
+    nosTemp = needLargeMem(byteSize); // PROBLEM
     for (el = list, i=0; el != NULL; el = el->next, i++)
         array[i] = el;
     gfHitSort2(array, count);
@@ -1102,8 +1117,6 @@ if (list != NULL && list->next != NULL)
     *pList = list;       
     }
 }
-
-
 
 static int cmpQuerySize;
 
@@ -1432,6 +1445,7 @@ for (clump = clumpList; clump != NULL; clump = clump->next)	/* uglyf */
     uglyf(" %d %d %s %d %d (%d hits)\n", clump->qStart, clump->qEnd, clump->target->seq->name,   clump->tStart, clump->tEnd, clump->hitCount);
     }
 #endif /* DEBUG */
+
 freez(&buckets);
 return clumpList;
 }
@@ -1456,11 +1470,12 @@ bits32 qStart, *tList;
 int hitCount = 0;
 
 for (i=0; i<tileSizeMinusOne; ++i)
-    {
+  {
     bVal = ntValNoN[(int)dna[i]];
-    bits <<= 2;
+    bits <<= 2; 
     bits += bVal;
-    }
+  }
+
 for (i=tileSizeMinusOne; i<size; ++i)
     {
     bVal = ntValNoN[(int)dna[i]];
@@ -1468,6 +1483,7 @@ for (i=tileSizeMinusOne; i<size; ++i)
     bits += bVal;
     bits &= mask;
     listSize = gf->listSizes[bits];
+
     if (listSize != 0)
 	{
 	qStart = i-tileSizeMinusOne;
@@ -1480,6 +1496,7 @@ for (i=tileSizeMinusOne; i<size; ++i)
 		if (target == NULL || 
 			(target == findSource(gf, tStart) && tStart >= tMin && tStart < tMax) ) 
 		    {
+
 		    lmAllocVar(lm, hit);
 		    hit->qStart = qStart;
 		    hit->tStart = tStart;
@@ -1824,6 +1841,7 @@ static struct gfHit *gfFindHitsWithQmask(struct genoFind *gf, bioSeq *seq,
 /* Find hits associated with one sequence soft-masking seq according to qMaskBits.
  * The hits will be in genome rather than chromosome coordinates. */
 {
+
 struct gfHit *hitList = NULL;
 if (gf->segSize == 0 && !gf->isPep && !gf->allowOneMismatch)
     {

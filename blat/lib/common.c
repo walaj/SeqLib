@@ -23,7 +23,7 @@ static char *cloneStringZExt(const char *s, int size, int copySize)
 /* Make a zero terminated copy of string in memory */
 {
 char *d = needMem(copySize+1);
-copySize = min(size,copySize);
+copySize = Blatmin(size,copySize);
 memcpy(d, s, copySize);
 d[copySize] = 0;
 return d;
@@ -993,7 +993,7 @@ struct slPair *slPairListFromString(char *str,boolean respectQuotes)
 // Returns NULL if parse error.  Free this up with slPairFreeValsAndList.
 {
 char *s = skipLeadingSpaces(str);  // Would like to remove this and tighten up the standard someday.
-if (isEmpty(s))
+if (BlatisEmpty(s))
     return NULL;
 
 struct slPair *list = NULL;
@@ -1557,7 +1557,7 @@ while(NULL != ptr)
     ptr += oldLen;
     ptr = strstr(ptr, old);
     }
-strLen = max(strlen(string) + (numTimes * (newLen - oldLen)), strlen(string));
+strLen = Blatmax(strlen(string) + (numTimes * (newLen - oldLen)), strlen(string));
 result = needMem(strLen + 1);
 
 ptr = strstr(string, old);
@@ -2787,8 +2787,8 @@ int  rangeIntersection(int start1, int end1, int start2, int end2)
 /* Return amount of bases two ranges intersect over, 0 or negative if no
  * intersection. */
 {
-int s = max(start1,start2);
-int e = min(end1,end2);
+int s = Blatmax(start1,start2);
+int e = Blatmin(end1,end2);
 return e-s;
 }
 

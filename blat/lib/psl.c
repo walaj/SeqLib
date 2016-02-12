@@ -809,7 +809,7 @@ int total;
 
 qAliSize = sizeMul * (psl->qEnd - psl->qStart);
 tAliSize = psl->tEnd - psl->tStart;
-aliSize = min(qAliSize, tAliSize);
+aliSize = Blatmin(qAliSize, tAliSize);
 if (aliSize <= 0)
     return 0;
 sizeDif = qAliSize - tAliSize;
@@ -1089,8 +1089,8 @@ else
     }
 tFloppyStart = psl->tStart;
 tFloppyEnd = psl->tSize - psl->tEnd;
-*retStartTail = min(qFloppyStart, tFloppyStart);
-*retEndTail = min(qFloppyEnd, tFloppyEnd);
+*retStartTail = Blatmin(qFloppyStart, tFloppyStart);
+*retEndTail = Blatmin(qFloppyEnd, tFloppyEnd);
 }
 
 static void rcSeqs(char **seqs, unsigned blockCount, unsigned *blockSizes)

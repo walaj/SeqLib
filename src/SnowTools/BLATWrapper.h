@@ -38,11 +38,20 @@ extern "C" {
 
 namespace SnowTools {
 
+  /** Call BLAT on a single sequence
+   * 
+   * BLATWrapper is an interface to the BLAT program (Jim Kent, UCSC, 2002). 
+   * The purpose of this class is to allow rapid querying of a sequence
+   * against a reference entirely in memory, with no file intermediates
+   * or the need to call BLAT externally. 
+   */
 class BLATWrapper {
 
  public:
 
   BLATWrapper() {}
+
+  void addHeader(bam_hdr_t * t);
 
   void loadIndex(const std::string& file, const std::string& oocfile);
   
@@ -50,7 +59,15 @@ class BLATWrapper {
 
   void querySequence(const std::string& name, const std::string& sequence, BamReadVector& brv);
   
+  template<class Archive>
+    void serialize(Archive & ar, const unsigned int version) {
+    for (int i = 0; i < slCount(dbSeqList); ++i)
+      ar & gf->lists[i];
+  }
+
  private:
+
+  std::unordered_map<std::string, int> m_name2id;
 
   char** dbFiles;
   struct dnaSeq *dbSeqList;
@@ -63,7 +80,7 @@ class BLATWrapper {
   int minMatch = 2;
   int minScore = 30;
   int maxGap = 2;
-  int repMatch = 1024*4;
+  int repMatch = 1024; //*4;
   int dotEvery = 0;
   boolean oneOff = false;
   boolean noHead = false;
@@ -82,39 +99,34 @@ class BLATWrapper {
   double minIdentity = 90;
   char *outputFormat = "psl";
   
-  void searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, FILE *psl, 
-		       boolean isRc, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv);
+  void searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, 
+		       boolean isRc, Bits *qMaskBits, BamReadVector& brv);
 
   Bits* maskQuerySeq(struct dnaSeq *seq, boolean isProt, 
 				  boolean maskQuery, boolean lcMask);
 
-  void searchOne(bioSeq *seq, struct genoFind *gf, FILE *f, boolean isProt, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv);
+  void searchOne(bioSeq *seq, struct genoFind *gf, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv);
 
   void trimSeq(struct dnaSeq *seq, struct dnaSeq *trimmed);
 
   void __searchOneIndex(int fileCount, char *files[], struct genoFind *gf, char *outName, 
-			boolean isProt, struct hash *maskHash, FILE *outFile, boolean showStatus);
+		        struct hash *maskHash, FILE *outFile, boolean showStatus);
     
 
   void searchOneMaskTrim(struct dnaSeq *seq, boolean isProt,
-		       struct genoFind *gf, FILE *outFile,
+		       struct genoFind *gf,
 		       struct hash *maskHash,
 			 long long *retTotalSize, int *retCount, BamReadVector& brv);
 
   void __gfLongDnaInMem(struct dnaSeq *query, struct genoFind *gf, 
 			boolean isRc, int minScore, Bits *qMaskBits, 
-			struct gfOutput *out, boolean fastMap, boolean band, BamReadVector& brv);
+			boolean fastMap, boolean band, BamReadVector& brv);
 
   struct ssBundle* __fastMapClumpsToBundles(struct genoFind *gf, struct gfClump *clumpList, bioSeq *qSeq);
 
-  struct ffAli* __refineSmallExons(struct ffAli *ff, 
-				   struct dnaSeq *nSeq, struct dnaSeq *hSeq);
-  
   void __clumpToHspRange(struct gfClump *clump, bioSeq *qSeq, int tileSize,
 			 int frame, struct trans3 *t3, struct gfRange **pRangeList, 
 			 boolean isProt, boolean fastMap);
-  
-  void __refineSmallExonsInBundle(struct ssBundle *bun);
   
   int __scoreAli(struct ffAli *ali, boolean isProt, 
 		 enum ffStringency stringency, 
@@ -142,7 +154,18 @@ class BLATWrapper {
   void __extendHitRight(int qMax, int tMax,
 			char **pEndQ, char **pEndT, int (*scoreMatch)(char a, char b), 
 			int maxDown);
+
+  struct gfHit* __gfFindHitsWithQmask(struct genoFind *gf, bioSeq *seq,
+				      Bits *qMaskBits, int qMaskOffset, struct lm *lm, int *retHitCount, 
+				      struct gfSeqSource *target, int tMin, int tMax);
   
+
+  struct gfHit* __gfFastFindDnaHits(struct genoFind *gf, struct dnaSeq *seq, 
+				    Bits *qMaskBits,  int qMaskOffset, struct lm *lm, int *retHitCount,
+				    struct gfSeqSource *target, int tMin, int tMax);
+    
+
+  struct gfSeqSource* __findSource(struct genoFind *gf, bits32 targetPos);
   
 };
  

@@ -65,7 +65,9 @@ std::string Histogram::toFileString() const {
   for (auto& i : m_bins)
     if (i.m_count)
       ss << i.bounds.first << "_" << i.bounds.second << "_" << i.m_count << ",";
-  return(cutLastChar(ss.str())); // trim off last comma
+  std::string out = ss.str();
+  out.pop_back(); // trim off last comma
+  return(out);
   
 }
 
@@ -126,7 +128,7 @@ void Histogram::initialSpans(size_t num_bins, std::vector<S>* pspanv, size_t min
     if (i != INTERCHR)
       intra++;
 
-  size_t bin_cut = 0;
+  int bin_cut = 0;
   try {
     bin_cut = floor((double)intra / (double)num_bins);
     if (bin_cut == 0)

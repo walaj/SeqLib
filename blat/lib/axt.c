@@ -916,7 +916,7 @@ int tPos = axt->tStart;
 int symPos;
 int aDigits = digitsBaseTen(axt->qEnd);
 int bDigits = digitsBaseTen(axt->tEnd);
-int digits = max(aDigits, bDigits);
+int digits = Blatmax(aDigits, bDigits);
 int qFlipOff = axt->qEnd + axt->qStart;
 int tFlipOff = axt->tEnd + axt->tStart;
 

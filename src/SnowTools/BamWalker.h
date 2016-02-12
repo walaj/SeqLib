@@ -28,9 +28,10 @@ inline char *samfaipath(const char *fn_ref)
 
 namespace SnowTools {
 
-/////////////// 
-// Hold read counts
-//////////////
+  /** Small class to store a counter to measure BamWalker progress.
+   *
+   * Currently only stores number of reads seen / kept. 
+   */
 struct ReadCount {
 
   uint64_t keep = 0;

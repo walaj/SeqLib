@@ -253,7 +253,7 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
     
     if (line_comment || line_empty)
       continue;
-    
+
     // check that it doesn't have too many rules on it
     if (count(line.begin(), line.end(), '@') > 1) {
       std::cerr << "ERROR: Every line must start with region@, global@ or specify a rule, and only one region/rule per line" << std::endl;

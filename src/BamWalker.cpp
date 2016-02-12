@@ -186,14 +186,14 @@ bool BamWalker::__open_BAM_for_reading()
   fp = std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
   
   if (!fp) {
-    std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
+    std::cerr << "Error using HTS reader on opening NGS file " << m_in << std::endl;
     exit(EXIT_FAILURE);
   } 
 
   br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete());
   
   if (!br) {
-    std::cerr << "Error using HTS reader on opening " << m_in << std::endl;
+    std::cerr << "Error using HTS reader on opening NGS file " << m_in << std::endl;
     return false;
   }
   

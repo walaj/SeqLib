@@ -18,6 +18,8 @@
  */
 namespace SnowTools {
 
+  /** @brief Container for an interval on the genome 
+   */
 class GenomicRegion {
 
   template<typename T> friend class GenomicRegionCollection;
@@ -69,9 +71,9 @@ class GenomicRegion {
    * 
    * Creates a GenomicRegion with pos1 = pos2. Simulates a random value
    * with val <= genome_size_XY and then converts to GenomicRegion
-   * @ param seed Set the random seed. Seed = 0 creates random seed
+   * @note Seed is set before-hand at any time with srand
    */
-  void random(int32_t seed = 0);
+  void random();
 
   /** Returns true if chr id >= 0, false otherwise
    */
@@ -80,19 +82,26 @@ class GenomicRegion {
   /** Check if the GenomicRegion is empty (aka chr -1 and pos1=pos2=0)   */
   bool isEmpty() const;
 
-  /** Find the distance between two GenomicRegion objects
-   * If chr1 != chr2, 
+  /** Find the absolute distance between start of two GenomicRegion objects 
+   * 
+   * If chr1 != chr2, then -1 is returned
+   * @param gr GenomicRegion object to compare with
    */
-  int32_t distance(const GenomicRegion &gr) const;
+  int32_t distanceBetweenStarts(const GenomicRegion &gr) const;
+
+  /** Find the absolute distance between ends of two GenomicRegion objects 
+   * 
+   * If chr1 != chr2, then -1 is returned
+   * @param gr GenomicRegion object to compare with
+   */
+  int32_t distanceBetweenEnds(const GenomicRegion &gr) const;
+
 
   // define how these are to be sorted
   bool operator < (const GenomicRegion& b) const;
   bool operator==(const GenomicRegion& b) const;
   bool operator<=(const GenomicRegion &b) const;
   
-  // determine if something overlaps with centromere 
-  int centromereOverlap() const;
-
   /** Check if the GenomicRegion has a complete or partial overlap
    * If the argument contains the calling object, returns 3
    * If the argument is contained in the calling object, returns 2
@@ -100,7 +109,7 @@ class GenomicRegion {
    * If the argument and calling object do not overlap, returns 0
    * @param gr GenomicRegion to compare against
    */
-  int getOverlap(const GenomicRegion gr) const;
+  int getOverlap(const GenomicRegion& gr) const;
 
   friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr);
 
@@ -136,7 +145,6 @@ class GenomicRegion {
 };
 
 typedef std::vector<GenomicRegion> GenomicRegionVector;
-typedef GenomicRegion GR;
 
 }
 
