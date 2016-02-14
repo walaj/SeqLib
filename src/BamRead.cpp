@@ -193,7 +193,8 @@ namespace SnowTools {
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
         << r.b->core.isize 
-	<< "\t" << r.Sequence()/* << "\t" << r.Qualities()*/;
+	<< "\t" << r.Sequence() << "\t" << r.GetIntTag("AS");
+      /* << "\t" << r.Qualities()*/;
     return out;
       
     

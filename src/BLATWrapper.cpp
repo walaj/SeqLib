@@ -416,6 +416,15 @@ namespace SnowTools {
 	    for (size_t i = 0; i < cigv.size(); ++i)
 	      cigr[i] = cigv[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
 
+	    int a_param = 1;
+	    int b_param = 3;
+	    int q_param = 5;
+	    int r_param = 2;
+
+	    // add the score
+	    int as_score = a_param * score - b_param * mismatchCount - q_param * gap_open - r_param * gap_ext;
+	    b.AddIntTag("AS", as_score);
+
 	    brv.push_back(b);
 
 	    //printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%s\t%d\t%d\n", score, mismatchCount, repMatch, countNs,
