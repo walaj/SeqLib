@@ -659,7 +659,7 @@ static void extendHitRight(int qMax, int tMax,
 int maxScore = 0;
 int score = 0;
 int maxPos = -1;
-int last = min(qMax, tMax);
+int last = Blatmin(qMax, tMax);
 int i;
 char *q = *pEndQ, *t = *pEndT;
 
@@ -688,7 +688,7 @@ static void extendHitLeft(int qMax, int tMax,
 int maxScore = 0;
 int score = 0;
 int maxPos = 0;
-int last = -min(qMax, tMax);
+int last = -Blatmin(qMax, tMax);
 int i;
 char *q = *pStartQ, *t = *pStartT;
 

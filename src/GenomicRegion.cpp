@@ -126,6 +126,11 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
       std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
       throw std::invalid_argument(inv);
     }
+    
+    // check that it wasn't a single region, but if so, fix (e.g. 1:1 gets fixed to 1:1-1)
+    if (end == 2147483647) // at max size = not set. set to pos1
+      end = beg+1;
+
   } else {
     std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
     throw std::invalid_argument(inv);
@@ -252,21 +257,23 @@ void GenomicRegion::random() {
 	  else 
 	    chr = std::stoi(SnowTools::scrubString(tchr, "chr")) - 1;
 	} catch(...) {
-	  std::cerr << "GenomicRegion: error making chr from string " << tchr << std::endl;
+	  throw std::invalid_argument("GenomicRegion: error making chr from string " + tchr);
 	}
 	return;
+      } else {
+	chr = bam_name2id(h, tchr.c_str());
       }
 
       // TODO slow.
       //bool found = false;
-      for (int i = 0; i < h->n_targets; ++i)
+      /*for (int i = 0; i < h->n_targets; ++i)
 	if (strcmp(tchr.c_str(), h->target_name[i]) == 0)
 	  {
 	    chr = i;
 	    //	    found = true;
 	    break;
 	  }
-
+      */
       //debug turn this back on
       //if (!found) 
       //	std::cerr << "GenomicRegion: error, could not find matching chr in header for chr string " << tchr << std::endl;

@@ -54,8 +54,8 @@ r->end = end;
 r->val = val;
 while ((existing = rbTreeRemove(tree, r)) != NULL)
     {
-    r->start = min(r->start, existing->start);
-    r->end = max(r->end, existing->end);
+    r->start = Blatmin(r->start, existing->start);
+    r->end = Blatmax(r->end, existing->end);
     if (mergeVals)
 	r->val = mergeVals(existing->val, r->val);
     }

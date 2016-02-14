@@ -478,7 +478,7 @@ if(str == NULL) /* don't have a cookie */
 hash = newHash(6);
 
 namePt = str;
-while (isNotEmpty(namePt))
+while (BlatisNotEmpty(namePt))
     {
     dataPt = strchr(namePt, '=');
     if (dataPt == NULL)
@@ -1006,7 +1006,7 @@ int cgiOptionalInt(char *varName, int defaultVal)
 {
 char *s = cgiOptionalString(varName);
 s = skipLeadingSpaces(s);
-if (isEmpty(s))
+if (BlatisEmpty(s))
     return defaultVal;
 return cgiInt(varName);
 }
@@ -1373,7 +1373,7 @@ if (charSize == 0) charSize = 8;
 
 printf("<INPUT TYPE=TEXT NAME=\"%s\" SIZE=%d VALUE=\"%s\"", varName,
         charSize, initialVal);
-if (isNotEmpty(script))
+if (BlatisNotEmpty(script))
     printf(" onkeypress=\"%s\"", script);
 printf(">\n");
 }
@@ -1397,7 +1397,7 @@ if (width==0)
 
 printf("<INPUT TYPE=TEXT class='inputBox' NAME=\"%s\" style='width: %dpx' VALUE=\"%s\"",
        varName,width, initialVal);
-if (isNotEmpty(extra))
+if (BlatisNotEmpty(extra))
     printf(" %s",extra);
 printf(">\n");
 }

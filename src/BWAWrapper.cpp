@@ -136,10 +136,10 @@ namespace SnowTools {
     idx = (bwaidx_t*)calloc(1, sizeof(bwaidx_t));;
 
     // construct the forward-only pac
-    uint8_t* fwd_pac = __make_pac(v, true, false); //true->for_only, false->write_file
+    uint8_t* fwd_pac = __make_pac(v, true); //true->for_only
 
     // construct the forward-reverse pac ("packed" 2 bit sequence)
-    uint8_t* pac = __make_pac(v, false, false); // don't write, becasue only used to make BWT
+    uint8_t* pac = __make_pac(v, false); // don't write, becasue only used to make BWT
 
     size_t tlen = 0;
     for (auto& i : v)
@@ -196,6 +196,9 @@ namespace SnowTools {
 #endif    
 
     double primary_score = 0;
+
+    int secondary_count = 0;
+
     //size_t num_secondary = 0;
     // loop through the hits
     for (size_t i = 0; i < ar.n; ++i) {
@@ -215,7 +218,7 @@ namespace SnowTools {
 
       // if score not sufficient or past cap, continue
       bool sec_and_low_score =  ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score;
-      bool sec_and_cap_hit = ar.a[i].secondary >= 0 && i > max_secondary;
+      bool sec_and_cap_hit = ar.a[i].secondary >= 0 && (int)i > max_secondary;
       if (sec_and_low_score || sec_and_cap_hit) {
 	free(a.cigar);
 	continue;
@@ -373,6 +376,12 @@ namespace SnowTools {
       b.AddIntTag("SB", ar.a[i].sub_n);
       b.AddIntTag("AS", a.score);
 
+      // count num secondaries
+      if (b.SecondaryFlag())
+	++secondary_count;
+
+      //std::cerr << "BWAWrapper::cname "  << name << " sub_n " << ar.a[i].sub_n << " secondary flag " << b.SecondaryFlag() << std::endl;
+      
       vec.push_back(b);
 
       //#ifdef DEBUG_BWATOOLS
@@ -389,6 +398,11 @@ namespace SnowTools {
       free(a.cigar); // don't forget to deallocate CIGAR
     }
     free (ar.a); // dealloc the hit list
+
+    // add the secondary counts
+    for (auto& i : vec)
+      i.AddIntTag("SQ", secondary_count);
+    
 }
 
   //void BWAWrapper::alignReads(const std::vector<BamRead>& reads){}
@@ -442,7 +456,7 @@ uint8_t* BWAWrapper::__add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int6
   return pac;
 }
 
-uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only, bool write_file)
+uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only)
 {
 
   bntseq_t * bns = (bntseq_t*)calloc(1, sizeof(bntseq_t));

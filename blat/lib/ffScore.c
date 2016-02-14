@@ -75,7 +75,7 @@ if (hGap == 0 && nGap == 0)
     return 0;
 else
     {
-    int overlap = min(hGap, nGap);
+    int overlap = Blatmin(hGap, nGap);
     int penalty = 8;
     if (overlap < 0)
 	overlap = 0;
@@ -96,7 +96,7 @@ if (hGap == 0 && nGap == 0)
     return 0;
 else
     {
-    int overlap = min(hGap, nGap);
+    int overlap = Blatmin(hGap, nGap);
     int penalty = 8;
     if (overlap < 0)
 	overlap = 0;

@@ -193,8 +193,8 @@ namespace SnowTools {
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
         << r.b->core.isize 
-	<< "\t" << r.Sequence() << "\t" << r.GetIntTag("AS");
-      /* << "\t" << r.Qualities()*/;
+	<< "\t" << r.Sequence() << "\t*" << 
+      "\tAS:" << r.GetIntTag("AS");/* << "\t" << r.Qualities()*/;
     return out;
       
     
@@ -361,6 +361,89 @@ namespace SnowTools {
     return out;
     
   }
+
+  bool BamRead::coveredBase(int pos) const {
+
+    if (pos < 0) 
+      return false;
+
+    if (NumClip() == 0) 
+      return true;
+    
+    Cigar cig = GetCigar();
+    assert(cig.size() > 1); // are clips, so has to be at least two fields
+
+    // get length of read (whether hardclipped or not)
+    int len = 0;
+    for (auto& c : cig) 
+      if (c.ConsumesQuery())
+	len += c.Length(); 
+
+    int lbound  = 0, posr = 0, rbound = len - 1;
+
+    // progress the left side
+    for (auto& c : cig) {
+      if (c.ConsumesQuery()) {
+	lbound = posr;
+	break;
+      }
+      posr += c.Length();
+    }
+
+    // progress the right side
+    posr = Length() - 1;
+    for (auto& c : cig) {
+      if (c.ConsumesQuery()) {
+	rbound = posr;
+	break;
+      }
+      posr -= c.Length();
+    }
+
+    return pos >= lbound && pos <= rbound;
+  }
+
+  bool BamRead::coveredMatchBase(int pos) const {
+
+    if (pos < 0) 
+      return false;
+
+    if (NumClip() == 0) 
+      return true;
+    
+    Cigar cig = GetCigar();
+    assert(cig.size() > 1); // are clips, so has to be at least two fields
+
+    // get length of read (whether hardclipped or not)
+    int len = 0;
+    for (auto& c : cig) 
+      if (c.ConsumesQuery())
+	len += c.Length(); 
+
+    int lbound  = 0, posr = 0, rbound = len - 1;
+
+    // progress the left side
+    for (auto& c : cig) {
+      if (c.Type() == 'M') {
+	lbound = posr;
+	break;
+      }
+      posr += c.Length();
+    }
+
+    // progress the right side
+    posr = Length() - 1;
+    for (auto& c : cig) {
+      if (c.Type() == 'M') {
+	rbound = posr;
+	break;
+      }
+      posr -= c.Length();
+    }
+
+    return pos >= lbound && pos <= rbound;
+  }
+
   
   BamRead::BamRead(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig) {
 

@@ -1,36 +1,21 @@
 #include "SnowTools/BLATWrapper.h"
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #define QWARN_SIZE 5000000
 
 static int ssAliCount = 16;	/* Number of alignments returned by ssStitch. */
 
 namespace SnowTools {
 
-  struct ffAli* BLATWrapper::__refineSmallExons(struct ffAli *ff, 
-					struct dnaSeq *nSeq, struct dnaSeq *hSeq)
-  /* Tweak small exons slightly - refining positions to match splice
-   * sites if possible and looking a little harder for small first
-   * and last exons. */
-  {
-    //if (jiggleSmallExons(ff, nSeq, hSeq))
-    //  ff = ffRemoveEmptyAlis(ff, TRUE);
-    return ff;
+  void BLATWrapper::addHeader(bam_hdr_t * t) {
+    
+    for (int i = 0; i < t->n_targets; ++i) 
+      m_name2id.insert(std::pair<std::string, int>(std::string(t->target_name[i]),i));
+
   }
   
-  void BLATWrapper::__refineSmallExonsInBundle(struct ssBundle *bun)
-  /* Tweak small exons slightly - refining positions to match splice
-   * sites if possible and looking a little harder for small first
-   * and last exons. */
-  {
-    struct ssFfItem *fi;    /* Item list - memory owned by bundle. */
-    
-    for (fi = bun->ffList; fi != NULL; fi = fi->next)
-      {
-	fi->ff = __refineSmallExons(fi->ff, bun->qSeq, bun->genoSeq);
-      }
-  }
-
-
   int BLATWrapper::__scoreAli(struct ffAli *ali, boolean isProt, 
 			      enum ffStringency stringency, 
 			      struct dnaSeq *tSeq, struct trans3 *t3List)
@@ -88,7 +73,7 @@ namespace SnowTools {
 
   void BLATWrapper::__gfLongDnaInMem(struct dnaSeq *query, struct genoFind *gf, 
 				     boolean isRc, int minScore, Bits *qMaskBits, 
-				     struct gfOutput *out, boolean fastMap, boolean band, BamReadVector& brv)
+				     boolean fastMap, boolean band, BamReadVector& brv)
   /* Chop up query into pieces, align each, and stitch back
    * together again. */
   {
@@ -115,9 +100,9 @@ namespace SnowTools {
 	 * maxSize or less do it all.   Otherwise just
 	 * do prefered size, and set it up to overlap
 	 * with surrounding pieces by overlapSize.  */
-	if (subOffset == 0 && query->size <= maxSize)
+	if (subOffset == 0 && query->size <= maxSize) {
 	  nextOffset = subSize = query->size;
-	else
+	} else
 	  {
 	    subSize = preferredSize;
 	    if (subSize + subOffset >= query->size)
@@ -135,7 +120,6 @@ namespace SnowTools {
 	endPos = &subQuery.dna[subSize];
 	saveEnd = *endPos;
 	*endPos = 0;
-	
 	//gf->maxPat = 1024; // jeremiah
 
 	if (band)
@@ -144,7 +128,20 @@ namespace SnowTools {
 	  }
 	else
 	  {
+
+	    // body of gfFindClumpWithQmask
+	    /*
+	    struct gfClump *clumpList = NULL;
+	    struct gfHit *hitList;
+	    int minMatch = gf->minMatch;
+	    
+	    hitList =  gfFindHitsWithQmask(gf, &subQuery, qMaskBits, subOffset, lm,
+	                &hitCount, NULL, 0, 0);
+	    cmpQuerySize = subQuery.size; // seq->size
+	    clumpList = clumpHits(gf, hitList, minMatch);
+	    */
 	    clumpList = gfFindClumpsWithQmask(gf, &subQuery, qMaskBits, subOffset, lm, &hitCount);
+
 	    //printf("HIT COUNT: %d   qMaskMits==null: %d   fastMap: %d, subQuery.dna: %s    offset: %d   gf->tileSize : %d  gf->minMatch+1   %d\n", hitCount, qMaskBits == NULL, fastMap, 
 	    //       subQuery.dna, subOffset, gf->tileSize, gf->minMatch+1);
 	    //printf("maxPat: %d  minMatch: %d   maxGap: %d  tileSize :%d  stepsize %d tileSpaceSize: %d  tileMask %d  sourceCount: %d isPep %d  allowOneMismatch %d   segSize %d\n",
@@ -170,8 +167,8 @@ namespace SnowTools {
     for (bun = bigBunList; bun != NULL; bun = bun->next)
       {
 	ssStitch(bun, ffCdna, minScore, ssAliCount);
-	if (!fastMap && !band)
-	  __refineSmallExonsInBundle(bun);
+	//if (!fastMap && !band)
+	//  __refineSmallExonsInBundle(bun);
 	
 	//jeremiah
 	//printf("bigBunList. Name: %s size: %d\n", bun->genoSeq->name, bun->genoSeq->size); //jeremiah
@@ -185,11 +182,11 @@ namespace SnowTools {
 	    struct trans3 *t3List = NULL;
 	    int score;
 	    struct dnaSeq *tSeq = bun->genoSeq; 
-	    struct dnaSeq *qSeq = bun->qSeq;
+	    //struct dnaSeq *qSeq = bun->qSeq;
 	    score = __scoreAli(ff_loop, bun->isProt, ffCdna, tSeq, NULL);
 	    
 	    boolean qIsRc = FALSE;
-	    boolean tIsRc = FALSE;
+	    //boolean tIsRc = FALSE;
 	    
 	    //jeremiah
 	    //////////////////
@@ -197,13 +194,12 @@ namespace SnowTools {
 	    struct ffAli *ali = ff_loop; //jeremiah
 	    struct ffAli *ff, *nextFf;
 	    struct ffAli *right = ffRightmost(ali);
-	    enum ffStringency stringency = ffCdna; //jeremiah
-	    int minMatch = minScore; // jeremiah
+	    //enum ffStringency stringency = ffCdna; //jeremiah
+	    //int minMatch = minScore; // jeremiah
 	    DNA *needle = bun->qSeq->dna;
 	    DNA *hay = tSeq->dna;
 	    int nStart = ali->nStart - needle;
 	    int nEnd = right->nEnd - needle;
-	    int hStart, hEnd; 
 	    int nInsertBaseCount = 0;
 	    int nInsertCount = 0;
 	    int hInsertBaseCount = 0;
@@ -218,8 +214,8 @@ namespace SnowTools {
 	    Bits *maskBits = NULL;
 	    int chromOffset = 0; //jeremiah
 	    
-	    hStart = trans3GenoPos(ali->hStart, tSeq, t3List, FALSE) + chromOffset;
-	    hEnd = trans3GenoPos(right->hEnd, tSeq, t3List, TRUE) + chromOffset;	    
+	    int hStart = trans3GenoPos(ali->hStart, tSeq, t3List, FALSE) + chromOffset;
+	    //	    int hEnd = trans3GenoPos(right->hEnd, tSeq, t3List, TRUE) + chromOffset;	    
 
 	    /* Count up matches, mismatches, inserts, etc. */
 	    for (ff = ali; ff != NULL; ff = nextFf)
@@ -273,6 +269,10 @@ namespace SnowTools {
 		  }
 	      }
 
+	    // move on if score too low
+	    if (score < 30)
+	      continue;
+	    
 	    Cigar cigv;
 
 	    // make the cigar (idea from Heng Li's psl2sam.pl)
@@ -328,18 +328,15 @@ namespace SnowTools {
 	      //cig += std::to_string(query->size - nEnd) + "S";
 	    }
 
-	    int aopt = 1, bopt = 3, qopt = 5, ropt = 2;
-	    int myscore = aopt * score - bopt * mismatchCount - qopt * gap_open - ropt * gap_ext;
-	    if (myscore < 0)
-	      myscore = 0;
-
 	    // make the read (jeremiah)
 	    BamRead b;
 	    b.init();
 
-	    GenomicRegion gr(std::string(bun->genoSeq->name), "1", "1", nullptr);
-
-	    b.b->core.tid = gr.chr; //a.rid; // TODO
+	    std::unordered_map<std::string, int>::const_iterator fff = m_name2id.find(std::string(bun->genoSeq->name));
+	    if (fff == m_name2id.end())
+	      throw std::out_of_range("No header entry for " + std::string(bun->genoSeq->name));
+	    
+	    b.b->core.tid = fff->second; 
 	    b.b->core.pos = hStart;
 	    b.b->core.qual = 0; //a.mapq; // TODO
 	    b.b->core.flag = 0; //a.flag;
@@ -416,6 +413,7 @@ namespace SnowTools {
 	    for (size_t i = 0; i < cigv.size(); ++i)
 	      cigr[i] = cigv[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
 
+	    // add the alignment score, as calculate by psl2sam
 	    int a_param = 1;
 	    int b_param = 3;
 	    int q_param = 5;
@@ -424,6 +422,8 @@ namespace SnowTools {
 	    // add the score
 	    int as_score = a_param * score - b_param * mismatchCount - q_param * gap_open - r_param * gap_ext;
 	    b.AddIntTag("AS", as_score);
+	    b.AddIntTag("BS", score);
+	    b.AddIntTag("SR", brv.size());
 
 	    brv.push_back(b);
 
@@ -436,15 +436,15 @@ namespace SnowTools {
 	
 	//saveAlignments(bun->genoSeq->name, bun->genoSeq->size, 0, bun, NULL, isRc, FALSE, ffCdna, minScore, out);
       }
-    
+
     ssBundleFreeList(&bigBunList);
     freeHash(&bunHash);
     lmCleanup(&lm);
   }
   
   
-  void BLATWrapper::searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, FILE *psl, 
-				    boolean isRc, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv)
+  void BLATWrapper::searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, 
+				    boolean isRc, Bits *qMaskBits, BamReadVector& brv)
   /* Search for seq in index, align it, and write results to psl. */
   {
     if (fastMap && (seq->size > MAXSINGLEPIECESIZE))
@@ -452,7 +452,7 @@ namespace SnowTools {
 	       "Larger pieces will have to be split up until no larger than this limit "
 	       "when the -fastMap option is used."	
 	       , MAXSINGLEPIECESIZE, seq->name, seq->size);
-    __gfLongDnaInMem(seq, gf, isRc, minScore, qMaskBits, gvo, fastMap, false /* fine? */, brv);
+    __gfLongDnaInMem(seq, gf, isRc, minScore, qMaskBits, fastMap, false /* fine? */, brv);
   }
  
   Bits* BLATWrapper::maskQuerySeq(struct dnaSeq *seq, boolean isProt, 
@@ -484,7 +484,7 @@ namespace SnowTools {
   }
   
   
-  void BLATWrapper::searchOne(bioSeq *seq, struct genoFind *gf, FILE *f, boolean isProt, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv)
+  void BLATWrapper::searchOne(bioSeq *seq, struct genoFind *gf, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv)
   /* Search for seq on either strand in index. */
   {
     //if (isProt)
@@ -493,12 +493,14 @@ namespace SnowTools {
     // }
     //else
       {
-	gvo->maskHash = maskHash;
-	searchOneStrand(seq, gf, f, FALSE, maskHash, qMaskBits, brv);
+	gvo->maskHash = maskHash; //debug
+	searchOneStrand(seq, gf, FALSE, qMaskBits, brv);
 	reverseComplement(seq->dna, seq->size);
-	searchOneStrand(seq, gf, f, TRUE, maskHash, qMaskBits, brv);
+	searchOneStrand(seq, gf, TRUE, qMaskBits, brv);
 	reverseComplement(seq->dna, seq->size);
       }
+
+      FILE * f = nullptr;
     gfOutputQuery(gvo, f);
   }
   
@@ -525,7 +527,7 @@ namespace SnowTools {
   
 
   void BLATWrapper::searchOneMaskTrim(struct dnaSeq *seq, boolean isProt,
-		       struct genoFind *gf, FILE *outFile,
+				      struct genoFind *gf,
 		       struct hash *maskHash,
 				      long long *retTotalSize, int *retCount, BamReadVector& brv)
 
@@ -540,7 +542,7 @@ namespace SnowTools {
     if (qType == gftRna || qType == gftRnaX)
       memSwapChar(trimmedSeq.dna, trimmedSeq.size, 'u', 't');
 
-    searchOne(&trimmedSeq, gf, outFile, isProt, maskHash, qMaskBits, brv);
+    searchOne(&trimmedSeq, gf,maskHash, qMaskBits, brv);
     *retTotalSize += seq->size;
     *retCount += 1;
     bitFree(&qMaskBits);
@@ -548,7 +550,7 @@ namespace SnowTools {
   
   
   void BLATWrapper::__searchOneIndex(int fileCount, char *files[], struct genoFind *gf, char *outName, 
-				     boolean isProt, struct hash *maskHash, FILE *outFile, boolean showStatus)
+				     struct hash *maskHash, FILE *outFile, boolean showStatus)
   /* Search all sequences in all files against single genoFind index. */
   {
     int i;
@@ -671,32 +673,60 @@ namespace SnowTools {
     
     long long totalSize = 0;
     int count = 0;
-    int queryCount;
-    bool showStatus = true;
     struct hash *maskHash = NULL;
 
     // convert to lowercase
     std::string lower = sequence;
     std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
-    // make the dna seq
+        // make the dna seq
     struct dnaSeq seq;
     seq.name = (char*)malloc(name.length() + 1);
-    strcpy(seq.name, name.c_str());
-    seq.dna = (char*)malloc(sequence.length());
-    strncpy(seq.dna, lower.data(), sequence.length());
+    memcpy(seq.name, name.c_str(), name.length() + 1);
+    seq.dna = (char*)malloc(sequence.length() + 1);
+    memcpy(seq.dna, lower.c_str(), sequence.length());  //cloneString();
+    seq.dna[sequence.length()] = 0;
     seq.size = sequence.length();
     seq.next = nullptr;
     seq.mask = nullptr;
 
     //setup the output
-    
 
     // search the sequence
     bool isProt = false;
     FILE * outFile = nullptr;
-    searchOneMaskTrim(&seq, isProt, gf, outFile, maskHash, &totalSize, &count, brv);
+    BamReadVector bavr;
+    searchOneMaskTrim(&seq, isProt, gf,maskHash, &totalSize, &count, bavr);
 
+    free(seq.name);
+    free(seq.dna);
+
+    if (!bavr.size())
+      return;
+
+    std::vector<BamRead> best_hit;  // which contig is best at loc
+    std::vector<int> best_score;    // score of that contig
+    // get covered positions
+    for (int i = 0; i < sequence.length(); ++i) {
+      best_hit.push_back(bavr[0]);
+      int bs = bavr[0].GetIntTag("BS");
+      for (auto& r : bavr) {
+	if (r.coveredBase(i) && r.GetIntTag("BS") > bs) {
+	  best_hit[i] = r;
+	  bs = r.GetIntTag("BS");
+	}
+      }
+    }
+
+    std::set<int> sset;
+    for (auto& i : best_hit) {		       
+      int sr = i.GetIntTag("SR");
+      if (!sset.count(sr))
+	{
+	  brv.push_back(i);
+	  sset.insert(sr);
+	}
+    }
   }
 
   void BLATWrapper::queryFile(const std::string& file) {
@@ -716,13 +746,14 @@ namespace SnowTools {
     char *outName = (char*)malloc(oname.length() + 1);
     strcpy(outName, oname.c_str());
 
-    bool tIsProt = false;
-
     FILE *f = mustOpen(outName, "w");
     
     gfClientFileArray(queryFile, &queryFiles, &queryCount);
 
-    __searchOneIndex(queryCount, queryFiles, gf, outName, tIsProt, maskHash, f, showStatus);
+    __searchOneIndex(queryCount, queryFiles, gf, outName, maskHash, f, showStatus);
+
+    free(queryFile);
+    free(outName);
 
   }
 
@@ -893,7 +924,7 @@ void BLATWrapper::__clumpToHspRange(struct gfClump *clump, bioSeq *qSeq, int til
   int qStart = 0, tStart = 0, qEnd = 0, tEnd = 0, newQ = 0, newT = 0;
   boolean outOfIt = TRUE;		/* Logically outside of a clump. */
   struct gfRange *range;
-  BIOPOL *lastQs = NULL, *lastQe = NULL, *lastTs = NULL, *lastTe = NULL;
+  BIOPOL *lastQs = NULL, *lastQe = NULL, *lastTs = NULL; //, *lastTe = NULL;
   int (*scoreMatch)(char a, char b) = (isProt ? aaScore2 : dnaScore2);
   int maxDown, minSpan;
   
@@ -946,7 +977,7 @@ void BLATWrapper::__clumpToHspRange(struct gfClump *clump, bioSeq *qSeq, int til
 		  lastQs = qs;
 		  lastTs = ts;
 		  lastQe = qe;
-		  lastTe = te;
+		  //lastTe = te;
 		  if (qe - qs >= minSpan)
 		    {
 		      //AllocVar(range);
@@ -994,7 +1025,7 @@ void BLATWrapper::__extendHitRight(int qMax, int tMax,
   int maxScore = 0;
   int score = 0;
   int maxPos = -1;
-  int last = min(qMax, tMax);
+  int last = Blatmin(qMax, tMax);
   int i;
   char *q = *pEndQ, *t = *pEndT;
   
@@ -1015,15 +1046,62 @@ void BLATWrapper::__extendHitRight(int qMax, int tMax,
   *pEndT = t+maxPos+1;
 }
 
+/*
+struct gfHit* BlatWrapper::__gfFindHitsWithQmask(struct genoFind *gf, bioSeq *seq,
+						 Bits *qMaskBits, int qMaskOffset, struct lm *lm, int *retHitCount, 
+						 struct gfSeqSource *target, int tMin, int tMax)
+// Find hits associated with one sequence soft-masking seq according to qMaskBits.
+// The hits will be in genome rather than chromosome coordinates. 
+{
+  
+  struct gfHit *hitList = NULL;
+  if (gf->segSize == 0 && !gf->isPep && !gf->allowOneMismatch)
+    {
+      hitList = gfFastFindDnaHits(gf, seq, qMaskBits, qMaskOffset, lm, retHitCount,
+				  target, tMin, tMax);
+    }
+  else
+    {
+    if (gf->segSize == 0)
+      {
+	if (gf->allowOneMismatch)
+	  {
+	    hitList = gfStraightFindNearHits(gf, seq, qMaskBits, qMaskOffset, lm, 
+					     retHitCount, target, tMin, tMax);
+	  }
+	else
+	  {
+	    hitList = gfStraightFindHits(gf, seq, qMaskBits, qMaskOffset, lm, retHitCount, 
+					 target, tMin, tMax);
+	  }
+      }
+    else
+      {
+	if (gf->allowOneMismatch)
+	  {
+	    hitList = gfSegmentedFindNearHits(gf, seq, qMaskBits, qMaskOffset, lm, retHitCount,
+					      target, tMin, tMax);
+	  }
+	else
+	  {
+	    hitList = gfSegmentedFindHits(gf, seq, qMaskBits, qMaskOffset, lm, retHitCount,
+					  target, tMin, tMax);
+	  }
+      }
+    }
+  return hitList;
+}
+*/
+
 void BLATWrapper::__extendHitLeft(int qMax, int tMax,
 				  char **pStartQ, char **pStartT, int (*scoreMatch)(char a, char b),
 				  int maxDown)
-/* Extend startQ/startT as much to the left as possible. */
+// Extend startQ/startT as much to the left as possible. 
 {
   int maxScore = 0;
   int score = 0;
   int maxPos = 0;
-  int last = -min(qMax, tMax);
+  int last = -Blatmin(qMax, tMax);
   int i;
   char *q = *pStartQ, *t = *pStartT;
   
@@ -1044,5 +1122,79 @@ void BLATWrapper::__extendHitLeft(int qMax, int tMax,
   *pStartT = t+maxPos;
 }
 
+
+/*
+struct gfHit* BLATWrapper::__gfFastFindDnaHits(struct genoFind *gf, struct dnaSeq *seq, 
+					       Bits *qMaskBits,  int qMaskOffset, struct lm *lm, int *retHitCount,
+					       struct gfSeqSource *target, int tMin, int tMax)
+// Find hits associated with one sequence. This is is special fast
+// case for DNA that is in an unsegmented index. 
+{
+  struct gfHit *hitList = NULL, *hit;
+  int size = seq->size;
+  int tileSizeMinusOne = gf->tileSize - 1;
+  int mask = gf->tileMask;
+  DNA *dna = seq->dna;
+  int i, j;
+  bits32 bits = 0;
+  bits32 bVal;
+  int listSize;
+  bits32 qStart, *tList;
+  int hitCount = 0;
+  
+  for (i=0; i<tileSizeMinusOne; ++i)
+    {
+      bVal = ntValNoN[(int)dna[i]];
+      bits <<= 2; 
+      bits += bVal;
+    }
+  
+  for (i=tileSizeMinusOne; i<size; ++i)
+    {
+      bVal = ntValNoN[(int)dna[i]];
+      bits <<= 2;
+      bits += bVal;
+      bits &= mask;
+      listSize = gf->listSizes[bits];
+      
+      if (listSize != 0)
+	{
+	  qStart = i-tileSizeMinusOne;
+	  if (qMaskBits == NULL || bitCountRange(qMaskBits, qStart+qMaskOffset, gf->tileSize) == 0)
+	    {
+	      tList = gf->lists[bits];
+	      for (j=0; j<listSize; ++j)
+		{
+		  int tStart = tList[j];
+		  if (target == NULL || 
+		      (target == __findSource(gf, tStart) && tStart >= tMin && tStart < tMax) ) 
+		    {
+		      
+		      lmAllocVar(lm, hit);
+		      hit->qStart = qStart;
+		      hit->tStart = tStart;
+		      hit->diagonal = tStart + size - qStart;
+		      slAddHead(&hitList, hit);
+		      ++hitCount;
+		    }
+		}
+	    }
+	}
+    }
+  *retHitCount = hitCount;
+  return hitList;
+}
+
+struct gfSeqSource* BLATWrapper::__findSource(struct genoFind *gf, bits32 targetPos)
+// Find source given target position. 
+{
+  //printf("running find source on pos: %d\n");
+  struct gfSeqSource *ss =  bsearch(&targetPos, gf->sources, gf->sourceCount, 
+				    sizeof(gf->sources[0]), bCmpSeqSource);
+  if (ss == NULL)
+    errAbort("Couldn't find source for %d", targetPos);
+  return ss;
+}
+*/
 
 }

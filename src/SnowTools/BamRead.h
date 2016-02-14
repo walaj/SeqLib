@@ -492,7 +492,6 @@ class BamRead {
       return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
   }
 
-
   /** Strip a particular alignment tag 
    * @param tag Tag to remove
    */
@@ -512,6 +511,25 @@ class BamRead {
 
   /** Return the raw pointer */
   inline bam1_t* raw() const { return b.get(); }
+
+  /** Check if base at position on read is covered by alignment M or I (not clip)
+   *
+   * Example: Alignment with 50M10I10M20S -- 
+   * 0-79: true, 80+ false
+   * @param pos Position on base (0 is start)
+   * @return true if that base is aligned (I or M)
+   */
+  bool coveredBase(int pos) const;
+
+  /** Check if base at position on read is covered by match only (M)
+   *
+   * Example: Alignment with 10S50M20S -- 
+   * 0-9: false, 10-59: true, 60+: false
+   * @param pos Position on base (0 is start)
+   * @return true if that base is aligned (M)
+   */
+  bool coveredMatchBase(int pos) const;
+
   
   //std::string toSam(bam_hdr_t* h) const;
 
