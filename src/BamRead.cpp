@@ -2,6 +2,8 @@
 
 #include <cassert>
 #include <bitset>
+#include <cctype>
+#include <boost/algorithm/string.hpp>
 
 namespace SnowTools {
 
@@ -541,6 +543,29 @@ namespace SnowTools {
   std::ostream& operator<<(std::ostream& out, const CigarField& c) { 
     out << bam_cigar_opchr(c.data) << bam_cigar_oplen(c.data); 
     return out; 
+  }
+
+  Cigar cigarFromString(const std::string& cig) {
+
+    // get the ops
+    std::vector<char> ops;
+    for (auto& c : cig)
+      if (!isdigit(c)) {
+	ops.push_back(c);
+      }
+
+    std::vector<std::string> lens;
+    boost::split(lens, cig, boost::is_any_of(cigar_delimiters));
+    lens.pop_back(); // fills in empty at end for some reason
+
+    assert(ops.size() == lens.size());
+    Cigar c;
+    for (size_t i = 0; i < lens.size(); ++i) {
+      c.push_back(CigarField(ops[i], std::stoi(lens[i])));
+    }
+    
+    return c;
+
   }
   
 }
