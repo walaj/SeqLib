@@ -23,6 +23,8 @@ static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'T', ' ', ' ', ' ', 
                                ' ', ' ', ' ', 'N'};
 
+static std::string cigar_delimiters = "MIDNSHPX";
+
 static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -97,8 +99,10 @@ class CigarField {
  };
 */
 
- typedef std::vector<CigarField> Cigar;
+typedef std::vector<CigarField> Cigar;
 typedef std::unordered_map<std::string, size_t> CigarMap;
+
+ Cigar cigarFromString(const std::string& cig);
 
 /** Class to store and interact with an HTSLib bam1_t read.
  *

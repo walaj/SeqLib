@@ -420,11 +420,9 @@ namespace SnowTools {
 	    int r_param = 2;
 
 	    // add the score
-	    //std::cout << " gap open " << gap_open << " gap ext " << gap_ext << " mismatchCount " << mismatchCount << " score " << score << std::endl;
 	    int as_score = a_param * score - b_param * mismatchCount - q_param * gap_open - r_param * gap_ext;
 	    b.AddIntTag("AS", as_score);
 	    b.AddIntTag("BS", score);
-
 	    b.AddIntTag("SR", brv.size());
 
 	    brv.push_back(b);
