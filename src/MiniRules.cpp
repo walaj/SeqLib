@@ -330,6 +330,12 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       // parse the line
       ar.parseRuleLine(line);
 
+      if (!m_regions.size()) {
+	std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+	std::cerr << "  Rules file specified without @region  " << std::endl;
+	std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+	exit(EXIT_FAILURE);
+      }
       m_regions.back().m_abstract_rules.push_back(ar);      
       m_regions.back().parseDiscordantShortcut(line, ar);
 
