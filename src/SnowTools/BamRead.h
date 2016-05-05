@@ -293,6 +293,10 @@ class BamRead {
    */
   double MeanPhred() const;
 
+  /** Do a smith waterman alignment
+   */
+  BamRead(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
+
   /** Get the quality scores of this read as a string */
   inline std::string Qualities() const { 
     uint8_t * p = bam_get_qual(b);

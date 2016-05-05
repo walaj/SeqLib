@@ -4,6 +4,7 @@
 #include <bitset>
 #include <cctype>
 #include <boost/algorithm/string.hpp>
+#include "SnowTools/ssw_cpp.h"
 
 namespace SnowTools {
 
@@ -31,6 +32,72 @@ namespace SnowTools {
       out[i] = BASES[bam_seqi(p,i)];
     return out;
     
+  }
+
+  BamRead::BamRead(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
+
+    StripedSmithWaterman::Aligner aligner;
+    // Declares a default filter
+    StripedSmithWaterman::Filter filter;
+    // Declares an alignment that stores the result
+    StripedSmithWaterman::Alignment alignment;
+    // Aligns the seq to the ref
+    aligner.Align(seq.c_str(), ref.c_str(), ref.size(), filter, &alignment);
+
+    init();
+    b->core.tid = gr->chr;
+    b->core.pos = gr->pos1 + alignment.ref_begin;
+    b->core.qual = alignment.sw_score;
+    b->core.flag = 0;
+    b->core.n_cigar = alignment.cigar.size();
+    
+    // set dumy mate
+    b->core.mtid = -1;
+    b->core.mpos = -1;
+    b->core.isize = 0;
+
+    // allocate all the data
+    b->core.l_qname = name.length() + 1;
+    b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+    b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
+    b.get()->data = (uint8_t*)malloc(b.get()->l_data);
+
+    // allocate all the data
+    b->core.l_qname = name.length() + 1;
+    b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+    b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
+    b.get()->data = (uint8_t*)malloc(b.get()->l_data);
+    
+    // allocate the qname
+    memcpy(b->data, name.c_str(), name.length() + 1);
+
+    // allocate the cigar. 32 bits per elem (4 type, 28 length)
+    uint32_t * cigr = bam_get_cigar(b);
+    for (size_t i = 0; i < alignment.cigar.size(); ++i)
+      cigr[i] = alignment.cigar[i]; //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
+
+    // allocate the sequence
+    uint8_t* m_bases = b->data + b->core.l_qname + (b->core.n_cigar<<2);
+    
+    // TODO move this out of bigger loop
+    int slen = seq.length();
+    for (int i = 0; i < slen; ++i) {
+      // bad idea but works for now
+      uint8_t base = 15;
+      if (seq.at(i) == 'A')
+	base = 1;
+      else if (seq.at(i) == 'C')
+	base = 2;
+      else if (seq.at(i) == 'G')
+	base = 4;
+      else if (seq.at(i) == 'T')
+	base = 8;
+      
+      m_bases[i >> 1] &= ~(0xF << ((~i & 1) << 2));   ///< zero out previous 4-bit base encoding
+      m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
+      
+    }
+      
   }
 
   void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
@@ -472,29 +539,29 @@ namespace SnowTools {
     // if alignment is reverse, set it
     if (gr->strand == '-') // just choose this convention to reverse
       b->core.flag |= BAM_FREVERSE;
-
-      // allocate all the data
-      b->core.l_qname = name.length() + 1;
-      b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
-      b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
-      b.get()->data = (uint8_t*)malloc(b.get()->l_data);
-
-      // allocate all the data
-      b->core.l_qname = name.length() + 1;
-      b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
-      b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
-      b.get()->data = (uint8_t*)malloc(b.get()->l_data);
-
-      // allocate the qname
-      memcpy(b->data, name.c_str(), name.length() + 1);
+    
+    // allocate all the data
+    b->core.l_qname = name.length() + 1;
+    b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+    b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
+    b.get()->data = (uint8_t*)malloc(b.get()->l_data);
+    
+    // allocate all the data
+    b->core.l_qname = name.length() + 1;
+    b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+    b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
+    b.get()->data = (uint8_t*)malloc(b.get()->l_data);
+    
+    // allocate the qname
+    memcpy(b->data, name.c_str(), name.length() + 1);
       
-      // allocate the cigar. 32 bits per elem (4 type, 28 length)
-      uint32_t * cigr = bam_get_cigar(b);
-      for (size_t i = 0; i < cig.size(); ++i)
-	cigr[i] = cig[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
-      
-      // allocate the sequence
-      uint8_t* m_bases = b->data + b->core.l_qname + (b->core.n_cigar<<2);
+    // allocate the cigar. 32 bits per elem (4 type, 28 length)
+    uint32_t * cigr = bam_get_cigar(b);
+    for (size_t i = 0; i < cig.size(); ++i)
+      cigr[i] = cig[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
+    
+    // allocate the sequence
+    uint8_t* m_bases = b->data + b->core.l_qname + (b->core.n_cigar<<2);
 
       // TODO move this out of bigger loop
       int slen = seq.length();

@@ -186,6 +186,12 @@ namespace SnowTools {
     
   }
 
+  void BWAWrapper::setGapOpen(int gap_open) {
+    if (gap_open < 0) 
+      throw std::invalid_argument("BWAWrapper::setGapOpen - gap_open must greater than zero");
+    memopt->o_del = memopt->o_ins = gap_open;
+  }
+
   void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, bool hardclip, 
 				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
     mem_alnreg_v ar;

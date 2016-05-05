@@ -47,7 +47,9 @@ AR = ar
 ARFLAGS = cru
 libsnowtools_a_AR = $(AR) $(ARFLAGS)
 libsnowtools_a_LIBADD =
-am_libsnowtools_a_OBJECTS = libsnowtools_a-GenomicRegion.$(OBJEXT) \
+am_libsnowtools_a_OBJECTS = libsnowtools_a-ssw_cpp.$(OBJEXT) \
+	libsnowtools_a-ssw.$(OBJEXT) \
+	libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-Histogram.$(OBJEXT) \
 	libsnowtools_a-RefGenome.$(OBJEXT) \
 	libsnowtools_a-SVVCF.$(OBJEXT) \
@@ -190,7 +192,7 @@ libsnowtools_a_CPPFLAGS = \
 	-I../SGA/Util -I../SGA/Bigraph -I../SGA/SuffixTools \
 	-I../SGA/Algorithm -I../SGA/SQG -I../blat/inc -I../blat/jkOwnLib -Wno-write-strings
 
-libsnowtools_a_SOURCES = GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp \
+libsnowtools_a_SOURCES = ssw_cpp.cpp ssw.c GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp \
 			AlignedContig.cpp BreakPoint.cpp \
 			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
@@ -270,6 +272,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-gChain.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-gzstream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-is.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-ssw.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-ssw_cpp.Po@am__quote@
 
 .C.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -284,6 +288,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+libsnowtools_a-ssw_cpp.o: ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-ssw_cpp.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-ssw_cpp.Tpo -c -o libsnowtools_a-ssw_cpp.o `test -f 'ssw_cpp.cpp' || echo '$(srcdir)/'`ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-ssw_cpp.Tpo $(DEPDIR)/libsnowtools_a-ssw_cpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ssw_cpp.cpp' object='libsnowtools_a-ssw_cpp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-ssw_cpp.o `test -f 'ssw_cpp.cpp' || echo '$(srcdir)/'`ssw_cpp.cpp
+
+libsnowtools_a-ssw_cpp.obj: ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-ssw_cpp.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-ssw_cpp.Tpo -c -o libsnowtools_a-ssw_cpp.obj `if test -f 'ssw_cpp.cpp'; then $(CYGPATH_W) 'ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/ssw_cpp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-ssw_cpp.Tpo $(DEPDIR)/libsnowtools_a-ssw_cpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ssw_cpp.cpp' object='libsnowtools_a-ssw_cpp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-ssw_cpp.obj `if test -f 'ssw_cpp.cpp'; then $(CYGPATH_W) 'ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/ssw_cpp.cpp'; fi`
 
 libsnowtools_a-GenomicRegion.o: GenomicRegion.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-GenomicRegion.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-GenomicRegion.Tpo -c -o libsnowtools_a-GenomicRegion.o `test -f 'GenomicRegion.cpp' || echo '$(srcdir)/'`GenomicRegion.cpp
@@ -536,6 +554,20 @@ libsnowtools_a-BLATWrapper.obj: BLATWrapper.cpp
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+libsnowtools_a-ssw.o: ssw.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-ssw.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-ssw.Tpo -c -o libsnowtools_a-ssw.o `test -f 'ssw.c' || echo '$(srcdir)/'`ssw.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-ssw.Tpo $(DEPDIR)/libsnowtools_a-ssw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ssw.c' object='libsnowtools_a-ssw.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-ssw.o `test -f 'ssw.c' || echo '$(srcdir)/'`ssw.c
+
+libsnowtools_a-ssw.obj: ssw.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-ssw.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-ssw.Tpo -c -o libsnowtools_a-ssw.obj `if test -f 'ssw.c'; then $(CYGPATH_W) 'ssw.c'; else $(CYGPATH_W) '$(srcdir)/ssw.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-ssw.Tpo $(DEPDIR)/libsnowtools_a-ssw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ssw.c' object='libsnowtools_a-ssw.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libsnowtools_a-ssw.obj `if test -f 'ssw.c'; then $(CYGPATH_W) 'ssw.c'; else $(CYGPATH_W) '$(srcdir)/ssw.c'; fi`
 
 libsnowtools_a-is.o: ../bwa/is.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libsnowtools_a-is.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-is.Tpo -c -o libsnowtools_a-is.o `test -f '../bwa/is.c' || echo '$(srcdir)/'`../bwa/is.c

@@ -104,6 +104,11 @@ class BWAWrapper {
    */
   std::string getInfo() const;
 
+  /** Set the gap open penalty
+   * @param gap_open Gap open penalty. Default 6.
+   */
+  void setGapOpen(int gap_open);
+
  private:
 
   mem_opt_t * memopt;
