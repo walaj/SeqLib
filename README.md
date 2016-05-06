@@ -46,16 +46,10 @@ BWA-MEM and BLAT operations in memory, and performing advanced filtering of
 reads using a hierarchy of rules. Currently, SnowTools wraps the following projects:
 * [HTSlib][htslib]
 * [BWA-MEM][BWA]
-* [SGA][SGA]
 * [BLAT][BLAT]
 
 SnowTools is built to be extendable. See [Variant Bam][var] for examples of how to take advantage of C++
 class extensions to build off of the SnowTools base functionality. 
-
-As noted above, there are many overlaps between this project at the [BamTools][BT] project from Derek Barnett.
-SnowTools is provided here in the case that it may be more suited to your individual needs than BamTools, or vice-versa. To
-aid developers in deciding which package is right for them, I have put together a small list of 
-similarities and differences between these two packages
  
 Example usages
 --------------
@@ -91,7 +85,13 @@ while (GetNextRead(r, rule)) {
 }
 ```
 
-SnowTools/BamTools similarity
+As noted above, there are many overlaps between this project and the [BamTools][BT] project from Derek Barnett, and the [Gamgee][gam] 
+project from the BroadInstitute.
+SnowTools is provided here in the case that it may be more suited to your individual needs than BamTools or Gamgee. To 
+aid developers in deciding which package is right for them, I have put together a small list of 
+similarities and differences between BamTools and SnowTools:
+
+SnowTools/BamTools/Gamgee similarity
 -----------------------------
 
 > 1. Provide read/write access to BAM files
@@ -117,7 +117,7 @@ SnowTools/BamTools differences
 
 Support
 -------
-This code is being developed and maintained by Jeremiah Wala (jwala@broadinstitute.org)
+This code is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org)
 
 Attributions
 ------------
