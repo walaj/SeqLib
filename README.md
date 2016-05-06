@@ -26,7 +26,6 @@ cd boost
 ./bootstrap.sh --with-libraries=regex
 ./b2
 
-
 ############### DOWNLOAD SNOWTOOLS ############### 
 git clone https://github.com/jwalabroad/SnowTools.git
 cd SnowTools
@@ -48,16 +47,19 @@ reads using a hierarchy of rules. Currently, SnowTools wraps the following proje
 * [BWA-MEM][BWA]
 * [BLAT][BLAT]
 
+SnowTools also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
+It uses an [interval tree][int] (provided by Erik Garrison @ekg) to provide for rapid interval queries.
+
 SnowTools is built to be extendable. See [Variant Bam][var] for examples of how to take advantage of C++
 class extensions to build off of the SnowTools base functionality. 
  
 Memory management
 -----------------
 One of the greater challenges in using C code like BWA-MEM and htslib 
-as an API is how to handle memory management. C++ makes this more palatable with smart
+as an API is in handling memory management. C++ makes this more palatable with smart
 pointers that handle freeing memory automatically. One of the 
 main motivations behind SnowTools is that all access to sequencing reads, BWA, etc should
-completely avoid mallocs and frees. In SnowTools, the speed and compression of HTSlib
+completely avoid ``malloc`` and ``free``. In SnowTools, the speed and compression of HTSlib
 is available, but all the mallocs/frees are handled for you automatically in the constructors and
 destructors.
 
@@ -88,14 +90,12 @@ SnowTools/BamTools differences
 > 8. SnowTools is faster at reading/writing BAM files by about 2x.
 > 9. BamTools builds with CMake, SnowTools with Autotools.
 
-Gamgee and BamTools
--------------------
-
 Example usages
 --------------
 ##### Targeted re-alignment of reads to a given region with BWA-MEM
 ```
 #include "SnowTools/RefGenome.h"
+#include "SnowTools/BWAWrapper.h"
 using SnowTools;
 RefGgenome ref("hg19.fasta");
 
@@ -185,3 +185,5 @@ Attributions
 [BT]: https://github.com/pezmaster31/bamtools
 
 [gam]: https://github.com/broadinstitute/gamgee
+
+[int]: https://github.com/ekg/intervaltree.git
