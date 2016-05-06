@@ -44,10 +44,10 @@ Description
 SnowTools is a C++ package for querying BAM and SAM files, performing 
 BWA-MEM and BLAT operations in memory, and performing advanced filtering of 
 reads using a hierarchy of rules. Currently, SnowTools wraps the following projects:
-1. HTSlib
-2. BWA-MEM
-3. SGA
-4. BLAT
+* [HTSlib][htslib]
+* [BWA-MEM][BWA]
+* [SGA][SGA]
+* [BLAT][BLAT]
 
 SnowTools is built to be extendable. See [Variant Bam][var] for examples of how to take advantage of C++
 class extensions to build off of the SnowTools base functionality. 
