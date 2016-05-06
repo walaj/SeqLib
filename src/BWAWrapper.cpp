@@ -188,8 +188,38 @@ namespace SnowTools {
 
   void BWAWrapper::setGapOpen(int gap_open) {
     if (gap_open < 0) 
-      throw std::invalid_argument("BWAWrapper::setGapOpen - gap_open must greater than zero");
+      throw std::invalid_argument("BWAWrapper::setGapOpen - gap_open must be >= zero");
     memopt->o_del = memopt->o_ins = gap_open;
+  }
+
+  void BWAWrapper::setGapExtension(int gap_ext) {
+    if (gap_ext < 0) 
+      throw std::invalid_argument("BWAWrapper::setGapExtension - gap extension must be >= zero");
+    memopt->e_del = memopt->e_ins = gap_ext;
+  }
+
+  void BWAWrapper::setMismatchPenalty(int m) {
+    if (m < 0) 
+      throw std::invalid_argument("BWAWrapper::setMismatchPenalty - mismatch must be >= zero");
+    memopt->b = m;
+  }
+
+  void BWAWrapper::setZDropoff(int z) {
+    if (z < 0) 
+      throw std::invalid_argument("BWAWrapper::setZDropoff - dropoff must be >= zero");
+    memopt->zdrop = z;
+  }
+
+  void BWAWrapper::setBandwidth(int w) {
+    if (w < 0) 
+      throw std::invalid_argument("BWAWrapper::setBandwidth - bandwidth must be >= zero");
+    memopt->w = w;
+  }
+
+  void BWAWrapper::setReseedTrigger(float r) {
+    if (r < 0) 
+      throw std::invalid_argument("BWAWrapper::setReseedTrigger - reseed trigger must be >= zero");
+    memopt->split_factor = r;
   }
 
   void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, bool hardclip, 
