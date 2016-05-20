@@ -7,12 +7,12 @@
 #include <memory>
 
 template <class T, typename K = std::size_t>
-class Interval {
+class TInterval {
 public:
     K start;
     K stop;
     T value;
-    Interval(K s, K e, const T& v)
+    TInterval(K s, K e, const T& v)
         : start(s)
         , stop(e)
         , value(v)
@@ -20,17 +20,17 @@ public:
 };
 
 template <class T, typename K>
-K intervalStart(const Interval<T,K>& i) {
+K intervalStart(const TInterval<T,K>& i) {
     return i.start;
 }
 
 template <class T, typename K>
-K intervalStop(const Interval<T,K>& i) {
+K intervalStop(const TInterval<T,K>& i) {
     return i.stop;
 }
 
 template <class T, typename K>
-  std::ostream& operator<<(std::ostream& out, Interval<T,K>& i) {
+  std::ostream& operator<<(std::ostream& out, TInterval<T,K>& i) {
     out << "Interval(" << i.start << ", " << i.stop << "): " << i.value;
     return out;
 }
@@ -38,25 +38,25 @@ template <class T, typename K>
 template <class T, typename K = std::size_t>
 class IntervalStartSorter {
 public:
-    bool operator() (const Interval<T,K>& a, const Interval<T,K>& b) {
+    bool operator() (const TInterval<T,K>& a, const TInterval<T,K>& b) {
         return a.start < b.start;
     }
 };
 
 template <class T, typename K = std::size_t>
-class IntervalTree {
+class TIntervalTree {
 
 public:
-    typedef Interval<T,K> interval;
+    typedef TInterval<T,K> interval;
     typedef std::vector<interval> intervalVector;
-    typedef IntervalTree<T,K> intervalTree;
+    typedef TIntervalTree<T,K> intervalTree;
 
     intervalVector intervals;
     std::unique_ptr<intervalTree> left;
     std::unique_ptr<intervalTree> right;
     K center;
 
-    IntervalTree<T,K>(void)
+    TIntervalTree<T,K>(void)
         : left(nullptr)
         , right(nullptr)
         , center(0)
@@ -68,7 +68,7 @@ private:
     }
 public:
 
-    IntervalTree<T,K>(const intervalTree& other)
+    TIntervalTree<T,K>(const intervalTree& other)
     :   intervals(other.intervals),
         left(other.left ? copyTree(*other.left) : nullptr),
         right(other.right ? copyTree(*other.right) : nullptr),
@@ -78,7 +78,7 @@ public:
 
 public:
 
-    IntervalTree<T,K>& operator=(const intervalTree& other) {
+    TIntervalTree<T,K>& operator=(const intervalTree& other) {
         center = other.center;
         intervals = other.intervals;
         left = other.left ? copyTree(*other.left) : nullptr;
@@ -87,7 +87,7 @@ public:
     }
 
     // Note: changes the order of ivals
-    IntervalTree<T,K>(
+    TIntervalTree<T,K>(
             intervalVector& ivals,
             std::size_t depth = 16,
             std::size_t minbucket = 64,
@@ -204,7 +204,7 @@ public:
 
     }
 
-    ~IntervalTree(void) = default;
+    ~TIntervalTree(void) = default;
 
 };
 
