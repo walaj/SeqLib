@@ -353,6 +353,15 @@ void BamWalker::writeAlignment(BamRead &r)
     sam_write1(fop.get(), hdr_write.get(), r.raw());
 }
 
+std::string BamWalker::printRegions() const {
+
+  std::stringstream ss;
+  for (auto& r : m_region)
+    ss << r << std::endl;
+  return(ss.str());
+
+}
+
 std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
 {
   out << " -- In Bam:  " << b.m_in << std::endl;

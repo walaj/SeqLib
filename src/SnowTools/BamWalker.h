@@ -110,6 +110,11 @@ class BamWalker {
    */
   void makeIndex();
 
+  /** Create a string representation of 
+   * all of the regions to walk
+   */
+  std::string printRegions() const;
+
   /** Print a run-time message to stdout.
    *
    * Prints a message about all of the reads that have been visited, and informaiton

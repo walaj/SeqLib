@@ -273,6 +273,9 @@ class BamRead {
     return cig;
   }
 
+  /** Get the length of the alignment (regardless of hardclipping) */
+  int32_t AlignmentLength() const;
+
   /** Retrieve the inverse of the CIGAR as a more managable Cigar structure */
   Cigar GetReverseCigar() const {
     uint32_t* c = bam_get_cigar(b);

@@ -17,6 +17,7 @@ static const std::unordered_map<std::string,bool> valid =
   {"supplementary", true},
   {"qcfail",        true},
   {"hardclip",      true},
+  //{"softclip",      true},
   {"fwd_strand",    true},
   {"rev_strand",    true},
   {"mate_fwd_strand",  true},
@@ -716,7 +717,8 @@ void Range::parseRuleLine(std::string line) {
     // trim the read, then check length
     int32_t new_len, new_clipnum; 
     if (phred.isEvery()) {
-      new_len = r.Length(); //a.QueryBases.length();
+      // if no phred triming, length is measured from alignment
+      new_len = r.AlignmentLength(); //a.QueryBases.length();
       new_clipnum = clipnum;
     }
     
@@ -1193,7 +1195,8 @@ GRC MiniRulesCollection::getAllRegions() const
   GRC out;
 
   for (auto& i : m_regions)
-    out.concat(i.m_grv);
+    if (!i.excluder)
+      out.concat(i.m_grv);
 
   out.mergeOverlappingIntervals();
   return out;

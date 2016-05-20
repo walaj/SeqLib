@@ -241,6 +241,7 @@ void GenomicRegion::random() {
       pos2 = std::stoi(tpos2);
     }
     catch (...) {
+      std::cerr << " tchr " << tchr << " tpos1 " << tpos1 << std::endl;
       std::cerr << "GenomicRegion: error making pos2 from " << tpos2 << std::endl;
       pos2 = 0;
     }
