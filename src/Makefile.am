@@ -8,10 +8,11 @@ libsnowtools_a_CPPFLAGS = \
 	-I../SGA/Algorithm -I../SGA/SQG -I../blat/inc -I../blat/jkOwnLib -Wno-write-strings
 
 libsnowtools_a_SOURCES = MiniRules2.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp \
-			AlignedContig.cpp BreakPoint.cpp \
+##			AlignedContig.cpp BreakPoint.cpp \
 			BamWalker.cpp BamStats.cpp gzstream.C SnowUtils.cpp \
-			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
-			STCoverage.cpp Fractions.cpp BLATWrapper.cpp \
+##			gChain.cpp \
+	BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
+        STCoverage.cpp Fractions.cpp BLATWrapper.cpp \
 			../bwa/is.c ../bwa/bwtindex.c \
 			../bwa/bwt_gen.c ../bwa/QSufSort.c \
                         ../bwa/bwt.c ../bwa/bwamem_extra.c 

@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 
-#include "SnowTools/MiniRules.h"
+#include "SnowTools/MiniRules2.h"
 
 // Phred score transformations
 inline int char2phred(char b) {
