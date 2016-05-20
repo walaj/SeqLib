@@ -18,7 +18,7 @@ namespace SnowTools {
 
 typedef TInterval<int32_t> GenomicInterval;
 typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
-typedef IntervalTree<int32_t> GenomicIntervalTree;
+typedef TIntervalTree<int32_t> GenomicIntervalTree;
 typedef std::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
 typedef std::vector<GenomicInterval> GenomicIntervalVector;
 
@@ -138,7 +138,9 @@ class GenomicRegionCollection {
    * @return Number of overlapping elements in this GenomicRegionCollection
    */
  size_t findOverlapping(const T &gr) const;
- 
+
+ bool overlapSameBin(const T &gr1, const T &gr2) const;
+
  size_t countContained(const T &gr);
  
  template<class K>

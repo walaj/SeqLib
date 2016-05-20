@@ -13,7 +13,7 @@
 class Bin;
 
 typedef TInterval<Bin> BinInterval;
-typedef IntervalTree<Bin> BinIntervalTree;
+typedef TIntervalTree<Bin> BinIntervalTree;
 typedef std::vector<BinInterval> BinIntervalVector;
 
 typedef uint32_t S;
