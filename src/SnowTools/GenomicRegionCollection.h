@@ -138,7 +138,9 @@ class GenomicRegionCollection {
    * @return Number of overlapping elements in this GenomicRegionCollection
    */
  size_t findOverlapping(const T &gr) const;
- 
+
+ bool overlapSameBin(const T &gr1, const T &gr2) const;
+
  size_t countContained(const T &gr);
  
  template<class K>

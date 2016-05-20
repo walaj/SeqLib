@@ -23,6 +23,8 @@ static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'T', ' ', ' ', ' ', 
                                ' ', ' ', ' ', 'N'};
 
+static std::string cigar_delimiters = "MIDNSHPX";
+
 static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -97,8 +99,10 @@ class CigarField {
  };
 */
 
- typedef std::vector<CigarField> Cigar;
+typedef std::vector<CigarField> Cigar;
 typedef std::unordered_map<std::string, size_t> CigarMap;
+
+ Cigar cigarFromString(const std::string& cig);
 
 /** Class to store and interact with an HTSLib bam1_t read.
  *
@@ -288,6 +292,10 @@ class BamRead {
   /** Return the mean phred score 
    */
   double MeanPhred() const;
+
+  /** Do a smith waterman alignment
+   */
+  BamRead(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
 
   /** Get the quality scores of this read as a string */
   inline std::string Qualities() const { 

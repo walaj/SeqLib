@@ -1,5 +1,3 @@
-* Run clang-format on source files so that coding style is consistent (for readability).
-
 * In `RefGenome.cpp`, the ctor is better to use initializer list rather than 
 assignment in the function body, following best practices. In fact, considering the issues raise with these raw pointers, it may be better to use `std::shared_ptr<faidx_t>` and call `get()` whenever the pointer is requested.
   The proposed temporary fix is (comments are removed because the codes are obvious and 
@@ -69,3 +67,17 @@ This leads to resource leak.
 
 * In `BamStats.cpp`, function `BamReadGroup::addRead` should take a `const` reference instead of reference to signal the read is not being modified. 
     Similarly for `BamStats::addRead`.
+
+*
+
+*
+
+*
+
+*
+
+*
+
+*
+
+* In `run_snowman2.cpp` in the `SnowmanSV` repo, line 25 `#define MATE_LOOKUP_MIN 3` and line 146 `static int32_t mate_lookup_min = 3;` potentially conflicts.

@@ -366,9 +366,38 @@ size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) const {
     return 0;
   ff->second.findOverlapping(gr.pos1, gr.pos2, giv);
   return (giv.size());
-
-
 }
+
+  template<class T>
+  bool GenomicRegionCollection<T>::overlapSameBin(const T &gr1, const T &gr2) const {
+
+  if (m_tree.size() == 0 && m_grv.size() != 0) 
+    {
+      std::cerr << "!!!!!! WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
+      return 0;
+    }
+  
+  // events on diff chr do not overlap same bin
+  if (gr1.chr != gr2.chr)
+    return false;
+
+  GenomicIntervalVector giv1, giv2;
+  GenomicIntervalTreeMap::const_iterator ff1 = m_tree.find(gr1.chr);
+  GenomicIntervalTreeMap::const_iterator ff2 = m_tree.find(gr2.chr);
+  if (ff1 == m_tree.end() || ff2 == m_tree.end())
+    return 0;
+
+  ff1->second.findOverlapping(gr1.pos1, gr1.pos2, giv1);
+  ff2->second.findOverlapping(gr2.pos1, gr2.pos2, giv2);
+
+  if (giv1.size() == 0 || giv2.size() == 0)
+    return false;
+
+  if (giv1[0].start == giv2[0].start)
+    return true;
+  return false;
+  
+  }
 
 template<class T>
 std::string GenomicRegionCollection<T>::sendToBED() const {

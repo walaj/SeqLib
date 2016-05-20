@@ -104,6 +104,36 @@ class BWAWrapper {
    */
   std::string getInfo() const;
 
+  /** Set the gap open penalty
+   * @param gap_open Gap open penalty. Default 6.
+   */
+  void setGapOpen(int gap_open);
+
+  /** Set the gap open penalty
+   * @param gap_open Gap extension penalty. Default 1
+   */
+  void setGapExtension(int gap_ext);
+
+  /** Set the mismatch penalty
+   * @param m Mismatch penalty (BWA-MEM b). Default 4
+   */
+  void setMismatchPenalty(int m);
+
+  /** Set the reseed trigger
+   * @param r See BWA-MEM -r. Default 1.5
+   */
+  void setReseedTrigger(float r);
+
+  /** Set the SW alignment bandwidth
+   * @param w See BWA-MEM -w. Default 100
+   */
+  void setBandwidth(int w);
+
+  /** Set the SW alignment Z dropoff
+   * @param z See BWA-MEM -d. Default 100
+   */
+  void setZDropoff(int z);
+
  private:
 
   mem_opt_t * memopt;
