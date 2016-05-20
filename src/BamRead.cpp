@@ -109,7 +109,6 @@ namespace SnowTools {
     }
       
   }
->>>>>>> f6bafb750c3be9357dfa506287960012f516c83a
 
   void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
   {
@@ -267,6 +266,11 @@ namespace SnowTools {
     //kstring_t *str;
     //sam_format1(hdr, b, str);
     //out << str->s;
+    
+    if (!r.b) {
+      out << "empty read";
+      return out;
+    }
 
     out << bam_get_qname(r.b) << "\t" << r.b->core.flag
 	<< "\t" << (r.b->core.tid+1) << "\t" << r.b->core.pos 

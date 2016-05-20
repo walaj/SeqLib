@@ -458,7 +458,7 @@ class MiniRulesCollection {
 
  private:  
 
-  void __construct_MRC(const std::string& file);  
+  void __construct_MRC(const std::string& script);  
 
   const std::string GetScriptContents(const std::string& script);
 

@@ -74,6 +74,7 @@ namespace SnowTools {
       *it = RCOMPLEMENT_TABLE[(unsigned char)*it];
   }
   
+
   /** Calculate the percentage and return as integer
    * @param numer Numerator
    * @param denom Denominator

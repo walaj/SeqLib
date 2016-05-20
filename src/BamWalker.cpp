@@ -377,10 +377,17 @@ std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
     out << "SAM" << std::endl;
 
   out << b.m_mr << std::endl;
-  if (b.m_region.size()) {
+  if (b.m_region.size() && b.m_region.size() < 20) {
     out << " ------- BamWalker Regions ----------" << std::endl;;
     for (auto& i : b.m_region)
       out << i << std::endl;
+  } 
+  else if (b.m_region.size() >= 20) {
+    int wid = 0;
+    for (auto& i : b.m_region)
+      wid += i.width();
+    out << " ------- BamWalker Regions ----------" << std::endl;;
+    out << " -- " << b.m_region.size() << " regions covering " << AddCommas(wid) << " bp of sequence"  << std::endl;
   }
   else 
     out << " - BamWalker - Walking whole genome -" << std::endl;

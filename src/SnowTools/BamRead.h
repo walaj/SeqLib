@@ -127,6 +127,11 @@ class BamRead {
    */
   void init();
 
+  /** Check if a read is empty (not initialized)
+   * @value true if read was not initialized with any values
+   */
+  bool isEmpty() const { return !b; }
+
   /** Explicitly pass a bam1_t to the BamRead. 
    *
    * The BamRead now controls the memory, and will delete at destruction
@@ -138,31 +143,31 @@ class BamRead {
   BamRead() : m_hdr(nullptr) {}
 
   /** BamRead is aligned on reverse strand */
-  inline bool ReverseFlag() const { return (b->core.flag&BAM_FREVERSE) != 0; }
+  inline bool ReverseFlag() const { return b ? ((b->core.flag&BAM_FREVERSE) != 0) : false; }
 
   /** BamRead has mate aligned on reverse strand */
-  inline bool MateReverseFlag() const { return (b->core.flag&BAM_FMREVERSE) != 0; }
+  inline bool MateReverseFlag() const { return b ? ((b->core.flag&BAM_FMREVERSE) != 0) : false; }
 
   /** BamRead has is an interchromosomal alignment */
-  inline bool Interchromosomal() const { return b->core.tid != b->core.mtid; }
+  inline bool Interchromosomal() const { return b ? b->core.tid != b->core.mtid : false; }
 
   /** BamRead is a duplicate */
-  inline bool DuplicateFlag() const { return (b->core.flag&BAM_FDUP) != 0; }
+  inline bool DuplicateFlag() const { return b ? ((b->core.flag&BAM_FDUP) != 0) : false; }
 
   /** BamRead is a secondary alignment */
-  inline bool SecondaryFlag() const { return (b->core.flag&BAM_FSECONDARY) != 0; }
+  inline bool SecondaryFlag() const { return b ? ((b->core.flag&BAM_FSECONDARY) != 0) : false; }
 
   /** BamRead is failed QC */
-  inline bool QCFailFlag() const { return (b->core.flag&BAM_FQCFAIL) != 0; }
+  inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
   /** BamRead is mapped */
-  inline bool MappedFlag() const { return (b->core.flag&BAM_FUNMAP) == 0; }
+  inline bool MappedFlag() const { return b ? ((b->core.flag&BAM_FUNMAP) == 0) : false; }
 
   /** BamRead mate is mapped */
-  inline bool MateMappedFlag() const { return (b->core.flag&BAM_FMUNMAP) == 0; }
+  inline bool MateMappedFlag() const { return b ? ((b->core.flag&BAM_FMUNMAP) == 0) : false; }
 
   /** BamRead mate is mapped */
-  inline bool PairMappedFlag() const { return !(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP); }
+  inline bool PairMappedFlag() const { return b ? (!(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP)) : false; }
 
   /** Count the total number of N bases in this sequence */
   int32_t CountNBases() const;
@@ -174,28 +179,28 @@ class BamRead {
   std::string QualitySequence() const;
 
   /** Get the alignment position */
-  inline int32_t Position() const { return b->core.pos; }
+  inline int32_t Position() const { return b ? b->core.pos : -1; }
   
   /** Get the alignment position of mate */
-  inline int32_t MatePosition() const { return b->core.mpos; }
+  inline int32_t MatePosition() const { return b ? b->core.mpos: -1; }
 
   /** Count the number of secondary alignments by looking at XA and XP tags */
   int32_t CountSecondaryAlignments() const;
 
   /** Get the end of the alignment */
-  inline int32_t PositionEnd() const { return bam_endpos(b.get()); }
+  inline int32_t PositionEnd() const { return b ? bam_endpos(b.get()) : -1; }
 
   /** Get the chromosome ID of the read */
-  inline int32_t ChrID() const { return b->core.tid; }
+  inline int32_t ChrID() const { return b ? b->core.tid : -1; }
   
   /** Get the chrosome ID of the mate read */
-  inline int32_t MateChrID() const { return b->core.mtid; }
+  inline int32_t MateChrID() const { return b ? b->core.mtid : -1; }
   
   /** Get the mapping quality */
-  inline int32_t MapQuality() const { return b->core.qual; }
+  inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
   
   /** Get the number of cigar fields */
-  inline int32_t CigarSize() const { return b->core.n_cigar; }
+  inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
   
   /** Check if this read is first in pair */
   inline bool FirstFlag() const { return (b->core.flag&BAM_FREAD1); }

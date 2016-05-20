@@ -241,38 +241,57 @@ void MiniRules::setRegionFromFile(const std::string& file) {
 // constructor to make a MiniRulesCollection from a rules file.
 // This will reduce each individual BED file and make the 
 // GenomicIntervalTreeMap
-void MiniRulesCollection::__construct_MRC(const std::string& file) {
+void MiniRulesCollection::__construct_MRC(const std::string& script) {
 
   // parse the rules file
-  const std::string document = GetScriptContents(file);
+  //std::cerr << " FILE " << file << std::endl;
+  //const std::string document = GetScriptContents(file);
 
   // set up JsonCPP reader and attempt to parse script
   Json::Value root;
   Json::Reader reader;
-  if ( !reader.parse(document, root) ) {
+  if ( !reader.parse(script, root) ) {
     // use built-in error reporting mechanism to alert user what was wrong with the script
-    std::cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << std::endl;
-    return;
+    std::cerr  << "ERROR: failed to parse JSON script" << std::endl;
+    std::cerr << script << std::endl;
+    exit(EXIT_FAILURE);
     //return false;     
   }
-
-  // define a default rule set
-  std::vector<AbstractRule> all_rules;
 
   Json::Value null(Json::nullValue);
 
   int level = 1;
 
+  // set which are global
+  std::set<int> globals;
+  int ii = 0;
+
+  // determine which regions are globals
+  for (auto& rr : root.getMemberNames()) {
+    ++ii;
+    if (rr.find("global") != std::string::npos)
+      globals.insert(ii);
+  }
+  ii = 0;
+
   // iterator over regions
   for (auto& regions : root) {
-    //    std::cerr << regions << std::endl;
-    
-    // check that all the values are allowed
-    //if (!__validate_json(regions, allowed_region_annots))
-    //  exit(EXIT_FAILURE);
+    ++ii;
 
+    // if its a global, set rule all and break
+    if (globals.count(ii)) {
+      rule_all = AbstractRule(); // clear the old one
+      rule_all.parseJson(regions);
+      continue;
+    }
+      
     MiniRules mr;
     mr.mrc = this;
+    
+    // add global rules (if there are any)
+    //for (auto& a : all_rules)
+    // mr.m_abstract_rules.push_back(a);
+
 
     // check if mate applies
     mr.m_applies_to_mate = __convert_to_bool(regions, "matelink");
@@ -287,7 +306,7 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       reg = v.asString();
 
     // actually parse the region
-    if (reg == "WG")
+    if (reg == "WG" || reg.empty())
       mr.m_whole_genome = true;
     else
       mr.setRegionFromFile(reg);
@@ -299,23 +318,25 @@ void MiniRulesCollection::__construct_MRC(const std::string& file) {
       mr.excluder = v.asBool();
 
     // set the rules
-    AbstractRule ar = rule_all; // always start with the global rule
     v = regions.get("rules", null);
     // loop through the rules
-    for (auto& vv : v)
-      if (vv != null)
-	ar.parseJson(vv);
-
-  // check that the regions have at least one rule
-  // if it it doesn't, give it the global WG all
+    for (auto& vv : v) {
+      if (vv != null) {
+    	AbstractRule ar = rule_all; // always start with the global rule
+    	ar.parseJson(vv);
+	// add the rule to the region
+	mr.m_abstract_rules.push_back(ar);
+      }
+    }
+    
+    // check that the regions have at least one rule
+    // if it it doesn't, give it the global WG all
     if (!mr.m_abstract_rules.size())
       mr.m_abstract_rules.push_back(rule_all);
     
-    // add the rule to the region
-    mr.m_abstract_rules.push_back(ar);
-    
     mr.m_level = level++;
     mr.id = std::to_string(level);
+
     m_regions.push_back(mr);
     
     std::cerr << mr << std::endl;
@@ -445,8 +466,10 @@ void MiniRulesCollection::sendToBed(std::string file) {
       } else {
 	every = false;
 	none = false;
+	inverted = false;
 	min = v[0].asInt();
 	max = v[1].asInt();
+	std::cerr << name << " " << min << " " << max << std::endl;
 	if (min > max) {
 	  inverted = true;
 	  std::swap(min, max); // make min always lower
@@ -458,6 +481,15 @@ void MiniRulesCollection::sendToBed(std::string file) {
 
   void AbstractRule::parseJson(const Json::Value& value) {
 
+    // verify that it has appropriate values
+    for (auto& i : value.getMemberNames()) {
+      if (!valid.count(i)) {
+	std::cerr << "Invalid key value in JSON: " << i << std::endl;
+	exit(EXIT_FAILURE);
+      }
+    }
+	
+    // parse the flags
     fr.parseJson(value);
     
     isize.parseJson(value, "isize");
@@ -880,23 +912,15 @@ std::ostream& operator<<(std::ostream &out, const FlagRule &fr) {
   if (fr.mate_mapped.isOn())
     keep += "mate_mapped,";
 
-
-  /*
-
-  // get the strings
-  for (auto it : fr.flags) {
-    if (it.second.isNA())
-      na += it.first + ",";
-    else if (it.second.isOn())
-      keep += it.first + ",";
-    else if (it.second.isOff())
-      remo += it.first + ",";
-    else // shouldn't get here
-      exit(1); 
-  }
-  */
-  if (!fr.isEvery())
+  keep = keep.length() > 10 ? keep.substr(0, keep.length() - 1) : ""; // remove trailing comment
+  remo = remo.length() > 10 ? remo.substr(0, remo.length() - 1) : ""; // remove trailing comment
+  
+  if (!keep.empty() && !remo.empty())
     out << keep << " -- " << remo;
+  else if (!keep.empty())
+    out << keep;
+  else
+    out << remo;
 
   return out;
 }
@@ -1058,34 +1082,6 @@ const std::string MiniRulesCollection::GetScriptContents(const std::string& scri
 
   return(output);
 
-}
-
-bool MiniRulesCollection::ParseFilterObject(const std::string& filterName, const Json::Value& filterObject) {
-
-  // filter object parsing variables
-  Json::Value null(Json::nullValue);
-  Json::Value propertyValue;
-
-  // store results
-  std::map<std::string, std::string> propertyTokens;
-
-  // iterate over known properties
-  std::unordered_set<std::string>::const_iterator propertyNameIter = valid.begin();
-  std::unordered_set<std::string>::const_iterator propertyNameEnd  = valid.end();
-  for ( ; propertyNameIter != propertyNameEnd; ++propertyNameIter ) {
-    const std::string& propertyName = (*propertyNameIter);
-
-    // if property defined in filter, add to token list
-    propertyValue = filterObject.get(propertyName, null);
-    if ( propertyValue != null ) {
-      std::cerr << "[" << propertyName << "] -- " << propertyValue.asString() << std::endl;
-      propertyTokens.insert( make_pair(propertyName, propertyValue.asString()) );
-    }
-
-
-  }
-
-  return true;
 }
 
 }

@@ -17,15 +17,15 @@ libsnowtools_a_SOURCES = MiniRules2.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c GenomicReg
 			../bwa/bwt_gen.c ../bwa/QSufSort.c \
                         ../bwa/bwt.c ../bwa/bwamem_extra.c 
 
-bin_PROGRAMS = snowtools
+#bin_PROGRAMS = snowtools
 
-snowtools_CPPFLAGS = \
-	-I$(top_srcdir)/htslib \
-	-I$(top_srcdir)/multifast-v1.4.2 
+#snowtools_CPPFLAGS = \
+#	-I$(top_srcdir)/htslib \
+#	-I$(top_srcdir)/multifast-v1.4.2 
 
 
 ## these are the executable versions of snowtools
-snowtools_LDADD = libsnowtools.a $(top_srcdir)/htslib/libhts.a $(top_srcdir)/multifast-v1.4.2/ahocorasick/build/libahocorasick.a
+#snowtools_LDADD = libsnowtools.a $(top_srcdir)/htslib/libhts.a $(top_srcdir)/multifast-v1.4.2/ahocorasick/build/libahocorasick.a
 ##snowtools_LDFLAGS = -std=c++11
-snowtools_SOURCES = snowtools.cpp 
+#snowtools_SOURCES = snowtools.cpp 
 ##SnowTools.cpp CoverageTool.cpp RealignTool.cpp
