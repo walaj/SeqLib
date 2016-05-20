@@ -26,7 +26,7 @@ static const std::unordered_set<std::string> valid =
     { "region","pad", "matelink", "exclude"};
 
   static const std::unordered_set<std::string> allowed_flag_annots = 
-    {"duplicated", "supplementary", "qcfail", "hardclip", 
+    {"duplicate", "supplementary", "qcfail", "hardclip", 
      "fwd_strand", "rev_strand", "mate_fwd_strand", "mate_rev_strand",
      "mapped", "mate_mapped", "ff", "fr", "rr", "rf", "ic"};
 
@@ -255,35 +255,19 @@ void MiniRulesCollection::__construct_MRC(const std::string& script) {
     std::cerr  << "ERROR: failed to parse JSON script" << std::endl;
     std::cerr << script << std::endl;
     exit(EXIT_FAILURE);
-    //return false;     
   }
 
   Json::Value null(Json::nullValue);
 
   int level = 1;
 
-  // set which are global
-  std::set<int> globals;
-  int ii = 0;
-
-  // determine which regions are globals
-  for (auto& rr : root.getMemberNames()) {
-    ++ii;
-    if (rr.find("global") != std::string::npos)
-      globals.insert(ii);
+  Json::Value glob = root.removeMember("global");
+  if (!glob.isNull()) {
+    rule_all.parseJson(glob);
   }
-  ii = 0;
-
+  
   // iterator over regions
   for (auto& regions : root) {
-    ++ii;
-
-    // if its a global, set rule all and break
-    if (globals.count(ii)) {
-      rule_all = AbstractRule(); // clear the old one
-      rule_all.parseJson(regions);
-      continue;
-    }
       
     MiniRules mr;
     mr.mrc = this;
@@ -291,7 +275,6 @@ void MiniRulesCollection::__construct_MRC(const std::string& script) {
     // add global rules (if there are any)
     //for (auto& a : all_rules)
     // mr.m_abstract_rules.push_back(a);
-
 
     // check if mate applies
     mr.m_applies_to_mate = __convert_to_bool(regions, "matelink");
@@ -338,9 +321,6 @@ void MiniRulesCollection::__construct_MRC(const std::string& script) {
     mr.id = std::to_string(level);
 
     m_regions.push_back(mr);
-    
-    std::cerr << mr << std::endl;
-    
   }
   
   // check that there is at least one non-excluder region. 
@@ -439,7 +419,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
   void FlagRule::parseJson(const Json::Value& value) {
 
     // have to set the na if find flag so that rule knows it cant skip checking
-    if (dup.parseJson(value, "duplicated")) na = false;
+    if (dup.parseJson(value, "duplicate")) na = false;
     if (supp.parseJson(value, "supplementary")) na = false;
     if (qcfail.parseJson(value, "qcfail")) na = false;
     if (hardclip.parseJson(value, "hardclip")) na = false;
@@ -469,7 +449,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
 	inverted = false;
 	min = v[0].asInt();
 	max = v[1].asInt();
-	std::cerr << name << " " << min << " " << max << std::endl;
+
 	if (min > max) {
 	  inverted = true;
 	  std::swap(min, max); // make min always lower
