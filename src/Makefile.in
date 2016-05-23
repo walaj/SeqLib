@@ -32,7 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-subdir = SnowTools/src
+subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -53,7 +53,6 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-MiniRules2.$(OBJEXT) \
 	libsnowtools_a-GenomicRegion.$(OBJEXT) \
 	libsnowtools_a-Histogram.$(OBJEXT) \
 	libsnowtools_a-RefGenome.$(OBJEXT) \
-	libsnowtools_a-SVVCF.$(OBJEXT) \
 	libsnowtools_a-BamWalker.$(OBJEXT) \
 	libsnowtools_a-BamStats.$(OBJEXT) \
 	libsnowtools_a-gzstream.$(OBJEXT) \
@@ -189,7 +188,7 @@ libsnowtools_a_CPPFLAGS = \
 	-I../SGA/Util -I../SGA/Bigraph -I../SGA/SuffixTools \
 	-I../SGA/Algorithm -I../SGA/SQG -I../blat/inc -I../blat/jkOwnLib -Wno-write-strings
 
-libsnowtools_a_SOURCES = MiniRules2.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp \
+libsnowtools_a_SOURCES = MiniRules2.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
 			BamWalker.cpp BamStats.cpp gzstream.C SnowUtils.cpp \
 	BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
         STCoverage.cpp Fractions.cpp BLATWrapper.cpp \
@@ -210,9 +209,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign SnowTools/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign SnowTools/src/Makefile
+	  $(AUTOMAKE) --foreign src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -257,7 +256,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-QSufSort.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-RefGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-STCoverage.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-SVVCF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-SnowUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-bwamem_extra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-bwt.Po@am__quote@
@@ -366,20 +364,6 @@ libsnowtools_a-RefGenome.obj: RefGenome.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='RefGenome.cpp' object='libsnowtools_a-RefGenome.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-RefGenome.obj `if test -f 'RefGenome.cpp'; then $(CYGPATH_W) 'RefGenome.cpp'; else $(CYGPATH_W) '$(srcdir)/RefGenome.cpp'; fi`
-
-libsnowtools_a-SVVCF.o: SVVCF.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-SVVCF.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-SVVCF.Tpo -c -o libsnowtools_a-SVVCF.o `test -f 'SVVCF.cpp' || echo '$(srcdir)/'`SVVCF.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-SVVCF.Tpo $(DEPDIR)/libsnowtools_a-SVVCF.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='SVVCF.cpp' object='libsnowtools_a-SVVCF.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-SVVCF.o `test -f 'SVVCF.cpp' || echo '$(srcdir)/'`SVVCF.cpp
-
-libsnowtools_a-SVVCF.obj: SVVCF.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-SVVCF.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-SVVCF.Tpo -c -o libsnowtools_a-SVVCF.obj `if test -f 'SVVCF.cpp'; then $(CYGPATH_W) 'SVVCF.cpp'; else $(CYGPATH_W) '$(srcdir)/SVVCF.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-SVVCF.Tpo $(DEPDIR)/libsnowtools_a-SVVCF.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='SVVCF.cpp' object='libsnowtools_a-SVVCF.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-SVVCF.obj `if test -f 'SVVCF.cpp'; then $(CYGPATH_W) 'SVVCF.cpp'; else $(CYGPATH_W) '$(srcdir)/SVVCF.cpp'; fi`
 
 libsnowtools_a-BamWalker.o: BamWalker.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamWalker.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-BamWalker.Tpo -c -o libsnowtools_a-BamWalker.o `test -f 'BamWalker.cpp' || echo '$(srcdir)/'`BamWalker.cpp
