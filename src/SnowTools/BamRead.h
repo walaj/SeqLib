@@ -169,6 +169,27 @@ class BamRead {
   /** BamRead mate is mapped */
   inline bool PairMappedFlag() const { return b ? (!(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP)) : false; }
 
+  /** BamRead is mapped in proper pair */
+  inline bool ProperPair() const { return b ? (b->core.flag&BAM_FPROPER_PAIR) : false;} 
+
+  /** BamRead has proper orientation (FR) */
+  inline bool ProperOrientation() const { 
+    if (!b)
+      return false;
+    
+    // mate on diff chrom gets false
+    if (b->core.tid != b->core.mtid)
+      return false;
+
+    // if FR return true
+    if (b->core.pos < b->core.mpos) {
+      return (b->core.flag&BAM_FREVERSE) == 0 && (b->core.flag&BAM_FMREVERSE) != 0 ? true : false;
+    } else {
+      return (b->core.flag&BAM_FREVERSE) == 0 && (b->core.flag&BAM_FMREVERSE) != 0 ? false : true;
+    }
+      
+  }
+
   /** Count the total number of N bases in this sequence */
   int32_t CountNBases() const;
 
