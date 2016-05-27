@@ -77,14 +77,20 @@ namespace SnowTools {
       return;
 
     // if we don't have an empty map for this, add
-    if ((r.ChrID()+1) > (int)m_map.size()) {
+    if (r.ChrID() >= (int)m_map.size()) {
       int k = m_map.size();
-      while (k < (r.ChrID()+1)) {
+      while (k <= r.ChrID()) {
 	m_map.push_back(CovMap());
 	//m_map.back().reserve(reserve_size);
 	++k;
       }
     }
+
+    assert(e - p < 1000); // limit on read length
+    assert(e >= p);
+    assert(p >= 0);
+    assert(r.ChrID() >= 0);
+    assert(r.ChrID() < m_map.size());
 
     try {
        while (p <= e) {

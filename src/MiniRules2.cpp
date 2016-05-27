@@ -265,7 +265,7 @@ void MiniRulesCollection::__construct_MRC(const std::string& script) {
   if (!glob.isNull()) {
     rule_all.parseJson(glob);
   }
-  
+
   // iterator over regions
   for (auto& regions : root) {
       
@@ -311,16 +311,17 @@ void MiniRulesCollection::__construct_MRC(const std::string& script) {
 	mr.m_abstract_rules.push_back(ar);
       }
     }
-    
+
     // check that the regions have at least one rule
     // if it it doesn't, give it the global WG all
     if (!mr.m_abstract_rules.size())
       mr.m_abstract_rules.push_back(rule_all);
-    
+
     mr.m_level = level++;
     mr.id = std::to_string(level);
 
     m_regions.push_back(mr);
+
   }
   
   // check that there is at least one non-excluder region. 

@@ -283,7 +283,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
   bam1_t* b = bam_init1(); 
 
   int32_t valid;
-  if (hts_itr == 0) { 
+  if (hts_itr == 0) {
     valid = bam_read1(fp.get(), b);    
     if (valid < 0) { 
 
@@ -294,6 +294,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
       return false;
     } 
   } else {
+
     valid = hts_itr_next(fp.get(), hts_itr.get(), b, dum);
   }
 
@@ -430,10 +431,10 @@ std::string BamWalker::displayMiniRulesCollection() const
 
     }*/
 
-void BamWalker::addBlacklist(GRC& bl) 
+ /*void BamWalker::addBlacklist(GRC& bl) 
 {
   blacklist = bl;
-}
+  }*/
 
 void BamWalker::setCram(const std::string& out, const std::string& ref) {
   m_out = out;

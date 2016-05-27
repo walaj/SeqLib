@@ -275,7 +275,7 @@ class BamWalker {
   std::vector<std::string> m_tag_list;
 
   // blacklist
-  GRC blacklist;
+  //GRC blacklist;
 
   // 
   bool m_verbose = false;
