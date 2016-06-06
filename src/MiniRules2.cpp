@@ -250,7 +250,13 @@ void MiniRulesCollection::__construct_MRC(const std::string& script) {
   // set up JsonCPP reader and attempt to parse script
   Json::Value root;
   Json::Reader reader;
-  if ( !reader.parse(script, root) ) {
+  if ( !reader.parse(script, root)) {
+    
+    if (script.empty()) {
+      std::cerr << "JSON script is empty. Setting default to filter all reads" << std::endl;
+      return;
+    }
+      
     // use built-in error reporting mechanism to alert user what was wrong with the script
     std::cerr  << "ERROR: failed to parse JSON script" << std::endl;
     std::cerr << script << std::endl;

@@ -36,6 +36,12 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 //#include "SnowTools/HTSTools.h"
 
+#define FRORIENTATION 0
+#define FFORIENTATION 1
+#define RFORIENTATION 2
+#define RRORIENTATION 3
+#define UDORIENTATION 4
+
 namespace SnowTools {
 
 enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
@@ -157,6 +163,32 @@ class BamRead {
   /** BamRead is a secondary alignment */
   inline bool SecondaryFlag() const { return b ? ((b->core.flag&BAM_FSECONDARY) != 0) : false; }
 
+  /** BamRead is paired */
+  inline bool PairedFlag() const { return b ? ((b->core.flag&BAM_FPAIRED) != 0) : false; }
+
+  /** Get the relative pair orientations 
+   * 
+   * 0 - FR (RFORIENTATION) (lower pos read is Fwd strand, higher is reverse)
+   * 1 - FF (FFORIENTATION)
+   * 2 - RF (RFORIENTATION)
+   * 3 - RR (RRORIENTATION)
+   * 4 - Undefined (UDORIENTATION) (unpaired or one/both is unmapped)
+   */
+  inline int PairOrientation() const {
+    if (!PairMappedFlag())
+      return UDORIENTATION;
+    else if (!ReverseFlag() && Position() < MatePosition() && MateReverseFlag())
+      return FRORIENTATION;
+    else if (!ReverseFlag() && !MateReverseFlag())
+      return FFORIENTATION;
+    else if (ReverseFlag() && MateReverseFlag())
+      return RRORIENTATION;
+    else if (ReverseFlag() && Position() < MatePosition() && !MateReverseFlag())
+      return RFORIENTATION;
+
+  }
+  
+
   /** BamRead is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
@@ -166,8 +198,8 @@ class BamRead {
   /** BamRead mate is mapped */
   inline bool MateMappedFlag() const { return b ? ((b->core.flag&BAM_FMUNMAP) == 0) : false; }
 
-  /** BamRead mate is mapped */
-  inline bool PairMappedFlag() const { return b ? (!(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP)) : false; }
+  /** BamRead is mapped and mate is mapped and in pair */
+  inline bool PairMappedFlag() const { return b ? (!(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP) && (b->core.flag&BAM_FPAIRED) ) : false; }
 
   /** BamRead is mapped in proper pair */
   inline bool ProperPair() const { return b ? (b->core.flag&BAM_FPROPER_PAIR) : false;} 

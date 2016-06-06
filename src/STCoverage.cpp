@@ -90,7 +90,7 @@ namespace SnowTools {
     assert(e >= p);
     assert(p >= 0);
     assert(r.ChrID() >= 0);
-    assert(r.ChrID() < m_map.size());
+    assert(r.ChrID() < (int)m_map.size());
 
     try {
        while (p <= e) {
