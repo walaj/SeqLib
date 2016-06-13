@@ -21,10 +21,9 @@ reuse -q GCC-4.9
 
 ############## DOWNLOAD AND INSTALL BOOST ###############
 ############## (only if not already installed) ##########
-git clone --recursive https://github.com/boostorg/boost.git
-cd boost
-./bootstrap.sh --with-libraries=regex
-./b2
+wget https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz
+tar -xvzf boost_1_61_0.tar.gz
+## we only user header-only libraries, so no compiling of Boost is needed
 
 ############### DOWNLOAD SNOWTOOLS ############### 
 git clone https://github.com/jwalabroad/SnowTools.git
