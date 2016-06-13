@@ -266,7 +266,9 @@ void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) 
 	   rc_main.totalString().c_str(), r.ChrName().c_str(), posstring.c_str(),  
 	   rc_main.keepString().c_str(), rc_main.percent());
   printf ("%s | ",buffer);
+#ifndef __APPLE__
   SnowTools::displayRuntime(start);
+#endif
   std::cerr << std::endl;
   
 }
