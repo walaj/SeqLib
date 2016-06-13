@@ -414,28 +414,6 @@ std::string BamWalker::displayMiniRulesCollection() const
   return ss.str();
 }
 
-/*void BamWalker::__check_regions_blacklist() 
-{
-
-  // does not work until get complement implemented
-
-  // check if it overlaps with blacklist
-  if (blacklist.size()) 
-    {
-      GRC regs;
-      for (auto& i : m_region)
-	regs.add(i);
-         //GRC out = regs.complement(blacklist);
-      m_region = out.asGenomicRegionVector();
-    }
-
-    }*/
-
- /*void BamWalker::addBlacklist(GRC& bl) 
-{
-  blacklist = bl;
-  }*/
-
 void BamWalker::setCram(const std::string& out, const std::string& ref) {
   m_out = out;
   fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), "wc"), sam_write_delete()); 

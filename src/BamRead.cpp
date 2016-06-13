@@ -235,13 +235,6 @@ namespace SnowTools {
 
     }*/
 
-  /*  std::string BamRead::toSam(bam_hdr_t* h) const 
-  {
-    kstring_t *str;
-    sam_format1(h, b, str);
-    return std::string(str->s);
-    }*/
-
   double BamRead::MeanPhred() const {
 
     if (b->core.l_qseq <= 0)
@@ -263,10 +256,6 @@ namespace SnowTools {
 
   std::ostream& operator<<(std::ostream& out, const BamRead &r)
   {
-    //kstring_t *str;
-    //sam_format1(hdr, b, str);
-    //out << str->s;
-    
     if (!r.b) {
       out << "empty read";
       return out;

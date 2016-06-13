@@ -263,6 +263,9 @@ class AbstractRule {
 
   std::string id;
 
+  // read group 
+  std::string read_group;
+
   // how many reads pass this rule?
   size_t m_count = 0;
 
@@ -331,7 +334,7 @@ class AbstractRule {
 
   // return if this rule accepts all reads
   bool isEvery() const {
-    return ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1) && xp.isEvery();
+    return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1) && xp.isEvery();
   }
 
   // return if this rule accepts no reads

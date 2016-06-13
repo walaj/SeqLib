@@ -4,7 +4,7 @@
 #include "htslib/khash.h"
 #include <unordered_set>
 
-//#define QNAME "D0UK2ACXX120515:7:1111:5448:49616"
+//#define QNAME "H01PEALXX140819:3:1104:14925:14265"
 //#define QFLAG 163
 
 //#define DEBUG_MINI 1
@@ -19,7 +19,7 @@ static const std::unordered_set<std::string> valid =
   "mate_mapped", "isize","clip", "phred", "length","nm",
   "mapq", "all", "ff", "xp","fr","rr","rf",
   "ic", "discordant","motif","nbases",
-  "ins","del",  "sub",  "subsample"
+  "ins","del",  "sub",  "subsample", "RG"
 };
 
   static const std::unordered_set<std::string> allowed_region_annots = 
@@ -448,14 +448,27 @@ void MiniRulesCollection::sendToBed(std::string file) {
     Json::Value v = value.get(name, null);
 
     if (v != null) {
-      if (v.size() != 2) {
+      if (v.size() > 2) {
 	std::cerr << " ERROR. Not expecting array size " << v.size() << " for Range " << name << std::endl;
       } else {
 	every = false;
 	none = false;
 	inverted = false;
-	min = v[0].asInt();
-	max = v[1].asInt();
+
+	
+	if (v.isArray()) {
+	  min = v[0].asInt();
+	  max = v[1].asInt();
+	} else if (v.isInt()) {
+	  min = v.asInt();
+	  max = INT_MAX;
+	} else if (v.isBool()) {
+	  min = v.asBool() ? 1 : INT_MAX; // if true, [1,MAX], if false [MAX,1] (not 1-MAX)
+	  max = v.asBool() ? INT_MAX : 1;
+	} else {
+	  std::cerr << "Unexpected type for range flag: " << name << std::endl;
+	  exit(EXIT_FAILURE);
+	}
 
 	if (min > max) {
 	  inverted = true;
@@ -476,6 +489,15 @@ void MiniRulesCollection::sendToBed(std::string file) {
       }
     }
 	
+    // parse read group
+    const std::string rg = "RG";
+    if (value.isMember(rg.c_str())) {
+      Json::Value null(Json::nullValue);
+      Json::Value v = value.get(rg, null);
+      assert(v != null);
+      read_group = v.asString();
+    }
+      
     // parse the flags
     fr.parseJson(value);
     
@@ -512,7 +534,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES Read seen " << " ID " << id << " " << r << std::endl;
 #endif
 
@@ -536,7 +558,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     bool isize_pass = isize.isValid(abs(r.InsertSize()));
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES isize_pass " << isize_pass << " " << " ID " << id << " " << r << std::endl;
 #endif
     
@@ -544,13 +566,23 @@ void MiniRulesCollection::sendToBed(std::string file) {
       return false;
     }
     
+    // check for valid read name 
+    if (!read_group.empty()) {
+      // try to get the read group tag from qname first
+      std::string qn = r.Qname();
+      size_t posr = qn.find(":", 0);
+      std::string RG = (posr != std::string::npos) ? qn.substr(0, posr) : r.GetZTag("RG");
+      if (!RG.empty() && RG != read_group)
+	return false;
+    }
+
     // check for valid mapping quality
     if (!mapq.isEvery())
       if (!mapq.isValid(r.MapQuality())) 
 	return false;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES mapq pass " << " ID " << id << " " << r << std::endl;
 #endif
     
@@ -559,7 +591,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
       return false;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES flag pass " << " " << id << " " << r << std::endl;
 #endif
     
@@ -573,7 +605,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
 
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES cigar pass " << " ID " << id << " "  << r << std::endl;
 #endif
 
@@ -584,7 +616,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
       return true;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME  && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES moving on. ID " << id << " " << r << std::endl;
 #endif
     
@@ -597,7 +629,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     }
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES pre-phred filter clip pass. ID " << id  << " " << r << std::endl;
 #endif
     
@@ -707,7 +739,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
 #endif
     
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
       std::cerr << "MINIRULES PASS EVERYTHING. ID " << id << " " << r << std::endl;
 #endif
 
@@ -755,25 +787,30 @@ void MiniRulesCollection::sendToBed(std::string file) {
 
   if ( ocheck ) {
 
-    bool first = r.Position() < r.MatePosition();
-    bool bfr = (first && (!r.ReverseFlag() && r.MateReverseFlag())) || (!first &&  r.ReverseFlag() && !r.MateReverseFlag());
-    bool brr = r.ReverseFlag() && r.MateReverseFlag();
-    bool brf = (first &&  (r.ReverseFlag() && !r.MateReverseFlag())) || (!first && !r.ReverseFlag() &&  r.MateReverseFlag());
-    bool bff = !r.ReverseFlag() && !r.MateReverseFlag();
+    //    bool first = r.Position() < r.MatePosition();
+    //bool bfr = (first && (!r.ReverseFlag() && r.MateReverseFlag())) || (!first &&  r.ReverseFlag() && !r.MateReverseFlag());
+    //bool brr = r.ReverseFlag() && r.MateReverseFlag();
+    //bool brf = (first &&  (r.ReverseFlag() && !r.MateReverseFlag())) || (!first && !r.ReverseFlag() &&  r.MateReverseFlag());
+    //bool bff = !r.ReverseFlag() && !r.MateReverseFlag();
       
     bool bic = r.Interchromosomal();
+
+    int PO = r.PairOrientation();
 
     // its FR and it CANT be FR (off) or its !FR and it MUST be FR (ON)
     // orienation not defined for inter-chrom, so exclude these with !ic
     if (!bic) { // PROCEED IF INTRA-CHROMOSOMAL
-      if ( (bfr && fr.isOff()) || (!bfr && fr.isOn())) 
+      //if ( (bfr && fr.isOff()) || (!bfr && fr.isOn())) 
+      if ( (PO == FRORIENTATION && fr.isOff()) || (PO != FRORIENTATION && fr.isOn())) 
 	return false;
-      // etc....
-      if ( (brr && rr.isOff()) || (!brr && rr.isOn())) 
+      //if ( (brr && rr.isOff()) || (!brr && rr.isOn())) 
+      if ( (PO == RRORIENTATION && rr.isOff()) || (PO != RRORIENTATION && rr.isOn())) 
 	return false;
-      if ( (brf && rf.isOff()) || (!brf && rf.isOn())) 
+      //if ( (brf && rf.isOff()) || (!brf && rf.isOn())) 
+      if ( (PO == RFORIENTATION && rf.isOff()) || (PO != RFORIENTATION&& rf.isOn())) 
 	return false;
-      if ( (bff && ff.isOff()) || (!bff && ff.isOn())) 
+      //if ( (bff && ff.isOff()) || (!bff && ff.isOn())) 
+      if ( (PO == FFORIENTATION && ff.isOff()) || (PO != FFORIENTATION && ff.isOn())) 
 	return false;
     }
     if ( (bic && ic.isOff()) || (!bic && ic.isOn()))
@@ -794,6 +831,8 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
   } else if (ar.isNone()) {
     out << "  KEEPING NONE";  
   } else {
+    if (!ar.read_group.empty())
+      out << "Read Group: " << ar.read_group << " -- ";
     if (!ar.isize.isEvery())
       out << "isize:" << ar.isize << " -- " ;
     if (!ar.mapq.isEvery())
@@ -916,8 +955,12 @@ std::ostream& operator<<(std::ostream &out, const FlagRule &fr) {
 std::ostream& operator<<(std::ostream &out, const Range &r) {
   if (r.isEvery())
     out << "all";
+  else if (r.min == 1 && r.max == INT_MAX && !r.inverted)
+    out << "ALL";
+  else if (r.min == 1 && r.max == INT_MAX && r.inverted)
+    out << "NONE";
   else
-    out << (r.inverted ? "NOT " : "") << "[" << r.min << "," << r.max << "]";
+    out << (r.inverted ? "NOT " : "") << "[" << r.min << "," << (r.max == INT_MAX ? "MAX" : std::to_string(r.max))  << "]";
   return out;
 }
 

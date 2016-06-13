@@ -146,7 +146,7 @@ class BamRead {
   void assign(bam1_t* a);
 
   /** Make a BamRead with no memory allocated and a null header */
-  BamRead() : m_hdr(nullptr) {}
+  BamRead() {}
 
   /** BamRead is aligned on reverse strand */
   inline bool ReverseFlag() const { return b ? ((b->core.flag&BAM_FREVERSE) != 0) : false; }
@@ -185,7 +185,7 @@ class BamRead {
       return RRORIENTATION;
     else if (ReverseFlag() && Position() < MatePosition() && !MateReverseFlag())
       return RFORIENTATION;
-
+    return -1;
   }
   
 
@@ -530,12 +530,12 @@ class BamRead {
    * Note that this requires that the header not be empty. If
    * it is empty, assumes this ia chr1 based reference
    */
-  inline std::string ChrName() const {
+  inline std::string ChrName(bam_hdr_t * h = nullptr) const {
 
     // if we have the header, convert
-    if (m_hdr) {
-      if (b->core.tid < m_hdr->n_targets)
-	return std::string(m_hdr->target_name[b->core.tid]);
+    if (h) {
+      if (b->core.tid < h->n_targets)
+	return std::string(h->target_name[b->core.tid]);
       else
 	return "CHR_ERROR";
     }
@@ -599,16 +599,9 @@ class BamRead {
    */
   bool coveredMatchBase(int pos) const;
 
-  
-  //std::string toSam(bam_hdr_t* h) const;
-
   std::shared_ptr<bam1_t> b; // need to move this to private  
   private:
 
-  //bam_hdr_h *hdr;
-  //bam1_t * b;
-
-  std::shared_ptr<bam_hdr_t> m_hdr;
 };
 
  typedef std::vector<BamRead> BamReadVector; 
