@@ -4,8 +4,8 @@
 #include "htslib/khash.h"
 #include <unordered_set>
 
-//#define QNAME "H01PEALXX140819:3:1104:14925:14265"
-//#define QFLAG 163
+//#define QNAME "tumor-1153-RAR-46"
+//#define QFLAG 161
 
 //#define DEBUG_MINI 1
 
@@ -534,7 +534,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     
 
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES Read seen " << " ID " << id << " " << r << std::endl;
 #endif
 
@@ -558,7 +558,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     bool isize_pass = isize.isValid(abs(r.InsertSize()));
 
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME  && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES isize_pass " << isize_pass << " " << " ID " << id << " " << r << std::endl;
 #endif
     
@@ -582,7 +582,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
 	return false;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1) )
       std::cerr << "MINIRULES mapq pass " << " ID " << id << " " << r << std::endl;
 #endif
     
@@ -591,7 +591,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
       return false;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES flag pass " << " " << id << " " << r << std::endl;
 #endif
     
@@ -605,18 +605,23 @@ void MiniRulesCollection::sendToBed(std::string file) {
 
 
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES cigar pass " << " ID " << id << " "  << r << std::endl;
 #endif
 
     
     // if we dont need to because everything is pass, just just pass it
     bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || atm_file.length() || !xp.isEvery();
+#ifdef QNAME
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
+      std::cerr << "MINIRULES is need to continue " << need_to_continue << " ID " << id << " " << r << std::endl;
+#endif
+
     if (!need_to_continue)
       return true;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES moving on. ID " << id << " " << r << std::endl;
 #endif
     
@@ -629,7 +634,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     }
 
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES pre-phred filter clip pass. ID " << id  << " " << r << std::endl;
 #endif
     
@@ -669,8 +674,8 @@ void MiniRulesCollection::sendToBed(std::string file) {
       }
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
-      std::cerr << "MINIRULES pre-phred filter. ID " << id << " start " << startpoint << " endpoint " << endpoint << " " << r << std::endl;
+      if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
+	std::cerr << "MINIRULES pre-phred filter. ID " << id << " start " << startpoint << " endpoint " << endpoint << " " << r << std::endl;
 #endif
 
       // all the bases are trimmed away 
@@ -700,7 +705,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     }
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES NBASES PASS. id: " << id << r << " new_len " << new_len << " new_clipnum" << new_clipnum << std::endl;
 #endif
 
@@ -710,7 +715,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
       return false;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1) )
       std::cerr << "MINIRULES LENGTH PASS. id: " << id << r << " newlen " << new_len << std::endl;
 #endif
     
@@ -719,7 +724,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
       return false;
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES CLIP AND LEN PASS. ID " << id << " "  << r << std::endl;
 #endif
 
@@ -739,7 +744,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
 #endif
     
 #ifdef QNAME
-    if (r.Qname() == QNAME/* && r.AlignmentFlag() == QFLAG*/)
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES PASS EVERYTHING. ID " << id << " " << r << std::endl;
 #endif
 
