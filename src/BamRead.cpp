@@ -265,7 +265,7 @@ namespace SnowTools {
 	<< "\t" << (r.b->core.tid+1) << "\t" << r.b->core.pos 
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
-        << r.b->core.isize 
+        << r.FullInsertSize() //r.b->core.isize 
 	<< "\t" << r.Sequence() << "\t*" << 
       "\tAS:" << r.GetIntTag("AS");/* << "\t" << r.Qualities()*/;
     return out;

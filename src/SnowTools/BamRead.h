@@ -7,6 +7,7 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <cassert>
 #include <algorithm>
 
 #include "htslib/hts.h"
@@ -177,15 +178,17 @@ class BamRead {
   inline int PairOrientation() const {
     if (!PairMappedFlag())
       return UDORIENTATION;
-    else if (!ReverseFlag() && Position() < MatePosition() && MateReverseFlag())
+    else if ( (!ReverseFlag() && Position() <= MatePosition() &&  MateReverseFlag() ) || // read 1
+	      (ReverseFlag()  && Position() >= MatePosition() && !MateReverseFlag() ) ) // read 2
       return FRORIENTATION;
     else if (!ReverseFlag() && !MateReverseFlag())
       return FFORIENTATION;
     else if (ReverseFlag() && MateReverseFlag())
       return RRORIENTATION;
-    else if (ReverseFlag() && Position() < MatePosition() && !MateReverseFlag())
+    else if (   ( ReverseFlag() && Position() < MatePosition() && !MateReverseFlag()) ||
+                (!ReverseFlag() && Position() > MatePosition() &&  MateReverseFlag()))
       return RFORIENTATION;
-    return -1;
+    assert(false);
   }
   
 
@@ -269,6 +272,16 @@ class BamRead {
   
   /** Get the insert size for this read */
   inline int32_t InsertSize() const { return b->core.isize; } 
+
+  /** Get the insert size, absolute value, and always taking into account read length */
+  inline int32_t FullInsertSize() const {
+
+    if (b->core.tid != b->core.mtid || !PairMappedFlag())
+      return 0;
+
+    return std::abs(b->core.pos - b->core.mpos) + Length();
+
+  }
   
   /** Get the number of query bases of this read (aka length) */
   inline int32_t Length() const { return b->core.l_qseq; }

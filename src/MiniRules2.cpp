@@ -4,7 +4,7 @@
 #include "htslib/khash.h"
 #include <unordered_set>
 
-//#define QNAME "tumor-1153-RAR-46"
+//#define QNAME "tumor-10385-DUP-866"
 //#define QFLAG 161
 
 //#define DEBUG_MINI 1
@@ -351,6 +351,7 @@ std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
 
   out << "----------MiniRulesCollection-------------" << std::endl;
   out << "--- counting all rules (fall through): " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
+
   for (auto& it : mr.m_regions)
     out << it;
   out << "------------------------------------------";
@@ -534,8 +535,10 @@ void MiniRulesCollection::sendToBed(std::string file) {
     
 
 #ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1)) {
       std::cerr << "MINIRULES Read seen " << " ID " << id << " " << r << std::endl;
+      std::cerr << " PAIR ORIENTATION " << r.PairOrientation() << " PAIR MAPPED FLAG " << r.ReverseFlag() << " MR " << r.MateReverseFlag() << " POS < MAT " << (r.Position() < r.MatePosition()) << std::endl;
+    }
 #endif
 
     // check if its keep all or none
@@ -555,7 +558,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
       }*/
     
     // check if is discordant
-    bool isize_pass = isize.isValid(abs(r.InsertSize()));
+    bool isize_pass = isize.isValid(r.FullInsertSize());
 
 #ifdef QNAME
     if (r.Qname() == QNAME  && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
@@ -615,6 +618,9 @@ void MiniRulesCollection::sendToBed(std::string file) {
 #ifdef QNAME
     if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES is need to continue " << need_to_continue << " ID " << id << " " << r << std::endl;
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1) && !need_to_continue)
+      std::cerr << "****** READ ACCEPTED ****** " << std::endl;
+      
 #endif
 
     if (!need_to_continue)
@@ -629,6 +635,12 @@ void MiniRulesCollection::sendToBed(std::string file) {
     unsigned clipnum = 0;
     if (!clip.isEvery()) {
       clipnum = r.NumClip();
+
+#ifdef QNAME
+    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
+      std::cerr << "MINIRULES CLIPNUM " << clipnum << " " << r << " NM&&LEN&&CLIP " << (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) << " NM " << nm.isEvery() << " CLIPVALID " << clip.isValid(clipnum) << " LEN " << len.isEvery() << "  CLUIP " << clip << std::endl;
+#endif
+
       if (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) // if clip fails, its not going to get better by trimming. kill it now before building teh char data
 	return false;
     }
@@ -745,7 +757,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     
 #ifdef QNAME
     if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES PASS EVERYTHING. ID " << id << " " << r << std::endl;
+      std::cerr << "****** READ ACCEPTED ****** " << std::endl;
 #endif
 
 
