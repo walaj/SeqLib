@@ -571,10 +571,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     
     // check for valid read name 
     if (!read_group.empty()) {
-      // try to get the read group tag from qname first
-      std::string qn = r.Qname();
-      size_t posr = qn.find(":", 0);
-      std::string RG = (posr != std::string::npos) ? qn.substr(0, posr) : r.GetZTag("RG");
+      std::string RG = r.ParseReadGroup();
       if (!RG.empty() && RG != read_group)
 	return false;
     }

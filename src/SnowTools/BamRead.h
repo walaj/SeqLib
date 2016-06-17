@@ -273,6 +273,18 @@ class BamRead {
   /** Get the insert size for this read */
   inline int32_t InsertSize() const { return b->core.isize; } 
 
+  /** Get the read group, first from qname, then by RG tag 
+   * @return empty string if no readgroup found
+   */
+  inline std::string ParseReadGroup() const {
+    // try to get the read group tag from qname first
+    std::string qn = Qname();
+    size_t posr = qn.find(":", 0);
+    std::string RG = (posr != std::string::npos) ? qn.substr(0, posr) : GetZTag("RG");
+    return (RG);
+  }
+
+
   /** Get the insert size, absolute value, and always taking into account read length */
   inline int32_t FullInsertSize() const {
 
