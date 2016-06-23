@@ -254,6 +254,9 @@ class BamRead {
   
   /** Get the mapping quality */
   inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
+
+  /** Set the mapping quality */
+  inline void SetMapQuality(int32_t m) { b->core.qual = m; }
   
   /** Get the number of cigar fields */
   inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
@@ -301,9 +304,6 @@ class BamRead {
   /** Append a tag with new value, delimited by 'x' */
   void SmartAddTag(const std::string& tag, const std::string& val);
   
-  /** Set the mapping quality */
-  void SetMapQuality(int32_t m) { b->core.qual = m; } 
-
   /** Set the query name */
   void SetQname(const std::string& n);
 
@@ -314,6 +314,9 @@ class BamRead {
 
   /** Return read as a GenomicRegion */
   GenomicRegion asGenomicRegion() const;
+
+  /** Return mate as a GenomicRegion */
+  GenomicRegion asGenomicRegionMate() const;
 
   /** Get the max insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {

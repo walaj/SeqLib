@@ -25,6 +25,10 @@ namespace SnowTools {
     return GenomicRegion(b->core.tid, b->core.pos, PositionEnd());
   }
 
+  GenomicRegion BamRead::asGenomicRegionMate() const {
+    return GenomicRegion(b->core.mtid, b->core.mpos, b->core.mpos + Length());
+  }
+
   std::string BamRead::Sequence() const {
     uint8_t * p = bam_get_seq(b);
     std::string out(b->core.l_qseq, 'N');
@@ -267,7 +271,8 @@ namespace SnowTools {
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
         << r.FullInsertSize() //r.b->core.isize 
 	<< "\t" << r.Sequence() << "\t*" << 
-      "\tAS:" << r.GetIntTag("AS");/* << "\t" << r.Qualities()*/;
+      "\tAS:" << r.GetIntTag("AS") << 
+      "\tDD:" << r.GetIntTag("DD");/* << "\t" << r.Qualities()*/;;/* << "\t" << r.Qualities()*/;
     return out;
       
     
