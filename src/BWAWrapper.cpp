@@ -224,6 +224,11 @@ namespace SnowTools {
 
   void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, bool hardclip, 
 				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
+    
+    // we haven't made an index, just return
+    if (!idx)
+      return;
+
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
 

@@ -5,9 +5,10 @@
 #include <cassert>
 #include "SnowTools/gzstream.h"
 #include <set>
+#include <unordered_set>
 
 #ifdef HAVE_BOOST_ICL_INTERVAL_SET_HPP  
-#include <boost/icl/interval_set.hpp>
+#include "boost/icl/interval_set.hpp"
 #endif
 
 //#define DEBUG_OVERLAPS 1
@@ -392,9 +393,22 @@ size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) const {
 
   if (giv1.size() == 0 || giv2.size() == 0)
     return false;
+  
+  // each one only overlapped one element
+  if (giv1.size() == 1 && giv2.size() == 1)
+    if (giv1[0].start == giv2[0].start)
+      return true;
 
-  if (giv1[0].start == giv2[0].start)
-    return true;
+  // make a set of the possible starts
+  std::unordered_set<int> vals;
+  for (auto& i : giv1)
+    vals.insert(i.value);
+  
+  // loop the other side and see if they mix
+  for (auto& j : giv2)
+    if (vals.count(j.value))
+      return true;
+
   return false;
   
   }
@@ -444,6 +458,53 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
   if (i >= m_grv.size()) 
     throw 20;
   return m_grv[i]; 
+}  
+
+
+// this is query
+template<class T>
+template<class K>
+GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(const K& gr, bool ignore_strand) const
+{  
+
+  GenomicRegionCollection<GenomicRegion> output;
+
+  if (m_tree.size() == 0 && m_grv.size() != 0) {
+    std::cerr << "!!!!!! findOverlaps with GRanges: WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
+    return output;
+  }
+  
+  // which chr (if any) are common between query and subject
+  GenomicIntervalTreeMap::const_iterator ff = m_tree.find(gr.chr);
+
+  //must as least share a chromosome  
+  if (ff == m_tree.end())
+    return output;
+
+  // get the subject hits
+  GenomicIntervalVector giv;
+  ff->second.findOverlapping(gr.pos1, gr.pos2, giv);
+  
+#ifdef DEBUG_OVERLAPS
+  std::cerr << "ff->second.intervals.size() " << ff->second.intervals.size() << std::endl;
+  for (auto& k : ff->second.intervals)
+    std::cerr << " intervals " << k.start << " to " << k.stop << " value " << k.value << std::endl;
+  std::cerr << "GIV NUMBER OF HITS " << giv.size() << " for query " << gr << std::endl;
+#endif
+
+  // loop through the hits and define the GenomicRegion
+  for (auto& j : giv) { // giv points to positions on subject
+    if (ignore_strand || (m_grv[j.value].strand == gr.strand) )
+      {
+#ifdef DEBUG_OVERLAPS
+	std::cerr << "find overlaps hit " << j.start << " " << j.stop << " -- " << j.value << std::endl;
+#endif
+	output.add(GenomicRegion(gr.chr, std::max(static_cast<int32_t>(j.start), gr.pos1), std::min(static_cast<int32_t>(j.stop), gr.pos2)));
+      }
+  }
+  
+  return output;
+  
 }
 
   // this is query
@@ -452,13 +513,22 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
 GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(GenomicRegionCollection<K>& subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const
 {  
 
+  GenomicRegionCollection<GenomicRegion> output;
+
+  if (subject.m_tree.size() == 0 && subject.m_grv.size() != 0) {
+    std::cerr << "!!!!!! findOverlaps: WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
+    return output;
+  }
+
+  // we loop through query, so want it to be smaller
+  if (subject.size() < m_grv.size()) 
+    std::cerr << "findOverlaps warning: Suggest switching query and subject for efficiency." << std::endl;
+
 #ifdef DEBUG_OVERLAPS
   std::cerr << "OVERLAP SUBJECT: " << std::endl;
   for (auto& i : subject)
     std::cerr << i << std::endl;
 #endif
-
-  GenomicRegionCollection<GenomicRegion> output;
 
   // loop through the query GRanges (this) and overlap with subject
   for (size_t i = 0; i < m_grv.size(); ++i) 
@@ -501,6 +571,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
   return output;
   
 }
+
 
 template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection(const T& gr)

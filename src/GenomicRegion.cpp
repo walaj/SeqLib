@@ -113,7 +113,7 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
 {
   
   if (h == nullptr)
-    std::cerr <<" NULL POINT: " << std::endl;
+    std::cerr <<" NULL HEADER in GenomicRegion::GenomicRegion(string, bam_hdr_t *): " << std::endl;
 
   // scrub String
   std::string reg2 = SnowTools::scrubString(reg, "chr");

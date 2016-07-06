@@ -6,6 +6,9 @@
 #include <boost/algorithm/string.hpp>
 #include "SnowTools/ssw_cpp.h"
 
+#define TAG_DELIMITER "^"
+#define CTAG_DELIMITER '^'
+
 namespace SnowTools {
 
   struct free_delete {
@@ -126,8 +129,12 @@ namespace SnowTools {
 	return;
       }
     
+    // check that we don't have the tag delimiter in the stirng
+    if (val.find(TAG_DELIMITER) != std::string::npos)
+      std::cerr << "BamRead::SmartAddTag -- Tag delimiter " << TAG_DELIMITER << " is in the value to be added. Compile with diff tag delimiter or change val" << std::endl;
+
     // append the tag
-    tmp += "x"  + val;
+    tmp += TAG_DELIMITER + val;
     
     // remove the old tag
     RemoveTag(tag.c_str());
@@ -398,10 +405,10 @@ namespace SnowTools {
     if (tmp.empty())
       return std::vector<std::string>();
     
-    if (tmp.find("x") != std::string::npos) {
+    if (tmp.find(TAG_DELIMITER) != std::string::npos) {
       std::istringstream iss(tmp);
       std::string line;
-      while (std::getline(iss, line, 'x')) {
+      while (std::getline(iss, line, CTAG_DELIMITER)) {
 	out.push_back(line);
       }
     } else {
@@ -425,10 +432,10 @@ namespace SnowTools {
     if (tmp.empty())
       return std::vector<int>();
     
-    if (tmp.find("x") != std::string::npos) {
+    if (tmp.find(TAG_DELIMITER) != std::string::npos) {
       std::istringstream iss(tmp);
       std::string line;
-      while (std::getline(iss, line, 'x')) {
+      while (std::getline(iss, line, CTAG_DELIMITER)) {
 	try { out.push_back(stoi(line)); } catch (...) { std::cerr << "Failed to read parsed int tag " << tag << " for value " << tmp << " with line " << line << std::endl; std::exit(EXIT_FAILURE); }
       }
     } else {
