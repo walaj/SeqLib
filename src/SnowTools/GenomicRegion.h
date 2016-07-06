@@ -96,6 +96,10 @@ class GenomicRegion {
    */
   int32_t distanceBetweenEnds(const GenomicRegion &gr) const;
 
+  /** Output as a string, with chr ID bumped up by one to make ID 0
+   * print as "1". Add commas to pos
+   */
+  std::string toPrettyString() const;
 
   // define how these are to be sorted
   bool operator < (const GenomicRegion& b) const;

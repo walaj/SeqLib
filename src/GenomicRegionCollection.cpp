@@ -396,7 +396,7 @@ size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) const {
   
   // each one only overlapped one element
   if (giv1.size() == 1 && giv2.size() == 1)
-    if (giv1[0].start == giv2[0].start)
+    if (giv1[0].value == giv2[0].value)
       return true;
 
   // make a set of the possible starts
@@ -521,7 +521,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
   }
 
   // we loop through query, so want it to be smaller
-  if (subject.size() < m_grv.size()) 
+  if (subject.size() < m_grv.size() && m_grv.size() - subject.size() > 20) 
     std::cerr << "findOverlaps warning: Suggest switching query and subject for efficiency." << std::endl;
 
 #ifdef DEBUG_OVERLAPS

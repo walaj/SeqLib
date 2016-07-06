@@ -77,7 +77,10 @@ std::string GenomicRegion::toString() const {
 void GenomicRegion::pad(int32_t pad) {
 
   if (-pad*2 > width())
-    throw std::out_of_range("GenomicRegion::pad - negative pad values can't obliterate GenomicRegion");
+    throw std::out_of_range(
+         "GenomicRegion::pad - negative pad values can't obliterate GenomicRegion with val " + 
+	 std::to_string(chr) + ":" + std::to_string(pos1) + "-" + std::to_string(pos2) + 
+	 " and pad " + std::to_string(pad));
 
   pos1 -= pad;
   pos2 += pad;
@@ -103,6 +106,14 @@ bool GenomicRegion::operator==(const GenomicRegion &b) const {
 bool GenomicRegion::operator<=(const GenomicRegion &b) const {
   return (*this < b || *this == b);
 }
+
+  std::string GenomicRegion::toPrettyString() const {
+    
+    std::stringstream ss;
+    ss << (chr + 1) << ":" << AddCommas(pos1) << "-" << AddCommas(pos2);
+    return ss.str();
+    
+  }
 
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   out << gr.toString();
