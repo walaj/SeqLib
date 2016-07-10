@@ -45,7 +45,9 @@ CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag
   int nbases = INT_MAX;
   int phred = 0;
   int clip = 0;
-  std::string rg;
+  int ins = 0;
+  int del = 0;
+  std::string rg, motif;
 
   bool all() const { 
     return !len && !mapq && !nbases && !phred && rg.empty() && !i_flag && !e_flag; 
@@ -188,23 +190,10 @@ struct FlagRule {
     rr = Flag();
     ic = Flag();
     paired = Flag();
+    m_on_flag = 0;
+    m_off_flag = 0;
   }
   
-
-  /**
-   * if inv is true, then if flag rule is ON and read is ON, return FALSE
-   */ 
-  /*bool inline flagCheck(Flag &f, bam1_t *b, int bamflag, bool inv) {
-    
-    if (!f.isNA()) {
-      bool val = (b->core.flag & bamflag);
-      if ( (f.isOff() && val) || (f.isOn() && !val))
-	return inv ? false : true;
-    }
-    return true; 
-    }*/
-
-
   Flag dup, supp, qcfail, hardclip, fwd_strand, rev_strand,
     mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic, paired;
 
@@ -216,32 +205,11 @@ struct FlagRule {
 
   void setOffFlag(uint32_t f) { m_off_flag = f; na = na && f == 0; } 
 
-  
   // ask whether a read passes the rule
   bool isValid(BamRead &r);
 
+  /** Print the flag rule */
   friend std::ostream& operator<<(std::ostream &out, const FlagRule &fr);
-
-  // set every flag to NA (most permissive)
-  void setEvery() {
-    dup.setOn();
-    supp.setOn();
-    qcfail.setOn();
-    hardclip.setOn();
-    fwd_strand.setOn();
-    rev_strand.setOn();
-    mate_fwd_strand.setOn();
-    mate_rev_strand.setOn();
-    mapped.setOn();
-    mate_mapped.setOn();
-    ff.setOn();
-    fr.setOn();
-    rf.setOn();
-    rr.setOn();
-    ic.setOn();
-    paired.setOn();
-    na = true;
-  }
 
   // ask if every flag is set to NA (most permissive)
   bool isEvery() const { return na; }
@@ -250,6 +218,8 @@ private:
 
   uint32_t m_on_flag;
   uint32_t m_off_flag;
+
+  int __parse_json_int(const Json::Value& v);
 
 };
 
@@ -262,17 +232,16 @@ class AbstractRule {
 
  public:
 
+  /** Create empty rule with default to accept all */
   AbstractRule() {}
+
+  /** Destroy */
   ~AbstractRule() {}
 
-  std::string name;
   Range isize, mapq, len, clip, phred, nm, nbases, ins, del, xp;
 
-  std::unordered_map<std::string,bool> orientation;
+  void addMotifRule(const std::string& f, bool inverted);
 
-  std::string atm_file;
-  bool atm_inv = false;
-  size_t atm_count = 0;
 
   std::string id;
 
@@ -282,53 +251,45 @@ class AbstractRule {
   // how many reads pass this rule?
   size_t m_count = 0;
 
-  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifndef __APPLE__
   //atm_ptr atm;
   AC_AUTOMATA_t * atm = 0;
 #endif
 
-  uint32_t subsam_seed = 999;
+
   double subsam_frac = 1;
-
-  bool none = false;
-  // set to true if you want a read to belong to the region if its mate does
-  //bool mate = false; 
-
-  FlagRule fr;
 
   bool isValid(BamRead &r);
 
-  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
-#ifndef __APPLE__
-  bool ahomatch(BamRead &r);
-
-  bool ahomatch(const char * seq, unsigned len);
-#endif
-
   void parseJson(const Json::Value& value);
-  void parseSubLine(const Json::Value& value);
-  void parseSeqLine(const Json::Value& value);
 
   friend std::ostream& operator<<(std::ostream &out, const AbstractRule &fr);
 
-  void setEvery() {
-    fr.setEvery();
-    atm_file = "";
-    subsam_frac = 1;
-  }
-  
   // return if this rule accepts all reads
   bool isEvery() const {
     return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1) && xp.isEvery();
   }
 
-  // return if this rule accepts no reads
-  bool isNone() const {
-    return none;
-    //return isize.isNone() && mapq.isNone() && len.isNone() && clip.isNone() && phred.isNone() && nm.isNone() && fr.isNone();
-  }
+  FlagRule fr;
 
+ private:
+
+  // data
+  uint32_t subsam_seed = 999; // random seed for subsampling
+
+  // motif data
+  std::string atm_file; // sequence file
+  bool atm_inv = false; // is this inverted
+  size_t atm_count = 0; // number of motifs
+
+#ifndef __APPLE__
+  bool ahomatch(BamRead &r);
+  bool ahomatch(const char * seq, unsigned len);
+#endif
+
+  void parseSubLine(const Json::Value& value);
+
+  void parseSeqLine(const Json::Value& value);
 
 };
 
@@ -456,6 +417,8 @@ class MiniRulesCollection {
   const std::string GetScriptContents(const std::string& script);
 
   bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
+
+  bool __validate_json_value(const Json::Value value, const std::unordered_set<std::string>& valid_vals);
 };
 
 }

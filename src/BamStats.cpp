@@ -87,8 +87,7 @@ void BamStats::addRead(BamRead &r)
 {
 
   // get the read group
-  std::string rg = r.GetZTag("RG");
-  //r_get_Z_tag(r, "RG", rg);
+  std::string rg = r.ParseReadGroup();
 
 #ifdef DEBUG_STATS
   std::cout << "got read group tag " << rg << std::endl;
