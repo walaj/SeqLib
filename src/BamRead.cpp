@@ -3,7 +3,12 @@
 #include <cassert>
 #include <bitset>
 #include <cctype>
+
+#ifdef BOOST_VERSION
 #include <boost/algorithm/string.hpp>
+#endif
+
+
 #include "SnowTools/ssw_cpp.h"
 
 #define TAG_DELIMITER "^"
@@ -630,6 +635,10 @@ namespace SnowTools {
 
   Cigar cigarFromString(const std::string& cig) {
 
+    Cigar tc;
+
+#ifdef BOOST_VERSION
+
     // get the ops
     std::vector<char> ops;
     for (auto& c : cig)
@@ -642,12 +651,18 @@ namespace SnowTools {
     lens.pop_back(); // fills in empty at end for some reason
 
     assert(ops.size() == lens.size());
-    Cigar c;
     for (size_t i = 0; i < lens.size(); ++i) {
-      c.push_back(CigarField(ops[i], std::stoi(lens[i])));
+      tc.push_back(CigarField(ops[i], std::stoi(lens[i])));
     }
     
-    return c;
+    return tc;
+#else
+
+    std::cerr << "!!!!!! BOOST REQUIRED FOR THIS FUNCTION !!!!!!" << std::endl << 
+      "!!!!!! Returning EMPTY CIGAR !!!!!!!!!" << std::endl;
+    return tc;
+#endif
+
 
   }
   

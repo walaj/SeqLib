@@ -1,8 +1,5 @@
 #include "SnowTools/BLATWrapper.h"
 
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-
 #define QWARN_SIZE 5000000
 
 static int ssAliCount = 16;	/* Number of alignments returned by ssStitch. */

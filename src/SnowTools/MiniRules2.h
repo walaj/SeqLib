@@ -4,16 +4,15 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <climits>
 
 #include "json/json.h"
 
 #include "SnowTools/GenomicRegionCollection.h"
 #include "SnowTools/BamRead.h"
 
-//#define HAVE_AHOCORASICK_AHOCORASICK_H 1
-//#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+// motif matching with ahocorasick not available on OSX
 #ifndef __APPLE__
-
 #include "ahocorasick/ahocorasick.h"
 #include <memory>
 
@@ -24,7 +23,36 @@ struct atm_free_delete {
 typedef std::unique_ptr<AC_AUTOMATA_t> atm_ptr;
 #endif
 
+#define MINIRULES_MATE_LINKED 1
+#define MINIRULES_MATE_LINKED_EXCLUDE 2
+#define MINIRULES_REGION 3
+#define MINIRULES_REGION_EXCLUDE 4
+
 namespace SnowTools {
+
+struct CommandLineRegion {
+  
+CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag(0), e_flag(0) {}
+
+  std::string f; // file
+  int type; // mate linked, excluder, etc
+  int pad;
+  uint32_t i_flag; // inclusive flags
+  uint32_t e_flag; // exclusive flags
+
+  int len = 0;
+  int mapq = 0;
+  int nbases = INT_MAX;
+  int phred = 0;
+  int clip = 0;
+  std::string rg;
+
+  bool all() const { 
+    return !len && !mapq && !nbases && !phred && rg.empty() && !i_flag && !e_flag; 
+  }
+
+};
+
 
 /** Stores a rule for a single alignment flag.
  *
@@ -82,54 +110,57 @@ class Flag {
  */
 struct Range {
 
-  /** Construct a Range from 0 to 0, non-inverted
+  /** Construct a default range with everything accepted
    */
-  Range() : min(0), max(0), inverted(false), pattern("") {}
+  Range() : m_min(0), m_max(0), m_inverted(false), m_every(true) {}
 
-  /** Construct a Range from mn to mx, inclusive
+  /** Construct a Range from min to max, inclusive
+   * @param min Minimum for range 
+   * @param max Maximum for range 
+   * @param inverted Declare if this should be an inverted range (do NOT accept vals in range)
    */
-  Range(int mn, int mx, int in, std::string p) : min(mn), max(mx), inverted(in), pattern(p) {}
-
-  int min;
-  int max;
-  bool inverted;
-  std::string pattern;
-  bool every = true;
-  bool none = false;
+  Range(int min, int max, bool inverted) : m_min(min), m_max(max), m_inverted(inverted), m_every(false) {}
   
+  /** Given a query value, determine if the value passes this Range
+   * @param val Query value (e.g. mapping quality)
+   * @return true if the value passes this Range rule
+   */
   bool isValid(int val) {
-    if (every)
+    if (m_every)
       return true;
-    if (none)
-      return true;
-    if (!inverted)
-      return (val >= min && val <= max);
+    if (!m_inverted)
+      return (val >= m_min && val <= m_max);
     else
-      return (val < min || val > max);
+      return (val < m_min || val > m_max);
   }
 
+  /** Parse a JSON value 
+   * @param value 
+   * @param name
+   */
   void parseJson(const Json::Value& value, const std::string& name);
 
+  /** Print the contents of this Range */
   friend std::ostream& operator<<(std::ostream &out, const Range &r);
 
-  // set that this ranges accepts everything
-  void setEvery() {
-    every = true;
-    none = false;
-  }
-
-  // set that this range accepts nothing
-    void setNone() {
-    every = false;
-    none = true;
-   }
+  /** Return if this range accepts all values */
+  bool isEvery() const { return m_every; }
   
-  // return if this range accepts all values
-  bool isEvery() const { return every; }
-  
-  // return if this range accepts no values
-  bool isNone() const { return none; }
+  /** Return the lower bound of the range */
+  int lowerBound() const { return m_min; }
 
+  /** Return the upper bound of the range */
+  int upperBound() const { return m_max; }
+
+  /** Return true if the range is inverted (e.g. do NOT accept i in [min,max] */
+  bool isInverted() const { return m_inverted; }
+  
+private:
+  
+  int m_min;
+  int m_max;
+  bool m_inverted;
+  bool m_every;
 
 };
 
@@ -139,7 +170,7 @@ struct Range {
  * satisfies the requirements for its alignment flag.
  */
 struct FlagRule {
-  
+
   FlagRule() {
     dup  = Flag();
     supp       = Flag();
@@ -173,12 +204,18 @@ struct FlagRule {
     return true; 
     }*/
 
+
   Flag dup, supp, qcfail, hardclip, fwd_strand, rev_strand,
     mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic, paired;
 
   bool na = true;
 
   void parseJson(const Json::Value& value);
+
+  void setOnFlag(uint32_t f) { m_on_flag = f; na = na && f == 0; } 
+
+  void setOffFlag(uint32_t f) { m_off_flag = f; na = na && f == 0; } 
+
   
   // ask whether a read passes the rule
   bool isValid(BamRead &r);
@@ -206,29 +243,13 @@ struct FlagRule {
     na = true;
   }
 
-  // set every flag to OFF everythign off)
-  void setNone() {
-    dup.setOff();
-    supp.setOff();
-    qcfail.setOff();
-    hardclip.setOff();
-    fwd_strand.setOff();
-    rev_strand.setOff();
-    mate_fwd_strand.setOff();
-    mate_rev_strand.setOff();
-    mapped.setOff();
-    mate_mapped.setOff();
-    ff.setOff();
-    fr.setOff();
-    rf.setOff();
-    rr.setOff();
-    ic.setOff();
-    paired.setOff();
-  }
-
-
   // ask if every flag is set to NA (most permissive)
   bool isEvery() const { return na; }
+
+private:
+
+  uint32_t m_on_flag;
+  uint32_t m_off_flag;
 
 };
 
@@ -244,20 +265,12 @@ class AbstractRule {
   AbstractRule() {}
   ~AbstractRule() {}
 
-  std::string name = "";
-  Range isize = {-1, -1, true, "isize"}; // include all
-  Range mapq =  {-1, -1, true, "mapq"}; 
-  Range len =   {-1, -1, true, "length"};
-  Range clip =  {-1, -1, true, "clip"};
-  Range phred = {-1, -1, true, "phred"};
-  Range nm = {-1, -1, true, "nm"};
-  Range nbases = {-1,-1,true, "nbases"};
-  Range ins = {-1,-1,true, "ins"};
-  Range del = {-1,-1,true, "del"};
-  Range xp = {-1,-1,true, "xp"};
+  std::string name;
+  Range isize, mapq, len, clip, phred, nm, nbases, ins, del, xp;
+
   std::unordered_map<std::string,bool> orientation;
 
-  std::string atm_file = "";
+  std::string atm_file;
   bool atm_inv = false;
   size_t atm_count = 0;
 
@@ -286,8 +299,6 @@ class AbstractRule {
 
   bool isValid(BamRead &r);
 
-
-
   //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifndef __APPLE__
   bool ahomatch(BamRead &r);
@@ -302,36 +313,11 @@ class AbstractRule {
   friend std::ostream& operator<<(std::ostream &out, const AbstractRule &fr);
 
   void setEvery() {
-    isize.setEvery();
-    mapq.setEvery();
-    len.setEvery();
-    clip.setEvery();
-    phred.setEvery();
-    nm.setEvery();
-    nbases.setEvery();
     fr.setEvery();
-    ins.setEvery();
-    del.setEvery();
-    xp.setEvery();
     atm_file = "";
     subsam_frac = 1;
   }
   
-  void setNone() { 
-    isize.setNone();
-    mapq.setNone();
-    len.setNone();
-    clip.setNone();
-    phred.setNone();
-    nm.setNone();
-    nbases.setNone();
-    fr.setNone();
-    del.setNone();
-    xp.setNone();
-    ins.setNone();
-    none = true;
-  }
-
   // return if this rule accepts all reads
   bool isEvery() const {
     return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && (atm_file.length() == 0) && (subsam_frac >= 1) && xp.isEvery();
@@ -360,15 +346,23 @@ class MiniRules {
 
   public:
   MiniRules() {}
+
   ~MiniRules() {}
-  
+
+  /** Make a MiniRules with a an all exclude or include rule
+   * @param Samtools style string, BED file or VCF 
+   * @param reg_type The type of rule this will be
+   * @param h BAM header that defines available chromosomes
+   */
+  MiniRules(const CommandLineRegion& c, bam_hdr_t * h);
+
   std::string id;
   
   bool excluder = false; // this region is for excluding
 
   bool isValid(BamRead &r);
    
-  void setRegionFromFile(const std::string& file);
+  void setRegionFromFile(const std::string& file, bam_hdr_t * h);
 
   bool isReadOverlappingRegion(BamRead &r);
 
@@ -387,7 +381,7 @@ class MiniRules {
   std::string m_region_file;
   //private:
 
-  GRC m_grv;
+  GRC m_grv; // the interval tree with the regions this rule applies to
 
   int m_level = -1;
 
@@ -424,9 +418,7 @@ class MiniRulesCollection {
 
   AbstractRule rule_all;
   
-  MiniRulesCollection(const std::string& file, bam_hdr_t *b);
-
-  MiniRulesCollection(const std::string& file);
+  MiniRulesCollection(const std::string& script, bam_hdr_t *h);
 
   void addGlobalRule(const std::string& rule);
 
@@ -460,8 +452,6 @@ class MiniRulesCollection {
   bool m_fall_through = false;
 
  private:  
-
-  void __construct_MRC(const std::string& script);  
 
   const std::string GetScriptContents(const std::string& script);
 

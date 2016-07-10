@@ -271,7 +271,7 @@ class BamRead {
   inline char* QnameChar() const { return bam_get_qname(b); }
   
   /** Get the full alignment flag for this read */
-  inline int32_t AlignmentFlag() const { return b->core.flag; }
+  inline uint32_t AlignmentFlag() const { return b->core.flag; }
   
   /** Get the insert size for this read */
   inline int32_t InsertSize() const { return b->core.isize; } 
