@@ -116,11 +116,9 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
   ++m_count_seen;
 
   if (m_regions.size() == 0) {
-    return "all";
-    //std::cerr << "Empty MiniRules" << std::endl;
-    //exit(EXIT_FAILURE);
+    return true;
   }
-
+  
   // need to run all rules if there is an excluder
   if (!m_fall_through)
     for (auto& i : m_regions)
@@ -147,11 +145,11 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 	  ++it.m_count;
 	rule_hit = true;
       }
-      
+
       // non-empty, need to check
       for (auto& jt : it.m_abstract_rules) { 
 	if (jt.isValid(r)) {
-
+      
 	  // this whole read is valid or not valid
 	  // depending on if this is an excluder region
 	  if (it.excluder)
@@ -159,7 +157,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 	  // if it excluded already, can never be included
 	  // if its a normal rule, then exclude_hit is F, it.excluder is F and is_valid get T
 	  is_valid = !exclude_hit && !it.excluder; 
-
+	  
 	  // update the region counter
 	  if (!rule_hit) // first hit for this region?
 	    ++it.m_count;
@@ -183,7 +181,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
     // didnt find hit (or fall through checking), move it up one
     ++which_region;
   }
-  
+
   // isn't in a rule or it never satisfied one. Remove
   if (!is_valid)
     return false; 
@@ -309,8 +307,10 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
       // set the region
       std::string reg;
       Json::Value v  = regions.get("region", null);
-      if (v != null) 
+      if (v != null) {
 	reg = v.asString();
+	mr.id = mr.id + reg;
+      }
       
       // actually parse the region
       if (reg == "WG" || reg.empty())
@@ -321,14 +321,17 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
       // check if its excluder region
       mr.excluder = false; // default is no exclude
       v = regions.get("exclude", null);
-      if (v != null) 
+      if (v != null) {
 	mr.excluder = v.asBool();
+	if (mr.excluder)
+	  mr.id = mr.id + "_exclude";
+      }
       
       // set the rules
       v = regions.get("rules", null);
       if (!v.size()) {
-	std::cerr << " !!!! RULES size is zero. !!!! " << std::endl;
-	exit(EXIT_FAILURE);
+	//std::cerr << " !!!! RULES size is zero. !!!! " << std::endl;
+	//exit(EXIT_FAILURE);
       }
 
       // loop through the rules
@@ -366,6 +369,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
       mr.m_whole_genome = true;
       mr.m_abstract_rules.push_back(rule_all);
       mr.mrc = this; // set the pointer to the collection
+      mr.id = "WG_includer";
       m_regions.push_back(mr);
     }
     
@@ -396,12 +400,12 @@ std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
   out << (mr.excluder ? "--Exclude Region: " : "--Include Region: ") << file_print;
   if (!mr.m_whole_genome) {
     //out << " --Size: " << AddCommas<int>(mr.m_width); 
-    out << " --Pad: " << mr.pad;
-    out << " --Include Mate: " << (mr.m_applies_to_mate ? "ON" : "OFF");
+    out << " Pad: " << mr.pad;
+    out << " Matelink: " << (mr.m_applies_to_mate ? "ON" : "OFF");
     if (mr.m_grv.size() == 1)
-      out << " --Region : " << mr.m_grv[0] << std::endl;
+      out << " Region : " << mr.m_grv[0] << std::endl;
     else
-      out << " --Region: " << mr.m_grv.size() << " regions" << std::endl;      
+      out << " " << mr.m_grv.size() << " regions" << std::endl;      
   } else {
     out << std::endl;
   }
