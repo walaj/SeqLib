@@ -4,8 +4,8 @@
 #include "htslib/khash.h"
 #include <unordered_set>
 
-//#define QNAME "tumor-10385-DUP-866"
-//#define QFLAG 161
+//#define QNAME "H01PEALXX140819:3:2120:19036:18467"
+//#define QFLAG 83
 
 //#define DEBUG_MINI 1
 
@@ -18,12 +18,12 @@ static const std::unordered_set<std::string> valid =
   "rev_strand", "mate_fwd_strand", "mate_rev_strand", "mapped",
   "mate_mapped", "isize","clip", "phred", "length","nm",
   "mapq", "all", "ff", "xp","fr","rr","rf",
-  "ic", "discordant","motif","nbases",
-  "ins","del",  "sub",  "subsample", "RG"
+  "ic", "discordant","motif","nbases","!motif","flag", "!flag",
+  "ins","del",  "sub",  "subsample", "rg"
 };
 
   static const std::unordered_set<std::string> allowed_region_annots = 
-    { "region","pad", "matelink", "exclude"};
+    { "region","pad", "matelink", "exclude", "rules"};
 
   static const std::unordered_set<std::string> allowed_flag_annots = 
     {"duplicate", "supplementary", "qcfail", "hardclip", 
@@ -39,6 +39,20 @@ bool MiniRules::isValid(BamRead &r) {
   return false;
 
 }
+
+  int FlagRule::__parse_json_int(const Json::Value& v) {
+
+      try {
+	if (v.asInt())
+	 return v.asInt();
+	else if (v.isString())
+	  return std::stoi(v.asString());
+      } catch (...) {
+	std::cerr << " trouble converting flag to int on " << v << std::endl;
+      }
+
+      return 0;
+  }
 
   bool __convert_to_bool(const Json::Value& value, const std::string& name) {
 
@@ -60,28 +74,17 @@ bool MiniRules::isValid(BamRead &r) {
   }
 
 
-  bool __validate_json(const Json::Value value, const std::unordered_set<std::string>& valid_vals) {
+  bool MiniRulesCollection::__validate_json_value(const Json::Value value, const std::unordered_set<std::string>& valid_vals) {
 
-    Json::Value null(Json::nullValue);
-    for (auto& r : value) {
-      bool ok = false;
-      for (auto& v : valid_vals) {
-	if (r.get(v, null) != null) {
-	  ok = true;
-	  break;
-	}
-      }
-      if (!ok) {
-	std::cerr << " unexpected JSON element of " << value << std::endl;
-	std::cerr << " For this scope, must be one of: " << std::endl;
-	for (auto& k : valid_vals)
-	  std::cerr << "   " << k << std::endl;
+    // verify that it has appropriate values
+    for (auto& i : value.getMemberNames()) {
+      if (!valid_vals.count(i)) {
+	std::cerr << "Invalid key value in JSON: " << i << std::endl;
 	return false;
       }
     }
-    
-    return true;
 
+    return true;
   }
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
@@ -113,11 +116,9 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
   ++m_count_seen;
 
   if (m_regions.size() == 0) {
-    return "all";
-    //std::cerr << "Empty MiniRules" << std::endl;
-    //exit(EXIT_FAILURE);
+    return true;
   }
-
+  
   // need to run all rules if there is an excluder
   if (!m_fall_through)
     for (auto& i : m_regions)
@@ -144,11 +145,11 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 	  ++it.m_count;
 	rule_hit = true;
       }
-      
+
       // non-empty, need to check
       for (auto& jt : it.m_abstract_rules) { 
 	if (jt.isValid(r)) {
-
+      
 	  // this whole read is valid or not valid
 	  // depending on if this is an excluder region
 	  if (it.excluder)
@@ -156,7 +157,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 	  // if it excluded already, can never be included
 	  // if its a normal rule, then exclude_hit is F, it.excluder is F and is_valid get T
 	  is_valid = !exclude_hit && !it.excluder; 
-
+	  
 	  // update the region counter
 	  if (!rule_hit) // first hit for this region?
 	    ++it.m_count;
@@ -180,7 +181,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
     // didnt find hit (or fall through checking), move it up one
     ++which_region;
   }
-  
+
   // isn't in a rule or it never satisfied one. Remove
   if (!is_valid)
     return false; 
@@ -191,20 +192,33 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 }
 
 // convert a region BED file into an interval tree map
-void MiniRules::setRegionFromFile(const std::string& file) {
+  void MiniRules::setRegionFromFile(const std::string& file, bam_hdr_t * h) {
   
   m_region_file = file;
+  id = file;
 
   // parse if it's a file
   if (SnowTools::read_access_test(file))
-    m_grv.regionFileToGRV(file, pad, mrc->h);
-  else {
-    if (mrc->h) {
-      GenomicRegion gr(file, mrc->h);
+    m_grv.regionFileToGRV(file, pad, h);
+  // samtools style string
+  else if (file.find(":") != std::string::npos && file.find("-") != std::string::npos) {
+    if (h) {
+      GenomicRegion gr(file, h);
       gr.pad(pad);
       m_grv.add(gr);
     } else {
       std::cerr << "!!!!!!!!MiniRules region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
+    }
+  }
+  // it's a single chromosome
+  else if (!file.empty()) {
+    SnowTools::GenomicRegion gr(file, "1", "1", h); //file is chr, "1" is dummy
+    if (gr.chr == -1 || gr.chr >= h->n_targets) {
+      std::cerr << "ERROR: Trying to match chromosome " << file << " to one in header, but no match found" << std::endl;
+      exit(EXIT_FAILURE);
+    } else {
+      gr.pos2 = h->target_len[gr.chr];
+      m_grv.add(gr);
     }
   }
 
@@ -226,157 +240,172 @@ void MiniRules::setRegionFromFile(const std::string& file) {
   return;
 }
 
-  MiniRulesCollection::MiniRulesCollection(const std::string& file, bam_hdr_t *b)
-  {
-    // set the header
-    h = b;
-    __construct_MRC(file);
-  }
 
-  MiniRulesCollection::MiniRulesCollection(const std::string& file)
-  {
-    __construct_MRC(file);
-  }
+  // constructor to make a MiniRulesCollection from a rules file.
+  // This will reduce each individual BED file and make the 
+  // GenomicIntervalTreeMap
+  MiniRulesCollection::MiniRulesCollection(const std::string& script, bam_hdr_t *h) {
 
-// constructor to make a MiniRulesCollection from a rules file.
-// This will reduce each individual BED file and make the 
-// GenomicIntervalTreeMap
-void MiniRulesCollection::__construct_MRC(const std::string& script) {
-
-  // parse the rules file
-  //std::cerr << " FILE " << file << std::endl;
-  //const std::string document = GetScriptContents(file);
-
-  // set up JsonCPP reader and attempt to parse script
-  Json::Value root;
-  Json::Reader reader;
-  if ( !reader.parse(script, root)) {
-    
-    if (script.empty()) {
-      std::cerr << "JSON script is empty. Setting default to filter all reads" << std::endl;
-      return;
-    }
+    // set up JsonCPP reader and attempt to parse script
+    Json::Value root;
+    Json::Reader reader;
+    if ( !reader.parse(script, root)) {
       
-    // use built-in error reporting mechanism to alert user what was wrong with the script
-    std::cerr  << "ERROR: failed to parse JSON script" << std::endl;
-    std::cerr << script << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  Json::Value null(Json::nullValue);
-
-  int level = 1;
-
-  Json::Value glob = root.removeMember("global");
-  if (!glob.isNull()) {
-    rule_all.parseJson(glob);
-  }
-
-  // iterator over regions
-  for (auto& regions : root) {
-      
-    MiniRules mr;
-    mr.mrc = this;
-    
-    // add global rules (if there are any)
-    //for (auto& a : all_rules)
-    // mr.m_abstract_rules.push_back(a);
-
-    // check if mate applies
-    mr.m_applies_to_mate = __convert_to_bool(regions, "matelink");
-
-    // check for region padding
-    mr.pad = regions.get("pad", 0).asInt();
-
-    // set the region
-    std::string reg;
-    Json::Value v  = regions.get("region", null);
-    if (v != null) 
-      reg = v.asString();
-
-    // actually parse the region
-    if (reg == "WG" || reg.empty())
-      mr.m_whole_genome = true;
-    else
-      mr.setRegionFromFile(reg);
-
-    // check if its excluder region
-    mr.excluder = false; // default is no exclude
-    v = regions.get("exclude", null);
-    if (v != null) 
-      mr.excluder = v.asBool();
-
-    // set the rules
-    v = regions.get("rules", null);
-    // loop through the rules
-    for (auto& vv : v) {
-      if (vv != null) {
-    	AbstractRule ar = rule_all; // always start with the global rule
-    	ar.parseJson(vv);
-	// add the rule to the region
-	mr.m_abstract_rules.push_back(ar);
+      if (script.empty()) {
+	std::cerr << "JSON script is empty. Setting default to filter all reads" << std::endl;
+	return;
       }
+      
+      // use built-in error reporting mechanism to alert user what was wrong with the script
+      std::cerr  << "ERROR: failed to parse JSON script" << std::endl;
+      std::cerr << script << std::endl;
+      exit(EXIT_FAILURE);
     }
 
-    // check that the regions have at least one rule
-    // if it it doesn't, give it the global WG all
-    if (!mr.m_abstract_rules.size())
+    // meake sure it at least has a rule
+    /*std::stringstream buffer;
+    if (read_access_test(script)) {
+      std::ifstream t(script);
+      buffer << t.rdbuf();
+    } else {
+      buffer << script;
+    }
+    if (buffer.str().find("\"rules\"") == std::string::npos) {
+      std::cerr << " !!! JSON must be formated as {\"region\" : \{\"rules\" : [{...}]}}" << std::endl 
+		<< " where \"rules\" is a keyword " << std::endl;
+      exit(EXIT_FAILURE);
+      }*/
+    
+    Json::Value null(Json::nullValue);
+    
+    int level = 1;
+    
+    Json::Value glob = root.removeMember("global");
+    if (!glob.isNull()) {
+      rule_all.parseJson(glob);
+    }
+    
+    // iterator over regions
+    for (auto& regions : root) {
+     
+      if (!__validate_json_value(regions, allowed_region_annots))
+	exit(EXIT_FAILURE);
+
+      MiniRules mr;
+      mr.mrc = this;
+      
+      // add global rules (if there are any)
+      //for (auto& a : all_rules)
+      // mr.m_abstract_rules.push_back(a);
+      
+      // check if mate applies
+      mr.m_applies_to_mate = __convert_to_bool(regions, "matelink");
+
+      // check for region padding
+      mr.pad = regions.get("pad", 0).asInt();
+      
+      // set the region
+      std::string reg;
+      Json::Value v  = regions.get("region", null);
+      if (v != null) {
+	reg = v.asString();
+	mr.id = mr.id + reg;
+      }
+      
+      // actually parse the region
+      if (reg == "WG" || reg.empty())
+	mr.m_whole_genome = true;
+      else
+	mr.setRegionFromFile(reg, h);
+      
+      // check if its excluder region
+      mr.excluder = false; // default is no exclude
+      v = regions.get("exclude", null);
+      if (v != null) {
+	mr.excluder = v.asBool();
+	if (mr.excluder)
+	  mr.id = mr.id + "_exclude";
+      }
+      
+      // set the rules
+      v = regions.get("rules", null);
+      if (!v.size()) {
+	//std::cerr << " !!!! RULES size is zero. !!!! " << std::endl;
+	//exit(EXIT_FAILURE);
+      }
+
+      // loop through the rules
+      for (auto& vv : v) {
+	if (vv != null) {
+	  if (!__validate_json_value(vv, valid))
+	    exit(EXIT_FAILURE);
+	  AbstractRule ar = rule_all; // always start with the global rule
+	  ar.parseJson(vv);
+	  // add the rule to the region
+	  mr.m_abstract_rules.push_back(ar);
+	}
+      }
+      
+      // check that the regions have at least one rule
+      // if it it doesn't, give it the global WG all
+      if (!mr.m_abstract_rules.size())
+	mr.m_abstract_rules.push_back(rule_all);
+      
+      mr.m_level = level++;
+      mr.id = std::to_string(level);
+
+      m_regions.push_back(mr);
+      
+    }
+    
+    // check that there is at least one non-excluder region. 
+    // if not, give global includer
+    bool has_includer = false;
+    for (auto& kk : m_regions)
+      if (!kk.excluder)
+	has_includer = true;
+    if (!has_includer) {
+      MiniRules mr;
+      mr.m_whole_genome = true;
       mr.m_abstract_rules.push_back(rule_all);
-
-    mr.m_level = level++;
-    mr.id = std::to_string(level);
-
-    m_regions.push_back(mr);
-
+      mr.mrc = this; // set the pointer to the collection
+      mr.id = "WG_includer";
+      m_regions.push_back(mr);
+    }
+    
   }
   
-  // check that there is at least one non-excluder region. 
-  // if not, give global includer
-  bool has_includer = false;
-  for (auto& kk : m_regions)
-    if (!kk.excluder)
-      has_includer = true;
-  if (!has_includer) {
-    MiniRules mr;
-    mr.m_whole_genome = true;
-    mr.m_abstract_rules.push_back(rule_all);
-    mr.mrc = this; // set the pointer to the collection
-    m_regions.push_back(mr);
+  // print the MiniRulesCollection
+  std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
+    
+    out << "----------MiniRulesCollection-------------" << std::endl;
+    out << "--- counting all rules (fall through): " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
+
+    for (auto& it : mr.m_regions)
+      out << it;
+    out << "------------------------------------------";
+    /*  std::cerr << "--- Rule counts " << std::endl;
+	for (auto& g : mr.m_regions)
+	for (auto& r : g.m_abstract_rules)
+	std::cerr << g.id << "\t" << g.m_count << "\t" << r.id << "\t" << r.m_count << std::endl;
+    */
+    return out;
+    
   }
-
-}
-
-// print the MiniRulesCollection
-std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
-
-  out << "----------MiniRulesCollection-------------" << std::endl;
-  out << "--- counting all rules (fall through): " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
-
-  for (auto& it : mr.m_regions)
-    out << it;
-  out << "------------------------------------------";
-  /*  std::cerr << "--- Rule counts " << std::endl;
-  for (auto& g : mr.m_regions)
-    for (auto& r : g.m_abstract_rules)
-      std::cerr << g.id << "\t" << g.m_count << "\t" << r.id << "\t" << r.m_count << std::endl;
-  */
-  return out;
-
-}
 
 // print a MiniRules information
 std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
   
   std::string file_print = mr.m_whole_genome ? "WHOLE GENOME" : mr.m_region_file;
-  out << (mr.excluder ? "--Exclude Region: " : "--RegionInput:") << file_print;
+  out << (mr.excluder ? "--Exclude Region: " : "--Include Region: ") << file_print;
   if (!mr.m_whole_genome) {
     //out << " --Size: " << AddCommas<int>(mr.m_width); 
-    out << " --Pad: " << mr.pad;
-    out << " --Include Mate: " << (mr.m_applies_to_mate ? "ON" : "OFF");
+    out << " Pad: " << mr.pad;
+    out << " Matelink: " << (mr.m_applies_to_mate ? "ON" : "OFF");
     if (mr.m_grv.size() == 1)
-      out << " --Region : " << mr.m_grv[0] << std::endl;
+      out << " Region : " << mr.m_grv[0] << std::endl;
     else
-      out << " --Region: " << mr.m_grv.size() << " regions" << std::endl;      
+      out << " " << mr.m_grv.size() << " regions" << std::endl;      
   } else {
     out << std::endl;
   }
@@ -423,8 +452,13 @@ void MiniRulesCollection::sendToBed(std::string file) {
 
   }
 
-
   void FlagRule::parseJson(const Json::Value& value) {
+
+    Json::Value null(Json::nullValue);
+    if (value == "flag") 
+      m_on_flag = __parse_json_int(value.get("flag", null));
+    if (value == "!flag") 
+      m_off_flag = __parse_json_int(value.get("!flag", null));
 
     // have to set the na if find flag so that rule knows it cant skip checking
     if (dup.parseJson(value, "duplicate")) na = false;
@@ -452,28 +486,26 @@ void MiniRulesCollection::sendToBed(std::string file) {
       if (v.size() > 2) {
 	std::cerr << " ERROR. Not expecting array size " << v.size() << " for Range " << name << std::endl;
       } else {
-	every = false;
-	none = false;
-	inverted = false;
+	m_every = false;
+	m_inverted = false;
 
-	
 	if (v.isArray()) {
-	  min = v[0].asInt();
-	  max = v[1].asInt();
+	  m_min = v[0].asInt();
+	  m_max = v[1].asInt();
 	} else if (v.isInt()) {
-	  min = v.asInt();
-	  max = INT_MAX;
+	  m_min = v.asInt();
+	  m_max = INT_MAX;
 	} else if (v.isBool()) {
-	  min = v.asBool() ? 1 : INT_MAX; // if true, [1,MAX], if false [MAX,1] (not 1-MAX)
-	  max = v.asBool() ? INT_MAX : 1;
+	  m_min = v.asBool() ? 1 : INT_MAX; // if true, [1,MAX], if false [MAX,1] (not 1-MAX)
+	  m_max = v.asBool() ? INT_MAX : 1;
 	} else {
 	  std::cerr << "Unexpected type for range flag: " << name << std::endl;
 	  exit(EXIT_FAILURE);
 	}
 
-	if (min > max) {
-	  inverted = true;
-	  std::swap(min, max); // make min always lower
+	if (m_min > m_max) {
+	  m_inverted = true;
+	  std::swap(m_min, m_max); // make min always lower
 	}
       }
 	
@@ -482,16 +514,8 @@ void MiniRulesCollection::sendToBed(std::string file) {
 
   void AbstractRule::parseJson(const Json::Value& value) {
 
-    // verify that it has appropriate values
-    for (auto& i : value.getMemberNames()) {
-      if (!valid.count(i)) {
-	std::cerr << "Invalid key value in JSON: " << i << std::endl;
-	exit(EXIT_FAILURE);
-      }
-    }
-	
     // parse read group
-    const std::string rg = "RG";
+    const std::string rg = "rg";
     if (value.isMember(rg.c_str())) {
       Json::Value null(Json::nullValue);
       Json::Value v = value.get(rg, null);
@@ -499,6 +523,13 @@ void MiniRulesCollection::sendToBed(std::string file) {
       read_group = v.asString();
     }
       
+    // set the ID
+    for (auto& i : value.getMemberNames()) {
+      id += i + ";";
+    }
+    if (id.length())
+      id.pop_back();
+
     // parse the flags
     fr.parseJson(value);
     
@@ -664,7 +695,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     if (!phred.isEvery()) {
       
       int32_t startpoint = 0, endpoint = 0;
-      r.QualityTrimmedSequence(phred.min, startpoint, endpoint);
+      r.QualityTrimmedSequence(phred.lowerBound(), startpoint, endpoint);
       new_len = endpoint - startpoint;
       
       if (endpoint != -1 && new_len < r.Length() && new_len > 0 && new_len - startpoint >= 0 && startpoint + new_len <= r.Length()) { 
@@ -763,9 +794,24 @@ void MiniRulesCollection::sendToBed(std::string file) {
   
   bool FlagRule::isValid(BamRead &r) {
     
+#ifdef QNAME
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << " IN FLAG RULE: EVERY? " << isEvery() << " ON NUMBER FLAG " << m_on_flag << " OFF NUMEBR FLAG " << m_off_flag <<  " ON NUM RESULT "  << std::endl;
+#endif
     if (isEvery())
       return true;
     
+    // if have on or off flag, use that
+    if (m_on_flag && !(r.AlignmentFlag() & m_on_flag) )
+      return false;
+    if (m_off_flag && (r.AlignmentFlag() & m_off_flag))
+      return false;
+       
+#ifdef QNAME
+    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+      std::cerr << " CHECKING NAMED FLAGS " << std::endl;
+#endif
+
     if (!dup.isNA()) 
       if ((dup.isOff() && r.DuplicateFlag()) || (dup.isOn() && !r.DuplicateFlag()))
       return false;
@@ -839,11 +885,9 @@ void MiniRulesCollection::sendToBed(std::string file) {
 // define how to print
 std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
 
-  out << "  Rule: " << ar.name << " -- ";;
+  out << "  Rule: ";
   if (ar.isEvery()) {
     out << "  ALL";
-  } else if (ar.isNone()) {
-    out << "  KEEPING NONE";  
   } else {
     if (!ar.read_group.empty())
       out << "Read Group: " << ar.read_group << " -- ";
@@ -871,7 +915,7 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
       out << "sub:" << ar.subsam_frac << " -- ";
 #ifndef __APPLE__
     //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
-    if (ar.atm_file != "")
+    if (!ar.atm_file.empty())
       out << (ar.atm_inv ? "NOT " : "") << "matching on " << ar.atm_count << " motifs from " << ar.atm_file << " -- ";
 #endif
     out << ar.fr;
@@ -889,6 +933,11 @@ std::ostream& operator<<(std::ostream &out, const FlagRule &fr) {
 
   std::string keep = "Flag ON: ";
   std::string remo = "Flag OFF: ";
+
+  if (fr.m_on_flag)
+    keep += "[" + std::to_string(fr.m_on_flag) + "],";
+  if (fr.m_off_flag)
+    remo += "[" + std::to_string(fr.m_off_flag) + "],";
 
   if (fr.dup.isOff())
     remo += "duplicate,";
@@ -968,17 +1017,12 @@ std::ostream& operator<<(std::ostream &out, const FlagRule &fr) {
 // define how to print
 std::ostream& operator<<(std::ostream &out, const Range &r) {
   if (r.isEvery())
-    out << "all";
-  else if (r.min == 1 && r.max == INT_MAX && !r.inverted)
     out << "ALL";
-  else if (r.min == 1 && r.max == INT_MAX && r.inverted)
-    out << "NONE";
   else
-    out << (r.inverted ? "NOT " : "") << "[" << r.min << "," << (r.max == INT_MAX ? "MAX" : std::to_string(r.max))  << "]";
+    out << (r.m_inverted ? "NOT " : "") << "[" << r.m_min << "," << (r.m_max == INT_MAX ? "MAX" : std::to_string(r.m_max))  << "]";
   return out;
 }
 
-  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 //bool AbstractRule::ahomatch(const string& seq) {
@@ -1001,7 +1045,6 @@ bool AbstractRule::ahomatch(BamRead &r) {
 }
 #endif
 
-  //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
 #ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 bool AbstractRule::ahomatch(const char * seq, unsigned len) {
@@ -1022,9 +1065,16 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
 #endif
 
   void AbstractRule::parseSeqLine(const Json::Value& value) {
+    
+    bool i = false; // invert motif?
+    std::string motif_file;
     Json::Value null(Json::nullValue);
     if (value.get("motif", null) != null) 
-      atm_file = value.get("motif", null).asString();
+      motif_file = value.get("motif", null).asString();
+    else if (value.get("!motif", null) != null) {
+      motif_file = value.get("!motif", null).asString();
+      i = true;
+    }
     else
       return;
 
@@ -1033,37 +1083,40 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
     exit(EXIT_FAILURE);
 #endif
 
+    addMotifRule(motif_file, i);
 
-  // open the sequence file
-  igzstream iss(atm_file.c_str());
-  if (!iss || !read_access_test(atm_file)) {
-    std::cerr << "ERROR: Cannot read the sequence file: " << atm_file << std::endl;
-    exit(EXIT_FAILURE);
+  return;
+
   }
 
-  // should it be inverted?
-  std::string inv;
-  //if (line.at(0) == '!') {
-  //  atm_inv = true;
-  //  inv = " -- Inverted -- ";
-  //}
 
-//#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+  void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
+
+    atm_file = f;
+    atm_inv = inverted;
+    
+    // open the sequence file
+    igzstream iss(atm_file.c_str());
+    if (!iss || !read_access_test(atm_file)) {
+      std::cerr << "ERROR: Cannot read the sequence file: " << atm_file << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    
 #ifndef __APPLE__
-  // initialize it
-  if (!atm)
-    atm = ac_automata_init(); //atm_ptr(ac_automata_init(), atm_free_delete);
-  // make the Aho-Corasick key
-  std::cerr << "...generating Aho-Corasick key"  << inv << " from file " << atm_file << std::endl;
-  std::string pat;
-  size_t count = 0;
-  while (getline(iss, pat, '\n')) {
-    ++count;
-    std::istringstream iss2(pat);
-    std::string val;
-    size_t count2 = 0;
-    /// only look at second element
-    while (getline(iss2, val, '\t')) {
+    // initialize it
+    if (!atm)
+      atm = ac_automata_init(); //atm_ptr(ac_automata_init(), atm_free_delete);
+    // make the Aho-Corasick key
+    std::cerr << "...generating Aho-Corasick key from file " << atm_file << std::endl;
+    std::string pat;
+    size_t count = 0;
+    while (getline(iss, pat, '\n')) {
+      ++count;
+      std::istringstream iss2(pat);
+      std::string val;
+      size_t count2 = 0;
+      /// only look at second element
+      while (getline(iss2, val, '\t')) {
 	++count2;
 	if (count2 > 1)
 	  continue;
@@ -1072,18 +1125,15 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
 	tmp_pattern.length = static_cast<unsigned>(val.length());
 	ac_automata_add(atm, &tmp_pattern);
       }
-  }
-  //ac_automata_finalize(atm);
-  //std::cerr << "Done generating Aho-Corasick key of size " << count << std::endl;  
-
-  atm_count = count;
+    }
+    //ac_automata_finalize(atm);
+    //std::cerr << "Done generating Aho-Corasick key of size " << count << std::endl;  
+    
+    atm_count = count;
 #endif
-
-  return;
-
+    
   }
-
-
+  
   void AbstractRule::parseSubLine(const Json::Value& value) {
     Json::Value null(Json::nullValue);
     if (value.get("sub", null) != null) 
@@ -1127,6 +1177,83 @@ const std::string MiniRulesCollection::GetScriptContents(const std::string& scri
   return(output);
 
 }
+
+  MiniRules::MiniRules(const CommandLineRegion& c, bam_hdr_t * h) {
+
+    m_region_file = c.f;
+
+    // set a whole genome ALL rule
+    if (c.type < 0) {
+      m_whole_genome = true;
+      id = "WG";
+    } else {
+      // set the genomic region this rule applies to
+      setRegionFromFile(c.f, h);
+    }
+
+    // add the abstract rule
+    AbstractRule ar;
+
+    // set the flag
+    if (c.i_flag || c.e_flag) {
+      ar.fr.setOnFlag(c.i_flag);
+      ar.fr.setOffFlag(c.e_flag);
+    }
+
+    // set the other fields
+    if (c.len)
+      ar.len = Range(c.len, INT_MAX, false);
+    if (c.nbases != INT_MAX)
+      ar.nbases = Range(0, c.nbases, false);
+    if (c.phred)
+      ar.phred = Range(c.phred, INT_MAX, false);
+    if (c.mapq)
+      ar.mapq = Range(c.mapq, INT_MAX, false);
+    if (c.clip)
+      ar.clip = Range(c.clip, INT_MAX, false);
+    if (c.del)
+      ar.del = Range(c.del, INT_MAX, false);
+    if (c.ins)
+      ar.ins = Range(c.ins, INT_MAX, false);
+
+    // set the id
+    ar.id = id + "_CMD_RULE";
+
+    // add a motif rule
+    if (!c.motif.empty())
+      ar.addMotifRule(c.motif, false);
+
+    // add read group rule
+    ar.read_group = c.rg;
+
+    m_abstract_rules.push_back(ar);
+
+    // set the properties of the region
+    if (c.type >= 0) {
+      switch(c.type) {
+      case MINIRULES_MATE_LINKED:
+	m_applies_to_mate = true;
+	excluder = false;
+	break;
+      case MINIRULES_MATE_LINKED_EXCLUDE:
+	m_applies_to_mate = true;
+	excluder = true;
+	break;
+      case MINIRULES_REGION:
+	m_applies_to_mate = false;
+	excluder = false;
+	break;
+      case MINIRULES_REGION_EXCLUDE:
+	m_applies_to_mate = false;
+	excluder = true;
+	break;
+      default:
+	std::cerr << "Unexpected type in MiniRules::MiniRules. Exiting" << std::endl;
+	exit(EXIT_FAILURE);
+      }
+    }
+    
+  }
 
 }
 

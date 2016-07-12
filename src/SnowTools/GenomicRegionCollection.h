@@ -7,7 +7,9 @@
 #include <list>
 #include <unordered_map>
 
+#ifdef BOOST_VERSION
 #include "boost/icl/interval_set.hpp"
+#endif
 
 #include "SnowTools/IntervalTree.h"
 #include "SnowTools/GenomicRegion.h"
@@ -212,7 +214,9 @@ class GenomicRegionCollection {
   // always construct this object any time m_grv is modifed
   GenomicIntervalTreeMap m_tree;
 
+#ifdef BOOST_VERSION
   boost::icl::interval_set<int> m_set;
+#endif
  
   GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
 
