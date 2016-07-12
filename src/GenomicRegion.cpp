@@ -62,7 +62,6 @@ std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
 // write genomic region to a string
 std::string GenomicRegion::toString() const {
   std::stringstream out;
-  //out << chrToString(chr)  << ":" << SnowUtils::AddCommas<int>(pos1) << "-" << SnowUtils::AddCommas<int>(pos2) << "(" << strand << ")"; 
   out << chrToString(chr) << ":" << SnowTools::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
     strand << ")"; 
   return out.str();

@@ -134,18 +134,13 @@ class GenomicRegion {
   int width() const;
 
   int32_t chr = 0;
+  //int32_t chr:30, strand:2;
   int32_t pos1 = 0;
   int32_t pos2 = 0;
   char strand = '*';
 
-  //  bam_hdr_t * m_hdr = nullptr;
-
  private:
 
-  //char strand = '*';
-  //std::string id;
-  //int mapq = 0;
-  
 };
 
 typedef std::vector<GenomicRegion> GenomicRegionVector;

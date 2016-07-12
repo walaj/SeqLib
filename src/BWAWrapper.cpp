@@ -29,7 +29,7 @@ namespace SnowTools {
     assert(id >= 0);
 
     if (id < 0 || id >= idx->bns->n_seqs) 
-      throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index");
+      throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index for id of " + std::to_string(id) + " on IDX of size " + std::to_string(idx->bns->n_seqs));
 
     return std::string(idx->bns->anns[id].name);
   }

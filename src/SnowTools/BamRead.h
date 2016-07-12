@@ -156,7 +156,7 @@ class BamRead {
   inline bool MateReverseFlag() const { return b ? ((b->core.flag&BAM_FMREVERSE) != 0) : false; }
 
   /** BamRead has is an interchromosomal alignment */
-  inline bool Interchromosomal() const { return b ? b->core.tid != b->core.mtid : false; }
+  inline bool Interchromosomal() const { return b ? b->core.tid != b->core.mtid && PairMappedFlag() : false; }
 
   /** BamRead is a duplicate */
   inline bool DuplicateFlag() const { return b ? ((b->core.flag&BAM_FDUP) != 0) : false; }
@@ -280,11 +280,16 @@ class BamRead {
    * @return empty string if no readgroup found
    */
   inline std::string ParseReadGroup() const {
-    // try to get the read group tag from qname first
+
+    // try to get from RG tag first
+    std::string RG = GetZTag("RG");
+    if (!RG.empty())
+      return RG;
+
+    // try to get the read group tag from qname second
     std::string qn = Qname();
     size_t posr = qn.find(":", 0);
-    std::string RG = (posr != std::string::npos) ? qn.substr(0, posr) : GetZTag("RG");
-    return (RG);
+    return (posr != std::string::npos) ? qn.substr(0, posr) : "NA";
   }
 
 
