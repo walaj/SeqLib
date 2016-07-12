@@ -87,7 +87,9 @@ void BamStats::addRead(BamRead &r)
 {
 
   // get the read group
-  std::string rg = r.ParseReadGroup();
+  std::string rg = r.GetZTag("RG"); 
+  if (rg.empty()) // try grabbing from QNAME
+    rg = "QNAMED_" + r.ParseReadGroup();
 
 #ifdef DEBUG_STATS
   std::cout << "got read group tag " << rg << std::endl;
