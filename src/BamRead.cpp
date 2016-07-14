@@ -4,7 +4,7 @@
 #include <bitset>
 #include <cctype>
 
-#ifdef BOOST_VERSION
+#ifdef HAVE_BOOST
 #include <boost/algorithm/string.hpp>
 #endif
 
@@ -637,7 +637,7 @@ namespace SnowTools {
 
     Cigar tc;
 
-#ifdef BOOST_VERSION
+#ifdef HAVE_BOOST
 
     // get the ops
     std::vector<char> ops;
