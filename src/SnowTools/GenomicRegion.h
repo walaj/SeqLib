@@ -96,6 +96,10 @@ class GenomicRegion {
    */
   int32_t distanceBetweenEnds(const GenomicRegion &gr) const;
 
+  /** Output as a string, with chr ID bumped up by one to make ID 0
+   * print as "1". Add commas to pos
+   */
+  std::string toPrettyString() const;
 
   // define how these are to be sorted
   bool operator < (const GenomicRegion& b) const;
@@ -130,18 +134,13 @@ class GenomicRegion {
   int width() const;
 
   int32_t chr = 0;
+  //int32_t chr:30, strand:2;
   int32_t pos1 = 0;
   int32_t pos2 = 0;
   char strand = '*';
 
-  //  bam_hdr_t * m_hdr = nullptr;
-
  private:
 
-  //char strand = '*';
-  //std::string id;
-  //int mapq = 0;
-  
 };
 
 typedef std::vector<GenomicRegion> GenomicRegionVector;

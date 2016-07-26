@@ -24,14 +24,14 @@ AC_ARG_WITH(boost, AS_HELP_STRING([--with-boost=PATH],
 	[specify directory containing the boost library)]))
 if test "$with_boost" -a -d "$with_boost"; then
     boost_include="-I$with_boost"
-    AC_CHECK_FILE("$with_boost/stage/lib", STAGE_PATH=1, STAGE_PATH=0)
-    if test ${STAGE_PATH} = 1; then
-        boost_lib="$with_boost/stage/lib"  
-    else
-        boost_lib="$with_boost/lib"        
-    fi
-    boost_lib_flag="-L/$boost_lib"
-    AC_SUBST(boost_lib)	
+    ##AC_CHECK_FILE("$with_boost/stage/lib", STAGE_PATH=1, STAGE_PATH=0)
+    ##if test ${STAGE_PATH} = 1; then
+    ##    boost_lib="$with_boost/stage/lib"  
+    ##else
+    ##    boost_lib="$with_boost/lib"        
+    ##fi
+    ##boost_lib_flag="-L/$boost_lib"
+    ##AC_SUBST(boost_lib)	
 fi
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -47,11 +47,10 @@ AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "$CXXFLAGS -O3")
 AC_SUBST(CFLAGS, "$CFLAGS -O3")
 AC_SUBST(CPPFLAGS, "$CPPFLAGS -I. $boost_include")
-AC_SUBST(LDFLAGS, "$LDFLAGS $boost_lib_flag")
+AC_SUBST(LDFLAGS, "$LDFLAGS")
 
 # We always need to specify to link in bamtools
-AC_SUBST(LIBS, "$LIBS")
-## -lboost_regex -pthread")
+AC_SUBST(LIBS, "$LIBS -pthread")
 
 # Check for hash table headers
 AC_CHECK_HEADERS([ \
@@ -61,10 +60,9 @@ AC_CHECK_HEADERS([ \
 ])
 
 # Make sure the boost headers can be found
-AC_CHECK_HEADERS([boost/regex.hpp],,[AC_MSG_ERROR([The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option])])
+AC_CHECK_HEADERS([boost/regex.hpp],[AC_SUBST(CPPFLAGS, "$CPPFLAGS -DHAVE_BOOST")],[AC_MSG_WARN([Optional: Specifify Boost library with--with-boost=PATH option])])
 
 AC_CONFIG_FILES([Makefile
-	         snow_test/Makefile	
 		 htslib/Makefile
 		 SGA/Util/Makefile
 		 SGA/Bigraph/Makefile
@@ -72,7 +70,6 @@ AC_CONFIG_FILES([Makefile
 		 SGA/StringGraph/Makefile
 		 SGA/SuffixTools/Makefile
 		 SGA/SQG/Makefile
-	         src/Makefile
-		 tools/Makefile])
+	         src/Makefile])
 
 AC_OUTPUT

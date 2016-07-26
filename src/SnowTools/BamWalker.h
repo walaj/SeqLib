@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 
-#include "SnowTools/MiniRules.h"
+#include "SnowTools/MiniRules2.h"
 
 // Phred score transformations
 inline int char2phred(char b) {
@@ -110,6 +110,11 @@ class BamWalker {
    */
   void makeIndex();
 
+  /** Create a string representation of 
+   * all of the regions to walk
+   */
+  std::string printRegions() const;
+
   /** Print a run-time message to stdout.
    *
    * Prints a message about all of the reads that have been visited, and informaiton
@@ -155,10 +160,6 @@ class BamWalker {
    */
   bool GetNextRead(BamRead &r, bool& rule);
 
-  /** Set regions to not be read from
-   */
-  void addBlacklist(GRC& bl);
-
   /** Write an alignment to the output BAM file 
    * @param r The BamRead to save
    */
@@ -168,12 +169,13 @@ class BamWalker {
    */
   const MiniRulesCollection& GetMiniRulesCollection() const { return m_mr; }
 
-  /** Send the counts for passed rules to a file */
+  /** Send the counts for passed rules to a file 
+   * @param Path to file to write the read statistics to
+   */
   void MiniRulesToFile(const std::string& file) const { m_mr.countsToFile(file); }
 
   /** Set the BamWalker to count reads for all rules */
   void setCountAllRules() { m_mr.m_fall_through = true; }
-
 
   std::string m_in;
   std::string m_out;
@@ -184,11 +186,16 @@ class BamWalker {
   void setStdout();
 
   /** Set a flag to say if we should print reads to CRAM format
+   * @param out Output CRAM file to write to
+   * @param ref File with the reference genome used for compression
    */
   void setCram(const std::string& out, const std::string& ref);
 
-  void setPrintHeader() { 
-    m_print_header = true;
+  /** If set to true, will print header in output 
+   * @param val Set whether to print the hader
+   */
+  void setPrintHeader(bool val) { 
+    m_print_header = val;
   }
 
   /** Set the output bam to remove all alignment tags */
@@ -254,25 +261,16 @@ class BamWalker {
 
   // hts
   std::shared_ptr<BGZF> fp;
-  //BGZF * fp = 0;
-  //hts_idx_t * idx = 0; // hts_idx_load(bamfile.c_str(), HTS_FMT_BAI);
   std::shared_ptr<hts_idx_t> idx;
   std::shared_ptr<hts_itr_t> hts_itr;
-  //hts_itr_t * hts_itr = 0; // sam_itr_queryi(idx, 3, 60000, 80000);
   std::shared_ptr<bam_hdr_t> br;
   std::shared_ptr<bam_hdr_t> hdr_write;
-  //bam_hdr_t * br = 0;
 
   std::shared_ptr<htsFile> fop;
-  //htsFile* fop = nullptr;
 
   // which tags to strip
   std::vector<std::string> m_tag_list;
 
-  // blacklist
-  GRC blacklist;
-
-  // 
   bool m_verbose = false;
 
   // read counter

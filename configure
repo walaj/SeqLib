@@ -642,7 +642,6 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 AM_CXXFLAGS
-boost_lib
 EGREP
 GREP
 CXXCPP
@@ -5067,41 +5066,14 @@ fi
 
 if test "$with_boost" -a -d "$with_boost"; then
     boost_include="-I$with_boost"
-    as_ac_File=`$as_echo "ac_cv_file_"$with_boost/stage/lib"" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for \"$with_boost/stage/lib\"" >&5
-$as_echo_n "checking for \"$with_boost/stage/lib\"... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r ""$with_boost/stage/lib""; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  STAGE_PATH=1
-else
-  STAGE_PATH=0
-fi
-
-    if test ${STAGE_PATH} = 1; then
-        boost_lib="$with_boost/stage/lib"
-    else
-        boost_lib="$with_boost/lib"
-    fi
-    boost_lib_flag="-L/$boost_lib"
-
+    ##AC_CHECK_FILE("$with_boost/stage/lib", STAGE_PATH=1, STAGE_PATH=0)
+    ##if test ${STAGE_PATH} = 1; then
+    ##    boost_lib="$with_boost/stage/lib"
+    ##else
+    ##    boost_lib="$with_boost/lib"
+    ##fi
+    ##boost_lib_flag="-L/$boost_lib"
+    ##AC_SUBST(boost_lib)
 fi
 
 # Only fail on warnings when the --enable-development flag is passed into configure
@@ -5124,13 +5096,12 @@ CFLAGS="$CFLAGS -O3"
 
 CPPFLAGS="$CPPFLAGS -I. $boost_include"
 
-LDFLAGS="$LDFLAGS $boost_lib_flag"
+LDFLAGS="$LDFLAGS"
 
 
 # We always need to specify to link in bamtools
-LIBS="$LIBS"
+LIBS="$LIBS -pthread"
 
-## -lboost_regex -pthread")
 
 # Check for hash table headers
 
@@ -5443,17 +5414,17 @@ as_val=`eval 'as_val=${'$as_ac_Header'}
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
+ CPPFLAGS="$CPPFLAGS -DHAVE_BOOST"
 
 else
-  { { $as_echo "$as_me:$LINENO: error: The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option" >&5
-$as_echo "$as_me: error: The Boost library must be installed for VariantBam. Specify its path with the --with-boost=PATH option" >&2;}
-   { (exit 1); exit 1; }; }
+  { $as_echo "$as_me:$LINENO: WARNING: Optional: Specifify Boost library with--with-boost=PATH option" >&5
+$as_echo "$as_me: WARNING: Optional: Specifify Boost library with--with-boost=PATH option" >&2;}
 fi
 
 done
 
 
-ac_config_files="$ac_config_files Makefile snow_test/Makefile htslib/Makefile SGA/Util/Makefile SGA/Bigraph/Makefile SGA/Algorithm/Makefile SGA/StringGraph/Makefile SGA/SuffixTools/Makefile SGA/SQG/Makefile src/Makefile tools/Makefile"
+ac_config_files="$ac_config_files Makefile htslib/Makefile SGA/Util/Makefile SGA/Bigraph/Makefile SGA/Algorithm/Makefile SGA/StringGraph/Makefile SGA/SuffixTools/Makefile SGA/SQG/Makefile src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -6100,7 +6071,6 @@ do
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "snow_test/Makefile") CONFIG_FILES="$CONFIG_FILES snow_test/Makefile" ;;
     "htslib/Makefile") CONFIG_FILES="$CONFIG_FILES htslib/Makefile" ;;
     "SGA/Util/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/Util/Makefile" ;;
     "SGA/Bigraph/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/Bigraph/Makefile" ;;
@@ -6109,7 +6079,6 @@ do
     "SGA/SuffixTools/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/SuffixTools/Makefile" ;;
     "SGA/SQG/Makefile") CONFIG_FILES="$CONFIG_FILES SGA/SQG/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
-    "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 $as_echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

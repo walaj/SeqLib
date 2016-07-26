@@ -3,8 +3,16 @@
 #include <cassert>
 #include <bitset>
 #include <cctype>
+
+#ifdef HAVE_BOOST
 #include <boost/algorithm/string.hpp>
+#endif
+
+
 #include "SnowTools/ssw_cpp.h"
+
+#define TAG_DELIMITER "^"
+#define CTAG_DELIMITER '^'
 
 namespace SnowTools {
 
@@ -25,6 +33,10 @@ namespace SnowTools {
     return GenomicRegion(b->core.tid, b->core.pos, PositionEnd());
   }
 
+  GenomicRegion BamRead::asGenomicRegionMate() const {
+    return GenomicRegion(b->core.mtid, b->core.mpos, b->core.mpos + Length());
+  }
+
   std::string BamRead::Sequence() const {
     uint8_t * p = bam_get_seq(b);
     std::string out(b->core.l_qseq, 'N');
@@ -32,6 +44,16 @@ namespace SnowTools {
       out[i] = BASES[bam_seqi(p,i)];
     return out;
     
+  }
+
+  int32_t BamRead::AlignmentLength() const {
+    uint32_t* c = bam_get_cigar(b);
+    int32_t len = 0;
+    for (int k = 0; k < b->core.n_cigar; ++k) 
+      if (bam_cigar_type(bam_cigar_op(c[k]))&1 || bam_cigar_opchr(c[k]) == 'H') // consumes query
+	len += bam_cigar_oplen(c[k]);
+    //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
+    return len;
   }
 
   BamRead::BamRead(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
@@ -112,8 +134,12 @@ namespace SnowTools {
 	return;
       }
     
+    // check that we don't have the tag delimiter in the stirng
+    if (val.find(TAG_DELIMITER) != std::string::npos)
+      std::cerr << "BamRead::SmartAddTag -- Tag delimiter " << TAG_DELIMITER << " is in the value to be added. Compile with diff tag delimiter or change val" << std::endl;
+
     // append the tag
-    tmp += "x"  + val;
+    tmp += TAG_DELIMITER + val;
     
     // remove the old tag
     RemoveTag(tag.c_str());
@@ -225,13 +251,6 @@ namespace SnowTools {
 
     }*/
 
-  /*  std::string BamRead::toSam(bam_hdr_t* h) const 
-  {
-    kstring_t *str;
-    sam_format1(h, b, str);
-    return std::string(str->s);
-    }*/
-
   double BamRead::MeanPhred() const {
 
     if (b->core.l_qseq <= 0)
@@ -253,17 +272,19 @@ namespace SnowTools {
 
   std::ostream& operator<<(std::ostream& out, const BamRead &r)
   {
-    //kstring_t *str;
-    //sam_format1(hdr, b, str);
-    //out << str->s;
+    if (!r.b) {
+      out << "empty read";
+      return out;
+    }
 
     out << bam_get_qname(r.b) << "\t" << r.b->core.flag
 	<< "\t" << (r.b->core.tid+1) << "\t" << r.b->core.pos 
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
-        << r.b->core.isize 
+        << r.FullInsertSize() //r.b->core.isize 
 	<< "\t" << r.Sequence() << "\t*" << 
-      "\tAS:" << r.GetIntTag("AS");/* << "\t" << r.Qualities()*/;
+      "\tAS:" << r.GetIntTag("AS") << 
+      "\tDD:" << r.GetIntTag("DD");/* << "\t" << r.Qualities()*/;;/* << "\t" << r.Qualities()*/;
     return out;
       
     
@@ -389,10 +410,10 @@ namespace SnowTools {
     if (tmp.empty())
       return std::vector<std::string>();
     
-    if (tmp.find("x") != std::string::npos) {
+    if (tmp.find(TAG_DELIMITER) != std::string::npos) {
       std::istringstream iss(tmp);
       std::string line;
-      while (std::getline(iss, line, 'x')) {
+      while (std::getline(iss, line, CTAG_DELIMITER)) {
 	out.push_back(line);
       }
     } else {
@@ -416,10 +437,10 @@ namespace SnowTools {
     if (tmp.empty())
       return std::vector<int>();
     
-    if (tmp.find("x") != std::string::npos) {
+    if (tmp.find(TAG_DELIMITER) != std::string::npos) {
       std::istringstream iss(tmp);
       std::string line;
-      while (std::getline(iss, line, 'x')) {
+      while (std::getline(iss, line, CTAG_DELIMITER)) {
 	try { out.push_back(stoi(line)); } catch (...) { std::cerr << "Failed to read parsed int tag " << tag << " for value " << tmp << " with line " << line << std::endl; std::exit(EXIT_FAILURE); }
       }
     } else {
@@ -614,6 +635,10 @@ namespace SnowTools {
 
   Cigar cigarFromString(const std::string& cig) {
 
+    Cigar tc;
+
+#ifdef HAVE_BOOST
+
     // get the ops
     std::vector<char> ops;
     for (auto& c : cig)
@@ -626,12 +651,18 @@ namespace SnowTools {
     lens.pop_back(); // fills in empty at end for some reason
 
     assert(ops.size() == lens.size());
-    Cigar c;
     for (size_t i = 0; i < lens.size(); ++i) {
-      c.push_back(CigarField(ops[i], std::stoi(lens[i])));
+      tc.push_back(CigarField(ops[i], std::stoi(lens[i])));
     }
     
-    return c;
+    return tc;
+#else
+
+    std::cerr << "!!!!!! BOOST REQUIRED FOR THIS FUNCTION !!!!!!" << std::endl << 
+      "!!!!!! Returning EMPTY CIGAR !!!!!!!!!" << std::endl;
+    return tc;
+#endif
+
 
   }
   

@@ -62,7 +62,6 @@ std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
 // write genomic region to a string
 std::string GenomicRegion::toString() const {
   std::stringstream out;
-  //out << chrToString(chr)  << ":" << SnowUtils::AddCommas<int>(pos1) << "-" << SnowUtils::AddCommas<int>(pos2) << "(" << strand << ")"; 
   out << chrToString(chr) << ":" << SnowTools::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
     strand << ")"; 
   return out.str();
@@ -77,7 +76,10 @@ std::string GenomicRegion::toString() const {
 void GenomicRegion::pad(int32_t pad) {
 
   if (-pad*2 > width())
-    throw std::out_of_range("GenomicRegion::pad - negative pad values can't obliterate GenomicRegion");
+    throw std::out_of_range(
+         "GenomicRegion::pad - negative pad values can't obliterate GenomicRegion with val " + 
+	 std::to_string(chr) + ":" + std::to_string(pos1) + "-" + std::to_string(pos2) + 
+	 " and pad " + std::to_string(pad));
 
   pos1 -= pad;
   pos2 += pad;
@@ -104,6 +106,14 @@ bool GenomicRegion::operator<=(const GenomicRegion &b) const {
   return (*this < b || *this == b);
 }
 
+  std::string GenomicRegion::toPrettyString() const {
+    
+    std::stringstream ss;
+    ss << (chr + 1) << ":" << AddCommas(pos1) << "-" << AddCommas(pos2);
+    return ss.str();
+    
+  }
+
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   out << gr.toString();
   return out;
@@ -113,7 +123,7 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
 {
   
   if (h == nullptr)
-    std::cerr <<" NULL POINT: " << std::endl;
+    std::cerr <<" NULL HEADER in GenomicRegion::GenomicRegion(string, bam_hdr_t *): " << std::endl;
 
   // scrub String
   std::string reg2 = SnowTools::scrubString(reg, "chr");
@@ -245,6 +255,7 @@ void GenomicRegion::random() {
       pos2 = std::stoi(tpos2);
     }
     catch (...) {
+      std::cerr << " tchr " << tchr << " tpos1 " << tpos1 << std::endl;
       std::cerr << "GenomicRegion: error making pos2 from " << tpos2 << std::endl;
       pos2 = 0;
     }

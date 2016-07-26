@@ -44,7 +44,11 @@ namespace SnowTools {
    * @return Time formatted as "CPU: XmYs Wall: XmYs"
    * @note Does not work on OSX or Windows (returns "not configured")
    */
-  inline std::string displayRuntime(const timespec start) {
+  inline std::string displayRuntime(
+#ifndef __APPLE__
+				    const timespec start
+#endif
+				    ) {
     
 #ifndef __APPLE__
     struct timespec finish;
@@ -74,6 +78,7 @@ namespace SnowTools {
       *it = RCOMPLEMENT_TABLE[(unsigned char)*it];
   }
   
+
   /** Calculate the percentage and return as integer
    * @param numer Numerator
    * @param denom Denominator

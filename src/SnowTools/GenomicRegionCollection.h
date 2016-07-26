@@ -7,6 +7,10 @@
 #include <list>
 #include <unordered_map>
 
+#ifdef BOOST_VERSION
+#include "boost/icl/interval_set.hpp"
+#endif
+
 #include "SnowTools/IntervalTree.h"
 #include "SnowTools/GenomicRegion.h"
 #include "SnowTools/BamRead.h"
@@ -146,6 +150,9 @@ class GenomicRegionCollection {
  template<class K>
  GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand = false) const;
 
+ template<class K>
+ GenomicRegionCollection<GenomicRegion> findOverlaps(const K& gr, bool ignore_strand) const;
+
  /** The total amount spanned by this collection
   */
  int width() const { int wid = 0; for (auto& i : m_grv) wid += i.width(); return wid; }
@@ -206,8 +213,12 @@ class GenomicRegionCollection {
 
   // always construct this object any time m_grv is modifed
   GenomicIntervalTreeMap m_tree;
+
+#ifdef BOOST_VERSION
+  boost::icl::interval_set<int> m_set;
+#endif
  
- GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
+  GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
 
  //GenomicRegionCollection<GenomicRegion> complement(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
 

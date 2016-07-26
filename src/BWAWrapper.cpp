@@ -29,7 +29,7 @@ namespace SnowTools {
     assert(id >= 0);
 
     if (id < 0 || id >= idx->bns->n_seqs) 
-      throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index");
+      throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index for id of " + std::to_string(id) + " on IDX of size " + std::to_string(idx->bns->n_seqs));
 
     return std::string(idx->bns->anns[id].name);
   }
@@ -224,6 +224,11 @@ namespace SnowTools {
 
   void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, bool hardclip, 
 				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
+    
+    // we haven't made an index, just return
+    if (!idx)
+      return;
+
     mem_alnreg_v ar;
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
 

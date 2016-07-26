@@ -7,6 +7,7 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <cassert>
 #include <algorithm>
 
 #include "htslib/hts.h"
@@ -35,6 +36,12 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 //#include "SnowTools/HTSTools.h"
+
+#define FRORIENTATION 0
+#define FFORIENTATION 1
+#define RFORIENTATION 2
+#define RRORIENTATION 3
+#define UDORIENTATION 4
 
 namespace SnowTools {
 
@@ -127,6 +134,11 @@ class BamRead {
    */
   void init();
 
+  /** Check if a read is empty (not initialized)
+   * @value true if read was not initialized with any values
+   */
+  bool isEmpty() const { return !b; }
+
   /** Explicitly pass a bam1_t to the BamRead. 
    *
    * The BamRead now controls the memory, and will delete at destruction
@@ -135,34 +147,83 @@ class BamRead {
   void assign(bam1_t* a);
 
   /** Make a BamRead with no memory allocated and a null header */
-  BamRead() : m_hdr(nullptr) {}
+  BamRead() {}
 
   /** BamRead is aligned on reverse strand */
-  inline bool ReverseFlag() const { return (b->core.flag&BAM_FREVERSE) != 0; }
+  inline bool ReverseFlag() const { return b ? ((b->core.flag&BAM_FREVERSE) != 0) : false; }
 
   /** BamRead has mate aligned on reverse strand */
-  inline bool MateReverseFlag() const { return (b->core.flag&BAM_FMREVERSE) != 0; }
+  inline bool MateReverseFlag() const { return b ? ((b->core.flag&BAM_FMREVERSE) != 0) : false; }
 
   /** BamRead has is an interchromosomal alignment */
-  inline bool Interchromosomal() const { return b->core.tid != b->core.mtid; }
+  inline bool Interchromosomal() const { return b ? b->core.tid != b->core.mtid && PairMappedFlag() : false; }
 
   /** BamRead is a duplicate */
-  inline bool DuplicateFlag() const { return (b->core.flag&BAM_FDUP) != 0; }
+  inline bool DuplicateFlag() const { return b ? ((b->core.flag&BAM_FDUP) != 0) : false; }
 
   /** BamRead is a secondary alignment */
-  inline bool SecondaryFlag() const { return (b->core.flag&BAM_FSECONDARY) != 0; }
+  inline bool SecondaryFlag() const { return b ? ((b->core.flag&BAM_FSECONDARY) != 0) : false; }
+
+  /** BamRead is paired */
+  inline bool PairedFlag() const { return b ? ((b->core.flag&BAM_FPAIRED) != 0) : false; }
+
+  /** Get the relative pair orientations 
+   * 
+   * 0 - FR (RFORIENTATION) (lower pos read is Fwd strand, higher is reverse)
+   * 1 - FF (FFORIENTATION)
+   * 2 - RF (RFORIENTATION)
+   * 3 - RR (RRORIENTATION)
+   * 4 - Undefined (UDORIENTATION) (unpaired or one/both is unmapped)
+   */
+  inline int PairOrientation() const {
+    if (!PairMappedFlag())
+      return UDORIENTATION;
+    else if ( (!ReverseFlag() && Position() <= MatePosition() &&  MateReverseFlag() ) || // read 1
+	      (ReverseFlag()  && Position() >= MatePosition() && !MateReverseFlag() ) ) // read 2
+      return FRORIENTATION;
+    else if (!ReverseFlag() && !MateReverseFlag())
+      return FFORIENTATION;
+    else if (ReverseFlag() && MateReverseFlag())
+      return RRORIENTATION;
+    else if (   ( ReverseFlag() && Position() < MatePosition() && !MateReverseFlag()) ||
+                (!ReverseFlag() && Position() > MatePosition() &&  MateReverseFlag()))
+      return RFORIENTATION;
+    assert(false);
+  }
+  
 
   /** BamRead is failed QC */
-  inline bool QCFailFlag() const { return (b->core.flag&BAM_FQCFAIL) != 0; }
+  inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
   /** BamRead is mapped */
-  inline bool MappedFlag() const { return (b->core.flag&BAM_FUNMAP) == 0; }
+  inline bool MappedFlag() const { return b ? ((b->core.flag&BAM_FUNMAP) == 0) : false; }
 
   /** BamRead mate is mapped */
-  inline bool MateMappedFlag() const { return (b->core.flag&BAM_FMUNMAP) == 0; }
+  inline bool MateMappedFlag() const { return b ? ((b->core.flag&BAM_FMUNMAP) == 0) : false; }
 
-  /** BamRead mate is mapped */
-  inline bool PairMappedFlag() const { return !(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP); }
+  /** BamRead is mapped and mate is mapped and in pair */
+  inline bool PairMappedFlag() const { return b ? (!(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP) && (b->core.flag&BAM_FPAIRED) ) : false; }
+
+  /** BamRead is mapped in proper pair */
+  inline bool ProperPair() const { return b ? (b->core.flag&BAM_FPROPER_PAIR) : false;} 
+
+  /** BamRead has proper orientation (FR) */
+  inline bool ProperOrientation() const { 
+    if (!b)
+      return false;
+    
+    // mate on diff chrom gets false
+    if (b->core.tid != b->core.mtid)
+      return false;
+
+    // if FR return true
+    if (b->core.pos < b->core.mpos) {
+      return (b->core.flag&BAM_FREVERSE) == 0 && (b->core.flag&BAM_FMREVERSE) != 0 ? true : false;
+    } else {
+      return (b->core.flag&BAM_FREVERSE) == 0 && (b->core.flag&BAM_FMREVERSE) != 0 ? false : true;
+    }
+      
+  }
 
   /** Count the total number of N bases in this sequence */
   int32_t CountNBases() const;
@@ -174,28 +235,31 @@ class BamRead {
   std::string QualitySequence() const;
 
   /** Get the alignment position */
-  inline int32_t Position() const { return b->core.pos; }
+  inline int32_t Position() const { return b ? b->core.pos : -1; }
   
   /** Get the alignment position of mate */
-  inline int32_t MatePosition() const { return b->core.mpos; }
+  inline int32_t MatePosition() const { return b ? b->core.mpos: -1; }
 
   /** Count the number of secondary alignments by looking at XA and XP tags */
   int32_t CountSecondaryAlignments() const;
 
   /** Get the end of the alignment */
-  inline int32_t PositionEnd() const { return bam_endpos(b.get()); }
+  inline int32_t PositionEnd() const { return b ? bam_endpos(b.get()) : -1; }
 
   /** Get the chromosome ID of the read */
-  inline int32_t ChrID() const { return b->core.tid; }
+  inline int32_t ChrID() const { return b ? b->core.tid : -1; }
   
   /** Get the chrosome ID of the mate read */
-  inline int32_t MateChrID() const { return b->core.mtid; }
+  inline int32_t MateChrID() const { return b ? b->core.mtid : -1; }
   
   /** Get the mapping quality */
-  inline int32_t MapQuality() const { return b->core.qual; }
+  inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
+
+  /** Set the mapping quality */
+  inline void SetMapQuality(int32_t m) { b->core.qual = m; }
   
   /** Get the number of cigar fields */
-  inline int32_t CigarSize() const { return b->core.n_cigar; }
+  inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
   
   /** Check if this read is first in pair */
   inline bool FirstFlag() const { return (b->core.flag&BAM_FREAD1); }
@@ -207,10 +271,37 @@ class BamRead {
   inline char* QnameChar() const { return bam_get_qname(b); }
   
   /** Get the full alignment flag for this read */
-  inline int32_t AlignmentFlag() const { return b->core.flag; }
+  inline uint32_t AlignmentFlag() const { return b->core.flag; }
   
   /** Get the insert size for this read */
   inline int32_t InsertSize() const { return b->core.isize; } 
+
+  /** Get the read group, first from qname, then by RG tag 
+   * @return empty string if no readgroup found
+   */
+  inline std::string ParseReadGroup() const {
+
+    // try to get from RG tag first
+    std::string RG = GetZTag("RG");
+    if (!RG.empty())
+      return RG;
+
+    // try to get the read group tag from qname second
+    std::string qn = Qname();
+    size_t posr = qn.find(":", 0);
+    return (posr != std::string::npos) ? qn.substr(0, posr) : "NA";
+  }
+
+
+  /** Get the insert size, absolute value, and always taking into account read length */
+  inline int32_t FullInsertSize() const {
+
+    if (b->core.tid != b->core.mtid || !PairMappedFlag())
+      return 0;
+
+    return std::abs(b->core.pos - b->core.mpos) + Length();
+
+  }
   
   /** Get the number of query bases of this read (aka length) */
   inline int32_t Length() const { return b->core.l_qseq; }
@@ -218,9 +309,6 @@ class BamRead {
   /** Append a tag with new value, delimited by 'x' */
   void SmartAddTag(const std::string& tag, const std::string& val);
   
-  /** Set the mapping quality */
-  void SetMapQuality(int32_t m) { b->core.qual = m; } 
-
   /** Set the query name */
   void SetQname(const std::string& n);
 
@@ -231,6 +319,9 @@ class BamRead {
 
   /** Return read as a GenomicRegion */
   GenomicRegion asGenomicRegion() const;
+
+  /** Return mate as a GenomicRegion */
+  GenomicRegion asGenomicRegionMate() const;
 
   /** Get the max insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {
@@ -272,6 +363,9 @@ class BamRead {
     //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
     return cig;
   }
+
+  /** Get the length of the alignment (regardless of hardclipping) */
+  int32_t AlignmentLength() const;
 
   /** Retrieve the inverse of the CIGAR as a more managable Cigar structure */
   Cigar GetReverseCigar() const {
@@ -469,12 +563,12 @@ class BamRead {
    * Note that this requires that the header not be empty. If
    * it is empty, assumes this ia chr1 based reference
    */
-  inline std::string ChrName() const {
+  inline std::string ChrName(bam_hdr_t * h = nullptr) const {
 
     // if we have the header, convert
-    if (m_hdr) {
-      if (b->core.tid < m_hdr->n_targets)
-	return std::string(m_hdr->target_name[b->core.tid]);
+    if (h) {
+      if (b->core.tid < h->n_targets)
+	return std::string(h->target_name[b->core.tid]);
       else
 	return "CHR_ERROR";
     }
@@ -538,16 +632,9 @@ class BamRead {
    */
   bool coveredMatchBase(int pos) const;
 
-  
-  //std::string toSam(bam_hdr_t* h) const;
-
   std::shared_ptr<bam1_t> b; // need to move this to private  
   private:
 
-  //bam_hdr_h *hdr;
-  //bam1_t * b;
-
-  std::shared_ptr<bam_hdr_t> m_hdr;
 };
 
  typedef std::vector<BamRead> BamReadVector; 

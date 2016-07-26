@@ -41,7 +41,7 @@ namespace SnowTools {
     ++v[p - m_gr.pos1];
     }
   */
-  void STCoverage::addRead(const BamRead &r, bool full_length) {
+  void STCoverage::addRead(const BamRead &r, int buff, bool full_length) {
     
     //m_settled = false;
     //m_grc.add(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd()));
@@ -69,22 +69,26 @@ namespace SnowTools {
 	e = r.PositionEnd();
     }
     else {
-      p = r.Position();
-      e = r.PositionEnd();
+      p = r.Position() + buff;
+      e = r.PositionEnd() - buff;
     }
 
     if (p < 0 || e < 0)
       return;
 
     // if we don't have an empty map for this, add
-    if ((r.ChrID()+1) > (int)m_map.size()) {
+    if (r.ChrID() >= (int)m_map.size()) {
       int k = m_map.size();
-      while (k < (r.ChrID()+1)) {
+      while (k <= r.ChrID()) {
 	m_map.push_back(CovMap());
 	//m_map.back().reserve(reserve_size);
 	++k;
       }
     }
+
+    assert(e - p < 1e6); // limit on read length
+    assert(r.ChrID() >= 0);
+    assert(r.ChrID() < (int)m_map.size());
 
     try {
        while (p <= e) {

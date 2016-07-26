@@ -266,7 +266,9 @@ void BamWalker::printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) 
 	   rc_main.totalString().c_str(), r.ChrName().c_str(), posstring.c_str(),  
 	   rc_main.keepString().c_str(), rc_main.percent());
   printf ("%s | ",buffer);
+#ifndef __APPLE__
   SnowTools::displayRuntime(start);
+#endif
   std::cerr << std::endl;
   
 }
@@ -283,7 +285,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
   bam1_t* b = bam_init1(); 
 
   int32_t valid;
-  if (hts_itr == 0) { 
+  if (hts_itr == 0) {
     valid = bam_read1(fp.get(), b);    
     if (valid < 0) { 
 
@@ -294,6 +296,7 @@ bool BamWalker::GetNextRead(BamRead& r, bool& rule)
       return false;
     } 
   } else {
+
     valid = hts_itr_next(fp.get(), hts_itr.get(), b, dum);
   }
 
@@ -353,6 +356,15 @@ void BamWalker::writeAlignment(BamRead &r)
     sam_write1(fop.get(), hdr_write.get(), r.raw());
 }
 
+std::string BamWalker::printRegions() const {
+
+  std::stringstream ss;
+  for (auto& r : m_region)
+    ss << r << std::endl;
+  return(ss.str());
+
+}
+
 std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
 {
   out << " -- In Bam:  " << b.m_in << std::endl;
@@ -368,10 +380,17 @@ std::ostream& SnowTools::operator<<(std::ostream& out, const BamWalker& b)
     out << "SAM" << std::endl;
 
   out << b.m_mr << std::endl;
-  if (b.m_region.size()) {
+  if (b.m_region.size() && b.m_region.size() < 20) {
     out << " ------- BamWalker Regions ----------" << std::endl;;
     for (auto& i : b.m_region)
       out << i << std::endl;
+  } 
+  else if (b.m_region.size() >= 20) {
+    int wid = 0;
+    for (auto& i : b.m_region)
+      wid += i.width();
+    out << " ------- BamWalker Regions ----------" << std::endl;;
+    out << " -- " << b.m_region.size() << " regions covering " << AddCommas(wid) << " bp of sequence"  << std::endl;
   }
   else 
     out << " - BamWalker - Walking whole genome -" << std::endl;
@@ -395,28 +414,6 @@ std::string BamWalker::displayMiniRulesCollection() const
   std::stringstream ss;
   ss << m_mr;
   return ss.str();
-}
-
-/*void BamWalker::__check_regions_blacklist() 
-{
-
-  // does not work until get complement implemented
-
-  // check if it overlaps with blacklist
-  if (blacklist.size()) 
-    {
-      GRC regs;
-      for (auto& i : m_region)
-	regs.add(i);
-         //GRC out = regs.complement(blacklist);
-      m_region = out.asGenomicRegionVector();
-    }
-
-    }*/
-
-void BamWalker::addBlacklist(GRC& bl) 
-{
-  blacklist = bl;
 }
 
 void BamWalker::setCram(const std::string& out, const std::string& ref) {
