@@ -60,7 +60,6 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-MiniRules2.$(OBJEXT) \
 	libsnowtools_a-BreakPoint.$(OBJEXT) \
 	libsnowtools_a-BamWalker.$(OBJEXT) \
 	libsnowtools_a-BamStats.$(OBJEXT) \
-	libsnowtools_a-MiniRules.$(OBJEXT) \
 	libsnowtools_a-gzstream.$(OBJEXT) \
 	libsnowtools_a-SnowUtils.$(OBJEXT) \
 	libsnowtools_a-gChain.$(OBJEXT) \
@@ -203,7 +202,7 @@ libsnowtools_a_CPPFLAGS = \
 
 libsnowtools_a_SOURCES = MiniRules2.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c GenomicRegion.cpp Histogram.cpp RefGenome.cpp SVVCF.cpp \
 			AlignedContig.cpp BreakPoint.cpp \
-			BamWalker.cpp BamStats.cpp MiniRules.cpp gzstream.C SnowUtils.cpp \
+			BamWalker.cpp BamStats.cpp gzstream.C SnowUtils.cpp \
 			gChain.cpp BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
 			STCoverage.cpp Fractions.cpp BLATWrapper.cpp \
 			../bwa/is.c ../bwa/bwtindex.c \
@@ -314,7 +313,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-Fractions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-GenomicRegion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-Histogram.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-MiniRules.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-MiniRules2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-QSufSort.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-RefGenome.Po@am__quote@
@@ -500,20 +498,6 @@ libsnowtools_a-BamStats.obj: BamStats.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamStats.cpp' object='libsnowtools_a-BamStats.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamStats.obj `if test -f 'BamStats.cpp'; then $(CYGPATH_W) 'BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/BamStats.cpp'; fi`
-
-libsnowtools_a-MiniRules.o: MiniRules.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-MiniRules.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-MiniRules.Tpo -c -o libsnowtools_a-MiniRules.o `test -f 'MiniRules.cpp' || echo '$(srcdir)/'`MiniRules.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-MiniRules.Tpo $(DEPDIR)/libsnowtools_a-MiniRules.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='MiniRules.cpp' object='libsnowtools_a-MiniRules.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-MiniRules.o `test -f 'MiniRules.cpp' || echo '$(srcdir)/'`MiniRules.cpp
-
-libsnowtools_a-MiniRules.obj: MiniRules.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-MiniRules.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-MiniRules.Tpo -c -o libsnowtools_a-MiniRules.obj `if test -f 'MiniRules.cpp'; then $(CYGPATH_W) 'MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/MiniRules.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-MiniRules.Tpo $(DEPDIR)/libsnowtools_a-MiniRules.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='MiniRules.cpp' object='libsnowtools_a-MiniRules.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-MiniRules.obj `if test -f 'MiniRules.cpp'; then $(CYGPATH_W) 'MiniRules.cpp'; else $(CYGPATH_W) '$(srcdir)/MiniRules.cpp'; fi`
 
 libsnowtools_a-gzstream.o: gzstream.C
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-gzstream.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-gzstream.Tpo -c -o libsnowtools_a-gzstream.o `test -f 'gzstream.C' || echo '$(srcdir)/'`gzstream.C

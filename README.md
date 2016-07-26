@@ -19,19 +19,12 @@ Installation
 ### if on Broad Institute servers, add GCC-4.9
 reuse -q GCC-4.9
 
-############## DOWNLOAD AND INSTALL BOOST ###############
-############## (only if not already installed) ##########
-git clone --recursive https://github.com/boostorg/boost.git
-cd boost
-./bootstrap.sh --with-libraries=regex
-./b2
-
 ############### DOWNLOAD SNOWTOOLS ############### 
 git clone https://github.com/jwalabroad/SnowTools.git
 cd SnowTools
 
 ############### COMPILE AND INSTALL ###############
-./configure --with-boost=<path_to_boost>
+./configure
 make
 ```
  
@@ -55,33 +48,28 @@ class extensions to build off of the SnowTools base functionality.
  
 Memory management
 -----------------
-One of the greater challenges in using C code like BWA-MEM and htslib 
-as an API is in handling memory management. C++ makes this more palatable with smart
+SnowTools is built to automatically handle memory management of C code from BWA-MEM and htslib by using C++ smart
 pointers that handle freeing memory automatically. One of the 
 main motivations behind SnowTools is that all access to sequencing reads, BWA, etc should
 completely avoid ``malloc`` and ``free``. In SnowTools, the speed and compression of HTSlib
-is available, but all the mallocs/frees are handled for you automatically in the constructors and
+is available, but all the mallocs/frees are handled automatically in the constructors and
 destructors.
 
 Note about BamTools and Gamgee
 ------------------------------
-There are many overlaps between this project and the [BamTools][BT] project from Derek Barnett, and the [Gamgee][gam] 
-project also from the Broad Institute. These are excellent projects, and I am providing SnowTools here 
-in the case that it may be more suited to your individual needs than BamTools or Gamgee. 
-
-In short, BamTools is the mostly widely used and tested program from BAM/SAM reading and writing in C++, but 
-is ~2x slower than htslib and has a larger memory footprint. Gamgee provides BAM/SAM/CRAM reading/writing, 
-and uses HTSlib to maximize efficiency, plus has smart pointer memory management. It is a more mature project, but does not have an interface to BWA-MEM or BLAT.
-SnowTools is the least mature of these projects, but unites in one eco system HTSlib, BWA-MEM, BLAT, and soon SGA (String Graph Assembler).
+There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, and the [Gamgee][gam] 
+project also from the Broad Institute. In short, BamTools has been more widely used and tested, but is relatively slow compared with SnowTools (~2x).
+Gamgee provides similar functionality as a C++ interface to C, but does not incorportate BWA-MEM or BLAT. SnowTools is under active development, while Gamgee
+has been abandoned.
 
 SnowTools/BamTools differences
 ------------------------------
 > 1. Sort/index functionality is independently implemented in BamTools. In SnowTools, the Samtools 
  sort and index functions are called directly.
-> 2. BamTools stores quality scores and sequences as strings. In SnowTools, the HTSlib native bam1_t format
- is used instead. This format has a lower memory footprint by using only 4 bits per base, rather than 8. 
- Conversion to C++ style std::string is provided as a function and can be done on the fly.
-> 3. BamTools provides the BamMultiReader class for reading multiple BAM files at once, while 
+> 2. BamTools stores quality scores and sequences as strings. In SnowTools, the HTSlib ``bam1_t`` format
+ is used instead, which uses only 4 bits per base, rather than 8. 
+ Conversion to C++ style ``std::string`` is provided with the ``Sequence`` function.
+> 3. BamTools provides the ``BamMultiReader`` class for reading multiple BAM files at once, while 
  SnowTools does not currently support this functionality.
 > 4. SnowTools contains a built in interface to BWA-MEM for in-memory indexing and querying.
 > 5. SnowTools contains a beta wrapper around BLAT.
@@ -147,14 +135,14 @@ while (GetNextRead(r, rule)) {
       bwa.alignSingleSequence(r.Sequence(), r.Qname(), results, hardclip, secondary_cutoff, secondary_cap);
 
       for (auto& i : results)
-        write.Alignment(i);
+        writeAlignment(i);
 }
 ```
 
 
 Support
 -------
-This code is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org)
+This project is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org)
 
 Attributions
 ------------
