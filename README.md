@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/jwalabroad/SnowTools.svg?branch=master)](https://travis-ci.org/jwalabroad/SnowTools)
 [![Coverage Status](https://coveralls.io/repos/jwalabroad/SnowTools/badge.svg?branch=master&service=github)](https://coveralls.io/github/jwalabroad/SnowTools?branch=master)
 
-C++ htslib/bwa-mem interface and command line tools for interrogating BAM and SAM files.
+C++ interface to HTSlib, BLAT and BWA-MEM 
 
 **License:** [GNU GPLv3][license]
 
@@ -14,18 +14,13 @@ Installation
 
 #######
 ```bash
-### if on Broad Institute servers, add GCC-4.9
-reuse -q GCC-4.9
-
 git clone https://github.com/jwalabroad/SnowTools.git
 cd SnowTools
-
-############### COMPILE AND INSTALL ###############
 ./configure
 make
 ```
  
-I have successfully compiled with GCC-4.8+ on Linux.
+I have successfully compiled with GCC-4.8+ on Linux and with Clang on Mac
 
 Description
 -----------
@@ -55,8 +50,8 @@ destructors.
 Note about BamTools and Gamgee
 ------------------------------
 There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, and the [Gamgee][gam] 
-project also from the Broad Institute. In short, BamTools has been more widely used and tested, but is relatively slow compared with SnowTools (~2x).
-Gamgee provides similar functionality as a C++ interface to C, but does not incorportate BWA-MEM or BLAT. SnowTools is under active development, while Gamgee
+project from the Broad Institute. In short, BamTools has been more widely used and tested, but is relatively slow compared with SnowTools (~2x).
+Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or BLAT. SnowTools is under active development, while Gamgee
 has been abandoned.
 
 SnowTools/BamTools differences
@@ -92,7 +87,7 @@ BWAWrapper bwa;
 USeqVector usv = {{"chr_reg1", seq}};
 bwa.constructIndex(usv);
 
-## query the string
+## align an example string with BWA-MEM
 std::string querySeq = "CAGCCTCACCCAGGAAAGCAGCTGGGGGTCCACTGGGCTCAGGGAAG";
 BamReadVector results;
 // hardclip=false, secondary score cutoff=0.9, max secondary alignments=10
@@ -104,7 +99,7 @@ for (auto& i : results)
 ## 
 ```
 
-##### Read a BAM line by line, realign reads with BWA-MEM
+##### Read a BAM line by line, realign reads with BWA-MEM, write to new BAM
 ```
 #include "SnowTools/BamWalker.h"
 #include "SnowTools/BWAWrapper.h"
@@ -123,11 +118,11 @@ write.SetWriteHeader(bwa.HeaderFromIndex());
 write.OpenWriteBam("out.bam");
 
 BamRead r;
-bool rule; // can set rules for what reads to accept. Default is all, so rule always true.
+bool rule_passed; // can set rules for what reads to accept. Default is accept all reads. See VariantBam
 bool hardclip = false;
 float secondary_cutoff = 0.90; // secondary alignments must have score >= 0.9*top_score
 int secondary_cap = 10; // max number of secondary alignments to return
-while (GetNextRead(r, rule)) {
+while (GetNextRead(r, rule_passed)) {
       BamReadVector results; // alignment results (can have multiple alignments)
       bwa.alignSingleSequence(r.Sequence(), r.Qname(), results, hardclip, secondary_cutoff, secondary_cap);
 
