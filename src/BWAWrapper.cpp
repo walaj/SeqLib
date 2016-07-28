@@ -202,12 +202,26 @@ namespace SnowTools {
     if (m < 0) 
       throw std::invalid_argument("BWAWrapper::setMismatchPenalty - mismatch must be >= zero");
     memopt->b = m;
+
+    bwa_fill_scmat(memopt->a, memopt->b, memopt->mat);
   }
 
   void BWAWrapper::setZDropoff(int z) {
     if (z < 0) 
       throw std::invalid_argument("BWAWrapper::setZDropoff - dropoff must be >= zero");
     memopt->zdrop = z;
+  }
+
+  void BWAWrapper::set3primeClippingPenalty(int p) {
+    if (p < 0) 
+      throw std::invalid_argument("BWAWrapper::set3primeClippingPenalty - penalty must be >= zero");
+    memopt->pen_clip3 = p;
+  }
+
+  void BWAWrapper::set5primeClippingPenalty(int p) {
+    if (p < 0) 
+      throw std::invalid_argument("BWAWrapper::set5primeClippingPenalty - penalty must be >= zero");
+    memopt->pen_clip5 = p;
   }
 
   void BWAWrapper::setBandwidth(int w) {

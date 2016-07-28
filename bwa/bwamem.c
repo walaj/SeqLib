@@ -671,7 +671,7 @@ void mem_chain2aln(const mem_opt_t *opt, const bntseq_t *bns, const uint8_t *pac
 	for (i = 0; i < c->n; ++i)
 		srt[i] = (uint64_t)c->seeds[i].score<<32 | i;
 	ks_introsort_64(c->n, srt);
-
+	
 	for (k = c->n - 1; k >= 0; --k) {
 		mem_alnreg_t *a;
 		s = &c->seeds[(uint32_t)srt[k]];
@@ -695,8 +695,8 @@ void mem_chain2aln(const mem_opt_t *opt, const bntseq_t *bns, const uint8_t *pac
 		}
 		if (i < av->n) { // the seed is (almost) contained in an existing alignment; further testing is needed to confirm it is not leading to a different aln
 			if (bwa_verbose >= 4)
-				printf("** Seed(%d) [%ld;%ld,%ld] is almost contained in an existing alignment [%d,%d) <=> [%ld,%ld)\n",
-					   k, (long)s->len, (long)s->qbeg, (long)s->rbeg, av->a[i].qb, av->a[i].qe, (long)av->a[i].rb, (long)av->a[i].re);
+				printf("** Seed(%d) [%ld;%ld,%ld] is almost contained in an existing alignment [%d,%d) <=> [%ld,%ld). I: %d\n",
+				       k, (long)s->len, (long)s->qbeg, (long)s->rbeg, av->a[i].qb, av->a[i].qe, (long)av->a[i].rb, (long)av->a[i].re, i);
 			for (i = k + 1; i < c->n; ++i) { // check overlapping seeds in the same chain
 				const mem_seed_t *t;
 				if (srt[i] == 0) continue;
@@ -1205,12 +1205,6 @@ void mem_process_seqs(const mem_opt_t *opt, const bwt_t *bwt, const bntseq_t *bn
 	w.seqs = seqs; w.n_processed = n_processed;
 	w.pes = &pes[0];
 	w.aux = malloc(opt->n_threads * sizeof(smem_aux_t));
-
-	//JEREMIAH
-	//fprintf(stdout, "mem_proc address 0: %x 1: %x\n", &seqs[0].seq, &seqs[1].seq);
-	//fprintf(stdout, "mem_proc address 0: %x 1: %x\n", &w.seqs[0].seq, &w.seqs[1].seq);
-	//for (i = 0; i < n; i++)
-	// fprintf(stdout, "w.seqs[i].seq: %s\n", w.seqs[i].seq);
 
 	for (i = 0; i < opt->n_threads; ++i)
 		w.aux[i] = smem_aux_init();

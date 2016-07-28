@@ -134,6 +134,16 @@ class BWAWrapper {
    */
   void setZDropoff(int z);
 
+  /** Set the 3-prime clipping penalty
+   * @param p See BWA-MEM -L. 
+   */
+  void set3primeClippingPenalty(int p);
+
+  /** Set the 5-prime clipping penalty
+   * @param p See BWA-MEM -L. 
+   */
+  void set5primeClippingPenalty(int p);
+
  private:
 
   mem_opt_t * memopt;
