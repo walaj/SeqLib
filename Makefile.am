@@ -1,3 +1,2 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib blat multifast-v1.4.2/ahocorasick src SGA/Util SGA/SQG SGA/Bigraph SGA/Algorithm SGA/StringGraph SGA/SuffixTools
-
+SUBDIRS = bwa htslib fermi-lite blat multifast-v1.4.2/ahocorasick src

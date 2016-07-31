@@ -1,22 +1,7 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the <boost/regex.hpp> header file. */
-#undef HAVE_BOOST_REGEX_HPP
-
 /* clock_getttime found */
 #undef HAVE_CLOCK_GETTIME
-
-/* Define to 1 if you have the <ext/hash_map> header file. */
-#undef HAVE_EXT_HASH_MAP
-
-/* Define to 1 if you have the <ext/hash_set> header file. */
-#undef HAVE_EXT_HASH_SET
-
-/* Define to 1 if you have the <google/sparse_hash_map> header file. */
-#undef HAVE_GOOGLE_SPARSE_HASH_MAP
-
-/* Define to 1 if you have the <google/sparse_hash_set> header file. */
-#undef HAVE_GOOGLE_SPARSE_HASH_SET
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -42,20 +27,8 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the <tr1/unordered_map> header file. */
-#undef HAVE_TR1_UNORDERED_MAP
-
-/* Define to 1 if you have the <tr1/unordered_set> header file. */
-#undef HAVE_TR1_UNORDERED_SET
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the <unordered_map> header file. */
-#undef HAVE_UNORDERED_MAP
-
-/* Define to 1 if you have the <unordered_set> header file. */
-#undef HAVE_UNORDERED_SET
 
 /* Name of package */
 #undef PACKAGE
