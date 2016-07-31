@@ -212,6 +212,23 @@ namespace SnowTools {
     memopt->zdrop = z;
   }
 
+  void BWAWrapper::setAScore(int a) {
+    if (a < 0) 
+      throw std::invalid_argument("BWAWrapper::setAScore - dropoff must be >= zero");
+    memopt->b *= a;
+    memopt->T *= a;
+    memopt->o_del *= a;
+    memopt->o_ins *= a;
+    memopt->e_del *= a;
+    memopt->e_ins *= a;
+    memopt->zdrop *= a;
+    memopt->pen_clip5 *= a;
+    memopt->pen_clip3 *= a;
+    memopt->pen_unpaired *= a;
+    memopt->a = a;
+  }
+
+
   void BWAWrapper::set3primeClippingPenalty(int p) {
     if (p < 0) 
       throw std::invalid_argument("BWAWrapper::set3primeClippingPenalty - penalty must be >= zero");

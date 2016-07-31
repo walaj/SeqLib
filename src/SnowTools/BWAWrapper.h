@@ -144,6 +144,11 @@ class BWAWrapper {
    */
   void set5primeClippingPenalty(int p);
 
+  /** Set the match score. Scales -TdBOELU
+   * @param a See BWA-MEM -A
+   */
+  void setAScore(int a);
+
  private:
 
   mem_opt_t * memopt;

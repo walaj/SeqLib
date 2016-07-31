@@ -4,10 +4,9 @@
 #include <bitset>
 #include <cctype>
 
-#ifdef HAVE_BOOST
-#include <boost/algorithm/string.hpp>
-#endif
-
+//#ifdef HAVE_BOOST
+//#include <boost/algorithm/string.hpp>
+//#endif
 
 #include "SnowTools/ssw_cpp.h"
 
@@ -629,7 +628,7 @@ namespace SnowTools {
   }
 
   std::ostream& operator<<(std::ostream& out, const CigarField& c) { 
-    out << bam_cigar_opchr(c.data) << bam_cigar_oplen(c.data); 
+    out << bam_cigar_oplen(c.data) << bam_cigar_opchr(c.data); 
     return out; 
   }
 
@@ -637,18 +636,23 @@ namespace SnowTools {
 
     Cigar tc;
 
-#ifdef HAVE_BOOST
 
-    // get the ops
+    // get the ops (MIDSHPN)
     std::vector<char> ops;
     for (auto& c : cig)
       if (!isdigit(c)) {
 	ops.push_back(c);
       }
 
+    std::size_t prev = 0, pos;
     std::vector<std::string> lens;
-    boost::split(lens, cig, boost::is_any_of(cigar_delimiters));
-    lens.pop_back(); // fills in empty at end for some reason
+    while ((pos = cig.find_first_of("MIDSHPNX", prev)) != std::string::npos) {
+        if (pos > prev)
+	  lens.push_back(cig.substr(prev, pos-prev));
+        prev = pos+1;
+      }
+    if (prev < cig.length())
+      lens.push_back(cig.substr(prev, std::string::npos));
 
     assert(ops.size() == lens.size());
     for (size_t i = 0; i < lens.size(); ++i) {
@@ -656,13 +660,21 @@ namespace SnowTools {
     }
     
     return tc;
+
+
+/*
+#ifdef HAVE_BOOST
+    std::vector<std::string> lens;
+    boost::split(lens, cig, boost::is_any_of(cigar_delimiters));
+    lens.pop_back(); // fills in empty at end for some reason
+
 #else
 
     std::cerr << "!!!!!! BOOST REQUIRED FOR THIS FUNCTION !!!!!!" << std::endl << 
       "!!!!!! Returning EMPTY CIGAR !!!!!!!!!" << std::endl;
     return tc;
 #endif
-
+*/
 
   }
   
