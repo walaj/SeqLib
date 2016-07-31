@@ -1,0 +1,3 @@
+[submodule "fermi-lite"]
+	path = fermi-lite
+	url = https://github.com/jwalabroad/fermi-lite
