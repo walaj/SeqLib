@@ -34,6 +34,8 @@ namespace SnowTools {
 
     std::string out(f);
 
+    free(f);
+
     return (out);
 
   }
