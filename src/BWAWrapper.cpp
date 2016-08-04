@@ -38,8 +38,8 @@ namespace SnowTools {
   {
 
     std::string my_hdr = bwa_print_sam_hdr2(idx->bns, "");
-    bam_hdr_t * hdr = bam_hdr_init();
-    hdr = sam_hdr_read2(my_hdr); 
+    //bam_hdr_t * hdr = bam_hdr_init();
+    bam_hdr_t * hdr = sam_hdr_read2(my_hdr); 
     //hdr->n_targets = idx->bns->n_seqs;
     //hdr->target_name = (char**)malloc(hdr->n_targets * sizeof(char*));
     //for (int i = 0; i < idx->bns->n_seqs; ++i) {

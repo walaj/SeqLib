@@ -55,8 +55,9 @@ void bam_hdr_destroy(bam_hdr_t *h)
     int32_t i;
     if (h == NULL) return;
     if (h->target_name) {
-        for (i = 0; i < h->n_targets; ++i)
-            free(h->target_name[i]);
+      for (i = 0; i < h->n_targets; ++i) {
+	free(h->target_name[i]);
+      }
         free(h->target_name);
         free(h->target_len);
     }

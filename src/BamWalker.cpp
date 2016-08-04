@@ -5,28 +5,27 @@
 using namespace SnowTools;
 
 struct idx_delete {
-  void operator()(void* x) { hts_idx_destroy((hts_idx_t*)x); }
+  void operator()(hts_idx_t* x) { hts_idx_destroy(x); }
 };
 
 struct hts_itr_delete {
-  void operator()(void* x) { hts_itr_destroy((hts_itr_t*)x); }
+  void operator()(hts_itr_t* x) { hts_itr_destroy(x); }
 };
 
 struct bgzf_delete {
-  void operator()(void* x) { bgzf_close((BGZF*)x); }
+  void operator()(BGZF* x) { bgzf_close(x); }
 };
 
 struct bam_hdr_delete {
-  void operator()(void* x) { bam_hdr_destroy((bam_hdr_t*)x); }
+  void operator()(bam_hdr_t* x) { bam_hdr_destroy(x); }
 };
 
 struct sam_write_delete {
-  void operator()(void* x) { sam_close((htsFile*)x); }
+  void operator()(htsFile* x) { sam_close(x); }
 };
 
-
-void BamWalker::SetWriteHeader(bam_hdr_t* hdr) { 
-  hdr_write = std::shared_ptr<bam_hdr_t>(hdr, bam_hdr_delete()); 
+void BamWalker::SetWriteHeader(bam_hdr_t* hdr) {
+  hdr_write = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete()); 
 };
 
 // set the bam region
@@ -176,6 +175,8 @@ BamWalker::BamWalker(const std::string& in) : m_in(in)
   if (!__open_BAM_for_reading())
     throw 20;
 }
+
+BamWalker::BamWalker() {}
 
 bool BamWalker::__open_BAM_for_reading()
 {
