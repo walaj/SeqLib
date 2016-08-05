@@ -24,13 +24,27 @@ namespace SnowTools {
      */
     RefGenome(const std::string& file);
 
+    /** Create an empty RefGenome object */
+    RefGenome() { index = nullptr; }
+    
+    /** Destroy malloc'ed faidx_t index inside object
+     */
+    ~RefGenome() { if (index) fai_destroy(index); }
+    
     /** Query a region to get the sequence
      * @param chr_name name of the chr to query
      * @param p1 position 1
      * @param p2 position 2
      */
-    std::string queryRegion(const std::string& chr_name, int32_t p1, int32_t p2);
+    std::string queryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const;
 
+    /** Load an indexed reference sequence */
+    void retrieveIndex(const std::string& file);
+    
+    /** Check if reference has been loaded 
+     */
+    bool empty() const { return (index == nullptr); }
+    
   private:
 
     faidx_t * index;

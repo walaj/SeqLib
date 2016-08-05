@@ -77,7 +77,7 @@ class BamWalker {
   BamWalker(const std::string& in);
 
   /** Construct an empty BamWalker */
-  BamWalker() {}
+  BamWalker();
 
   /** Destroy a BamWalker and close all connections to the BAM 
    * 
@@ -213,7 +213,10 @@ class BamWalker {
   /** Return a pointer to the BAM header */
   bam_hdr_t * header() const { return br.get(); };
 
-  /** Explicitly provide the output BAM a header */
+  /** Explicitly provide the output BAM a header. 
+   * 
+   * This will create a copy of the bam_hdr_t for this BamWalker.
+   */
   void SetWriteHeader(bam_hdr_t* hdr);
 
   /** Set the limit for total number of reads seen */

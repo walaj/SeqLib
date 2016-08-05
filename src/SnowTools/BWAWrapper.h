@@ -78,6 +78,9 @@ class BWAWrapper {
 
   /** Construct a new bwa index for this object. 
    * @param v vector of references to input (e.g. v = {{"r1", "AT"}};)
+   * 
+   * Throw an invalid_argument exception if any of the names or sequences
+   * of the input USeqVector is empty
    */
   void constructIndex(const USeqVector& v);
 
@@ -149,6 +152,9 @@ class BWAWrapper {
    */
   void setAScore(int a);
 
+  /** Check if no sequences have been included */
+  bool empty() const { return !idx; }
+  
  private:
 
   mem_opt_t * memopt;
