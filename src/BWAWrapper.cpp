@@ -126,6 +126,11 @@ namespace SnowTools {
     if (!v.size())
       return;
 
+    // check the integrity of the input data
+    for (auto& i : v)
+      if (i.name.empty() || i.seq.empty())
+	throw std::invalid_argument("BWAWrapper::constructIndex - Reference sequences must have non-empty name and seq");
+    
     if (idx) {
       std::cout << "...clearing old index" << std::endl;
       bwa_idx_destroy(idx);
@@ -261,7 +266,7 @@ namespace SnowTools {
       return;
 
     mem_alnreg_v ar;
-    ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.c_str()); // get all the hits
+    ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.data()); // get all the hits (was c_str())
 
 #ifdef DEBUG_BWATOOLS
     std::cout << "num hits: " << ar.n << std::endl;

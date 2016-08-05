@@ -29,7 +29,7 @@ namespace SnowTools {
     
   }
 
-  std::string RefGenome::queryRegion(const std::string& chr_name, int32_t p1, int32_t p2) {
+  std::string RefGenome::queryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const {
     
     // check that we ahve a loaded index
     if (!index) {

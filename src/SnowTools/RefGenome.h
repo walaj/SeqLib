@@ -36,7 +36,7 @@ namespace SnowTools {
      * @param p1 position 1
      * @param p2 position 2
      */
-    std::string queryRegion(const std::string& chr_name, int32_t p1, int32_t p2);
+    std::string queryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const;
 
     /** Load an indexed reference sequence */
     void retrieveIndex(const std::string& file);
