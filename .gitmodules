@@ -4,3 +4,7 @@
 [submodule "htslib"]
 	path = htslib
 	url = https://github.com/samtools/htslib
+[submodule "bwa"]
+	path = bwa
+	url = https://github.com/lh3/bwa
+	branch = Apache2
