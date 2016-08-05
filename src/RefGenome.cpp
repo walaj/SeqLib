@@ -5,7 +5,7 @@
 
 namespace SnowTools {
 
-  RefGenome::RefGenome(const std::string& file ) {
+  RefGenome::RefGenome(const std::string& file )  {
     
     index = nullptr;
 
