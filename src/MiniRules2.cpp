@@ -547,6 +547,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
     // parse the subsample data
     parseSubLine(value);
     
+#ifdef HAVE_AHO_CORASICK
 #ifndef __APPLE__
     // parse aho corasick file, if not already inheretid
     if (!atm) {
@@ -556,6 +557,7 @@ void MiniRulesCollection::sendToBed(std::string file) {
 	  std::cerr << "Done generating Aho-Corasick tree" << std::endl;  
 	}
       }
+#endif
 #endif
 
   }
@@ -642,7 +644,12 @@ void MiniRulesCollection::sendToBed(std::string file) {
 
     
     // if we dont need to because everything is pass, just just pass it
-    bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || atm_file.length() || !xp.isEvery();
+    bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || 
+#ifdef HAVE_AHO_CORASICK
+      atm_file.length() || 
+#endif
+      !xp.isEvery();
+
 #ifdef QNAME
     if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES is need to continue " << need_to_continue << " ID " << id << " " << r << std::endl;
@@ -774,13 +781,14 @@ void MiniRulesCollection::sendToBed(std::string file) {
       if (!xp.isValid(r.CountSecondaryAlignments()))
 	return false;
     
-    //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
+#ifdef HAVE_AHO_CORASICK
 #ifndef __APPLE__
     if (atm_file.length()) {
       bool m = ahomatch(r);
       if ( (!m && !atm_inv) || (m && atm_inv) )
 	return false;
     }
+#endif
 #endif
     
 #ifdef QNAME
@@ -913,10 +921,12 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
       out << "del:" << ar.del << " -- ";
     if (ar.subsam_frac < 1)
       out << "sub:" << ar.subsam_frac << " -- ";
+#ifdef HAVE_AHO_CORASICK
 #ifndef __APPLE__
     //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
     if (!ar.atm_file.empty())
       out << (ar.atm_inv ? "NOT " : "") << "matching on " << ar.atm_count << " motifs from " << ar.atm_file << " -- ";
+#endif
 #endif
     out << ar.fr;
   }
@@ -1023,6 +1033,7 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
   return out;
 }
 
+#ifdef HAVE_AHO_CORASICK
 #ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 //bool AbstractRule::ahomatch(const string& seq) {
@@ -1044,7 +1055,9 @@ bool AbstractRule::ahomatch(BamRead &r) {
   
 }
 #endif
+#endif
 
+#ifdef HAVE_AHO_CORASICK
 #ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 bool AbstractRule::ahomatch(const char * seq, unsigned len) {
@@ -1063,7 +1076,9 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
     return false;
 }
 #endif
+#endif
 
+#ifdef HAVE_AHO_CORASICK
   void AbstractRule::parseSeqLine(const Json::Value& value) {
     
     bool i = false; // invert motif?
@@ -1088,8 +1103,9 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
   return;
 
   }
+#endif
 
-
+#if HAVE_AHO_CORASICK
   void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
 
     atm_file = f;
@@ -1133,6 +1149,7 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
 #endif
     
   }
+#endif
   
   void AbstractRule::parseSubLine(const Json::Value& value) {
     Json::Value null(Json::nullValue);
@@ -1219,9 +1236,11 @@ const std::string MiniRulesCollection::GetScriptContents(const std::string& scri
     // set the id
     ar.id = id + "_CMD_RULE";
 
+#ifdef HAVE_AHO_CORASICK
     // add a motif rule
     if (!c.motif.empty())
       ar.addMotifRule(c.motif, false);
+#endif
 
     // add read group rule
     ar.read_group = c.rg;

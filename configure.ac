@@ -37,7 +37,6 @@ AC_SUBST(LDFLAGS, "$LDFLAGS")
 AC_SUBST(LIBS, "$LIBS -pthread")
 
 AC_CONFIG_FILES([Makefile
-		 htslib/Makefile
 	         src/Makefile])
 
 AC_OUTPUT

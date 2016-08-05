@@ -5076,7 +5076,7 @@ LDFLAGS="$LDFLAGS"
 LIBS="$LIBS -pthread"
 
 
-ac_config_files="$ac_config_files Makefile htslib/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -5723,7 +5723,6 @@ do
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "htslib/Makefile") CONFIG_FILES="$CONFIG_FILES htslib/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
