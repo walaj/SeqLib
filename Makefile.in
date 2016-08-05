@@ -192,7 +192,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib fermi-lite blat multifast-v1.4.2/ahocorasick src
+SUBDIRS = bwa htslib fermi-lite src
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
