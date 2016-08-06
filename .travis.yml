@@ -26,7 +26,7 @@ before_install:
 - if [ -n "${BOOST_VERSION}" ]; then export BOOST_ROOT="${TRAVIS_BUILD_DIR}/../boost-trunk"; export CMAKE_MODULE_PATH="${BOOST_ROOT}"; fi
 - if [ "${CXX}" = "g++" ]; then export CXX="$(which g++-4.8)"; export CC="$(which gcc-4.8)"; fi
 - if [ "${TRAVIS_OS_NAME}" = "osx" -a "${CXX}" = "clang++" ]; then export CXX="$(which c++)"; export CC="$(which cc)"; fi
-- .travis_scripts/travis-before-install.sh
+- .travis.scripts/travis-before-install.sh
 
 script: 
 - if [ "$CXX" == "clang++" ]; then .travis_scripts/clang.sh; fi
