@@ -2,6 +2,8 @@
 
 ## borrowed from Gamgee project: https://github.com/broadinstitute/gamgee/blob/master/.travis_scripts/clang.sh
 
+echo "...building with clang"
+
 wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
 sudo apt-add-repository 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.5 main'
 sudo apt-get -qq update
