@@ -441,7 +441,7 @@ char *faidx_fetch_seq(const faidx_t *fai, const char *c_name, int p_beg_i, int p
     if (iter == kh_end(fai->hash))
     {
         *len = -2;
-        //fprintf(stderr, "[fai_fetch_seq] The sequence \"%s\" not found\n", c_name);
+        fprintf(stderr, "[fai_fetch_seq] The sequence \"%s\" not found\n", c_name);
         return NULL;
     }
     val = kh_value(fai->hash, iter);
