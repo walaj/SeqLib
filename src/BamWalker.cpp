@@ -246,15 +246,15 @@ bool BamWalker::__open_BAM_for_writing()
 
       }*/
 
-void BamWalker::SetMiniRulesCollection(const std::string& rules)
+void BamWalker::SetReadFilterCollection(const std::string& rules)
 {
 
   // construct the minirules
-  m_mr = MiniRulesCollection(rules, br.get());
+  m_mr = ReadFilterCollection(rules, br.get());
 
   // check that it worked
   if (!m_mr.size()) {
-    //std::cerr << "No MiniRules were successfully parsed" << std::endl;
+    //std::cerr << "No ReadFilter were successfully parsed" << std::endl;
     //throw 20;
   }
 }
@@ -410,7 +410,7 @@ void BamWalker::setStripTags(const std::string& list)
     }
 }
 
-std::string BamWalker::displayMiniRulesCollection() const 
+std::string BamWalker::displayReadFilterCollection() const 
 {
   std::stringstream ss;
   ss << m_mr;

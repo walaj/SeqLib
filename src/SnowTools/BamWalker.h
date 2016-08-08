@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 
-#include "SnowTools/MiniRules2.h"
+#include "SnowTools/ReadFilter.h"
 
 // Phred score transformations
 inline int char2phred(char b) {
@@ -138,21 +138,21 @@ class BamWalker {
    */
   bool OpenWriteBam(const std::string& bam);
 
-  /** Pass a MiniRules script to the BAM.
+  /** Pass a ReadFilter script to the BAM.
    * 
-   * This will call the constructor of MiniRulesCollection, and 
+   * This will call the constructor of ReadFilterCollection, and 
    * parse the provides rules and add it as a rule set to this BamWalker.
    * @param rules A string of rules, or a file pointing to a rules script
    */
-  void SetMiniRulesCollection(const std::string& rules);
+  void SetReadFilterCollection(const std::string& rules);
   
-  /** Explicitly provide a MiniRulesCollection to this BamWalker
+  /** Explicitly provide a ReadFilterCollection to this BamWalker
    */
-  void SetMiniRulesCollection(const MiniRulesCollection& mr) { m_mr = mr; }
+  void SetReadFilterCollection(const ReadFilterCollection& mr) { m_mr = mr; }
 
   /** Retrieve the next read from the BAM.
    *
-   * If a MiniRulesCollection is defined for this BAM
+   * If a ReadFilterCollection is defined for this BAM
    * will grab the next valid read.
    * r Read to fill with data
    * rule bool identifying if this read passed the rules
@@ -165,21 +165,21 @@ class BamWalker {
    */
   void writeAlignment(BamRead &r);
 
-  /** Return the MiniRulesCollection object used by this BamWalker
+  /** Return the ReadFilterCollection object used by this BamWalker
    */
-  const MiniRulesCollection& GetMiniRulesCollection() const { return m_mr; }
+  const ReadFilterCollection& GetReadFilterCollection() const { return m_mr; }
 
   /** Send the counts for passed rules to a file 
    * @param Path to file to write the read statistics to
    */
-  void MiniRulesToFile(const std::string& file) const { m_mr.countsToFile(file); }
+  void ReadFilterToFile(const std::string& file) const { m_mr.countsToFile(file); }
 
   /** Set the BamWalker to count reads for all rules */
   void setCountAllRules() { m_mr.m_fall_through = true; }
 
   std::string m_in;
   std::string m_out;
-  MiniRulesCollection m_mr;
+  ReadFilterCollection m_mr;
 
   /** Set a flag to say if we should print reads to stdout
    */
@@ -207,8 +207,8 @@ class BamWalker {
   /** Set to have verbose actions */
   void setVerbose() { m_verbose = true; }
 
-  /** Return the MiniRulesCollection as a string */
-  std::string displayMiniRulesCollection() const;
+  /** Return the ReadFilterCollection as a string */
+  std::string displayReadFilterCollection() const;
 
   /** Return a pointer to the BAM header */
   bam_hdr_t * header() const { return br.get(); };

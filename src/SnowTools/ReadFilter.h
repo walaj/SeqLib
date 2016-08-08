@@ -1,5 +1,5 @@
-#ifndef MINI_RULES_H
-#define MINI_RULES_H
+#ifndef SNOWTOOLS_READ_FILTER_H__
+#define SNOWTOOLS_READ_FILTER_H__
 
 #include <string>
 #include <vector>
@@ -310,29 +310,29 @@ class AbstractRule {
 
 };
 
-class MiniRulesCollection;
+class ReadFilterCollection;
 
 /** 
  * A set of AbstractRules on a region united by logi rules.
  *
- * MiniRules stores an arbitrarily complex collection of AbstractRules
+ * ReadFilter stores an arbitrarily complex collection of AbstractRules
  * (e.g. (Mapped && Clipped) || (Unmapped)).
  */
-class MiniRules {
+class ReadFilter {
   
-  friend class MiniRulesCollection;
+  friend class ReadFilterCollection;
 
   public:
-  MiniRules() {}
+  ReadFilter() {}
 
-  ~MiniRules() {}
+  ~ReadFilter() {}
 
-  /** Make a MiniRules with a an all exclude or include rule
+  /** Make a ReadFilter with a an all exclude or include rule
    * @param Samtools style string, BED file or VCF 
    * @param reg_type The type of rule this will be
    * @param h BAM header that defines available chromosomes
    */
-  MiniRules(const CommandLineRegion& c, bam_hdr_t * h);
+  ReadFilter(const CommandLineRegion& c, bam_hdr_t * h);
 
   std::string id;
   
@@ -344,7 +344,7 @@ class MiniRules {
 
   bool isReadOverlappingRegion(BamRead &r);
 
-  friend std::ostream& operator<<(std::ostream& out, const MiniRules &mr);
+  friend std::ostream& operator<<(std::ostream& out, const ReadFilter &mr);
  
   size_t size() const {
     return m_abstract_rules.size();
@@ -370,8 +370,8 @@ class MiniRules {
   // rule applies to mate too
   bool m_applies_to_mate = false;
 
-  // pointer to its containing MiniRulesCollection
-  MiniRulesCollection * mrc; 
+  // pointer to its containing ReadFilterCollection
+  ReadFilterCollection * mrc; 
 
   // how many reads pass this MiniRule
   size_t m_count = 0;
@@ -380,29 +380,29 @@ class MiniRules {
 
 /** A full set of rules across any number of regions
  *
- * Stores the entire set of MiniRules, each defined on a unique interval.
- * A single MiniRulesCollection object is sufficient to store any combination of rules,
- * and is the highest in the rule hierarchy. (MiniRulesCollection stores MiniRules 
+ * Stores the entire set of ReadFilter, each defined on a unique interval.
+ * A single ReadFilterCollection object is sufficient to store any combination of rules,
+ * and is the highest in the rule hierarchy. (ReadFilterCollection stores ReadFilter 
  * stores AbstractRules stores FlagRule/Ranges).
  */
-class MiniRulesCollection {
+class ReadFilterCollection {
 
  public: 
   
-  /** Construct an empty MiniRulesCollection 
+  /** Construct an empty ReadFilterCollection 
    * that will pass all reads
    */
-  MiniRulesCollection() {}
+  ReadFilterCollection() {}
 
   AbstractRule rule_all;
   
-  MiniRulesCollection(const std::string& script, bam_hdr_t *h);
+  ReadFilterCollection(const std::string& script, bam_hdr_t *h);
 
   void addGlobalRule(const std::string& rule);
 
   bool isValid(BamRead &r);
   
-  friend std::ostream& operator<<(std::ostream& out, const MiniRulesCollection &mr);
+  friend std::ostream& operator<<(std::ostream& out, const ReadFilterCollection &mr);
   
   void sendToBed(std::string file);
 
@@ -420,7 +420,7 @@ class MiniRulesCollection {
     return num;
   }
 
-  std::vector<MiniRules> m_regions;
+  std::vector<ReadFilter> m_regions;
 
   bam_hdr_t * h = nullptr;// in case we need to convert from text chr to id chr
 

@@ -1,4 +1,4 @@
-#include "SnowTools/MiniRules2.h"
+#include "SnowTools/ReadFilter.h"
 
 #include <cassert>
 #include "htslib/khash.h"
@@ -30,7 +30,7 @@ static const std::unordered_set<std::string> valid =
      "fwd_strand", "rev_strand", "mate_fwd_strand", "mate_rev_strand",
      "mapped", "mate_mapped", "ff", "fr", "rr", "rf", "ic"};
 
-bool MiniRules::isValid(BamRead &r) {
+bool ReadFilter::isValid(BamRead &r) {
 
   for (auto& it : m_abstract_rules)
     if (it.isValid(r)) 
@@ -74,7 +74,7 @@ bool MiniRules::isValid(BamRead &r) {
   }
 
 
-  bool MiniRulesCollection::__validate_json_value(const Json::Value value, const std::unordered_set<std::string>& valid_vals) {
+  bool ReadFilterCollection::__validate_json_value(const Json::Value value, const std::unordered_set<std::string>& valid_vals) {
 
     // verify that it has appropriate values
     for (auto& i : value.getMemberNames()) {
@@ -89,7 +89,7 @@ bool MiniRules::isValid(BamRead &r) {
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
 // contained in these rules
-bool MiniRules::isReadOverlappingRegion(BamRead &r) {
+bool ReadFilter::isReadOverlappingRegion(BamRead &r) {
 
   // if this is a whole genome rule, it overlaps
   if (m_whole_genome)
@@ -111,7 +111,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 
 // checks which rule a read applies to (using the hiearchy stored in m_regions).
 // if a read does not satisfy a rule it is excluded.
-  bool MiniRulesCollection::isValid(BamRead &r) {
+  bool ReadFilterCollection::isValid(BamRead &r) {
 
   ++m_count_seen;
 
@@ -192,7 +192,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 }
 
 // convert a region BED file into an interval tree map
-  void MiniRules::setRegionFromFile(const std::string& file, bam_hdr_t * h) {
+  void ReadFilter::setRegionFromFile(const std::string& file, bam_hdr_t * h) {
   
   m_region_file = file;
   id = file;
@@ -207,7 +207,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
       gr.pad(pad);
       m_grv.add(gr);
     } else {
-      std::cerr << "!!!!!!!!MiniRules region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
+      std::cerr << "!!!!!!!!ReadFilter region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
     }
   }
   // it's a single chromosome
@@ -241,10 +241,10 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
 }
 
 
-  // constructor to make a MiniRulesCollection from a rules file.
+  // constructor to make a ReadFilterCollection from a rules file.
   // This will reduce each individual BED file and make the 
   // GenomicIntervalTreeMap
-  MiniRulesCollection::MiniRulesCollection(const std::string& script, bam_hdr_t *h) {
+  ReadFilterCollection::ReadFilterCollection(const std::string& script, bam_hdr_t *h) {
 
     // set up JsonCPP reader and attempt to parse script
     Json::Value root;
@@ -291,7 +291,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
       if (!__validate_json_value(regions, allowed_region_annots))
 	exit(EXIT_FAILURE);
 
-      MiniRules mr;
+      ReadFilter mr;
       mr.mrc = this;
       
       // add global rules (if there are any)
@@ -365,7 +365,7 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
       if (!kk.excluder)
 	has_includer = true;
     if (!has_includer) {
-      MiniRules mr;
+      ReadFilter mr;
       mr.m_whole_genome = true;
       mr.m_abstract_rules.push_back(rule_all);
       mr.mrc = this; // set the pointer to the collection
@@ -375,10 +375,10 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
     
   }
   
-  // print the MiniRulesCollection
-  std::ostream& operator<<(std::ostream &out, const MiniRulesCollection &mr) {
+  // print the ReadFilterCollection
+  std::ostream& operator<<(std::ostream &out, const ReadFilterCollection &mr) {
     
-    out << "----------MiniRulesCollection-------------" << std::endl;
+    out << "----------ReadFilterCollection-------------" << std::endl;
     out << "--- counting all rules (fall through): " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
 
     for (auto& it : mr.m_regions)
@@ -393,8 +393,8 @@ bool MiniRules::isReadOverlappingRegion(BamRead &r) {
     
   }
 
-// print a MiniRules information
-std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
+// print a ReadFilter information
+std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
   
   std::string file_print = mr.m_whole_genome ? "WHOLE GENOME" : mr.m_region_file;
   out << (mr.excluder ? "--Exclude Region: " : "--Include Region: ") << file_print;
@@ -417,7 +417,7 @@ std::ostream& operator<<(std::ostream &out, const MiniRules &mr) {
 }
 
 // merge all of the intervals into one and send to a bed file
-void MiniRulesCollection::sendToBed(std::string file) {
+void ReadFilterCollection::sendToBed(std::string file) {
 
   std::ofstream out(file);
   if (!out) {
@@ -1157,7 +1157,7 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
       subsam_frac = value.get("sub", null).asDouble();
   }
   
-GRC MiniRulesCollection::getAllRegions() const
+GRC ReadFilterCollection::getAllRegions() const
 {
   GRC out;
 
@@ -1168,7 +1168,7 @@ GRC MiniRulesCollection::getAllRegions() const
   return out;
 }
 
-  void MiniRulesCollection::countsToFile(const std::string& file) const
+  void ReadFilterCollection::countsToFile(const std::string& file) const
   {
     std::ofstream of;
     of.open(file);
@@ -1181,7 +1181,7 @@ GRC MiniRulesCollection::getAllRegions() const
     
   }
 
-const std::string MiniRulesCollection::GetScriptContents(const std::string& script) {
+const std::string ReadFilterCollection::GetScriptContents(const std::string& script) {
   
   std::ifstream iss_file(script.c_str());
 
@@ -1195,7 +1195,7 @@ const std::string MiniRulesCollection::GetScriptContents(const std::string& scri
 
 }
 
-  MiniRules::MiniRules(const CommandLineRegion& c, bam_hdr_t * h) {
+  ReadFilter::ReadFilter(const CommandLineRegion& c, bam_hdr_t * h) {
 
     m_region_file = c.f;
 
@@ -1267,7 +1267,7 @@ const std::string MiniRulesCollection::GetScriptContents(const std::string& scri
 	excluder = true;
 	break;
       default:
-	std::cerr << "Unexpected type in MiniRules::MiniRules. Exiting" << std::endl;
+	std::cerr << "Unexpected type in ReadFilter. Exiting" << std::endl;
 	exit(EXIT_FAILURE);
       }
     }

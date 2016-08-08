@@ -17,7 +17,6 @@
 #include "htslib/faidx.h"
 
 #include "SnowTools/GenomicRegion.h"
-//#include "SnowTools/BLATWrapper.h"
 
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
@@ -35,8 +34,6 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-//#include "SnowTools/HTSTools.h"
-
 #define FRORIENTATION 0
 #define FFORIENTATION 1
 #define RFORIENTATION 2

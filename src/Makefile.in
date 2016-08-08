@@ -47,7 +47,8 @@ AR = ar
 ARFLAGS = cru
 libsnowtools_a_AR = $(AR) $(ARFLAGS)
 libsnowtools_a_LIBADD =
-am_libsnowtools_a_OBJECTS = libsnowtools_a-MiniRules2.$(OBJEXT) \
+am_libsnowtools_a_OBJECTS = libsnowtools_a-ReadFilter.$(OBJEXT) \
+	libsnowtools_a-SeqPlot.$(OBJEXT) \
 	libsnowtools_a-jsoncpp.$(OBJEXT) \
 	libsnowtools_a-ssw_cpp.$(OBJEXT) libsnowtools_a-ssw.$(OBJEXT) \
 	libsnowtools_a-GenomicRegion.$(OBJEXT) \
@@ -62,7 +63,8 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-MiniRules2.$(OBJEXT) \
 	libsnowtools_a-BWAWrapper.$(OBJEXT) \
 	libsnowtools_a-BamRead.$(OBJEXT) \
 	libsnowtools_a-STCoverage.$(OBJEXT) \
-	libsnowtools_a-Fractions.$(OBJEXT)
+	libsnowtools_a-Fractions.$(OBJEXT) \
+	libsnowtools_a-FermiAssembler.$(OBJEXT)
 libsnowtools_a_OBJECTS = $(am_libsnowtools_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -177,12 +179,13 @@ top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libsnowtools.a
 libsnowtools_a_CPPFLAGS = \
         -I.. \
-        -I../htslib
+        -I../htslib -I../bwa
 
-libsnowtools_a_SOURCES = MiniRules2.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
+libsnowtools_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
+			GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
 			BamWalker.cpp BamStats.cpp gzstream.C SnowUtils.cpp \
-	BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
-        STCoverage.cpp Fractions.cpp
+			BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
+		        STCoverage.cpp Fractions.cpp FermiAssembler.cpp
 
 all: all-am
 
@@ -236,12 +239,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamRead.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamStats.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamWalker.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-FermiAssembler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-Fractions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-GenomicRegion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-Histogram.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-MiniRules2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-ReadFilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-RefGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-STCoverage.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-SeqPlot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-SnowUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-gzstream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-jsoncpp.Po@am__quote@
@@ -262,19 +267,33 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-libsnowtools_a-MiniRules2.o: MiniRules2.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-MiniRules2.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-MiniRules2.Tpo -c -o libsnowtools_a-MiniRules2.o `test -f 'MiniRules2.cpp' || echo '$(srcdir)/'`MiniRules2.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-MiniRules2.Tpo $(DEPDIR)/libsnowtools_a-MiniRules2.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='MiniRules2.cpp' object='libsnowtools_a-MiniRules2.o' libtool=no @AMDEPBACKSLASH@
+libsnowtools_a-ReadFilter.o: ReadFilter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-ReadFilter.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-ReadFilter.Tpo -c -o libsnowtools_a-ReadFilter.o `test -f 'ReadFilter.cpp' || echo '$(srcdir)/'`ReadFilter.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-ReadFilter.Tpo $(DEPDIR)/libsnowtools_a-ReadFilter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ReadFilter.cpp' object='libsnowtools_a-ReadFilter.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-MiniRules2.o `test -f 'MiniRules2.cpp' || echo '$(srcdir)/'`MiniRules2.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-ReadFilter.o `test -f 'ReadFilter.cpp' || echo '$(srcdir)/'`ReadFilter.cpp
 
-libsnowtools_a-MiniRules2.obj: MiniRules2.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-MiniRules2.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-MiniRules2.Tpo -c -o libsnowtools_a-MiniRules2.obj `if test -f 'MiniRules2.cpp'; then $(CYGPATH_W) 'MiniRules2.cpp'; else $(CYGPATH_W) '$(srcdir)/MiniRules2.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-MiniRules2.Tpo $(DEPDIR)/libsnowtools_a-MiniRules2.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='MiniRules2.cpp' object='libsnowtools_a-MiniRules2.obj' libtool=no @AMDEPBACKSLASH@
+libsnowtools_a-ReadFilter.obj: ReadFilter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-ReadFilter.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-ReadFilter.Tpo -c -o libsnowtools_a-ReadFilter.obj `if test -f 'ReadFilter.cpp'; then $(CYGPATH_W) 'ReadFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/ReadFilter.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-ReadFilter.Tpo $(DEPDIR)/libsnowtools_a-ReadFilter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ReadFilter.cpp' object='libsnowtools_a-ReadFilter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-MiniRules2.obj `if test -f 'MiniRules2.cpp'; then $(CYGPATH_W) 'MiniRules2.cpp'; else $(CYGPATH_W) '$(srcdir)/MiniRules2.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-ReadFilter.obj `if test -f 'ReadFilter.cpp'; then $(CYGPATH_W) 'ReadFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/ReadFilter.cpp'; fi`
+
+libsnowtools_a-SeqPlot.o: SeqPlot.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-SeqPlot.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-SeqPlot.Tpo -c -o libsnowtools_a-SeqPlot.o `test -f 'SeqPlot.cpp' || echo '$(srcdir)/'`SeqPlot.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-SeqPlot.Tpo $(DEPDIR)/libsnowtools_a-SeqPlot.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='SeqPlot.cpp' object='libsnowtools_a-SeqPlot.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-SeqPlot.o `test -f 'SeqPlot.cpp' || echo '$(srcdir)/'`SeqPlot.cpp
+
+libsnowtools_a-SeqPlot.obj: SeqPlot.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-SeqPlot.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-SeqPlot.Tpo -c -o libsnowtools_a-SeqPlot.obj `if test -f 'SeqPlot.cpp'; then $(CYGPATH_W) 'SeqPlot.cpp'; else $(CYGPATH_W) '$(srcdir)/SeqPlot.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-SeqPlot.Tpo $(DEPDIR)/libsnowtools_a-SeqPlot.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='SeqPlot.cpp' object='libsnowtools_a-SeqPlot.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-SeqPlot.obj `if test -f 'SeqPlot.cpp'; then $(CYGPATH_W) 'SeqPlot.cpp'; else $(CYGPATH_W) '$(srcdir)/SeqPlot.cpp'; fi`
 
 libsnowtools_a-jsoncpp.o: jsoncpp.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-jsoncpp.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-jsoncpp.Tpo -c -o libsnowtools_a-jsoncpp.o `test -f 'jsoncpp.cpp' || echo '$(srcdir)/'`jsoncpp.cpp
@@ -457,6 +476,20 @@ libsnowtools_a-Fractions.obj: Fractions.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Fractions.cpp' object='libsnowtools_a-Fractions.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-Fractions.obj `if test -f 'Fractions.cpp'; then $(CYGPATH_W) 'Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/Fractions.cpp'; fi`
+
+libsnowtools_a-FermiAssembler.o: FermiAssembler.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-FermiAssembler.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-FermiAssembler.Tpo -c -o libsnowtools_a-FermiAssembler.o `test -f 'FermiAssembler.cpp' || echo '$(srcdir)/'`FermiAssembler.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-FermiAssembler.Tpo $(DEPDIR)/libsnowtools_a-FermiAssembler.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='FermiAssembler.cpp' object='libsnowtools_a-FermiAssembler.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-FermiAssembler.o `test -f 'FermiAssembler.cpp' || echo '$(srcdir)/'`FermiAssembler.cpp
+
+libsnowtools_a-FermiAssembler.obj: FermiAssembler.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-FermiAssembler.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-FermiAssembler.Tpo -c -o libsnowtools_a-FermiAssembler.obj `if test -f 'FermiAssembler.cpp'; then $(CYGPATH_W) 'FermiAssembler.cpp'; else $(CYGPATH_W) '$(srcdir)/FermiAssembler.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-FermiAssembler.Tpo $(DEPDIR)/libsnowtools_a-FermiAssembler.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='FermiAssembler.cpp' object='libsnowtools_a-FermiAssembler.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-FermiAssembler.obj `if test -f 'FermiAssembler.cpp'; then $(CYGPATH_W) 'FermiAssembler.cpp'; else $(CYGPATH_W) '$(srcdir)/FermiAssembler.cpp'; fi`
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -695,9 +728,6 @@ uninstall-am:
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am
 
-#			../bwa/is.c ../bwa/bwtindex.c \
-#			../bwa/bwt_gen.c ../bwa/QSufSort.c \
-#                        ../bwa/bwt.c ../bwa/bwamem_extra.c 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -31,10 +31,17 @@ namespace SnowTools {
 
   std::string RefGenome::queryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const {
     
-    // check that we ahve a loaded index
-    if (!index) {
+    // check that we have a loaded index
+    if (!index) 
       throw std::invalid_argument("RefGenome::queryRegion index not loaded");
-    }
+
+    // check input is OK
+    if (p1 > p2)
+      throw std::invalid_argument("RefGenome::queryRegion p1 must be <= p2");
+    if (p1 < 0)
+      throw std::invalid_argument("RefGenome::queryRegion p1 must be >= 0");
+    if (p2 < 0)
+      throw std::invalid_argument("RefGenome::queryRegion p2 must be >= 0");
 
     int len;
     char * f = faidx_fetch_seq(index, const_cast<char*>(chr_name.c_str()), p1, p2, &len);
@@ -45,6 +52,9 @@ namespace SnowTools {
     std::string out(f);
 
     free(f);
+
+    if (out.empty())
+      throw std::invalid_argument("RefGenome::queryRegion - Returning empty query on " + chr_name + ":" + std::to_string(p1) + "-" + std::to_string(p2));
 
     return (out);
 

@@ -6,5 +6,5 @@
 	url = https://github.com/samtools/htslib
 [submodule "bwa"]
 	path = bwa
-	url = https://github.com/lh3/bwa
+	url = https://github.com/jwalabroad/bwa
 	branch = Apache2
