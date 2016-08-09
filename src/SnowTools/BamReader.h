@@ -148,7 +148,6 @@ class BamReader {
   std::shared_ptr<hts_idx_t> idx;
   std::shared_ptr<hts_itr_t> hts_itr;
   std::shared_ptr<bam_hdr_t> br;
-  std::shared_ptr<bam_hdr_t> hdr_write;
 
   bool m_verbose = false;
 

@@ -8,8 +8,6 @@ namespace SnowTools {
 // set the bam region
 bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx) {
   
-  assert(m_in.length());
-  
 #ifdef DEBUG_WALKER
   std::cerr << "trying to set the region for "<< m_in << " and on region " << gp << std::endl;
 #endif
@@ -62,7 +60,7 @@ void BamReader::setBamReaderRegion(const GenomicRegion& g, std::shared_ptr<hts_i
   m_region.clear();
   m_region.push_back(g);
   m_region_idx = 0; // rewind it
-  //__check_regions_blacklist(); // sets m_region
+
   if (m_region.size())
     __set_region(m_region[0], passed_idx);
   else
@@ -96,7 +94,7 @@ BamReader::BamReader(const std::string& in) : m_in(in)
 {
   // open for reading
   if (!__open_BAM_for_reading())
-    throw 20;
+    throw std::runtime_error("BamReader: Cannot read file: " + m_in);
 }
 
 BamReader::BamReader() {}
@@ -104,22 +102,16 @@ BamReader::BamReader() {}
 bool BamReader::__open_BAM_for_reading()
 {
 
-  assert(m_in.length());
-  
   // HTS open the reader
   fp = std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
   
-  if (!fp) {
-    std::cerr << "Error using HTS reader on opening NGS file " << m_in << std::endl;
-    exit(EXIT_FAILURE);
-  } 
+  if (!fp) 
+    return false; 
 
   br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete());
   
-  if (!br) {
-    std::cerr << "Error using HTS reader on opening NGS file " << m_in << std::endl;
+  if (!br) 
     return false;
-  }
   
   return true;
 
