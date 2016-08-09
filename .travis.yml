@@ -14,6 +14,7 @@ env:
 before_install: 
 - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 - sudo apt-get -qq update
+- sudo apt-get install libboost-system-dev libboost-test-dev
 ##- sudo apt-get install valgrind python-yaml libyaml-dev build-essential libssh2-1-dev libarchive-dev clang
 - sudo apt-get install gcc-4.8 g++-4.8
 - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
