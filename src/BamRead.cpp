@@ -656,7 +656,8 @@ namespace SnowTools {
 
     assert(ops.size() == lens.size());
     for (size_t i = 0; i < lens.size(); ++i) {
-      tc.push_back(CigarField(ops[i], std::stoi(lens[i])));
+      //tc.push_back(CigarField(ops[i], std::stoi(lens[i])));
+      tc.add(CigarField(ops[i], std::stoi(lens[i])));
     }
     
     return tc;

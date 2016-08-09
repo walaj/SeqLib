@@ -6,6 +6,8 @@
 #include "htslib/bgzf.h"
 #include "htslib/kstring.h"
 
+#include <string>
+
 namespace SnowTools {
   
   /** Store a header to a BAM file 

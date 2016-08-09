@@ -1,1 +1,1 @@
-#include "SnowTools"
+#include "SnowTools/BamHeader.h"

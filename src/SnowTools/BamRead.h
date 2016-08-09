@@ -52,58 +52,89 @@ class CigarField {
 
  public:
 
+  /** Construct the cigar op by type (MIDNSHPX) and length */
   CigarField(char t, uint32_t l); 
 
+  /** Construct the cigar op from the raw sam.h uint32_t (first 4 bits op, last 28 len) */
   CigarField(uint32_t f) : data(f) {}
 
-  uint32_t raw() const { return data; }
+  /** Return the raw sam.h uint8_t cigar data */
+  inline uint32_t raw() const { return data; }
 
+  /** Print the cigar field (e.g. 35M) */
   friend std::ostream& operator<<(std::ostream& out, const CigarField& c);
 
-  char Type() const { return bam_cigar_opchr(data); } 
+  /** Return the cigar op type (one of MIDNSHPX) as a char */
+  inline char Type() const { return bam_cigar_opchr(data); } 
 
-  uint8_t RawType() const { return bam_cigar_op(data); } 
+  /** Return the raw sam.h uint8_t cigar type (bam_cigar_op(data)) */
+  inline uint8_t RawType() const { return bam_cigar_op(data); } 
 
-  uint32_t Length() const { return bam_cigar_oplen(data); } 
+  /** Return the length of the cigar op (e.g. 35M returns 35) */
+  inline uint32_t Length() const { return bam_cigar_oplen(data); } 
 
-  bool ConsumesReference() const { return bam_cigar_type(bam_cigar_op(data))&2;  }
-  bool ConsumesQuery()     const { return bam_cigar_type(bam_cigar_op(data))&1;  }
+  /** Returns true if cigar op matches bases on the reference (MDN=X)
+  inline bool ConsumesReference() const { return bam_cigar_type(bam_cigar_op(data))&2;  }
+
+  /** Returuns true cigar op matches bases on the query (MIS=X) */
+  inline bool ConsumesQuery() const { return bam_cigar_type(bam_cigar_op(data))&1;  }
 
  private:
 
+  // first 4 bits hold op, last 28 hold len
   uint32_t data;
   
 };
 
-/*
  class Cigar {
    
  public:
 
+   /** Iterator to first cigar op */
    typename std::vector<CigarField>::iterator begin() { return m_data.begin(); } 
 
+   /** Iterator to last cigar op */
    typename std::vector<CigarField>::iterator end() { return m_data.end(); }
 
-   typename std::vector<CigarField>::iterator begin() { return m_data.begin(); } 
+   /** Const iterator to end of cigar op */
+   typename std::vector<CigarField>::const_iterator begin() const { return m_data.begin(); } 
 
-   typename std::vector<CigarField>::iterator end() { return m_data.end(); }
+   /** Const iterator to end of cigar op */
+   typename std::vector<CigarField>::const_iterator end() const { return m_data.end(); }
 
+   /** Const reference to last cigar op */
+   inline const CigarField& back() const { return m_data.back(); }
 
+   /** Reference to last cigar op */
+   inline CigarField& back() { return m_data.back(); }
+
+   /** Const reference to first cigar op */
+   inline const CigarField& front() const { return m_data.front(); }
+
+   /** Reference to first cigar op */
+   inline CigarField& front() { return m_data.front(); }
+
+   /** Returns the number of cigar ops */
    size_t size() const { return m_data.size(); }
 
+   /** Returns the i'th cigar op */
+   CigarField& operator[](size_t i) { return m_data[i]; }
+
+   /** Returns the i'th cigar op (const) */
+   const CigarField& operator[](size_t i) const { return m_data[i]; }
+
+   /** Add a new cigar op */
    void add(const CigarField& c) { 
      m_data.push_back(c); 
    }
    
  private:
    
-   //size_t m_len;
    std::vector<CigarField> m_data; // should make this simpler
 
  };
-*/
 
-typedef std::vector<CigarField> Cigar;
+ //typedef std::vector<CigarField> Cigar;
 typedef std::unordered_map<std::string, size_t> CigarMap;
 
  Cigar cigarFromString(const std::string& cig);
@@ -356,7 +387,8 @@ class BamRead {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
     for (int k = 0; k < b->core.n_cigar; ++k) 
-      cig.push_back(CigarField(c[k]));
+      //cig.push_back(CigarField(c[k]));
+      //cig.add(CigarField(c[k]));
     //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
     return cig;
   }
@@ -369,7 +401,9 @@ class BamRead {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
     for (int k = b->core.n_cigar - 1; k >= 0; --k) 
-      cig.push_back(CigarField(c[k]));
+      //cig.add(CigarField(c[k]));
+      cig.add(CigarField(c[k]));
+      //cig.push_back(CigarField(c[k]));
     //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
     return cig;
   }

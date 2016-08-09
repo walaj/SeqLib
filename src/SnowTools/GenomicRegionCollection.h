@@ -209,7 +209,10 @@ class GenomicRegionCollection {
   typename std::vector<T>::iterator begin() { return m_grv.begin(); } 
 
   typename std::vector<T>::iterator end() { return m_grv.end(); } 
+ 
+  typename std::vector<T>::const_iterator begin() const { return m_grv.begin(); } 
 
+  typename std::vector<T>::const_iterator end() const { return m_grv.end(); } 
 
   // always construct this object any time m_grv is modifed
   GenomicIntervalTreeMap m_tree;
