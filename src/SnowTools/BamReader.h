@@ -7,7 +7,6 @@
 #include "SnowTools/ReadFilter.h"
 #include "SnowTools/BamWalker.h"
 
-
 namespace SnowTools {
 
 /** Walk along a BAM or along BAM regions and stream in/out reads

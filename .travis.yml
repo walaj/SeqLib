@@ -31,7 +31,6 @@ before_install:
 script: 
 - .travis.scripts/travis-install.sh
 - ./configure && make
-- cd snow_test && ./configure --with-boost=$BOOST_ROOT && make && ./snow_test && cd ..
 
 after_success: 
 - .travis.scripts/coveralls.sh
