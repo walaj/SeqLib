@@ -29,6 +29,7 @@ before_install:
 
 script: 
 - ./configure && make
+- cd snow_test && ./configure --with-boost=$BOOST_ROOT && make && ./snow_test
 
 after_success: 
 - .travis.scripts/coveralls.sh
