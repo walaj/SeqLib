@@ -3,7 +3,7 @@
 
 C++ interface to HTSlib, BLAT and BWA-MEM 
 
-**License:** [GNU GPLv3][license]
+**License:** [Apache2][license]
 
 API Documentation
 -----------------
@@ -29,8 +29,8 @@ SnowTools is a C++ package for querying BAM and SAM files, performing
 BWA-MEM and BLAT operations in memory, and performing advanced filtering of 
 reads using a hierarchy of rules. Currently, SnowTools wraps the following projects:
 * [HTSlib][htslib]
-* [BWA-MEM][BWA]
-* [BLAT][BLAT]
+* [BWA-MEM][BWA] (Apache2 branch)
+* [FermiKit][fermi] (Apache2 branch)
 
 SnowTools also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
 It uses an [interval tree][int] (provided by Erik Garrison @ekg) to provide for rapid interval queries.
@@ -152,7 +152,7 @@ Attributions
 
 [BWA]: https://github.com/lh3/bwa
 
-[license]: https://github.com/broadinstitute/variant-bam/blob/master/LICENSE
+[license]: https://github.com/jwalabroad/SnowTools/blob/new_license/LICENSE
 
 [BamTools]: https://raw.githubusercontent.com/wiki/pezmaster31/bamtools/Tutorial_Toolkit_BamTools-1.0.pdf
 
@@ -167,3 +167,5 @@ Attributions
 [gam]: https://github.com/broadinstitute/gamgee
 
 [int]: https://github.com/ekg/intervaltree.git
+
+[fermi]: https://github.com/lh3/fermi-lite
