@@ -489,6 +489,12 @@ EXCLUDE                = bwa \
 		         htslib \
 		         multifast-v1.4.2 \
 		         blat \
+			 fermi-lite \
+			 src/json \
+			 src/old \
+			 src/ssw.c \
+			 src/ssw_cpp.cpp \
+			 src/gzstream.C \
 		         SGA \
 		         snow_test \ 
 		         .git \
