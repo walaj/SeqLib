@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "SnowTools/ReadFilter.h"
+#include "SnowTools/BamWalker.h"
 
 
 namespace SnowTools {

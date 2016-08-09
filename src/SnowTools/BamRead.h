@@ -127,6 +127,10 @@ class CigarField {
    void add(const CigarField& c) { 
      m_data.push_back(c); 
    }
+
+  /** Print the cigar string (e.g. 35M25S) */
+  friend std::ostream& operator<<(std::ostream& out, const Cigar& c);
+  
    
  private:
    
@@ -320,7 +324,6 @@ class BamRead {
     return (posr != std::string::npos) ? qn.substr(0, posr) : "NA";
   }
 
-
   /** Get the insert size, absolute value, and always taking into account read length */
   inline int32_t FullInsertSize() const {
 
@@ -343,15 +346,16 @@ class BamRead {
   /** Set the sequence name */
   void SetSequence(const std::string& seq);
 
+  /** Print a SAM-lite record for this alignment */
   friend std::ostream& operator<<(std::ostream& out, const BamRead &r);
 
   /** Return read as a GenomicRegion */
   GenomicRegion asGenomicRegion() const;
 
-  /** Return mate as a GenomicRegion */
+  /** Return mate read as a GenomicRegion */
   GenomicRegion asGenomicRegionMate() const;
 
-  /** Get the max insertion size on this cigar */
+  /** Return the max single insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {
     uint32_t* c = bam_get_cigar(b);
     uint32_t imax = 0;
@@ -361,7 +365,7 @@ class BamRead {
     return imax;
   }
 
-  /** Get the max deletion size on this cigar */
+  /** Return the max single deletion size on this cigar */
   inline uint32_t MaxDeletionBases() const {
     uint32_t* c = bam_get_cigar(b);
     uint32_t dmax = 0;
@@ -371,7 +375,7 @@ class BamRead {
     return dmax;
   }
 
-  /** Get the max deletion size on this cigar */
+  /** Get the number of matched bases in this alignment */
   inline uint32_t NumMatchBases() const {
     uint32_t* c = bam_get_cigar(b);
     uint32_t dmax = 0;
@@ -387,9 +391,7 @@ class BamRead {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
     for (int k = 0; k < b->core.n_cigar; ++k) 
-      //cig.push_back(CigarField(c[k]));
-      //cig.add(CigarField(c[k]));
-    //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
+      cig.add(CigarField(c[k]));
     return cig;
   }
 

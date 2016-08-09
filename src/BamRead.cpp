@@ -632,6 +632,14 @@ namespace SnowTools {
     return out; 
   }
 
+
+  std::ostream& operator<<(std::ostream& out, const Cigar& c) { 
+    for (auto& i : c)
+      out << i;
+    return out; 
+  }
+
+
   Cigar cigarFromString(const std::string& cig) {
 
     Cigar tc;
