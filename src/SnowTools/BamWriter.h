@@ -12,10 +12,11 @@ class BamWriter  {
 
  public:
 
-  /** Construct a new BamWriter for writing a BAM/SAM/CRAM
-   * @param in Name of BAM/SAM/CRAM file to write
+  /** Construct a new BamWriter for writing a BAM file 
+   * @param f Name of BAM file to write
+   * @note Immediately calls OpenWriteBam.
    */
-  BamWriter(const std::string& in);
+  BamWriter(const std::string& f);
 
   /** Construct an empty BamWriter */
   BamWriter() {}
@@ -27,28 +28,36 @@ class BamWriter  {
    */
   ~BamWriter() {}
 
+  /** Close a BAM file explitily. This is required before indexing with makeIndex.
+   * @note If not called, BAM will close properly on object destruction
+   * @exception Throws a runtime_error if BAM already closed or was never opened
+   */
+  void CloseBam();
+
   /** Create the index file for the output bam in BAI format.
    *
-   * This will make a call to HTSlib bam_index_build for the output file.
+   * This will make a call to HTSlib bam_index_build for the output file. 
+   * @exception Throws a runtime_error if sam_index_build2 exits with < 0 status
    */
-  void makeIndex();
+  void makeIndex() const;
 
   /** Print out some basic info about this walker, 
    * including Minz0iRules
    */
   friend std::ostream& operator<<(std::ostream& out, const BamWriter& b);
 
-  /** Open a BAM file for streaming out
+  /** Open a BAM file for streaming out.
+   * @param bam Path to the output BAM file
+   * @exception Throws a runtime_error if cannot write BAM
+   * @note Calling this function will immediately write the BAM with its header
    */
-  bool OpenWriteBam(const std::string& bam);
+  void OpenWriteBam(const std::string& bam);
 
   /** Write an alignment to the output BAM file 
    * @param r The BamRead to save
+   * @exception Throws a runtime_error if cannot write alignment
    */
   void writeAlignment(BamRead &r);
-
-  std::string m_in;
-  std::string m_out;
 
   /** Set a flag to say if we should print reads to stdout */
   void setStdout();
@@ -77,11 +86,14 @@ class BamWriter  {
 
  protected:
 
+  // path to output file
+  std::string m_out; 
+
   // for stdout mode, print header?
   bool m_print_header = false;
 
   // open m_out, true if success
-  bool __open_BAM_for_writing();
+  void __open_BAM_for_writing();
   
   // hts
   std::shared_ptr<BGZF> fp;

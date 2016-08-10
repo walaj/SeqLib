@@ -84,41 +84,6 @@ namespace SnowTools {
     return out;
   }
   
-  bam_hdr_t* BWAWrapper::sam_hdr_read2(const std::string& hdr) const {
-    kstring_t str;
-    bam_hdr_t *h;
-    str.l = str.m = 0; str.s = 0;
-    
-    std::istringstream iss(hdr);
-    std::string line;
-    while (std::getline(iss, line, '\n')) {
-      //while (hts_getline(fp, KS_SEP_LINE, &fp->line) >= 0) {
-      if (line.length() == 0 || line.at(0) != '@') break;
-      
-      //if (line.length() > 3 && line.substr(0,3) == "@SQ") has_SQ = 1;
-      //if (fp->line.l > 3 && strncmp(fp->line.s,"@SQ",3) == 0) has_SQ = 1;
-      //kputsn(fp->line.s, fp->line.l, &str);
-      kputsn(line.c_str(), line.length(), &str);
-      kputc('\n', &str);
-    }
-    /*
-      if (! has_SQ && fp->fn_aux) {
-      char line[2048];
-      FILE *f = fopen(fp->fn_aux, "r");
-      if (f == NULL) return NULL;
-      while (fgets(line, sizeof line, f)) {
-      const char *name = strtok(line, "\t");
-      const char *length = strtok(NULL, "\t");
-      ksprintf(&str, "@SQ\tSN:%s\tLN:%s\n", name, length);
-      }
-      fclose(f);
-      }
-    */
-    if (str.l == 0) kputsn("", 0, &str);
-    h = sam_hdr_parse(str.l, str.s);
-    h->l_text = str.l; h->text = str.s;
-    return h;
-  }
   
   
   void BWAWrapper::constructIndex(const USeqVector& v) {

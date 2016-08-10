@@ -11,8 +11,7 @@
 
 #include "SnowTools/SnowToolsCommon.h"
 #include "SnowTools/SnowUtils.h"
-
-#include "htslib/sam.h"
+#include "SnowTools/BamHeader.h"
 
 /** 
  */
@@ -124,6 +123,12 @@ class GenomicRegion {
    * @exception throws an invalid_argument exception if ref id >= h->n_targets
    */
   std::string ChrName(const bam_hdr_t* h = nullptr) const;
+
+  /** Extract the chromosome name as a string 
+   * @param h BamHeader to serve as sequence dictionary
+   * @exception throws an out_of_range exception if ref id >= h->n_targets
+   */
+  std::string ChrName(const BamHeader& h) const;
 
   /** Pad the object to make larger or smaller
    * @param pad Amount to pad by.

@@ -58,6 +58,21 @@ std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
   }
   return cc;
 }
+
+  std::string GenomicRegion::ChrName(const BamHeader& h) const {
+    
+    std::string cc;
+    if (!h.isEmpty()) {
+      if (chr >= h.NumSequences())
+	throw std::invalid_argument( "GenomicRegion::ChrName - not enough targets in BamHeader to cover ref id");
+      else
+	cc = h.IDtoName(chr); // std::string(h->target_name[chr]);
+    } else {
+      cc = chrToString(chr);
+    }
+    return cc;
+  }
+
   
 // write genomic region to a string
 std::string GenomicRegion::toString() const {

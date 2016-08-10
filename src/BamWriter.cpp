@@ -9,33 +9,46 @@ void BamWriter::SetWriteHeader(bam_hdr_t* hdr) {
   hdr_write = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete()); 
 };
 
-void BamWriter::makeIndex() {
-  
-  if (!fop)
-    std::cerr << "WARNING: Trying to close write BAM when none specified" << std::endl;
+  void BamWriter::CloseBam() {
 
-  //__close_write_bam();
+    if (!fop)
+      throw std::runtime_error("BamWriter::CloseBam() - Trying to close BAM that is already closed or never opened");
+
+    sam_close(fop.get());
+
+    // clear the shared_ptr to output BAM
+    fop = nullptr;
+  }
+
+void BamWriter::makeIndex() const {
+  
+  // throw an error if BAM is not already closed
+  if (fop)
+    throw std::runtime_error("BamWriter::makeIndex - Trying to index open BAM. Close first with CloseBam()");
   
   // call to htslib to build bai index
-  bam_index_build(m_out.c_str(), 0); // 0 is "min_shift", which is 0 for bai index
+  if (bam_index_build(m_out.c_str(), 0) < 0) // 0 is "min_shift", which is 0 for bai index
+    throw std::runtime_error("BamWriter::makeIndex - Failed to create index");
+  
 
 }
-bool BamWriter::OpenWriteBam(const std::string& bam) 
+void BamWriter::OpenWriteBam(const std::string& bam) 
 {
   m_out = bam;
 
-  return __open_BAM_for_writing();
+  __open_BAM_for_writing();
+
+  return;
 }
 
 
-BamWriter::BamWriter(const std::string& in) : m_in(in)
+BamWriter::BamWriter(const std::string& f) : m_out(f)
 {
-  // open for reading
-  if (!__open_BAM_for_writing())
-    throw 20;
+  __open_BAM_for_writing();
 }
 
-bool BamWriter::__open_BAM_for_writing() 
+
+void BamWriter::__open_BAM_for_writing() 
 {
 
   // hts open the writer
@@ -45,10 +58,8 @@ bool BamWriter::__open_BAM_for_writing()
     m_print_header = true;
   }
 
-  if (!fop) {
-    std::cerr << "Error: Cannot open BAM for writing " << m_out << std::endl;
-    return false;
-  }
+  if (!fop) 
+    throw std::runtime_error("BamWriter - Cannot open BAM for writing");
 
   // if no write header, set as read
   if (!hdr_write)
@@ -56,23 +67,22 @@ bool BamWriter::__open_BAM_for_writing()
 
   // hts write the header
   if (m_print_header) {
-    sam_hdr_write(fop.get(), hdr_write.get());      
+    if (sam_hdr_write(fop.get(), hdr_write.get()) < 0) {
+      throw std::runtime_error("BamWriter - Cannot write header. sam_hdr_write exited with < 0");
+    }
   }
 
-  return true;
 
 }
 
 void BamWriter::writeAlignment(BamRead &r)
 {
-
-  //for (auto& i : m_tag_list)
-  //  r.RemoveTag(i.c_str());
-    
-  if (!fop)
-    std::cerr << "BamWriter ERROR in writeAlignment. Did you forget to open the Bam for writing (OpenWriteBam)? Skipping write"  << std::endl;
-  else
-    sam_write1(fop.get(), hdr_write.get(), r.raw());
+  if (!fop) {
+    throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRead. Did you forget to open the Bam for writing (OpenWriteBam)?");
+  } else {
+    if (sam_write1(fop.get(), hdr_write.get(), r.raw()) < 0)
+      throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRead. sam_write1 exited with < 0");      
+  }
 }
 
 std::ostream& operator<<(std::ostream& out, const BamWriter& b)

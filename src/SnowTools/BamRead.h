@@ -73,7 +73,7 @@ class CigarField {
   /** Return the length of the cigar op (e.g. 35M returns 35) */
   inline uint32_t Length() const { return bam_cigar_oplen(data); } 
 
-  /** Returns true if cigar op matches bases on the reference (MDN=X)
+  /** Returns true if cigar op matches bases on the reference (MDN=X) */
   inline bool ConsumesReference() const { return bam_cigar_type(bam_cigar_op(data))&2;  }
 
   /** Returuns true cigar op matches bases on the query (MIS=X) */

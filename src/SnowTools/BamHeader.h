@@ -7,6 +7,7 @@
 #include "htslib/kstring.h"
 
 #include <string>
+#include <memory>
 
 namespace SnowTools {
   
@@ -23,7 +24,7 @@ namespace SnowTools {
      * 
      * @note No memory is allocated here
      */
-    BamHeader() { h = nullptr; };
+    BamHeader() {};
     
     /** Initialize a BamHeader from a string containing
      * a BAM header in human-readable form (e.g. @PG ... )
@@ -31,10 +32,35 @@ namespace SnowTools {
      */
     BamHeader(const std::string& hdr);
 
+    /** Create a new BamHeader from a raw HTSlib header.
+     * 
+     * @note This will make a copy of the input header
+     */
+    BamHeader(const bam_hdr_t * hdr);
+    
+    /** Return the number of sequences store in this dictionary
+     * Returns 0 if header is unitialized.
+     */
+    int NumSequences() const;
+
+    /** Convert a numeric sequence ID to a name
+     * 
+     * @exception Throws an out_of_range if ID is >= then number of 
+     * targets in dictionary, or if header is uninitialized..
+     * @exception Throws an invalid_argument if ID is < 0;
+     */
+    std::string IDtoName(int id) const;
+
+    /** Check if the header has been initialized
+     */
+    bool isEmpty() const { return h.get() != 0; }
+
   private:
 
-    bam_hdr_t * h;
-    
+    std::shared_ptr<bam_hdr_t> h;
+
+    // adapted from sam_hdr_read
+    bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;
 
   };
   
