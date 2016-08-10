@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/jwalabroad/SnowTools.svg?branch=master)](https://travis-ci.org/jwalabroad/SnowTools)
-[![Coverage Status](https://coveralls.io/repos/jwalabroad/SnowTools/badge.svg?branch=master&service=github)](https://coveralls.io/github/jwalabroad/SnowTools?branch=master)
+[![Build Status](https://travis-ci.org/jwalabroad/SnowTools.svg?branch=new_license)](https://travis-ci.org/jwalabroad/SnowTools)
+[![Coverage Status](https://coveralls.io/repos/github/jwalabroad/SnowTools/badge.svg?branch=new_license)](https://coveralls.io/github/jwalabroad/SnowTools?branch=new_license)
 
-C++ interface to HTSlib, BLAT and BWA-MEM 
+C++ interface to HTSlib, BWA-MEM and Fermi-kit
 
 **License:** [Apache2][license]
 
