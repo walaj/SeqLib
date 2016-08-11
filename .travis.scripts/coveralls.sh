@@ -14,8 +14,8 @@ echo "...running unit tests and code coverage"
   fi
   cd snow_test
   
-  #./configure --with-boost=${BOOST_ROOT}
-  #make
+  ./configure --with-boost=${BOOST_ROOT}
+  make
   rm snow_test-snow-test.gcno ## dont get cov on test prog
 
   ./snow_test

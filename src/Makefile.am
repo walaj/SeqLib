@@ -2,7 +2,7 @@ noinst_LIBRARIES = libsnowtools.a
 
 libsnowtools_a_CPPFLAGS = \
         -I.. \
-        -I../htslib -I../bwa
+        -I../htslib -I../bwa -I../fermi-lite
 
 libsnowtools_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
