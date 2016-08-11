@@ -67,19 +67,19 @@ class GenomicRegionCollection {
    * @param file Path to call-stats file
    * @param pad Amount to pad intervals by
    */
- void readMuTect(const std::string &file, int pad = 0, bam_hdr_t* h = NULL);
+ void readMuTect(const std::string &file, int pad, const SnowTools::BamHeader& hdr);
 
   /** Read in a BED file and adds to GenomicRegionCollection object
    * @param file Path to BED file
    * @param pad Amount to pad intervals by
    */
- void readBEDfile(const std::string &file, int pad = 0, bam_hdr_t* h = NULL);
+ void readBEDfile(const std::string &file, int pad, const SnowTools::BamHeader& hdr);
 
   /** Read in a VCF file and adds to GenomicRegionCollection object
    * @param file Path to BED file
    * @param pad Amount to pad intervals by
    */
- void readVCFfile(const std::string &file, int pad = 0, bam_hdr_t* h = NULL);
+ void readVCFfile(const std::string &file, int pad, const SnowTools::BamHeader& hdr);
 
   /** Read in a text file (can be gzipped) and add to GenomicRegionCollection
    *
@@ -91,7 +91,7 @@ class GenomicRegionCollection {
    * @param file Text file to read and store intervals
    * @param pad Amount to pad the intervals by (calls GenomicRegion::pad)
    */
- void regionFileToGRV(const std::string &file, int pad = 0, bam_hdr_t* h = NULL, bool chr_header = false);
+ void regionFileToGRV(const std::string &file, int pad, const BamHeader& hdr, bool chr_header = false);
 
   /** Fill in the GenomicIntervalTreeMap stored in this object. 
    *

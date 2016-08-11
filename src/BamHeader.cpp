@@ -1,7 +1,11 @@
 #include "SnowTools/BamHeader.h"
+#include "SnowTools/BamWalker.h"
 
 #include <sstream>
 #include <stdexcept>
+#include <iostream>
+
+#include "htslib/khash.h"
 
 namespace SnowTools {
 
@@ -9,7 +13,45 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   h = std::shared_ptr<bam_hdr_t>(sam_hdr_read2(hdr)); 
 
+  ConstructName2IDTable();
+
 }
+
+  void BamHeader::WriteToStdout() const {
+
+    std::shared_ptr<htsFile> f = std::shared_ptr<htsFile>(sam_open("-", "w"), sam_write_delete());
+    f->format.format == text_format;
+    sam_hdr_write(f.get(), h.get());
+  }
+
+  BamHeader::BamHeader(const bam_hdr_t * hdr) {
+
+    h = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr));
+
+    ConstructName2IDTable();
+
+  }
+
+  int BamHeader::ConstructName2IDTable() {
+
+    // create the lookup table if not already made
+    if (!n2i) {
+      n2i = std::shared_ptr<std::unordered_map<std::string, int>>(new std::unordered_map<std::string, int>());
+      for (int i = 0; i < h->n_targets; ++i)
+	n2i->insert(std::pair<std::string, int>(std::string(h->target_name[i]), i));
+    }
+
+  }
+
+  int BamHeader::Name2ID(const std::string& name) const {
+
+    std::unordered_map<std::string, int>::const_iterator ff = n2i->find(name);
+    if (ff != n2i->end())
+      return ff->second;
+    else
+      return -1;
+
+  }
 
 bam_hdr_t* BamHeader::sam_hdr_read2(const std::string& hdr) const {
 

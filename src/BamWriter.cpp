@@ -5,9 +5,32 @@
 
 namespace SnowTools {
 
-void BamWriter::SetWriteHeader(bam_hdr_t* hdr) {
-  hdr_write = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete()); 
-};
+  void BamWriter::SetHeader(const SnowTools::BamHeader& h) {
+    hdr = h;
+  }
+
+  void BamWriter::WriteHeader() const {
+    
+    if (hdr.isEmpty())
+      throw std::runtime_error("BamWriter::WriteHeader - No header supplied. Provide with SetWriteHeader");
+
+    // hts open the writer
+    //if (!fop) { // default is bam. if already set by flag, don't reopen
+    //  assert(m_out.length());
+    //  fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), "wb"), sam_write_delete());
+    // }
+    
+    if (!fop) 
+      throw std::runtime_error("BamWriter::WriteHeader - Output not open for writing. Open with Open()");
+    
+    if (sam_hdr_write(fop.get(), hdr.get()) < 0) 
+      throw std::runtime_error("BamWriter - Cannot write header. sam_hdr_write exited with < 0");
+    
+  }
+  
+  void BamWriter::SetWriteHeader(bam_hdr_t* hdr) {
+    hdr_write = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete()); 
+  }
 
   void BamWriter::CloseBam() {
 
@@ -32,55 +55,39 @@ void BamWriter::makeIndex() const {
   
 
 }
-void BamWriter::OpenWriteBam(const std::string& bam) 
-{
-  m_out = bam;
 
-  __open_BAM_for_writing();
+  void BamWriter::Open(const std::string& f) {
 
-  return;
-}
+    // don't reopen
+    if (fop)
+      return;
 
+    m_out = f;
 
-BamWriter::BamWriter(const std::string& f) : m_out(f)
-{
-  __open_BAM_for_writing();
-}
+    // hts open the writer
+    fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), output_format.c_str()), sam_write_delete());
 
-
-void BamWriter::__open_BAM_for_writing() 
-{
-
-  // hts open the writer
-  if (!fop) { // default is bam. if already set by flag, don't reopen
-    assert(m_out.length());
-    fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), "wb"), sam_write_delete());
-    m_print_header = true;
+    if (!fop)
+      throw std::runtime_error("BamWriter::Open - Cannot open output file: " + f);
   }
 
-  if (!fop) 
-    throw std::runtime_error("BamWriter - Cannot open BAM for writing");
+  BamWriter::BamWriter(int o) {
 
-  // if no write header, set as read
-  if (!hdr_write)
-    hdr_write = br;
-
-  // hts write the header
-  if (m_print_header) {
-    if (sam_hdr_write(fop.get(), hdr_write.get()) < 0) {
-      throw std::runtime_error("BamWriter - Cannot write header. sam_hdr_write exited with < 0");
+    switch(o) {
+    case BAM : output_format = "wb";
+    case CRAM : output_format = "wc";
+    case SAM : output_format = "w";
     }
+
   }
-
-
-}
+  
 
 void BamWriter::writeAlignment(BamRecord &r)
 {
   if (!fop) {
     throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. Did you forget to open the Bam for writing (OpenWriteBam)?");
   } else {
-    if (sam_write1(fop.get(), hdr_write.get(), r.raw()) < 0)
+    if (sam_write1(fop.get(), hdr.get(), r.raw()) < 0)
       throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. sam_write1 exited with < 0");      
   }
 }

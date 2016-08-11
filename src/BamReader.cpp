@@ -20,8 +20,8 @@ bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t>
   if (!idx) 
     idx = std::shared_ptr<hts_idx_t>(hts_idx_load(m_in.c_str(), HTS_FMT_BAI), idx_delete());
   
-  if (gp.chr >= br->n_targets) {
-    std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << br->n_targets << std::endl;
+  if (gp.chr >= m_hdr.NumSequences()) {
+    std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << m_hdr.NumSequences() << std::endl;
     return false;
   }
   
@@ -95,14 +95,15 @@ bool BamReader::__open_BAM_for_reading()
 {
 
   // HTS open the reader
-  fp = std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
+  fp = m_in == "-" ? std::shared_ptr<BGZF>(bgzf_fdopen(fileno(stdin), "r")) : std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
   
   if (!fp) 
     return false; 
 
-  br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete());
+  //br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete()g);
+  m_hdr = BamHeader(bam_hdr_read(fp.get())); //bam_hdr_read(fp.get()), bam_hdr_delete());
   
-  if (!br) 
+  if (!m_hdr.get()) 
     return false;
   
   return true;
@@ -113,7 +114,7 @@ void BamReader::SetReadFilterCollection(const std::string& rules)
 {
 
   // construct the minirules
-  m_mr = ReadFilterCollection(rules, br.get());
+  m_mr = ReadFilterCollection(rules, m_hdr.get());
 
   // check that it worked
   if (!m_mr.size()) {

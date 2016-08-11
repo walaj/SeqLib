@@ -191,33 +191,33 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
   
 }
 
-// convert a region BED file into an interval tree map
-  void ReadFilter::setRegionFromFile(const std::string& file, bam_hdr_t * h) {
-  
-  m_region_file = file;
-  id = file;
-
-  // parse if it's a file
-  if (SnowTools::read_access_test(file))
-    m_grv.regionFileToGRV(file, pad, h);
-  // samtools style string
-  else if (file.find(":") != std::string::npos && file.find("-") != std::string::npos) {
-    if (h) {
-      GenomicRegion gr(file, h);
-      gr.pad(pad);
-      m_grv.add(gr);
-    } else {
-      std::cerr << "!!!!!!!!ReadFilter region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
+  // convert a region BED file into an interval tree map
+  void ReadFilter::setRegionFromFile(const std::string& file, const BamHeader& hdr) {
+    
+    m_region_file = file;
+    id = file;
+    
+    // parse if it's a file
+    if (SnowTools::read_access_test(file))
+      m_grv.regionFileToGRV(file, pad, hdr);
+    // samtools style string
+    else if (file.find(":") != std::string::npos && file.find("-") != std::string::npos) {
+      if (!hdr.isEmpty()) {
+	GenomicRegion gr(file, hdr);
+	gr.pad(pad);
+	m_grv.add(gr);
+      } else {
+	std::cerr << "!!!!!!!!ReadFilter region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
+      }
     }
-  }
-  // it's a single chromosome
-  else if (!file.empty()) {
-    SnowTools::GenomicRegion gr(file, "1", "1", h); //file is chr, "1" is dummy
-    if (gr.chr == -1 || gr.chr >= h->n_targets) {
-      std::cerr << "ERROR: Trying to match chromosome " << file << " to one in header, but no match found" << std::endl;
-      exit(EXIT_FAILURE);
-    } else {
-      gr.pos2 = h->target_len[gr.chr];
+    // it's a single chromosome
+    else if (!file.empty()) {
+      SnowTools::GenomicRegion gr(file, "1", "1", hdr); //file is chr, "1" is dummy
+      if (gr.chr == -1 || gr.chr >= hdr.NumSequences()) {
+	std::cerr << "ERROR: Trying to match chromosome " << file << " to one in header, but no match found" << std::endl;
+	exit(EXIT_FAILURE);
+      } else {
+	gr.pos2 = hdr.get()->target_len[gr.chr];
       m_grv.add(gr);
     }
   }
@@ -244,7 +244,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
   // constructor to make a ReadFilterCollection from a rules file.
   // This will reduce each individual BED file and make the 
   // GenomicIntervalTreeMap
-  ReadFilterCollection::ReadFilterCollection(const std::string& script, bam_hdr_t *h) {
+  ReadFilterCollection::ReadFilterCollection(const std::string& script, const BamHeader& hdr) {
 
     // set up JsonCPP reader and attempt to parse script
     Json::Value root;
@@ -316,7 +316,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
       if (reg == "WG" || reg.empty())
 	mr.m_whole_genome = true;
       else
-	mr.setRegionFromFile(reg, h);
+	mr.setRegionFromFile(reg, hdr);
       
       // check if its excluder region
       mr.excluder = false; // default is no exclude
@@ -1173,7 +1173,7 @@ const std::string ReadFilterCollection::GetScriptContents(const std::string& scr
 
 }
 
-  ReadFilter::ReadFilter(const CommandLineRegion& c, bam_hdr_t * h) {
+  ReadFilter::ReadFilter(const CommandLineRegion& c, const SnowTools::BamHeader& hdr) {
 
     m_region_file = c.f;
 
@@ -1183,7 +1183,7 @@ const std::string ReadFilterCollection::GetScriptContents(const std::string& scr
       id = "WG";
     } else {
       // set the genomic region this rule applies to
-      setRegionFromFile(c.f, h);
+      setRegionFromFile(c.f, hdr);
     }
 
     // add the abstract rule

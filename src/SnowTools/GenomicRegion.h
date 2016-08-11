@@ -40,7 +40,7 @@ class GenomicRegion {
   GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char t_strand = '*');
 
   /** Construct a GenomicRegion from a set of strings */
-  GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, bam_hdr_t* h = NULL);
+  GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, const BamHeader& hdr);
 
   /** Construct a GenomicRegion from a samtools style region string.
    *
@@ -51,7 +51,7 @@ class GenomicRegion {
    * @param h Pointer to BAM header that will be used to convert chr string to ref id
    * @exception throws an invalid_argument exception if cannot parse correctly
    */
-  GenomicRegion(const std::string& reg, bam_hdr_t* h);
+  GenomicRegion(const std::string& reg, const BamHeader& hdr);
 
   /** Return a string representation of just the first base-pair 
    * e.g. 1:10,000
@@ -117,12 +117,6 @@ class GenomicRegion {
   friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr);
 
   std::string toString() const;
-
-  /** Extract the chromosome name as a string 
-   * @param h BAM header with h->target_name field
-   * @exception throws an invalid_argument exception if ref id >= h->n_targets
-   */
-  std::string ChrName(const bam_hdr_t* h = nullptr) const;
 
   /** Extract the chromosome name as a string 
    * @param h BamHeader to serve as sequence dictionary

@@ -47,7 +47,11 @@ namespace SnowTools {
     /** Deallocate the trie */
     ~AhoCorasick() { if (aho_trie) delete aho_trie; }
 
-    /** Add a motif to the trie */
+    /** Add a motif to the trie 
+     * @note Trie construction is lazy. Won't build trie until 
+     * first query. Therefore first query is slow, the rest are
+     * O(n) where (n) is length of query string.
+     */
     void AddMotif(const std::string& m) { 
       aho_trie->insert(m);
     } 
@@ -409,7 +413,8 @@ class ReadFilter {
    * @param reg_type The type of rule this will be
    * @param h BAM header that defines available chromosomes
    */
-  ReadFilter(const CommandLineRegion& c, bam_hdr_t * h);
+  //ReadFilter(const CommandLineRegion& c, bam_hdr_t * h);
+  ReadFilter(const CommandLineRegion& c, const BamHeader& hdr);
 
   std::string id;
   
@@ -417,7 +422,7 @@ class ReadFilter {
 
   bool isValid(BamRecord &r);
    
-  void setRegionFromFile(const std::string& file, bam_hdr_t * h);
+  void setRegionFromFile(const std::string& file, const BamHeader& hdr);
 
   bool isReadOverlappingRegion(BamRecord &r);
 
@@ -473,7 +478,8 @@ class ReadFilterCollection {
 
   AbstractRule rule_all;
   
-  ReadFilterCollection(const std::string& script, bam_hdr_t *h);
+  //ReadFilterCollection(const std::string& script, bam_hdr_t *h);
+  ReadFilterCollection(const std::string& script, const SnowTools::BamHeader& h);
 
   void addGlobalRule(const std::string& rule);
 
@@ -499,7 +505,8 @@ class ReadFilterCollection {
 
   std::vector<ReadFilter> m_regions;
 
-  bam_hdr_t * h = nullptr;// in case we need to convert from text chr to id chr
+  //bam_hdr_t * h = nullptr;// in case we need to convert from text chr to id chr
+  BamHeader h;// in case we need to convert from text chr to id chr
 
   void countsToFile(const std::string& file) const;
 

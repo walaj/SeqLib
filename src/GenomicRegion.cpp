@@ -45,20 +45,6 @@ int GenomicRegion::getOverlap(const GenomicRegion& gr) const {
 }
 
 
-std::string GenomicRegion::ChrName(const bam_hdr_t* h) const {
-
-  std::string cc;
-  if (h) {
-    if (chr >= h->n_targets)
-      throw std::invalid_argument( "GenomicRegion::ChrName - not enough targets in BAM hdr to cover ref id");
-    else
-      cc = std::string(h->target_name[chr]);
-  } else {
-    cc = chrToString(chr);
-  }
-  return cc;
-}
-
   std::string GenomicRegion::ChrName(const BamHeader& h) const {
     
     std::string cc;
@@ -134,11 +120,11 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   return out;
 }
 
-GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h) 
+  GenomicRegion::GenomicRegion(const std::string& reg, const BamHeader& hdr) 
 {
   
-  if (h == nullptr)
-    std::cerr <<" NULL HEADER in GenomicRegion::GenomicRegion(string, bam_hdr_t *): " << std::endl;
+  if (hdr.isEmpty())
+    throw std::invalid_argument("GenomicRegion constructor - supplied empty BamHeader");
 
   // scrub String
   std::string reg2 = SnowTools::scrubString(reg, "chr");
@@ -150,7 +136,7 @@ GenomicRegion::GenomicRegion(const std::string& reg, bam_hdr_t* h)
     char *tmp = (char*)alloca(q - reg2.c_str() + 1); // stack alloc
     strncpy(tmp, reg2.c_str(), q - reg2.c_str());
     tmp[q - reg2.c_str()] = 0;
-    tid = bam_name2id(h, tmp);
+    tid = hdr.Name2ID(std::string(tmp)); //bam_name2id(h.get(), tmp);
     if (tid < 0) {
       std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
       throw std::invalid_argument(inv);
@@ -254,7 +240,7 @@ void GenomicRegion::random() {
   
 }
 
-  GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, bam_hdr_t *h)
+  GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, const SnowTools::BamHeader& hdr)
   {
     // convert the pos strings
     try {
@@ -278,7 +264,7 @@ void GenomicRegion::random() {
       chr = -1;
 
       // if no header, assume that it is "standard"
-      if (!h) {
+      if (hdr.isEmpty()) {
 	try { 
 	  if (tchr == "X" || tchr == "chrX")
 	    chr = 22;
@@ -291,7 +277,7 @@ void GenomicRegion::random() {
 	}
 	return;
       } else {
-	chr = bam_name2id(h, tchr.c_str());
+	chr = hdr.Name2ID(tchr); //bam_name2id(hdr.get(), tchr.c_str());
       }
 
       // TODO slow.

@@ -7,20 +7,24 @@
 
 namespace SnowTools {
 
+  const int BAM = 0;
+  const int SAM = 1;
+  const int CRAM = 2;
+  const int STDOUT = 3;
+
 /** Walk along a BAM or along BAM regions and stream in/out reads
  */
 class BamWriter  {
 
  public:
 
-  /** Construct a new BamWriter for writing a BAM file 
-   * @param f Name of BAM file to write
-   * @note Immediately calls OpenWriteBam.
-   */
-  BamWriter(const std::string& f);
-
-  /** Construct an empty BamWriter */
+  /** Construct an empty BamWriter to write BAM */
   BamWriter() {}
+
+  /** Construct an empty BamWriter and specify output format 
+   * @param o One of SnowTools::BAM, SnowTools::CRAM, SnowTools::SAM, SnowTools::STDOUT
+   */
+  BamWriter(int o);
 
   /** Destroy a BamWriter and close all connections to the BAM 
    * 
@@ -28,6 +32,12 @@ class BamWriter  {
    * calls required within HTSlib to close a BAM or SAM file. 
    */
   ~BamWriter() {}
+
+  /** Write the BAM header */
+  void WriteHeader() const;
+
+  
+  void SetHeader(const SnowTools::BamHeader& h);
 
   /** Close a BAM file explitily. This is required before indexing with makeIndex.
    * @note If not called, BAM will close properly on object destruction
@@ -48,11 +58,11 @@ class BamWriter  {
   friend std::ostream& operator<<(std::ostream& out, const BamWriter& b);
 
   /** Open a BAM file for streaming out.
-   * @param bam Path to the output BAM file
+   * @param f Path to the output BAM file
    * @exception Throws a runtime_error if cannot write BAM
    * @note Calling this function will immediately write the BAM with its header
    */
-  void OpenWriteBam(const std::string& bam);
+  void Open(const std::string& f);
 
   /** Write an alignment to the output BAM file 
    * @param r The BamRecord to save
@@ -96,6 +106,9 @@ class BamWriter  {
   // open m_out, true if success
   void __open_BAM_for_writing();
   
+  // output format
+  std::string output_format = "wb";
+  
   // hts
   std::shared_ptr<BGZF> fp;
   std::shared_ptr<hts_idx_t> idx;
@@ -108,6 +121,9 @@ class BamWriter  {
   // which tags to strip
   std::vector<std::string> m_tag_list;
 
+  // header
+  SnowTools::BamHeader hdr;
+  
 };
 
 

@@ -8,6 +8,7 @@
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 namespace SnowTools {
   
@@ -53,11 +54,31 @@ namespace SnowTools {
 
     /** Check if the header has been initialized
      */
-    bool isEmpty() const { return h.get() != 0; }
+    bool isEmpty() const { return h.get() == 0; }
 
+    /** Return the raw bam_hdr_t */
+    const bam_hdr_t* get() const { return h.get(); }
+
+    /** Get the numeric ID associated with a sequence name.
+     * @param name Name of the sequence
+     * @return ID of named sequence, or -1 if not in dictionary
+     */
+    int Name2ID(const std::string& name) const;
+
+    void WriteToStdout() const;
   private:
 
+    // adapted from sam.c - bam_nam2id
+    int bam_name2id_2(const bam_hdr_t *h, const char *ref) const;
+
     std::shared_ptr<bam_hdr_t> h;
+
+    // make the name 2 id map (to be used by Name2ID)
+    // replaces part of bam_name2id that makes the hash table
+    int ConstructName2IDTable();
+
+    // hash table for name to id
+    std::shared_ptr<std::unordered_map<std::string, int>> n2i;
 
     // adapted from sam_hdr_read
     bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;

@@ -66,7 +66,7 @@ namespace SnowTools {
 
 
 template<class T>
-void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, bam_hdr_t* h) {
+void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, const BamHeader& hdr) {
   
   assert(pad >= 0);
 
@@ -103,7 +103,7 @@ void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, ba
 	}
 
 	// parse the strings and send to genomci region
-	T gr(chr, pos, pos, h);
+	T gr(chr, pos, pos, hdr);
 	if (gr.valid()) {
 	  gr.pad(pad);
 	  m_grv.push_back(gr);
@@ -114,7 +114,7 @@ void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, ba
 }
 
 template<class T>
-void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, bam_hdr_t* h) {
+void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, const BamHeader& hdr) {
 
   assert(pad >= 0);
 
@@ -157,7 +157,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
       }
       
       // construct the GenomicRegion
-      T gr(chr, pos1, pos2, h);
+      T gr(chr, pos1, pos2, hdr);
 
       if (gr.valid()) {
 	gr.pad(pad);
@@ -172,7 +172,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
 }
 
 template<class T>
-void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, bam_hdr_t * h) {
+void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, const BamHeader& hdr) {
 
   assert(pad >= 0);
 
@@ -204,7 +204,7 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 	} else {
 
 	  // construct the GenomicRegion
-	  T gr(chr, pos, pos, h);
+	  T gr(chr, pos, pos, hdr);
 	  if (gr.valid()) {
 	    gr.pad(pad);
 	    m_grv.push_back(gr);
@@ -220,7 +220,7 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 }
 
 template<class T>
-void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pad, bam_hdr_t *h, bool chr_header) {
+void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pad, const BamHeader& hdr, bool chr_header) {
 
   header_has_chr_string = chr_header;
 
@@ -242,15 +242,15 @@ void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pa
   if ((header.find("MuTect") != std::string::npos) ||
       (file.find("call_stats") != std::string::npos) || 
       (file.find("callstats") != std::string::npos))
-    readMuTect(file, pad, h);
+    readMuTect(file, pad, hdr);
   // BED file
   else if (file.find(".bed") != std::string::npos)
-    readBEDfile(file, pad, h);
+    readBEDfile(file, pad, hdr);
   // VCF file
   else if (file.find(".vcf") != std::string::npos) 
-    readVCFfile(file, pad, h);
+    readVCFfile(file, pad, hdr);
   else // default is BED file
-    readBEDfile(file, pad, h);    
+    readBEDfile(file, pad, hdr);    
 }
 
 // reduce a set of GenomicRegions into the minium overlapping set (same as GenomicRanges "reduce")

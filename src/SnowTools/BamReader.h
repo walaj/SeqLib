@@ -105,7 +105,9 @@ class BamReader {
   std::string displayReadFilterCollection() const;
 
   /** Return a pointer to the BAM header */
-  bam_hdr_t * header() const { return br.get(); };
+  //bam_hdr_t * header() const { return br.get(); };
+  
+  const BamHeader& Header() const { return m_hdr; }
   
   /** Reset all the counters and regions, but keep the loaded index */
   void resetAll();
@@ -132,7 +134,9 @@ class BamReader {
   std::shared_ptr<BGZF> fp;
   std::shared_ptr<hts_idx_t> idx;
   std::shared_ptr<hts_itr_t> hts_itr;
-  std::shared_ptr<bam_hdr_t> br;
+  //std::shared_ptr<bam_hdr_t> br;
+
+  BamHeader m_hdr;
 
   bool m_verbose = false;
 
