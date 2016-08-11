@@ -1,4 +1,4 @@
-#include "SnowTools/BamRead.h"
+#include "SnowTools/BamRecord.h"
 
 #include <cassert>
 #include <bitset>
@@ -19,24 +19,24 @@ namespace SnowTools {
     void operator()(void* x) { bam_destroy1((bam1_t*)x); }
   };
   
-  void BamRead::init() {
+  void BamRecord::init() {
     bam1_t* f = bam_init1();
     b = std::shared_ptr<bam1_t>(f, free_delete());
   }
 
-  void BamRead::assign(bam1_t* a) { 
+  void BamRecord::assign(bam1_t* a) { 
     b = std::shared_ptr<bam1_t>(a, free_delete()); 
   }
 
-  GenomicRegion BamRead::asGenomicRegion() const {
+  GenomicRegion BamRecord::asGenomicRegion() const {
     return GenomicRegion(b->core.tid, b->core.pos, PositionEnd());
   }
 
-  GenomicRegion BamRead::asGenomicRegionMate() const {
+  GenomicRegion BamRecord::asGenomicRegionMate() const {
     return GenomicRegion(b->core.mtid, b->core.mpos, b->core.mpos + Length());
   }
 
-  std::string BamRead::Sequence() const {
+  std::string BamRecord::Sequence() const {
     uint8_t * p = bam_get_seq(b);
     std::string out(b->core.l_qseq, 'N');
     for (int32_t i = 0; i < b->core.l_qseq; ++i) 
@@ -45,7 +45,7 @@ namespace SnowTools {
     
   }
 
-  int32_t BamRead::AlignmentLength() const {
+  int32_t BamRecord::AlignmentLength() const {
     uint32_t* c = bam_get_cigar(b);
     int32_t len = 0;
     for (int k = 0; k < b->core.n_cigar; ++k) 
@@ -55,7 +55,7 @@ namespace SnowTools {
     return len;
   }
 
-  BamRead::BamRead(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
+  BamRecord::BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
 
     StripedSmithWaterman::Aligner aligner;
     // Declares a default filter
@@ -121,7 +121,7 @@ namespace SnowTools {
       
   }
 
-  void BamRead::SmartAddTag(const std::string& tag, const std::string& val)
+  void BamRecord::SmartAddTag(const std::string& tag, const std::string& val)
   {
     // get the old tag
     assert(tag.length());
@@ -135,7 +135,7 @@ namespace SnowTools {
     
     // check that we don't have the tag delimiter in the stirng
     if (val.find(TAG_DELIMITER) != std::string::npos)
-      std::cerr << "BamRead::SmartAddTag -- Tag delimiter " << TAG_DELIMITER << " is in the value to be added. Compile with diff tag delimiter or change val" << std::endl;
+      std::cerr << "BamRecord::SmartAddTag -- Tag delimiter " << TAG_DELIMITER << " is in the value to be added. Compile with diff tag delimiter or change val" << std::endl;
 
     // append the tag
     tmp += TAG_DELIMITER + val;
@@ -148,7 +148,7 @@ namespace SnowTools {
     AddZTag(tag, tmp);
   }
 
-  void BamRead::clearSeqQualAndTags() {
+  void BamRecord::clearSeqQualAndTags() {
 
     int new_size = b->core.l_qname + ((b)->core.n_cigar<<2);// + 1; ///* 0xff seq */ + 1 /* 0xff qual */;
     b->data = (uint8_t*)realloc(b->data, new_size);
@@ -156,7 +156,7 @@ namespace SnowTools {
     b->core.l_qseq = 0;
   }
 
-  void BamRead::SetSequence(const std::string& seq) {
+  void BamRecord::SetSequence(const std::string& seq) {
 
     int new_size = b->l_data - ((b->core.l_qseq+1)>>1) - b->core.l_qseq + ((seq.length()+1)>>1) + seq.length();    
     int old_aux_spot = (b->core.n_cigar<<2) + b->core.l_qname + ((b->core.l_qseq + 1)>>1) + b->core.l_qseq;
@@ -212,7 +212,7 @@ namespace SnowTools {
     
   }
   
-  void BamRead::SetQname(const std::string& n)
+  void BamRecord::SetQname(const std::string& n)
   {
     // copy out the non-qname data
     size_t nonq_len = b->l_data - b->core.l_qname;
@@ -238,7 +238,7 @@ namespace SnowTools {
     b->m_data = b->l_data;
   }
 
-  /*void BamRead::SetSequence(std::string s)
+  /*void BamRecord::SetSequence(std::string s)
   {
 
     // change the size to accomodate new sequence. Clear the quality string
@@ -250,7 +250,7 @@ namespace SnowTools {
 
     }*/
 
-  double BamRead::MeanPhred() const {
+  double BamRecord::MeanPhred() const {
 
     if (b->core.l_qseq <= 0)
       return -1;
@@ -262,14 +262,14 @@ namespace SnowTools {
     return s / b->core.l_qseq;
   }
 
-  std::string BamRead::QualitySequence() const {
+  std::string BamRecord::QualitySequence() const {
     std::string seq = GetZTag("GV");
     if (!seq.length()) 
       seq = Sequence();
     return seq;
   }
 
-  std::ostream& operator<<(std::ostream& out, const BamRead &r)
+  std::ostream& operator<<(std::ostream& out, const BamRecord &r)
   {
     if (!r.b) {
       out << "empty read";
@@ -289,7 +289,7 @@ namespace SnowTools {
     
   }
 
-  int32_t BamRead::CountSecondaryAlignments() const 
+  int32_t BamRecord::CountSecondaryAlignments() const 
   {
     int xp_count = 0;
     
@@ -311,7 +311,7 @@ namespace SnowTools {
     
   }
 
-  int32_t BamRead::CountNBases() const {
+  int32_t BamRecord::CountNBases() const {
     uint8_t* p = bam_get_seq(b); 
     int32_t n = 0;
     for (int ww = 0; ww < b->core.l_qseq; ww++)
@@ -320,7 +320,7 @@ namespace SnowTools {
     return n;
   }
 
-  void BamRead::QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint, int32_t& endpoint) const {
+  void BamRecord::QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint, int32_t& endpoint) const {
 
     endpoint = -1; //seq.length();
     startpoint = 0;
@@ -376,20 +376,20 @@ namespace SnowTools {
       for (int32_t i = startpoint; i < (endpoint - startpoint); ++i) 
 	output[i] = BASES[bam_seqi(p,i)];
     } catch (...) {
-      std::cerr << "Trying to subset string in BamRead::QualityTrimRead out of bounds. String: " << Sequence() << " start " << startpoint << " length " << (endpoint - startpoint) << std::endl;
+      std::cerr << "Trying to subset string in BamRecord::QualityTrimRead out of bounds. String: " << Sequence() << " start " << startpoint << " length " << (endpoint - startpoint) << std::endl;
     }
 
     return output;
     */
   }
 
-  void BamRead::AddZTag(std::string tag, std::string val) {
+  void BamRecord::AddZTag(std::string tag, std::string val) {
     if (tag.empty() || val.empty())
       return;
     bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
   }
 
-  std::string BamRead::GetZTag(const std::string& tag) const {
+  std::string BamRecord::GetZTag(const std::string& tag) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
       return std::string();
@@ -401,7 +401,7 @@ namespace SnowTools {
 
   
   // get a string tag that might be separted by "x"
-  std::vector<std::string> BamRead::GetSmartStringTag(const std::string& tag) const {
+  std::vector<std::string> BamRecord::GetSmartStringTag(const std::string& tag) const {
     
     std::vector<std::string> out;
     std::string tmp = GetZTag(tag);
@@ -425,7 +425,7 @@ namespace SnowTools {
   }
   
   
-  std::vector<int> BamRead::GetSmartIntTag(const std::string& tag) const {
+  std::vector<int> BamRecord::GetSmartIntTag(const std::string& tag) const {
     
     std::vector<int> out;
     std::string tmp;
@@ -451,7 +451,7 @@ namespace SnowTools {
     
   }
 
-  bool BamRead::coveredBase(int pos) const {
+  bool BamRecord::coveredBase(int pos) const {
 
     if (pos < 0) 
       return false;
@@ -492,7 +492,7 @@ namespace SnowTools {
     return pos >= lbound && pos <= rbound;
   }
 
-  bool BamRead::coveredMatchBase(int pos) const {
+  bool BamRecord::coveredMatchBase(int pos) const {
 
     if (pos < 0) 
       return false;
@@ -534,7 +534,7 @@ namespace SnowTools {
   }
 
   
-  BamRead::BamRead(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig) {
+  BamRecord::BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig) {
 
     // make sure cigar fits with sequence
     size_t clen = 0;

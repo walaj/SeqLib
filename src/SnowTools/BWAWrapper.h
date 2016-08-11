@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <memory>
 
-#include "SnowTools/BamRead.h"
+#include "SnowTools/BamRecord.h"
 #include "SnowTools/BamHeader.h"
 #include "htslib/sam.h"
 
@@ -74,7 +74,7 @@ class BWAWrapper {
   /** Construct a bam_hdr_t from a header string */
   bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;
 
-  void alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, bool hardclip, 
+  void alignSingleSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
 			   double keep_sec_with_frac_of_primary_score, int max_secondary);
 
   /** Construct a new bwa index for this object. 

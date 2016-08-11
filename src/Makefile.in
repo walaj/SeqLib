@@ -59,10 +59,9 @@ am_libsnowtools_a_OBJECTS = libsnowtools_a-ReadFilter.$(OBJEXT) \
 	libsnowtools_a-BamStats.$(OBJEXT) \
 	libsnowtools_a-gzstream.$(OBJEXT) \
 	libsnowtools_a-SnowUtils.$(OBJEXT) \
-	libsnowtools_a-BamRead.$(OBJEXT) \
 	libsnowtools_a-gzstream.$(OBJEXT) \
 	libsnowtools_a-BWAWrapper.$(OBJEXT) \
-	libsnowtools_a-BamRead.$(OBJEXT) \
+	libsnowtools_a-BamRecord.$(OBJEXT) \
 	libsnowtools_a-STCoverage.$(OBJEXT) \
 	libsnowtools_a-Fractions.$(OBJEXT) \
 	libsnowtools_a-FermiAssembler.$(OBJEXT) \
@@ -186,7 +185,7 @@ libsnowtools_a_CPPFLAGS = \
 libsnowtools_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
 			BamWriter.cpp BamReader.cpp BamStats.cpp gzstream.C SnowUtils.cpp \
-			BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
+			gzstream.C BWAWrapper.cpp BamRecord.cpp \
 		        STCoverage.cpp Fractions.cpp FermiAssembler.cpp \
 			BamHeader.cpp
 
@@ -240,8 +239,8 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamHeader.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamRead.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamReader.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamRecord.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamStats.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-BamWriter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsnowtools_a-FermiAssembler.Po@am__quote@
@@ -440,20 +439,6 @@ libsnowtools_a-SnowUtils.obj: SnowUtils.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-SnowUtils.obj `if test -f 'SnowUtils.cpp'; then $(CYGPATH_W) 'SnowUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/SnowUtils.cpp'; fi`
 
-libsnowtools_a-BamRead.o: BamRead.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamRead.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-BamRead.Tpo -c -o libsnowtools_a-BamRead.o `test -f 'BamRead.cpp' || echo '$(srcdir)/'`BamRead.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-BamRead.Tpo $(DEPDIR)/libsnowtools_a-BamRead.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamRead.cpp' object='libsnowtools_a-BamRead.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamRead.o `test -f 'BamRead.cpp' || echo '$(srcdir)/'`BamRead.cpp
-
-libsnowtools_a-BamRead.obj: BamRead.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamRead.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-BamRead.Tpo -c -o libsnowtools_a-BamRead.obj `if test -f 'BamRead.cpp'; then $(CYGPATH_W) 'BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/BamRead.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-BamRead.Tpo $(DEPDIR)/libsnowtools_a-BamRead.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamRead.cpp' object='libsnowtools_a-BamRead.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamRead.obj `if test -f 'BamRead.cpp'; then $(CYGPATH_W) 'BamRead.cpp'; else $(CYGPATH_W) '$(srcdir)/BamRead.cpp'; fi`
-
 libsnowtools_a-BWAWrapper.o: BWAWrapper.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BWAWrapper.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo -c -o libsnowtools_a-BWAWrapper.o `test -f 'BWAWrapper.cpp' || echo '$(srcdir)/'`BWAWrapper.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-BWAWrapper.Tpo $(DEPDIR)/libsnowtools_a-BWAWrapper.Po
@@ -467,6 +452,20 @@ libsnowtools_a-BWAWrapper.obj: BWAWrapper.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BWAWrapper.cpp' object='libsnowtools_a-BWAWrapper.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BWAWrapper.obj `if test -f 'BWAWrapper.cpp'; then $(CYGPATH_W) 'BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BWAWrapper.cpp'; fi`
+
+libsnowtools_a-BamRecord.o: BamRecord.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamRecord.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-BamRecord.Tpo -c -o libsnowtools_a-BamRecord.o `test -f 'BamRecord.cpp' || echo '$(srcdir)/'`BamRecord.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-BamRecord.Tpo $(DEPDIR)/libsnowtools_a-BamRecord.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamRecord.cpp' object='libsnowtools_a-BamRecord.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamRecord.o `test -f 'BamRecord.cpp' || echo '$(srcdir)/'`BamRecord.cpp
+
+libsnowtools_a-BamRecord.obj: BamRecord.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-BamRecord.obj -MD -MP -MF $(DEPDIR)/libsnowtools_a-BamRecord.Tpo -c -o libsnowtools_a-BamRecord.obj `if test -f 'BamRecord.cpp'; then $(CYGPATH_W) 'BamRecord.cpp'; else $(CYGPATH_W) '$(srcdir)/BamRecord.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libsnowtools_a-BamRecord.Tpo $(DEPDIR)/libsnowtools_a-BamRecord.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamRecord.cpp' object='libsnowtools_a-BamRecord.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsnowtools_a-BamRecord.obj `if test -f 'BamRecord.cpp'; then $(CYGPATH_W) 'BamRecord.cpp'; else $(CYGPATH_W) '$(srcdir)/BamRecord.cpp'; fi`
 
 libsnowtools_a-STCoverage.o: STCoverage.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsnowtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsnowtools_a-STCoverage.o -MD -MP -MF $(DEPDIR)/libsnowtools_a-STCoverage.Tpo -c -o libsnowtools_a-STCoverage.o `test -f 'STCoverage.cpp' || echo '$(srcdir)/'`STCoverage.cpp

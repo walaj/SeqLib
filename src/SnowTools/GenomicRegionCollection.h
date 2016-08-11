@@ -13,7 +13,7 @@
 
 #include "SnowTools/IntervalTree.h"
 #include "SnowTools/GenomicRegion.h"
-#include "SnowTools/BamRead.h"
+#include "SnowTools/BamRecord.h"
 
 /** Class to store vector of intervals on the genome
  */
@@ -50,7 +50,7 @@ class GenomicRegionCollection {
 
   /** Construct from a vector of reads
    */
-  GenomicRegionCollection(const BamReadVector& brv);
+  GenomicRegionCollection(const BamRecordVector& brv);
 
   /** Construct a GenomicRegionCollection with overlapping intervals
    * 

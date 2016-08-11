@@ -1,7 +1,7 @@
 #ifndef SNOWTOOLS_CONTIG_PLOT_H__
 #define SNOWTOOLS_CONTIG_PLOT_H__
 
-#include "SnowTools/BamRead.h"
+#include "SnowTools/BamRecord.h"
 
 namespace SnowTools {
   
@@ -18,7 +18,7 @@ namespace SnowTools {
   private: 
 
     // reads that align to the contig
-    std::vector<BamRead> m_reads;
+    BamRecordVector m_reads;
 
   };
 

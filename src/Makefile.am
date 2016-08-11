@@ -7,6 +7,6 @@ libsnowtools_a_CPPFLAGS = \
 libsnowtools_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
 			BamWriter.cpp BamReader.cpp BamStats.cpp gzstream.C SnowUtils.cpp \
-			BamRead.cpp gzstream.C BWAWrapper.cpp BamRead.cpp \
+			gzstream.C BWAWrapper.cpp BamRecord.cpp \
 		        STCoverage.cpp Fractions.cpp FermiAssembler.cpp \
 			BamHeader.cpp

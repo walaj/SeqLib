@@ -225,7 +225,7 @@ namespace SnowTools {
     memopt->split_factor = r;
   }
 
-  void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamReadVector& vec, bool hardclip, 
+  void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
 				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
     
     // we haven't made an index, just return
@@ -279,7 +279,7 @@ namespace SnowTools {
 #endif
 
       // instantiate the read
-      BamRead b;
+      BamRecord b;
       b.init();
 
       b.b->core.tid = a.rid;
@@ -449,7 +449,7 @@ namespace SnowTools {
     
 }
 
-  //void BWAWrapper::alignReads(const std::vector<BamRead>& reads){}
+  //void BWAWrapper::alignReads(const std::vector<BamRecord>& reads){}
 
 uint8_t* BWAWrapper::__add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q)
 {

@@ -445,7 +445,7 @@ bool GenomicRegionCollection<T>::getNextGenomicRegion(T& gr)
 }
 
 template<class T>
-GenomicRegionCollection<T>::GenomicRegionCollection(const BamReadVector& brv) {
+GenomicRegionCollection<T>::GenomicRegionCollection(const BamRecordVector& brv) {
 
   for (auto& i : brv) 
     m_grv.push_back(GenomicRegion(i.ChrID(), i.Position(), i.PositionEnd()));

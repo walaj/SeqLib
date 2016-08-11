@@ -42,7 +42,7 @@ BamReadGroup::BamReadGroup(const std::string& name) : reads(0), supp(0), unmap(0
     return out;
   }
 
-void BamReadGroup::addRead(BamRead &r)
+void BamReadGroup::addRead(BamRecord &r)
 {
   
   ++reads;
@@ -83,7 +83,7 @@ void BamReadGroup::addRead(BamRead &r)
 
 }
 
-void BamStats::addRead(BamRead &r)
+void BamStats::addRead(BamRecord &r)
 {
 
   // get the read group

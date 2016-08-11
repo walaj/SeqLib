@@ -15,7 +15,7 @@
 #include "htslib/bgzf.h"
 #include "htslib/kstring.h"
 
-#include "SnowTools/BamRead.h"
+#include "SnowTools/BamRecord.h"
 #include "SnowTools/GenomicRegion.h"
 #include "SnowTools/GenomicRegionCollection.h"
 
@@ -57,7 +57,7 @@ class STCoverage {
    * @param reserve_size Upper bound estimate for size of map. Not a hard
    *   cutoff but improves performance if total number of positions is less than this, 
    *   as it will not rehash. */
-  void addRead(const BamRead &r, int buff, bool full_length);
+  void addRead(const BamRecord &r, int buff, bool full_length);
 
   /** Make a new coverage object at interval gr */
   STCoverage(const GenomicRegion& gr);

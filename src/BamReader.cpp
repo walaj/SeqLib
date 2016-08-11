@@ -21,7 +21,6 @@ bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t>
     idx = std::shared_ptr<hts_idx_t>(hts_idx_load(m_in.c_str(), HTS_FMT_BAI), idx_delete());
   
   if (gp.chr >= br->n_targets) {
-    m_region_fail= true;
     std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << br->n_targets << std::endl;
     return false;
   }
@@ -29,29 +28,22 @@ bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t>
   if (!idx) {
     std::cerr << "Failed to load index file for file " << m_in << std::endl;
     std::cerr << "...suggest rebuilding index with samtools index" << std::endl;
-    m_region_fail = true;
-    exit(EXIT_FAILURE);
     return false;
   }
   hts_itr = std::shared_ptr<hts_itr_t>(sam_itr_queryi(idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
 
   if (!hts_itr) {
     std::cerr << "Error: Failed to set region: " << gp << std::endl; 
-    m_region_fail = true;
     return false;
   }
 
-  m_region_fail = false;
   return true;
 }
 
 void BamReader::resetAll() {
 
-  m_region_fail = false;
   m_region_idx = 0;
   m_region = GenomicRegionVector();
-  m_num_reads_seen = 0;
-  m_num_reads_kept = 0;
 
 }
 
@@ -130,7 +122,7 @@ void BamReader::SetReadFilterCollection(const std::string& rules)
   }
 }
 
-void BamReader::printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) const {
+void BamReader::printRuntimeMessage(const ReadCount &rc_main, const BamRecord &r) const {
 
   char buffer[100];
   std::string posstring = AddCommas<int>(r.Position());
@@ -146,14 +138,9 @@ void BamReader::printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) 
   
 }
 
-bool BamReader::GetNextRead(BamRead& r, bool& rule)
+bool BamReader::GetNextRead(BamRecord& r, bool& rule)
 {
   
-  if (m_region_fail) {
-    std::cerr << "BamReader::GetNextRead - Since region failed to be set, refuse to read in reads" << std::endl;
-    return false;
-  }
-
   void* dum = 0;
   bam1_t* b = bam_init1(); 
 
@@ -199,17 +186,6 @@ bool BamReader::GetNextRead(BamRead& r, bool& rule)
 
   // check if it passed the rules
   rule = m_mr.isValid(r);
-
-  ++m_num_reads_seen;
-  if (rule)
-    ++m_num_reads_kept;
-
-  // hit the limit, no more raeding
-  if (m_limit >= 0 && m_num_reads_seen > m_limit)
-    return false;
-  if (m_keep_limit >= 0 && m_num_reads_kept > m_keep_limit)
-    return false;
-
 
   return true;
 }

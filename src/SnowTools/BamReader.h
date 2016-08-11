@@ -53,7 +53,7 @@ class BamReader {
    * Prints a message about all of the reads that have been visited, and informaiton
    * about the current read
    */
-  void printRuntimeMessage(const ReadCount &rc_main, const BamRead &r) const;
+  void printRuntimeMessage(const ReadCount &rc_main, const BamRecord &r) const;
 
   /** Print out some basic info about this walker, 
    * including Minz0iRules
@@ -67,7 +67,7 @@ class BamReader {
   /** Pass a ReadFilter script to the BAM.
    * 
    * This will call the constructor of ReadFilterCollection, and 
-   * parse the provides rules and add it as a rule set to this BamReader.
+   * parse the provides rules and add it as a rule set to this BamRecorder.
    * @param rules A string of rules, or a file pointing to a rules script
    */
   void SetReadFilterCollection(const std::string& rules);
@@ -84,7 +84,7 @@ class BamReader {
    * rule bool identifying if this read passed the rules
    * @return true if the next read is available
    */
-  bool GetNextRead(BamRead &r, bool& rule);
+  bool GetNextRead(BamRecord &r, bool& rule);
 
   /** Return the ReadFilterCollection object used by this BamReader
    */
@@ -98,10 +98,6 @@ class BamReader {
   /** Set the BamReader to count reads for all rules */
   void setCountAllRules() { m_mr.m_fall_through = true; }
 
-  std::string m_in;
-
-  ReadFilterCollection m_mr;
-
   /** Set to have verbose actions */
   void setVerbose() { m_verbose = true; }
 
@@ -110,27 +106,16 @@ class BamReader {
 
   /** Return a pointer to the BAM header */
   bam_hdr_t * header() const { return br.get(); };
-
-  /** Set the limit for total number of reads seen */
-  void setReadLimit(int lim) { m_limit = lim; m_num_reads_seen = 0; }
-
-  /** Set the limit for total number of reads kept */
-  void setReadKeepLimit(int lim) { m_keep_limit = lim; m_num_reads_kept = 0; }
   
   /** Reset all the counters and regions, but keep the loaded index */
   void resetAll();
 
  protected:
 
-  bool m_region_fail = false;
+  std::string m_in; ///< file name
 
-  // for stdout mode, print header?
-  bool m_print_header = false;
+  ReadFilterCollection m_mr; ///< filter collection
 
-  // limit to number of reads to be read in
-  int m_limit = -1;
-  int m_keep_limit = -1;
-  
   // point index to this region of bam
   bool __set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
 
@@ -151,9 +136,6 @@ class BamReader {
 
   bool m_verbose = false;
 
-  // read counter
-  int m_num_reads_seen = 0;
-  int m_num_reads_kept = 0;
 };
 
 

@@ -75,13 +75,13 @@ void BamWriter::__open_BAM_for_writing()
 
 }
 
-void BamWriter::writeAlignment(BamRead &r)
+void BamWriter::writeAlignment(BamRecord &r)
 {
   if (!fop) {
-    throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRead. Did you forget to open the Bam for writing (OpenWriteBam)?");
+    throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. Did you forget to open the Bam for writing (OpenWriteBam)?");
   } else {
     if (sam_write1(fop.get(), hdr_write.get(), r.raw()) < 0)
-      throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRead. sam_write1 exited with < 0");      
+      throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. sam_write1 exited with < 0");      
   }
 }
 

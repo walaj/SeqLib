@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_READ_H__
-#define SNOWTOOLS_READ_H__
+#ifndef SNOWTOOLS_BAM_RECORD_H__
+#define SNOWTOOLS_BAM_RECORD_H__
 
 #include <cstdint>
 #include <vector>
@@ -44,7 +44,7 @@ namespace SnowTools {
 
 enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
 
-/** Basic container for cigar data. 
+/** Basic container for a single cigar operation
  *
  * Stores a single cigar element in a compact 32bit form (same as HTSlib).
  */
@@ -61,7 +61,7 @@ class CigarField {
   /** Return the raw sam.h uint8_t cigar data */
   inline uint32_t raw() const { return data; }
 
-  /** Print the cigar field (e.g. 35M) */
+  /** Print the cigar field (eg 35M) */
   friend std::ostream& operator<<(std::ostream& out, const CigarField& c);
 
   /** Return the cigar op type (one of MIDNSHPX) as a char */
@@ -70,7 +70,7 @@ class CigarField {
   /** Return the raw sam.h uint8_t cigar type (bam_cigar_op(data)) */
   inline uint8_t RawType() const { return bam_cigar_op(data); } 
 
-  /** Return the length of the cigar op (e.g. 35M returns 35) */
+  /** Return the length of the cigar op (eg 35M returns 35) */
   inline uint32_t Length() const { return bam_cigar_oplen(data); } 
 
   /** Returns true if cigar op matches bases on the reference (MDN=X) */
@@ -86,6 +86,10 @@ class CigarField {
   
 };
 
+/** CIGAR for a single gapped alignment
+ *
+ * Constructed as a vector of CigarField objects. 
+ */
  class Cigar {
    
  public:
@@ -128,7 +132,7 @@ class CigarField {
      m_data.push_back(c); 
    }
 
-  /** Print the cigar string (e.g. 35M25S) */
+  /** Print cigar string (eg 35M25S) */
   friend std::ostream& operator<<(std::ostream& out, const Cigar& c);
   
    
@@ -148,21 +152,21 @@ typedef std::unordered_map<std::string, size_t> CigarMap;
  * HTSLibrary reads are stored in the bam1_t struct. Memory allocation
  * is taken care of by bam1_t init, and deallocation by destroy_bam1. This
  * class is a C++ interface that automatically takes care of memory management
- * for these C allocs/deallocs. The only member of BamRead is a bam1_t object.
+ * for these C allocs/deallocs. The only member of BamRecord is a bam1_t object.
  * Alloc/dealloc is taken care of by the constructor and destructor.
  */
-class BamRead {
+class BamRecord {
 
   friend class BLATWraper;
   friend class BWAWrapper;
 
  public:
 
-  /** Construct a BamRead with perfect "alignment"
+  /** Construct a BamRecord with perfect "alignment"
    */
-  BamRead(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
+  BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
   
-  /** Construct an empty BamRead by calling bam_init1() 
+  /** Construct an empty BamRecord by calling bam_init1() 
    */
   void init();
 
@@ -171,32 +175,32 @@ class BamRead {
    */
   bool isEmpty() const { return !b; }
 
-  /** Explicitly pass a bam1_t to the BamRead. 
+  /** Explicitly pass a bam1_t to the BamRecord. 
    *
-   * The BamRead now controls the memory, and will delete at destruction
+   * The BamRecord now controls the memory, and will delete at destruction
    * @param a An allocated bam1_t
    */
   void assign(bam1_t* a);
 
-  /** Make a BamRead with no memory allocated and a null header */
-  BamRead() {}
+  /** Make a BamRecord with no memory allocated and a null header */
+  BamRecord() {}
 
-  /** BamRead is aligned on reverse strand */
+  /** BamRecord is aligned on reverse strand */
   inline bool ReverseFlag() const { return b ? ((b->core.flag&BAM_FREVERSE) != 0) : false; }
 
-  /** BamRead has mate aligned on reverse strand */
+  /** BamRecord has mate aligned on reverse strand */
   inline bool MateReverseFlag() const { return b ? ((b->core.flag&BAM_FMREVERSE) != 0) : false; }
 
-  /** BamRead has is an interchromosomal alignment */
+  /** BamRecord has is an interchromosomal alignment */
   inline bool Interchromosomal() const { return b ? b->core.tid != b->core.mtid && PairMappedFlag() : false; }
 
-  /** BamRead is a duplicate */
+  /** BamRecord is a duplicate */
   inline bool DuplicateFlag() const { return b ? ((b->core.flag&BAM_FDUP) != 0) : false; }
 
-  /** BamRead is a secondary alignment */
+  /** BamRecord is a secondary alignment */
   inline bool SecondaryFlag() const { return b ? ((b->core.flag&BAM_FSECONDARY) != 0) : false; }
 
-  /** BamRead is paired */
+  /** BamRecord is paired */
   inline bool PairedFlag() const { return b ? ((b->core.flag&BAM_FPAIRED) != 0) : false; }
 
   /** Get the relative pair orientations 
@@ -224,22 +228,22 @@ class BamRead {
   }
   
 
-  /** BamRead is failed QC */
+  /** BamRecord is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
-  /** BamRead is mapped */
+  /** BamRecord is mapped */
   inline bool MappedFlag() const { return b ? ((b->core.flag&BAM_FUNMAP) == 0) : false; }
 
-  /** BamRead mate is mapped */
+  /** BamRecord mate is mapped */
   inline bool MateMappedFlag() const { return b ? ((b->core.flag&BAM_FMUNMAP) == 0) : false; }
 
-  /** BamRead is mapped and mate is mapped and in pair */
+  /** BamRecord is mapped and mate is mapped and in pair */
   inline bool PairMappedFlag() const { return b ? (!(b->core.flag&BAM_FMUNMAP) && !(b->core.flag&BAM_FUNMAP) && (b->core.flag&BAM_FPAIRED) ) : false; }
 
-  /** BamRead is mapped in proper pair */
+  /** BamRecord is mapped in proper pair */
   inline bool ProperPair() const { return b ? (b->core.flag&BAM_FPROPER_PAIR) : false;} 
 
-  /** BamRead has proper orientation (FR) */
+  /** BamRecord has proper orientation (FR) */
   inline bool ProperOrientation() const { 
     if (!b)
       return false;
@@ -347,7 +351,7 @@ class BamRead {
   void SetSequence(const std::string& seq);
 
   /** Print a SAM-lite record for this alignment */
-  friend std::ostream& operator<<(std::ostream& out, const BamRead &r);
+  friend std::ostream& operator<<(std::ostream& out, const BamRecord &r);
 
   /** Return read as a GenomicRegion */
   GenomicRegion asGenomicRegion() const;
@@ -422,7 +426,7 @@ class BamRead {
 
   /** Do a smith waterman alignment
    */
-  BamRead(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
+  BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
 
   /** Get the quality scores of this read as a string */
   inline std::string Qualities() const { 
@@ -524,25 +528,25 @@ class BamRead {
   }
   
   /** Get a string (Z) tag 
-   * @param tag Name of the tag. e.g. "XP"
+   * @param tag Name of the tag. eg "XP"
    * @return The value stored in the tag. Returns empty string if it does not exist.
    */
   std::string GetZTag(const std::string& tag) const;
   
   /** Get a vector of ints from a Z tag delimited by "x"
-   * @param tag Name of the tag e.g. "AL"
+   * @param tag Name of the tag eg "AL"
    * @return A vector of ints, retrieved from the x delimited Z tag
    */
   std::vector<int> GetSmartIntTag(const std::string& tag) const;
 
   /** Get a vector of strings from a Z tag delimited by "x"
-   * @param tag Name of the tag e.g. "CN"
+   * @param tag Name of the tag eg "CN"
    * @return A vector of strngs, retrieved from the x delimited Z tag
    */
   std::vector<std::string> GetSmartStringTag(const std::string& tag) const;
 
   /** Get an int (i) tag 
-   * @param tag Name of the tag. e.g. "XP"
+   * @param tag Name of the tag. eg "XP"
    * @return The value stored in the tag. Returns 0 if it does not exist.
    */
   inline int32_t GetIntTag(const std::string& tag) const {
@@ -554,13 +558,13 @@ class BamRead {
 
 
   /** Add a string (Z) tag
-   * @param tag Name of the tag. e.g. "XP"
+   * @param tag Name of the tag. eg "XP"
    * @param val Value for the tag
    */
   void AddZTag(std::string tag, std::string val);
 
   /** Add an int (i) tag
-   * @param tag Name of the tag. e.g. "XP"
+   * @param tag Name of the tag. eg "XP"
    * @param val Value for the tag
    */
   inline void AddIntTag(const std::string& tag, int32_t val) {
@@ -613,7 +617,7 @@ class BamRead {
   }
 
   /** Return a human readable chromosome name assuming chr is indexed
-   * from 0 (e.g. id 0 return "1")
+   * from 0 (eg id 0 return "1")
    */
   inline std::string ChrName() const {
     return std::to_string(b->core.tid + 1);
@@ -696,19 +700,19 @@ class BamRead {
 
 };
 
- typedef std::vector<BamRead> BamReadVector; 
+ typedef std::vector<BamRecord> BamRecordVector; 
  
- typedef std::vector<BamReadVector> BamReadClusterVector;
+ typedef std::vector<BamRecordVector> BamRecordClusterVector;
 
  /** @brief Sort methods for reads
   */
- namespace BamReadSort {
+ namespace BamRecordSort {
 
    /** @brief Sort by read position 
     */
    struct ByReadPosition
    {
-     bool operator()( const BamRead& lx, const BamRead& rx ) const {
+     bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
        return (lx.ChrID() < rx.ChrID()) || (lx.ChrID() == rx.ChrID() && lx.Position() < rx.Position());
      }
    };
@@ -717,7 +721,7 @@ class BamRead {
     */
    struct ByMatePosition
    {
-     bool operator()( const BamRead& lx, const BamRead& rx ) const {
+     bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
        return (lx.MateChrID() < rx.MateChrID()) || (lx.MateChrID() == rx.MateChrID() && lx.MatePosition() < rx.MatePosition());
      }
    };

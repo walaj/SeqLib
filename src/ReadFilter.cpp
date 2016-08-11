@@ -30,7 +30,7 @@ static const std::unordered_set<std::string> valid =
      "fwd_strand", "rev_strand", "mate_fwd_strand", "mate_rev_strand",
      "mapped", "mate_mapped", "ff", "fr", "rr", "rf", "ic"};
 
-bool ReadFilter::isValid(BamRead &r) {
+bool ReadFilter::isValid(BamRecord &r) {
 
   for (auto& it : m_abstract_rules)
     if (it.isValid(r)) 
@@ -89,7 +89,7 @@ bool ReadFilter::isValid(BamRead &r) {
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
 // contained in these rules
-bool ReadFilter::isReadOverlappingRegion(BamRead &r) {
+bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 
   // if this is a whole genome rule, it overlaps
   if (m_whole_genome)
@@ -111,7 +111,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRead &r) {
 
 // checks which rule a read applies to (using the hiearchy stored in m_regions).
 // if a read does not satisfy a rule it is excluded.
-  bool ReadFilterCollection::isValid(BamRead &r) {
+  bool ReadFilterCollection::isValid(BamRecord &r) {
 
   ++m_count_seen;
 
@@ -564,7 +564,7 @@ void ReadFilterCollection::sendToBed(std::string file) {
 
 
 // main function for determining if a read is valid
-  bool AbstractRule::isValid(BamRead &r) {
+  bool AbstractRule::isValid(BamRecord &r) {
     
 
 #ifdef QNAME
@@ -800,7 +800,7 @@ void ReadFilterCollection::sendToBed(std::string file) {
     return true;
   }
   
-  bool FlagRule::isValid(BamRead &r) {
+  bool FlagRule::isValid(BamRecord &r) {
     
 #ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
@@ -1037,7 +1037,7 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
 #ifndef __APPLE__
 // check if a string contains a substring using Aho Corasick algorithm
 //bool AbstractRule::ahomatch(const string& seq) {
-bool AbstractRule::ahomatch(BamRead &r) {
+bool AbstractRule::ahomatch(BamRecord &r) {
 
   // make into Ac strcut
   std::string seq = r.Sequence();

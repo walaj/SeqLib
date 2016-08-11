@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <memory>
+#include "SnowTools/BamRecord.h"
 
 namespace SnowTools {
 
@@ -54,10 +55,10 @@ class BamWriter  {
   void OpenWriteBam(const std::string& bam);
 
   /** Write an alignment to the output BAM file 
-   * @param r The BamRead to save
+   * @param r The BamRecord to save
    * @exception Throws a runtime_error if cannot write alignment
    */
-  void writeAlignment(BamRead &r);
+  void writeAlignment(BamRecord &r);
 
   /** Set a flag to say if we should print reads to stdout */
   void setStdout();

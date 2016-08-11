@@ -23,7 +23,7 @@ namespace SnowTools {
     return (*std::max_element(v->begin(), v->end()));
   }
 
-  /*void STCoverage::addRead2(const BamRead& r) {
+  /*void STCoverage::addRead2(const BamRecord& r) {
 
     int p = r.Position();
     int e = r.PositionEnd();
@@ -41,7 +41,7 @@ namespace SnowTools {
     ++v[p - m_gr.pos1];
     }
   */
-  void STCoverage::addRead(const BamRead &r, int buff, bool full_length) {
+  void STCoverage::addRead(const BamRecord &r, int buff, bool full_length) {
     
     //m_settled = false;
     //m_grc.add(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd()));

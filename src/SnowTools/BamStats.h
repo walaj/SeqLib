@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "SnowTools/Histogram.h"
-#include "SnowTools/BamRead.h"
+#include "SnowTools/BamRecord.h"
 
 namespace SnowTools{
 
@@ -33,8 +33,8 @@ class BamReadGroup {
    */
   friend std::ostream& operator<<(std::ostream& out, const BamReadGroup& rg);
 
-  /** Add a BamRead to this read group */
-  void addRead(BamRead &r);
+  /** Add a BamRecord to this read group */
+  void addRead(BamRecord &r);
 
  private:
 
@@ -73,7 +73,7 @@ class BamStats
   /** Add a read by finding which read group it belongs to and calling the 
    * addRead function for that BamReadGroup.
    */
-  void addRead(BamRead &r);
+  void addRead(BamRecord &r);
 
  private:
   

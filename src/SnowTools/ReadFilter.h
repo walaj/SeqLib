@@ -9,7 +9,7 @@
 #include "json/json.h"
 
 #include "SnowTools/GenomicRegionCollection.h"
-#include "SnowTools/BamRead.h"
+#include "SnowTools/BamRecord.h"
 
 // motif matching with ahocorasick not available on OSX
 #ifdef HAVE_AHO_CORASICK
@@ -213,7 +213,7 @@ struct FlagRule {
   void setOffFlag(uint32_t f) { m_off_flag = f; na = na && f == 0; } 
 
   // ask whether a read passes the rule
-  bool isValid(BamRead &r);
+  bool isValid(BamRecord &r);
 
   /** Print the flag rule */
   friend std::ostream& operator<<(std::ostream &out, const FlagRule &fr);
@@ -237,28 +237,20 @@ private:
  */
 class AbstractRule {
 
+  friend class ReadFilter;
+  friend class ReadFilterCollection;
+
  public:
 
   /** Create empty rule with default to accept all */
   AbstractRule() {}
 
-  /** Destroy */
+  /** Destroy the filter */
   ~AbstractRule() {}
-
-  Range isize, mapq, len, clip, phred, nm, nbases, ins, del, xp;
 
 #ifdef HAVE_AHO_CORASICK
   void addMotifRule(const std::string& f, bool inverted);
 #endif
-
-
-  std::string id;
-
-  // read group 
-  std::string read_group;
-
-  // how many reads pass this rule?
-  size_t m_count = 0;
 
 #ifndef __APPLE__
   #ifdef HAVE_AHO_CORASICK
@@ -267,13 +259,19 @@ class AbstractRule {
   #endif
 #endif
 
+  /** Query a read against this rule. If the
+   * read passes this rule, return true.
+   * @param r An aligned sequencing read to query against filter
+   */
+  bool isValid(BamRecord &r);
 
-  double subsam_frac = 1;
-
-  bool isValid(BamRead &r);
-
+  /** Supply the rule parameters with a JSON
+   * @param A JSON object created by parsing a string
+   */
   void parseJson(const Json::Value& value);
 
+  /** Print some basic information about this filter
+   */
   friend std::ostream& operator<<(std::ostream &out, const AbstractRule &fr);
 
   // return if this rule accepts all reads
@@ -285,9 +283,49 @@ class AbstractRule {
       (subsam_frac >= 1) && xp.isEvery();
   }
 
-  FlagRule fr;
+  /** Set the rate to subsample (default 1 = no subsampling) 
+   * @param s A rate between 0 and 1
+   */
+  void SetSubsampleRate(double s) { subsam_frac = s; };
+
+  /** Supply a name for this rule 
+   * @param s ID to be associated with this rule
+   */
+  void SetRuleID(const std::string& s) { id = s; };
+
+  /** Specify a read-group for this filter.
+   * Reads that do not belong to this read group
+   * will not pass isValid
+   * @param A read group to be matched against RG:Z:<readgroup>
+   */
+  void SetReadGroup(const std::string& rg) { read_group = rg; }
+
+  FlagRule fr; ///< FlagRule specifying the alignment flag filter
+
+  Range isize; ///< Range object for insert-size filter
+  Range mapq; ///< Range object for mapping quality filter
+  Range len; ///< Range object for length filter
+  Range phred; ///< Range object for base-quality filter
+  Range clip; ///< Range object for number of clipped bases filter
+  Range nm; ///< Range object for NM (num mismatch) filter
+  Range nbases; ///< Range object for number of "N" bases filer
+  Range ins; ///< Range object for max CIGAR insertion size filter
+  Range del; ///< Range object for max CIGAR deletion size filter
+  Range xp; ///< Range object for number of secondary alignments
 
  private:
+
+  // read group 
+  std::string read_group;
+
+  // how many reads pass this rule?
+  size_t m_count = 0;
+
+  // id for this rule
+  std::string id;
+
+  // fraction reads to subsample
+  double subsam_frac = 1;
 
   // data
   uint32_t subsam_seed = 999; // random seed for subsampling
@@ -300,7 +338,7 @@ class AbstractRule {
   size_t atm_count = 0; // number of motifs
 
 
-  bool ahomatch(BamRead &r);
+  bool ahomatch(BamRecord &r);
   bool ahomatch(const char * seq, unsigned len);
   void parseSeqLine(const Json::Value& value);
 #endif
@@ -338,11 +376,11 @@ class ReadFilter {
   
   bool excluder = false; // this region is for excluding
 
-  bool isValid(BamRead &r);
+  bool isValid(BamRecord &r);
    
   void setRegionFromFile(const std::string& file, bam_hdr_t * h);
 
-  bool isReadOverlappingRegion(BamRead &r);
+  bool isReadOverlappingRegion(BamRecord &r);
 
   friend std::ostream& operator<<(std::ostream& out, const ReadFilter &mr);
  
@@ -400,7 +438,7 @@ class ReadFilterCollection {
 
   void addGlobalRule(const std::string& rule);
 
-  bool isValid(BamRead &r);
+  bool isValid(BamRecord &r);
   
   friend std::ostream& operator<<(std::ostream& out, const ReadFilterCollection &mr);
   
