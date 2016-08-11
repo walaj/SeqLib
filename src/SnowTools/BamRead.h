@@ -595,8 +595,9 @@ class BamRead {
    * 
    * Note that this requires that the header not be empty. If
    * it is empty, assumes this ia chr1 based reference
+   * @note This will be deprecated
    */
-  inline std::string ChrName(bam_hdr_t * h = nullptr) const {
+  inline std::string ChrName(bam_hdr_t * h) const {
 
     // if we have the header, convert
     if (h) {
@@ -606,6 +607,31 @@ class BamRead {
 	return "CHR_ERROR";
     }
 
+    // no header, assume zero based
+    return std::to_string(b->core.tid + 1);
+    
+  }
+
+  /** Return a human readable chromosome name assuming chr is indexed
+   * from 0 (e.g. id 0 return "1")
+   */
+  inline std::string ChrName() const {
+    return std::to_string(b->core.tid + 1);
+  }
+
+  /** Retrieve the human readable chromosome name. 
+   * 
+   * Note that this requires that the header not be empty. If
+   * it is empty, assumes this ia chr1 based reference
+   * @exception Throws an out_of_range exception if chr id is not in dictionary
+   * @return Empty string if chr id < 0, otherwise chromosome name from dictionary.
+   */
+  inline std::string ChrName(const SnowTools::BamHeader& h) const {
+
+    if (b->core.tid < 0)
+      return std::string();
+    
+    return h.IDtoName(b->core.tid);
     // no header, assume zero based
     return std::to_string(b->core.tid + 1);
     

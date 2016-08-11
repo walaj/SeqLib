@@ -34,12 +34,14 @@ namespace SnowTools {
     return std::string(idx->bns->anns[id].name);
   }
 
-  bam_hdr_t * BWAWrapper::HeaderFromIndex() const 
+  BamHeader BWAWrapper::HeaderFromIndex() const 
   {
 
     std::string my_hdr = bwa_print_sam_hdr2(idx->bns, "");
+
+    BamHeader hdr(my_hdr);
     //bam_hdr_t * hdr = bam_hdr_init();
-    bam_hdr_t * hdr = sam_hdr_read2(my_hdr); 
+    //bam_hdr_t * hdr = sam_hdr_read2(my_hdr); 
     //hdr->n_targets = idx->bns->n_seqs;
     //hdr->target_name = (char**)malloc(hdr->n_targets * sizeof(char*));
     //for (int i = 0; i < idx->bns->n_seqs; ++i) {

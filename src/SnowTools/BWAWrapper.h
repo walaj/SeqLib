@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "SnowTools/BamRead.h"
+#include "SnowTools/BamHeader.h"
 #include "htslib/sam.h"
 
 #define MEM_F_SOFTCLIP  0x200
@@ -68,7 +69,7 @@ class BWAWrapper {
   std::string ChrIDToName(int id) const;
 
   /** Create a bam_hdr_t from the loaded index files */
-  bam_hdr_t * HeaderFromIndex() const;
+  BamHeader HeaderFromIndex() const;
 
   /** Construct a bam_hdr_t from a header string */
   bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;
