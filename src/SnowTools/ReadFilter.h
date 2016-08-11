@@ -11,6 +11,8 @@
 #include "SnowTools/GenomicRegionCollection.h"
 #include "SnowTools/BamRecord.h"
 
+#include "SnowTools/aho_corasick.hpp"
+
 // motif matching with ahocorasick not available on OSX
 #ifdef HAVE_AHO_CORASICK
 #ifndef __APPLE__
@@ -32,6 +34,45 @@ typedef std::unique_ptr<AC_AUTOMATA_t> atm_ptr;
 #define MINIRULES_REGION_EXCLUDE 4
 
 namespace SnowTools {
+
+  /** Tool for using the Aho-Corasick method for substring queries of 
+   * using large dictionaries 
+   * @note Trie construction / searching implemented by https://github.com/blockchaindev/aho_corasick
+   */
+  struct AhoCorasick {
+    
+    /** Allocate a new empty trie */
+    AhoCorasick() { aho_trie = new aho_corasick::trie(); }
+
+    /** Deallocate the trie */
+    ~AhoCorasick() { if (aho_trie) delete aho_trie; }
+
+    /** Add a motif to the trie */
+    void AddMotif(const std::string& m) { 
+      aho_trie->insert(m);
+    } 
+    
+    /** Add a set of motifs to the trie from a file 
+     * @param f File storing the motifs (new line separated)
+     * @exception Throws a runtime_error if file cannot be opened
+     */
+    void TrieFromFile(const std::string& f);
+
+    /** Query if a string is in the trie 
+     * @param t Text to query
+     * @return Returns true if there is a string in the trie that is a substring of t
+     */
+    bool QueryText(const std::string& t) const;
+
+    aho_corasick::trie * aho_trie; ///< The trie for the Aho-Corasick search
+    
+    std::string file; ///< Name of the file holding the motifs
+
+    bool inv = false; ///< Is this an inverted dictinary (ie exclude hits)
+    
+    int count = 0; ///< Number of motifs in dictionary
+    
+  };
 
 struct CommandLineRegion {
   
@@ -78,30 +119,25 @@ class Flag {
    */
   Flag() : on(false), off(false), na(true) {}
     
-    /** Set the flag to NA
-     */
+  /** Set the flag to NA (pass alignment regardless of flag value) */
   void setNA() { on = false; off = false; na = true; } 
   
-  /** Set the flag to ON
-   */
+  /** Set the flag to ON (require flag ON to pass) */
   void setOn() { on = true; off = false; na = false; } 
 
-  /** Set the flag to OFF
-   */
+  /** Set the flag to OFF (require flag OFF to pass) */
   void setOff() { on = false; off = true; na = false; } 
 
-  /** Query if the flag is NA
-   */
+  /** Return if the Flag filter is NA */
   bool isNA()  const { return na; } 
 
-  /** Query if the flag is ON
-   */
+  /** Return if the Flag filter is ON */
   bool isOn()  const { return on; } 
 
-  /** Query if the flag is OFF
-   */
+  /** Return if the Flag filter is OFF */
   bool isOff() const { return off; } 
 
+  /** Parse the Flag rule from a JSON entry */
   bool parseJson(const Json::Value& value, const std::string& name);
 
  private: 
@@ -112,10 +148,10 @@ class Flag {
 
 };
 
-/** Hold a range of valid numeric values (e.g. isize). 
+/** Filter numeric values on whether they fall in/out of a range of values (eg mapping quality). 
  *
  * Can optionally invert the range to make rule the complement of the range
- * (eg isize NOT in [300,600]
+ * (eg insert-size NOT in [300,600]
  */
 struct Range {
 
@@ -201,8 +237,10 @@ struct FlagRule {
     m_off_flag = 0;
   }
   
-  Flag dup, supp, qcfail, hardclip, fwd_strand, rev_strand,
-    mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic, paired;
+  Flag dup; ///< Filter for duplicated flag 
+  Flag supp; ///< Flag for  
+  Flag qcfail, hardclip, fwd_strand, rev_strand;
+  Flag mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic, paired;
 
   bool na = true;
 
@@ -243,14 +281,12 @@ class AbstractRule {
  public:
 
   /** Create empty rule with default to accept all */
-  AbstractRule() {}
+  AbstractRule() { }
 
   /** Destroy the filter */
   ~AbstractRule() {}
 
-#ifdef HAVE_AHO_CORASICK
   void addMotifRule(const std::string& f, bool inverted);
-#endif
 
 #ifndef __APPLE__
   #ifdef HAVE_AHO_CORASICK
@@ -321,6 +357,9 @@ class AbstractRule {
   // how many reads pass this rule?
   size_t m_count = 0;
 
+  // the aho-corasick trie
+  AhoCorasick aho;
+
   // id for this rule
   std::string id;
 
@@ -333,9 +372,9 @@ class AbstractRule {
 #ifdef HAVE_AHO_CORASICK
 #ifndef __APPLE__
   // motif data
-  std::string atm_file; // sequence file
-  bool atm_inv = false; // is this inverted
-  size_t atm_count = 0; // number of motifs
+  //std::string atm_file; // sequence file
+  //bool atm_inv = false; // is this inverted
+  //size_t atm_count = 0; // number of motifs
 
 
   bool ahomatch(BamRecord &r);

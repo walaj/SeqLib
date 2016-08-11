@@ -14,7 +14,7 @@ extern "C" {
 
 namespace SnowTools {
 
-  int BWAWrapper::refCount() const {
+  int BWAWrapper::NumSequences() const {
     
     if (!idx)
       return 0;
@@ -703,13 +703,10 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
     err_fclose(fp);
   }
 
-  std::string BWAWrapper::getInfo() const
-  {
-    std::stringstream  ss;
-    
-    ss << "BNS: l_pac: " << idx->bns->l_pac << " n_seqs: " << idx->bns->n_seqs <<
-      " seed: " << idx->bns->seed << " n_holes " << idx->bns->n_holes;
-    return ss.str();
+  std::ostream& operator<<(std::ostream& out, const BWAWrapper& b) {
+    out << "BNS: l_pac: " << b.idx->bns->l_pac << " n_seqs: " << b.idx->bns->n_seqs <<
+      " seed: " << b.idx->bns->seed << " n_holes " << b.idx->bns->n_holes;
+    return out;
   }
 }
 

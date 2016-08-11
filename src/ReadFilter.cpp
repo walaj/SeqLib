@@ -1105,51 +1105,29 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
   }
 #endif
 
-#if HAVE_AHO_CORASICK
   void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
+    std::cerr << "...making the AhoCorasick trie from " << f << std::endl;
+    aho.TrieFromFile(f);
+    std::cerr << "...finished making AhoCorasick trie with " << AddCommas(aho.count) << " motifs" << std::endl;
+    aho.inv = inverted;
+  }
+  
+  void AhoCorasick::TrieFromFile(const std::string& f) {
 
-    atm_file = f;
-    atm_inv = inverted;
-    
+    file = f;
+
     // open the sequence file
-    igzstream iss(atm_file.c_str());
-    if (!iss || !read_access_test(atm_file)) {
-      std::cerr << "ERROR: Cannot read the sequence file: " << atm_file << std::endl;
-      exit(EXIT_FAILURE);
-    }
+    igzstream iss(f.c_str());
+    if (!iss || !read_access_test(f)) 
+      throw std::runtime_error("AhoCorasick::TrieFromFile - Cannot read file: " + f);
     
-#ifndef __APPLE__
-    // initialize it
-    if (!atm)
-      atm = ac_automata_init(); //atm_ptr(ac_automata_init(), atm_free_delete);
-    // make the Aho-Corasick key
-    std::cerr << "...generating Aho-Corasick key from file " << atm_file << std::endl;
+    // make the Aho-Corasick trie
     std::string pat;
-    size_t count = 0;
     while (getline(iss, pat, '\n')) {
       ++count;
-      std::istringstream iss2(pat);
-      std::string val;
-      size_t count2 = 0;
-      /// only look at second element
-      while (getline(iss2, val, '\t')) {
-	++count2;
-	if (count2 > 1)
-	  continue;
-	AC_PATTERN_t tmp_pattern;
-	tmp_pattern.astring = val.c_str();
-	tmp_pattern.length = static_cast<unsigned>(val.length());
-	ac_automata_add(atm, &tmp_pattern);
-      }
+      AddMotif(pat);
     }
-    //ac_automata_finalize(atm);
-    //std::cerr << "Done generating Aho-Corasick key of size " << count << std::endl;  
-    
-    atm_count = count;
-#endif
-    
   }
-#endif
   
   void AbstractRule::parseSubLine(const Json::Value& value) {
     Json::Value null(Json::nullValue);

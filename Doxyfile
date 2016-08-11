@@ -507,7 +507,8 @@ EXCLUDE                = bwa \
 
 EXCLUDE_SYMLINKS       = NO
 
-EXCLUDE_SYMBOLS	       = atm_free_delete
+EXCLUDE_SYMBOLS	       = atm_free_delete bam_hdr_delete bgzf_delete s_align sam_write_delete \
+                         idx_delete hts_itr_delete
 
 # If the value of the INPUT tag contains directories, you can use the 
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude 
