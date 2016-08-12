@@ -14,7 +14,7 @@ echo "...running unit tests and code coverage"
   fi
   cd snow_test
   
-  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${BOOST_ROOT}/stage/lib
+  export LD_LIBRARY_PATH=${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}
   echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
   ./configure --with-boost=${BOOST_ROOT}
   make
