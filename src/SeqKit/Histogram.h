@@ -20,7 +20,7 @@ typedef uint32_t S;
 
 #define INTERCHR 250000000
 
-namespace SnowTools {
+namespace SeqKit {
 
   class Histogram;
 

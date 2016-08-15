@@ -1,9 +1,9 @@
-#include "SnowTools/GenomicRegionCollection.h"
+#include "SeqKit/GenomicRegionCollection.h"
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <cassert>
-#include "SnowTools/gzstream.h"
 #include <set>
 #include <unordered_set>
 
@@ -13,7 +13,7 @@
 
 //#define DEBUG_OVERLAPS 1
 
-namespace SnowTools {
+namespace SeqKit {
 
   static bool header_has_chr_string = false;
 
@@ -73,7 +73,7 @@ void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, co
   std::cerr << "Reading MuTect CallStats"  << std::endl;
   std::string curr_chr = "dum";
   
-  igzstream iss(file.c_str());
+  std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "MuTect call-stats file does not exist: " << file << std::endl;
     exit(EXIT_FAILURE);
@@ -118,7 +118,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
 
   assert(pad >= 0);
 
-  igzstream iss(file.c_str());
+  std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "BED file does not exist: " << file << std::endl;
     exit(EXIT_FAILURE);
@@ -176,7 +176,7 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 
   assert(pad >= 0);
 
-  igzstream iss(file.c_str());
+  std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "VCF file does not exist: " << file << std::endl;
     exit(EXIT_FAILURE);
@@ -224,7 +224,7 @@ void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pa
 
   header_has_chr_string = chr_header;
 
-  igzstream iss(file.c_str());
+  std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "Region file does not exist: " << file << std::endl;
     exit(EXIT_FAILURE);

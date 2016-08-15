@@ -8,7 +8,7 @@
 #include "htslib/faidx.h"
 
 
-namespace SnowTools {
+namespace SeqKit {
   
   /** Stores an indexed reference genome
    *

@@ -10,10 +10,9 @@
 #include <cmath>
 #include <algorithm>
 
-#include "SnowTools/gzstream.h"
-#include "SnowTools/SnowToolsCommon.h"
+#include "SeqKit/SeqKitCommon.h"
 
-namespace SnowTools {
+namespace SeqKit {
 
   /** Check if a file is readable and exists
    * @param name Name of a file to test

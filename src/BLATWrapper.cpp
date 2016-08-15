@@ -1,10 +1,10 @@
-#include "SnowTools/BLATWrapper.h"
+#include "SeqKit/BLATWrapper.h"
 
 #define QWARN_SIZE 5000000
 
 static int ssAliCount = 16;	/* Number of alignments returned by ssStitch. */
 
-namespace SnowTools {
+namespace SeqKit {
 
   void BLATWrapper::addHeader(bam_hdr_t * t) {
     

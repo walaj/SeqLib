@@ -1,9 +1,9 @@
 #ifndef SNOWTOOLS_CONTIG_PLOT_H__
 #define SNOWTOOLS_CONTIG_PLOT_H__
 
-#include "SnowTools/BamRecord.h"
+#include "SeqKit/BamRecord.h"
 
-namespace SnowTools {
+namespace SeqKit {
   
   /** Object for creating ASCII alignment plots
    */

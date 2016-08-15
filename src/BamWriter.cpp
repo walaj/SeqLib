@@ -1,11 +1,11 @@
-#include "SnowTools/BamWalker.h"
-#include "SnowTools/BamWriter.h"
+#include "SeqKit/BamWalker.h"
+#include "SeqKit/BamWriter.h"
 
 //#define DEBUG_WALKER 1
 
-namespace SnowTools {
+namespace SeqKit {
 
-  void BamWriter::SetHeader(const SnowTools::BamHeader& h) {
+  void BamWriter::SetHeader(const SeqKit::BamHeader& h) {
     hdr = h;
   }
 

@@ -1,8 +1,8 @@
-#include "SnowTools/Fractions.h"
+#include "SeqKit/Fractions.h"
 
-namespace SnowTools {
+namespace SeqKit {
 
-  FracRegion::FracRegion(const std::string& c, const std::string& p1, const std::string& p2, bam_hdr_t * h, const std::string& f) : SnowTools::GenomicRegion(c, p1, p2, h)
+  FracRegion::FracRegion(const std::string& c, const std::string& p1, const std::string& p2, bam_hdr_t * h, const std::string& f) : SeqKit::GenomicRegion(c, p1, p2, h)
   {
     // convert frac to double
     try { 
@@ -19,14 +19,14 @@ namespace SnowTools {
 
 
   std::ostream& operator<<(std::ostream& out, const FracRegion& f) {
-    out << f.chr << ":" << SnowTools::AddCommas<int32_t>(f.pos1) << "-" << 
-      SnowTools::AddCommas<int32_t>(f.pos2) << " Frac: " << f.frac;
+    out << f.chr << ":" << SeqKit::AddCommas<int32_t>(f.pos1) << "-" << 
+      SeqKit::AddCommas<int32_t>(f.pos2) << " Frac: " << f.frac;
     return out;
   }
 
 void Fractions::readFromBed(const std::string& file, bam_hdr_t * h) {
 
-  igzstream iss(file.c_str());
+  std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "BED file does not exist: " << file << std::endl;
     exit(EXIT_FAILURE);

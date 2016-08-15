@@ -1,4 +1,4 @@
-#include "SnowTools/ReadFilter.h"
+#include "SeqKit/ReadFilter.h"
 
 #include <cassert>
 #include "htslib/khash.h"
@@ -9,7 +9,7 @@
 
 //#define DEBUG_MINI 1
 
-namespace SnowTools {
+namespace SeqKit {
 
 // define what is a valid condition
 static const std::unordered_set<std::string> valid = 
@@ -198,7 +198,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     id = file;
     
     // parse if it's a file
-    if (SnowTools::read_access_test(file))
+    if (SeqKit::read_access_test(file))
       m_grv.regionFileToGRV(file, pad, hdr);
     // samtools style string
     else if (file.find(":") != std::string::npos && file.find("-") != std::string::npos) {
@@ -212,7 +212,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     }
     // it's a single chromosome
     else if (!file.empty()) {
-      SnowTools::GenomicRegion gr(file, "1", "1", hdr); //file is chr, "1" is dummy
+      SeqKit::GenomicRegion gr(file, "1", "1", hdr); //file is chr, "1" is dummy
       if (gr.chr == -1 || gr.chr >= hdr.NumSequences()) {
 	std::cerr << "ERROR: Trying to match chromosome " << file << " to one in header, but no match found" << std::endl;
 	exit(EXIT_FAILURE);
@@ -1117,7 +1117,7 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
     file = f;
 
     // open the sequence file
-    igzstream iss(f.c_str());
+    std::ifstream iss(f.c_str());
     if (!iss || !read_access_test(f)) 
       throw std::runtime_error("AhoCorasick::TrieFromFile - Cannot read file: " + f);
     
@@ -1173,7 +1173,7 @@ const std::string ReadFilterCollection::GetScriptContents(const std::string& scr
 
 }
 
-  ReadFilter::ReadFilter(const CommandLineRegion& c, const SnowTools::BamHeader& hdr) {
+  ReadFilter::ReadFilter(const CommandLineRegion& c, const SeqKit::BamHeader& hdr) {
 
     m_region_file = c.f;
 

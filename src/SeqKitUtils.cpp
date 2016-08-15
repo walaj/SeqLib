@@ -1,8 +1,8 @@
-#include "SnowTools/SnowUtils.h"
+#include "SeqKit/SeqKitUtils.h"
 #include <random>
 
 
-std::string SnowTools::scrubString(const std::string& toscrub, const std::string& toremove) 
+std::string SeqKit::scrubString(const std::string& toscrub, const std::string& toremove) 
 {
   std::string::size_type i = toscrub.find(toremove);
   if (i == std::string::npos)
@@ -16,7 +16,7 @@ std::string SnowTools::scrubString(const std::string& toscrub, const std::string
   return ts;
 }
 
-int SnowTools::weightedRandom(const std::vector<double>& cs) {
+int SeqKit::weightedRandom(const std::vector<double>& cs) {
 
   // get a weighted random number
   size_t al = 0;

@@ -5,10 +5,10 @@
 #include <cstdint>
 #include <iostream>
 
-#include "SnowTools/Histogram.h"
-#include "SnowTools/BamRecord.h"
+#include "SeqKit/Histogram.h"
+#include "SeqKit/BamRecord.h"
 
-namespace SnowTools{
+namespace SeqKit{
 
   /** Store information pertaining to a given read group *
    *

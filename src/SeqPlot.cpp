@@ -1,1 +1,1 @@
-#include "SnowTools/SeqPlot.h"
+#include "SeqKit/SeqPlot.h"

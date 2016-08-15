@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <memory>
 
-#include "SnowTools/BamRecord.h"
-#include "SnowTools/BamHeader.h"
+#include "SeqKit/BamRecord.h"
+#include "SeqKit/BamHeader.h"
 #include "htslib/sam.h"
 
 #define MEM_F_SOFTCLIP  0x200
@@ -27,7 +27,7 @@ extern "C" {
 
 KSEQ_DECLARE(gzFile)
 
-namespace SnowTools {
+namespace SeqKit {
 
   /** Structure to hold unaligned sequence (name and bases)
    */

@@ -1,5 +1,5 @@
-#include "SnowTools/ssw_cpp.h"
-#include "SnowTools/ssw.h"
+#include "SeqKit/ssw_cpp.h"
+#include "SeqKit/ssw.h"
 
 #include <sstream>
 

@@ -3,9 +3,9 @@
 
 #include <cassert>
 #include <memory>
-#include "SnowTools/BamRecord.h"
+#include "SeqKit/BamRecord.h"
 
-namespace SnowTools {
+namespace SeqKit {
 
   const int BAM = 0;
   const int SAM = 1;
@@ -22,7 +22,7 @@ class BamWriter  {
   BamWriter() {}
 
   /** Construct an empty BamWriter and specify output format 
-   * @param o One of SnowTools::BAM, SnowTools::CRAM, SnowTools::SAM, SnowTools::STDOUT
+   * @param o One of SeqKit::BAM, SeqKit::CRAM, SeqKit::SAM, SeqKit::STDOUT
    */
   BamWriter(int o);
 
@@ -37,7 +37,7 @@ class BamWriter  {
   void WriteHeader() const;
 
   
-  void SetHeader(const SnowTools::BamHeader& h);
+  void SetHeader(const SeqKit::BamHeader& h);
 
   /** Close a BAM file explitily. This is required before indexing with makeIndex.
    * @note If not called, BAM will close properly on object destruction
@@ -122,7 +122,7 @@ class BamWriter  {
   std::vector<std::string> m_tag_list;
 
   // header
-  SnowTools::BamHeader hdr;
+  SeqKit::BamHeader hdr;
   
 };
 

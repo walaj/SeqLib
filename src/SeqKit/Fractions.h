@@ -1,16 +1,16 @@
 #ifndef SNOWMAN_FRACTIONS_H__
 #define SNOWMAN_FRACTIONS_H__
 
-#include "SnowTools/GenomicRegionCollection.h"
+#include "SeqKit/GenomicRegionCollection.h"
 #include <string>
 
-namespace SnowTools {
+namespace SeqKit {
 
   /** @brief Extension of GenomicRegion with a fraction of reads to keep on an interval
    * 
    * Used in conjunction with Fractions and used for selectively sub-sampling BAM files.
    */
-class FracRegion : public SnowTools::GenomicRegion {
+class FracRegion : public SeqKit::GenomicRegion {
 
  public:
   
@@ -35,7 +35,7 @@ class Fractions {
 
   void readFromBed(const std::string& file, bam_hdr_t * h) ;
 
-  SnowTools::GenomicRegionCollection<FracRegion> m_frc;
+  SeqKit::GenomicRegionCollection<FracRegion> m_frc;
 
  private:
 

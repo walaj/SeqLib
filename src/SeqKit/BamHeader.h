@@ -10,7 +10,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace SnowTools {
+namespace SeqKit {
   
   /** Store a header to a BAM file 
    *

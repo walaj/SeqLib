@@ -1,12 +1,12 @@
-noinst_LIBRARIES = libsnowtools.a
+noinst_LIBRARIES = libseqkit.a
 
-libsnowtools_a_CPPFLAGS = \
+libseqkit_a_CPPFLAGS = \
         -I.. \
         -I../htslib -I../bwa -I../fermi-lite
 
-libsnowtools_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
+libseqkit_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
-			BamWriter.cpp BamReader.cpp BamStats.cpp gzstream.C SnowUtils.cpp \
-			gzstream.C BWAWrapper.cpp BamRecord.cpp \
+			BamWriter.cpp BamReader.cpp BamStats.cpp SeqKitUtils.cpp \
+			BWAWrapper.cpp BamRecord.cpp \
 		        STCoverage.cpp Fractions.cpp FermiAssembler.cpp \
 			BamHeader.cpp

@@ -5,40 +5,40 @@
  *
  * \section intro_sec Introduction
  *
- * SnowTools is a C++ package for querying BAM and SAM files, performing 
+ * SeqKit is a C++ package for querying BAM and SAM files, performing 
  * BWA-MEM operations in memory, and performing advanced filtering of 
- * reads using a hierarchy of rules. At its core, SnowTools is a C++ interface
+ * reads using a hierarchy of rules. At its core, SeqKit is a C++ interface
  * to the C htslib project, which provides the code for core BAM/SAM operations. 
  * (https://github.com/samtools/htslib)
  *
- * SnowTools is built to be extendable. See (...) for examples of how to take advantage of C++
- * class extensions to build off of the SnowTools base functionality. 
+ * SeqKit is built to be extendable. See (...) for examples of how to take advantage of C++
+ * class extensions to build off of the SeqKit base functionality. 
  *
- * SnowTools is available as a stand-alone executable, which wrap a number of tools. 
+ * SeqKit is available as a stand-alone executable, which wrap a number of tools. 
  * However, certain functionality provided in an optimal form by SamTools or 
- * BamTools are intentially left out of SnowTools. In cases where improvements or alternative
+ * BamTools are intentially left out of SeqKit. In cases where improvements or alternative
  * approaches are useful, the functionally is partially duplicated (e.g. count).
  * 
  * As noted above, there are many overlaps between this project at the BamTools project from Derek Barnett 
- * (https://github.com/pezmaster31/bamtools). As such, SnowTools is provided as a 
+ * (https://github.com/pezmaster31/bamtools). As such, SeqKit is provided as a 
  * a supplemental library that may be more suited to your individual needs that BamTools, or vice-versa. To
  * aid developers in deciding which package is right for them, I have put together a small list of 
  * similarities and differences between these two packages
  *
  * 
- * \subsection similaries SnowTools/BamTools similarity
+ * \subsection similaries SeqKit/BamTools similarity
  * - Provide read/write access to BAM files
  * - Classes containing individual reads and ways to interact with them (e.g. edit tags)
  * - Available as an API and a command-line versoin
- * \subsection differenes SnowTools/BamTools differences
- * - Sort/index functionality is independently implemented in BamTools. In SnowTools, the Samtools 
+ * \subsection differenes SeqKit/BamTools differences
+ * - Sort/index functionality is independently implemented in BamTools. In SeqKit, the Samtools 
  * sort and index functions are called directly.
- * - BamTools stores quality scores and sequences as strings. In SnowTools, the HTSlib native bam1_t format
+ * - BamTools stores quality scores and sequences as strings. In SeqKit, the HTSlib native bam1_t format
  * is used instead. This format has a lower memory footprint by using only 4 bits per base, rather than 8. 
  * Conversion to C++ style std::string is provided as a function and can be done on the fly.
  * - BamTools provides the BamMultiReader class for reading multiple BAM files at once, while 
- * SnowTools does not currently support this functionality.
- * - BamTools provides the following CLI tools that are not supported in SnowTools
+ * SeqKit does not currently support this functionality.
+ * - BamTools provides the following CLI tools that are not supported in SeqKit
  *    - convert - Convert between BAM and other formats
  *    - header - Print the BAM header
  *    - index - Index a BAM file
@@ -51,7 +51,7 @@
  * \section install_sec Installation
  * \code
  * git clone https://github.com/broadinstitute/isva.git
- * cd isva/SnowTools/src
+ * cd isva/SeqKit/src
  * ./configure
  * make
  * \endcode
@@ -73,7 +73,7 @@
 #include <vector>
 #include <cstdint>
 
-namespace SnowTools {
+namespace SeqKit {
 
   static const char RCOMPLEMENT_TABLE[128] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 					      ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',

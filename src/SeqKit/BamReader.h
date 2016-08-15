@@ -4,10 +4,10 @@
 #include <cassert>
 #include <memory>
 
-#include "SnowTools/ReadFilter.h"
-#include "SnowTools/BamWalker.h"
+#include "SeqKit/ReadFilter.h"
+#include "SeqKit/BamWalker.h"
 
-namespace SnowTools {
+namespace SeqKit {
 
 /** Walk along a BAM or along BAM regions and stream in/out reads
  */

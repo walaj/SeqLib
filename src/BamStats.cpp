@@ -1,9 +1,9 @@
-#include "SnowTools/BamStats.h"
+#include "SeqKit/BamStats.h"
 
 #include <cmath>
 
 //#define DEBUG_STATS 1
-namespace SnowTools {
+namespace SeqKit {
 
 BamReadGroup::BamReadGroup(const std::string& name) : reads(0), supp(0), unmap(0), qcfail(0), 
 						      duplicate(0), mate_unmap(0), m_name(name)

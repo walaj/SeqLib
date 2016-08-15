@@ -1,5 +1,5 @@
-#include "SnowTools/Histogram.h"
-#include "SnowTools/SnowUtils.h"
+#include "SeqKit/Histogram.h"
+#include "SeqKit/SeqKitUtils.h"
 #include <fstream>
 #include <cmath>
 #include <algorithm>
@@ -9,7 +9,7 @@
 
 #define DEBUG_HISTOGRAM
 
-namespace SnowTools {
+namespace SeqKit {
 
 Histogram::Histogram(const int32_t& start, const int32_t& end, const uint32_t& width)
 {

@@ -15,15 +15,15 @@
 #include "htslib/bgzf.h"
 #include "htslib/kstring.h"
 
-#include "SnowTools/BamRecord.h"
-#include "SnowTools/GenomicRegion.h"
-#include "SnowTools/GenomicRegionCollection.h"
+#include "SeqKit/BamRecord.h"
+#include "SeqKit/GenomicRegion.h"
+#include "SeqKit/GenomicRegionCollection.h"
 
 typedef std::shared_ptr<std::vector<uint16_t>> uint16_sp;
 typedef std::unordered_map<int,int> CovMap;
 //typedef std::unordered_map<int,CovMap> CovMapMap;
 
-namespace SnowTools {
+namespace SeqKit {
 
 
   
@@ -74,7 +74,7 @@ class STCoverage {
   //void combineCoverage(Coverage &cov);
 
   /** Return a short summary string of this coverage object */
-  void ToBedgraph(ogzstream * o, const bam_hdr_t * h) const;
+  void ToBedgraph(std::ofstream * o, const bam_hdr_t * h) const;
   
   /** Print the entire data */
   friend std::ostream& operator<<(std::ostream &out, const STCoverage &c);

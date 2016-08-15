@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 
-namespace SnowTools {
+namespace SeqKit {
   
   /** Stores an indexed reference genome
    *

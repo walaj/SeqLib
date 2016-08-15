@@ -1,9 +1,9 @@
-#include "SnowTools/STCoverage.h"
-#include "SnowTools/SnowToolsCommon.h"
+#include "SeqKit/STCoverage.h"
+#include "SeqKit/SeqKitCommon.h"
 #include <stdexcept>
 #include <algorithm>
 
-namespace SnowTools {
+namespace SeqKit {
 
   void STCoverage::clear() {
     m_map.clear();
@@ -14,7 +14,7 @@ namespace SnowTools {
     m_grc.mergeOverlappingIntervals();
   }
   
-  STCoverage::STCoverage(const SnowTools::GenomicRegion& gr) {
+  STCoverage::STCoverage(const SeqKit::GenomicRegion& gr) {
     m_gr = gr;
     v = uint16_sp(new std::vector<uint16_t>(gr.width(),0));
   }
@@ -113,7 +113,7 @@ namespace SnowTools {
     return out;
   }
 
-  void STCoverage::ToBedgraph(ogzstream * o, const bam_hdr_t * h) const {
+  void STCoverage::ToBedgraph(std::ofstream * o, const bam_hdr_t * h) const {
 
     //settleCoverage();
 

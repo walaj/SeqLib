@@ -1,5 +1,5 @@
-#include "SnowTools/BamHeader.h"
-#include "SnowTools/BamWalker.h"
+#include "SeqKit/BamHeader.h"
+#include "SeqKit/BamWalker.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -7,7 +7,7 @@
 
 #include "htslib/khash.h"
 
-namespace SnowTools {
+namespace SeqKit {
 
 BamHeader::BamHeader(const std::string& hdr)  {
 

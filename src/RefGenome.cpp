@@ -1,9 +1,9 @@
-#include "SnowTools/RefGenome.h"
+#include "SeqKit/RefGenome.h"
 
 #include <stdexcept>
-#include "SnowTools/SnowUtils.h"
+#include "SeqKit/SeqKitUtils.h"
 
-namespace SnowTools {
+namespace SeqKit {
 
   void RefGenome::retrieveIndex(const std::string& file) {
 

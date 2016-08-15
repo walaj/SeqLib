@@ -1,9 +1,9 @@
-#include "SnowTools/BamWalker.h"
-#include "SnowTools/BamReader.h"
+#include "SeqKit/BamWalker.h"
+#include "SeqKit/BamReader.h"
 
 //#define DEBUG_WALKER 1
 
-namespace SnowTools {
+namespace SeqKit {
 
 // set the bam region
 bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx) {

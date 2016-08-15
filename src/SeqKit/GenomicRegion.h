@@ -9,13 +9,13 @@
 #include <cstring>
 #include <memory>
 
-#include "SnowTools/SnowToolsCommon.h"
-#include "SnowTools/SnowUtils.h"
-#include "SnowTools/BamHeader.h"
+#include "SeqKit/SeqKitCommon.h"
+#include "SeqKit/SeqKitUtils.h"
+#include "SeqKit/BamHeader.h"
 
 /** 
  */
-namespace SnowTools {
+namespace SeqKit {
 
   /** @brief Container for an interval on the genome 
    */
