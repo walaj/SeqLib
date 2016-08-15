@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/jwalabroad/SnowTools.svg?branch=new_license)](https://travis-ci.org/jwalabroad/SnowTools)
-[![Coverage Status](https://coveralls.io/repos/github/jwalabroad/SnowTools/badge.svg?branch=new_license)](https://coveralls.io/github/jwalabroad/SnowTools?branch=new_license)
+[![Build Status](https://travis-ci.org/jwalabroad/SeqLib.svg?branch=master)](https://travis-ci.org/jwalabroad/SeqLib)
+[![Coverage Status](https://coveralls.io/repos/github/jwalabroad/SeqLib/badge.svg?branch=master)](https://coveralls.io/github/jwalabroad/SeqLib?branch=master)
 
 C++ interface to HTSlib, BWA-MEM and Fermi-kit
 
@@ -14,8 +14,8 @@ Installation
 
 #######
 ```bash
-git clone https://github.com/jwalabroad/SnowTools.git
-cd SnowTools
+git clone https://github.com/jwalabroad/SeqLib.git
+cd SeqLib
 ./configure
 make
 ```
@@ -25,58 +25,58 @@ I have successfully compiled with GCC-4.8+ on Linux and with Clang on Mac
 Description
 -----------
 
-SnowTools is a C++ package for querying BAM and SAM files, performing 
+SeqLib is a C++ package for querying BAM and SAM files, performing 
 BWA-MEM and BLAT operations in memory, and performing advanced filtering of 
-reads using a hierarchy of rules. Currently, SnowTools wraps the following projects:
+reads using a hierarchy of rules. Currently, SeqLib wraps the following projects:
 * [HTSlib][htslib]
 * [BWA-MEM][BWA] (Apache2 branch)
 * [FermiKit][fermi] (Apache2 branch)
 
-SnowTools also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
+SeqLib also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
 It uses an [interval tree][int] (provided by Erik Garrison @ekg) to provide for rapid interval queries.
 
-SnowTools is built to be extendable. See [Variant Bam][var] for examples of how to take advantage of C++
-class extensions to build off of the SnowTools base functionality. 
+SeqLib is built to be extendable. See [Variant Bam][var] for examples of how to take advantage of C++
+class extensions to build off of the SeqLib base functionality. 
  
 Memory management
 -----------------
-SnowTools is built to automatically handle memory management of C code from BWA-MEM and htslib by using C++ smart
+SeqLib is built to automatically handle memory management of C code from BWA-MEM and htslib by using C++ smart
 pointers that handle freeing memory automatically. One of the 
-main motivations behind SnowTools is that all access to sequencing reads, BWA, etc should
-completely avoid ``malloc`` and ``free``. In SnowTools, the speed and compression of HTSlib
+main motivations behind SeqLib is that all access to sequencing reads, BWA, etc should
+completely avoid ``malloc`` and ``free``. In SeqLib, the speed and compression of HTSlib
 is available, but all the mallocs/frees are handled automatically in the constructors and
 destructors.
 
 Note about BamTools and Gamgee
 ------------------------------
 There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, and the [Gamgee][gam] 
-project from the Broad Institute. In short, BamTools has been more widely used and tested, but is relatively slow compared with SnowTools (~2x).
-Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or BLAT. SnowTools is under active development, while Gamgee
+project from the Broad Institute. In short, BamTools has been more widely used and tested, but is relatively slow compared with SeqLib (~2x).
+Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or BLAT. SeqLib is under active development, while Gamgee
 has been abandoned.
 
-SnowTools/BamTools differences
+SeqLib/BamTools differences
 ------------------------------
-> 1. Sort/index functionality is independently implemented in BamTools. In SnowTools, the Samtools 
+> 1. Sort/index functionality is independently implemented in BamTools. In SeqLib, the Samtools 
  sort and index functions are called directly.
-> 2. BamTools stores quality scores and sequences as strings. In SnowTools, the HTSlib ``bam1_t`` format
+> 2. BamTools stores quality scores and sequences as strings. In SeqLib, the HTSlib ``bam1_t`` format
  is used instead, which uses only 4 bits per base, rather than 8. 
  Conversion to C++ style ``std::string`` is provided with the ``Sequence`` function.
 > 3. BamTools provides the ``BamMultiReader`` class for reading multiple BAM files at once, while 
- SnowTools does not currently support this functionality.
-> 4. SnowTools contains a built in interface to BWA-MEM for in-memory indexing and querying.
-> 5. SnowTools contains a beta wrapper around BLAT.
-> 6. SnowTools supports reading and writing CRAM files
+ SeqLib does not currently support this functionality.
+> 4. SeqLib contains a built in interface to BWA-MEM for in-memory indexing and querying.
+> 5. SeqLib contains a beta wrapper around BLAT.
+> 6. SeqLib supports reading and writing CRAM files
 > 7. BamTools has been widely used in a number of applications, and is thus substantially more tested.
-> 8. SnowTools is faster at reading/writing BAM files by about 2x.
-> 9. BamTools builds with CMake, SnowTools with Autotools.
+> 8. SeqLib is faster at reading/writing BAM files by about 2x.
+> 9. BamTools builds with CMake, SeqLib with Autotools.
 
 Example usages
 --------------
 ##### Targeted re-alignment of reads to a given region with BWA-MEM
 ```
-#include "SnowTools/RefGenome.h"
-#include "SnowTools/BWAWrapper.h"
-using SnowTools;
+#include "SeqLib/RefGenome.h"
+#include "SeqLib/BWAWrapper.h"
+using SeqLib;
 RefGgenome ref("hg19.fasta");
 
 ## get sequence at given locus
@@ -101,9 +101,9 @@ for (auto& i : results)
 
 ##### Read a BAM line by line, realign reads with BWA-MEM, write to new BAM
 ```
-#include "SnowTools/BamWalker.h"
-#include "SnowTools/BWAWrapper.h"
-using SnowTools;
+#include "SeqLib/BamWalker.h"
+#include "SeqLib/BWAWrapper.h"
+using SeqLib;
 
 // open the reader BAM
 BamWalker bw("test.bam");
@@ -152,13 +152,13 @@ Attributions
 
 [BWA]: https://github.com/lh3/bwa
 
-[license]: https://github.com/jwalabroad/SnowTools/blob/new_license/LICENSE
+[license]: https://github.com/jwalabroad/SeqLib/blob/new_license/LICENSE
 
 [BamTools]: https://raw.githubusercontent.com/wiki/pezmaster31/bamtools/Tutorial_Toolkit_BamTools-1.0.pdf
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
-[htmldoc]: http://jwalabroad.github.io/SnowTools/doxygen
+[htmldoc]: http://jwalabroad.github.io/SeqLib/doxygen
 
 [var]: https://github.com/jwalabroad/VariantBam
 
