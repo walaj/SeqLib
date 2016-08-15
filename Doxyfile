@@ -17,7 +17,7 @@
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = SnowTools
+PROJECT_NAME           = SeqLib
 
 PROJECT_BRIEF	       = "C++ htslib/bwa-mem interface and command line tools for interrogating sequence data"
 
@@ -27,7 +27,7 @@ PROJECT_BRIEF	       = "C++ htslib/bwa-mem interface and command line tools for 
 
 PROJECT_NUMBER         = 0.0
 
-REPO_PATH	       = https://github.com/jwalabroad/SnowTools.git
+REPO_PATH	       = https://github.com/jwalabroad/SeqLib.git
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
@@ -496,7 +496,7 @@ EXCLUDE                = bwa \
 			 src/ssw_cpp.cpp \
 			 src/gzstream.C \
 		         SGA \
-		         snow_test \ 
+		         seq_test \ 
 		         .git \
 			 .travis.scripts \
 		         README.md
