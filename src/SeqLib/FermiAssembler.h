@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 
-namespace SeqKit {
+namespace SeqLib {
   
   /** Stores an indexed reference genome
    *

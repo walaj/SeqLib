@@ -3,9 +3,9 @@
 
 #include <cassert>
 #include <memory>
-#include "SeqKit/BamRecord.h"
+#include "SeqLib/BamRecord.h"
 
-namespace SeqKit {
+namespace SeqLib {
 
   const int BAM = 0;
   const int SAM = 1;
@@ -22,7 +22,7 @@ class BamWriter  {
   BamWriter() {}
 
   /** Construct an empty BamWriter and specify output format 
-   * @param o One of SeqKit::BAM, SeqKit::CRAM, SeqKit::SAM, SeqKit::STDOUT
+   * @param o One of SeqLib::BAM, SeqLib::CRAM, SeqLib::SAM, SeqLib::STDOUT
    */
   BamWriter(int o);
 
@@ -37,7 +37,7 @@ class BamWriter  {
   void WriteHeader() const;
 
   
-  void SetHeader(const SeqKit::BamHeader& h);
+  void SetHeader(const SeqLib::BamHeader& h);
 
   /** Close a BAM file explitily. This is required before indexing with makeIndex.
    * @note If not called, BAM will close properly on object destruction
@@ -122,7 +122,7 @@ class BamWriter  {
   std::vector<std::string> m_tag_list;
 
   // header
-  SeqKit::BamHeader hdr;
+  SeqLib::BamHeader hdr;
   
 };
 

@@ -1,8 +1,8 @@
-#include "SeqKit/Fractions.h"
+#include "SeqLib/Fractions.h"
 
-namespace SeqKit {
+namespace SeqLib {
 
-  FracRegion::FracRegion(const std::string& c, const std::string& p1, const std::string& p2, bam_hdr_t * h, const std::string& f) : SeqKit::GenomicRegion(c, p1, p2, h)
+  FracRegion::FracRegion(const std::string& c, const std::string& p1, const std::string& p2, bam_hdr_t * h, const std::string& f) : SeqLib::GenomicRegion(c, p1, p2, h)
   {
     // convert frac to double
     try { 
@@ -19,8 +19,8 @@ namespace SeqKit {
 
 
   std::ostream& operator<<(std::ostream& out, const FracRegion& f) {
-    out << f.chr << ":" << SeqKit::AddCommas<int32_t>(f.pos1) << "-" << 
-      SeqKit::AddCommas<int32_t>(f.pos2) << " Frac: " << f.frac;
+    out << f.chr << ":" << SeqLib::AddCommas<int32_t>(f.pos1) << "-" << 
+      SeqLib::AddCommas<int32_t>(f.pos2) << " Frac: " << f.frac;
     return out;
   }
 

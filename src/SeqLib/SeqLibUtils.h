@@ -10,9 +10,9 @@
 #include <cmath>
 #include <algorithm>
 
-#include "SeqKit/SeqKitCommon.h"
+#include "SeqLib/SeqLibCommon.h"
 
-namespace SeqKit {
+namespace SeqLib {
 
   /** Check if a file is readable and exists
    * @param name Name of a file to test

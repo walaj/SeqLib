@@ -20,7 +20,7 @@ typedef uint32_t S;
 
 #define INTERCHR 250000000
 
-namespace SeqKit {
+namespace SeqLib {
 
   class Histogram;
 

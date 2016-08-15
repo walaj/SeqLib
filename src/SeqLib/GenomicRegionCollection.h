@@ -11,14 +11,14 @@
 #include "boost/icl/interval_set.hpp"
 #endif
 
-#include "SeqKit/IntervalTree.h"
-#include "SeqKit/GenomicRegion.h"
-#include "SeqKit/BamRecord.h"
+#include "SeqLib/IntervalTree.h"
+#include "SeqLib/GenomicRegion.h"
+#include "SeqLib/BamRecord.h"
 
 /** Class to store vector of intervals on the genome
  */
 
-namespace SeqKit {
+namespace SeqLib {
 
 typedef TInterval<int32_t> GenomicInterval;
 typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
@@ -67,19 +67,19 @@ class GenomicRegionCollection {
    * @param file Path to call-stats file
    * @param pad Amount to pad intervals by
    */
- void readMuTect(const std::string &file, int pad, const SeqKit::BamHeader& hdr);
+ void readMuTect(const std::string &file, int pad, const SeqLib::BamHeader& hdr);
 
   /** Read in a BED file and adds to GenomicRegionCollection object
    * @param file Path to BED file
    * @param pad Amount to pad intervals by
    */
- void readBEDfile(const std::string &file, int pad, const SeqKit::BamHeader& hdr);
+ void readBEDfile(const std::string &file, int pad, const SeqLib::BamHeader& hdr);
 
   /** Read in a VCF file and adds to GenomicRegionCollection object
    * @param file Path to BED file
    * @param pad Amount to pad intervals by
    */
- void readVCFfile(const std::string &file, int pad, const SeqKit::BamHeader& hdr);
+ void readVCFfile(const std::string &file, int pad, const SeqLib::BamHeader& hdr);
 
   /** Read in a text file (can be gzipped) and add to GenomicRegionCollection
    *

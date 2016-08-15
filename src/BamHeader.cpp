@@ -1,5 +1,5 @@
-#include "SeqKit/BamHeader.h"
-#include "SeqKit/BamWalker.h"
+#include "SeqLib/BamHeader.h"
+#include "SeqLib/BamWalker.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -7,7 +7,7 @@
 
 #include "htslib/khash.h"
 
-namespace SeqKit {
+namespace SeqLib {
 
 BamHeader::BamHeader(const std::string& hdr)  {
 

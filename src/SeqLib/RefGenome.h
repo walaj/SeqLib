@@ -8,7 +8,7 @@
 #include "htslib/faidx.h"
 
 
-namespace SeqKit {
+namespace SeqLib {
   
   /** Stores an indexed reference genome
    *

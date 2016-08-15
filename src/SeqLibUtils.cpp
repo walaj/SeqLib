@@ -1,8 +1,8 @@
-#include "SeqKit/SeqKitUtils.h"
+#include "SeqLib/SeqLibUtils.h"
 #include <random>
 
 
-std::string SeqKit::scrubString(const std::string& toscrub, const std::string& toremove) 
+std::string SeqLib::scrubString(const std::string& toscrub, const std::string& toremove) 
 {
   std::string::size_type i = toscrub.find(toremove);
   if (i == std::string::npos)
@@ -16,7 +16,7 @@ std::string SeqKit::scrubString(const std::string& toscrub, const std::string& t
   return ts;
 }
 
-int SeqKit::weightedRandom(const std::vector<double>& cs) {
+int SeqLib::weightedRandom(const std::vector<double>& cs) {
 
   // get a weighted random number
   size_t al = 0;

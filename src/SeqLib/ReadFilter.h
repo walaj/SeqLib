@@ -8,10 +8,10 @@
 
 #include "json/json.h"
 
-#include "SeqKit/GenomicRegionCollection.h"
-#include "SeqKit/BamRecord.h"
+#include "SeqLib/GenomicRegionCollection.h"
+#include "SeqLib/BamRecord.h"
 
-#include "SeqKit/aho_corasick.hpp"
+#include "SeqLib/aho_corasick.hpp"
 
 // motif matching with ahocorasick not available on OSX
 #ifdef HAVE_AHO_CORASICK
@@ -33,7 +33,7 @@ typedef std::unique_ptr<AC_AUTOMATA_t> atm_ptr;
 #define MINIRULES_REGION 3
 #define MINIRULES_REGION_EXCLUDE 4
 
-namespace SeqKit {
+namespace SeqLib {
 
   /** Tool for using the Aho-Corasick method for substring queries of 
    * using large dictionaries 
@@ -479,7 +479,7 @@ class ReadFilterCollection {
   AbstractRule rule_all;
   
   //ReadFilterCollection(const std::string& script, bam_hdr_t *h);
-  ReadFilterCollection(const std::string& script, const SeqKit::BamHeader& h);
+  ReadFilterCollection(const std::string& script, const SeqLib::BamHeader& h);
 
   void addGlobalRule(const std::string& rule);
 

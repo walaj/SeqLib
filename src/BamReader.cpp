@@ -1,9 +1,9 @@
-#include "SeqKit/BamWalker.h"
-#include "SeqKit/BamReader.h"
+#include "SeqLib/BamWalker.h"
+#include "SeqLib/BamReader.h"
 
 //#define DEBUG_WALKER 1
 
-namespace SeqKit {
+namespace SeqLib {
 
 // set the bam region
 bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx) {

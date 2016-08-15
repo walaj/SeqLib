@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <memory>
 
-#include "SeqKit/BamRecord.h"
-#include "SeqKit/BamHeader.h"
+#include "SeqLib/BamRecord.h"
+#include "SeqLib/BamHeader.h"
 #include "htslib/sam.h"
 
 #define MEM_F_SOFTCLIP  0x200
@@ -27,7 +27,7 @@ extern "C" {
 
 KSEQ_DECLARE(gzFile)
 
-namespace SeqKit {
+namespace SeqLib {
 
   /** Structure to hold unaligned sequence (name and bases)
    */

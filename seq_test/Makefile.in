@@ -54,13 +54,13 @@ am_seq_test_OBJECTS = seq_test-seq_test.$(OBJEXT) \
 	seq_test-GenomicRegion.$(OBJEXT) seq_test-Histogram.$(OBJEXT) \
 	seq_test-BamWriter.$(OBJEXT) seq_test-BamReader.$(OBJEXT) \
 	seq_test-BamStats.$(OBJEXT) seq_test-ReadFilter.$(OBJEXT) \
-	seq_test-SeqKitUtils.$(OBJEXT) seq_test-BamRecord.$(OBJEXT) \
+	seq_test-SeqLibUtils.$(OBJEXT) seq_test-BamRecord.$(OBJEXT) \
 	seq_test-BWAWrapper.$(OBJEXT) seq_test-STCoverage.$(OBJEXT) \
 	seq_test-Fractions.$(OBJEXT) seq_test-RefGenome.$(OBJEXT) \
 	seq_test-SeqPlot.$(OBJEXT) seq_test-BamHeader.$(OBJEXT) \
 	seq_test-FermiAssembler.$(OBJEXT)
 seq_test_OBJECTS = $(am_seq_test_OBJECTS)
-seq_test_DEPENDENCIES = ../src/libseqkit.a ../bwa/libbwa.a \
+seq_test_DEPENDENCIES = ../src/libseqlib.a ../bwa/libbwa.a \
 	../htslib/libhts.a
 seq_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(seq_test_LDFLAGS) $(LDFLAGS) -o $@
@@ -181,8 +181,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-#noinst_LIBRARIES = libseqtest.a
 seq_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
@@ -191,7 +189,7 @@ seq_test_CPPFLAGS = \
      -I.. --coverage
 
 seq_test_LDADD = \
-	../src/libseqkit.a \
+	../src/libseqlib.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
 	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono
@@ -200,7 +198,7 @@ seq_test_LDFLAGS = --coverage
 seq_test_SOURCES = seq_test.cpp \
 	../src/GenomicRegion.cpp \
 	../src/Histogram.cpp ../src/BamWriter.cpp ../src/BamReader.cpp ../src/BamStats.cpp \
-	../src/ReadFilter.cpp ../src/SeqKitUtils.cpp ../src/BamRecord.cpp \
+	../src/ReadFilter.cpp ../src/SeqLibUtils.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp ../src/STCoverage.cpp \
         ../src/Fractions.cpp ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
 	../src/FermiAssembler.cpp
@@ -321,7 +319,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-ReadFilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-RefGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-STCoverage.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-SeqKitUtils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-SeqLibUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-SeqPlot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-seq_test.Po@am__quote@
 
@@ -437,19 +435,19 @@ seq_test-ReadFilter.obj: ../src/ReadFilter.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-ReadFilter.obj `if test -f '../src/ReadFilter.cpp'; then $(CYGPATH_W) '../src/ReadFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ReadFilter.cpp'; fi`
 
-seq_test-SeqKitUtils.o: ../src/SeqKitUtils.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-SeqKitUtils.o -MD -MP -MF $(DEPDIR)/seq_test-SeqKitUtils.Tpo -c -o seq_test-SeqKitUtils.o `test -f '../src/SeqKitUtils.cpp' || echo '$(srcdir)/'`../src/SeqKitUtils.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-SeqKitUtils.Tpo $(DEPDIR)/seq_test-SeqKitUtils.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqKitUtils.cpp' object='seq_test-SeqKitUtils.o' libtool=no @AMDEPBACKSLASH@
+seq_test-SeqLibUtils.o: ../src/SeqLibUtils.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-SeqLibUtils.o -MD -MP -MF $(DEPDIR)/seq_test-SeqLibUtils.Tpo -c -o seq_test-SeqLibUtils.o `test -f '../src/SeqLibUtils.cpp' || echo '$(srcdir)/'`../src/SeqLibUtils.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-SeqLibUtils.Tpo $(DEPDIR)/seq_test-SeqLibUtils.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqLibUtils.cpp' object='seq_test-SeqLibUtils.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-SeqKitUtils.o `test -f '../src/SeqKitUtils.cpp' || echo '$(srcdir)/'`../src/SeqKitUtils.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-SeqLibUtils.o `test -f '../src/SeqLibUtils.cpp' || echo '$(srcdir)/'`../src/SeqLibUtils.cpp
 
-seq_test-SeqKitUtils.obj: ../src/SeqKitUtils.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-SeqKitUtils.obj -MD -MP -MF $(DEPDIR)/seq_test-SeqKitUtils.Tpo -c -o seq_test-SeqKitUtils.obj `if test -f '../src/SeqKitUtils.cpp'; then $(CYGPATH_W) '../src/SeqKitUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqKitUtils.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-SeqKitUtils.Tpo $(DEPDIR)/seq_test-SeqKitUtils.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqKitUtils.cpp' object='seq_test-SeqKitUtils.obj' libtool=no @AMDEPBACKSLASH@
+seq_test-SeqLibUtils.obj: ../src/SeqLibUtils.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-SeqLibUtils.obj -MD -MP -MF $(DEPDIR)/seq_test-SeqLibUtils.Tpo -c -o seq_test-SeqLibUtils.obj `if test -f '../src/SeqLibUtils.cpp'; then $(CYGPATH_W) '../src/SeqLibUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqLibUtils.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-SeqLibUtils.Tpo $(DEPDIR)/seq_test-SeqLibUtils.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqLibUtils.cpp' object='seq_test-SeqLibUtils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-SeqKitUtils.obj `if test -f '../src/SeqKitUtils.cpp'; then $(CYGPATH_W) '../src/SeqKitUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqKitUtils.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-SeqLibUtils.obj `if test -f '../src/SeqLibUtils.cpp'; then $(CYGPATH_W) '../src/SeqLibUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqLibUtils.cpp'; fi`
 
 seq_test-BamRecord.o: ../src/BamRecord.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-BamRecord.o -MD -MP -MF $(DEPDIR)/seq_test-BamRecord.Tpo -c -o seq_test-BamRecord.o `test -f '../src/BamRecord.cpp' || echo '$(srcdir)/'`../src/BamRecord.cpp

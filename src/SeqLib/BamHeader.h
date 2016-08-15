@@ -10,7 +10,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace SeqKit {
+namespace SeqLib {
   
   /** Store a header to a BAM file 
    *

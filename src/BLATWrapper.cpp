@@ -1,10 +1,10 @@
-#include "SeqKit/BLATWrapper.h"
+#include "SeqLib/BLATWrapper.h"
 
 #define QWARN_SIZE 5000000
 
 static int ssAliCount = 16;	/* Number of alignments returned by ssStitch. */
 
-namespace SeqKit {
+namespace SeqLib {
 
   void BLATWrapper::addHeader(bam_hdr_t * t) {
     

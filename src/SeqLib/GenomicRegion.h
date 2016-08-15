@@ -9,13 +9,13 @@
 #include <cstring>
 #include <memory>
 
-#include "SeqKit/SeqKitCommon.h"
-#include "SeqKit/SeqKitUtils.h"
-#include "SeqKit/BamHeader.h"
+#include "SeqLib/SeqLibCommon.h"
+#include "SeqLib/SeqLibUtils.h"
+#include "SeqLib/BamHeader.h"
 
 /** 
  */
-namespace SeqKit {
+namespace SeqLib {
 
   /** @brief Container for an interval on the genome 
    */

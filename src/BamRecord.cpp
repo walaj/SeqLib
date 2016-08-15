@@ -1,4 +1,4 @@
-#include "SeqKit/BamRecord.h"
+#include "SeqLib/BamRecord.h"
 
 #include <cassert>
 #include <bitset>
@@ -8,12 +8,12 @@
 //#include <boost/algorithm/string.hpp>
 //#endif
 
-#include "SeqKit/ssw_cpp.h"
+#include "SeqLib/ssw_cpp.h"
 
 #define TAG_DELIMITER "^"
 #define CTAG_DELIMITER '^'
 
-namespace SeqKit {
+namespace SeqLib {
 
   struct free_delete {
     void operator()(void* x) { bam_destroy1((bam1_t*)x); }

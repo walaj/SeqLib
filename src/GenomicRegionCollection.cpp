@@ -1,4 +1,4 @@
-#include "SeqKit/GenomicRegionCollection.h"
+#include "SeqLib/GenomicRegionCollection.h"
 
 #include <iostream>
 #include <sstream>
@@ -13,7 +13,7 @@
 
 //#define DEBUG_OVERLAPS 1
 
-namespace SeqKit {
+namespace SeqLib {
 
   static bool header_has_chr_string = false;
 

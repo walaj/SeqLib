@@ -15,15 +15,15 @@
 #include "htslib/bgzf.h"
 #include "htslib/kstring.h"
 
-#include "SeqKit/BamRecord.h"
-#include "SeqKit/GenomicRegion.h"
-#include "SeqKit/GenomicRegionCollection.h"
+#include "SeqLib/BamRecord.h"
+#include "SeqLib/GenomicRegion.h"
+#include "SeqLib/GenomicRegionCollection.h"
 
 typedef std::shared_ptr<std::vector<uint16_t>> uint16_sp;
 typedef std::unordered_map<int,int> CovMap;
 //typedef std::unordered_map<int,CovMap> CovMapMap;
 
-namespace SeqKit {
+namespace SeqLib {
 
 
   

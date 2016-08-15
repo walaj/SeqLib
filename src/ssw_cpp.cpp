@@ -1,5 +1,5 @@
-#include "SeqKit/ssw_cpp.h"
-#include "SeqKit/ssw.h"
+#include "SeqLib/ssw_cpp.h"
+#include "SeqLib/ssw.h"
 
 #include <sstream>
 

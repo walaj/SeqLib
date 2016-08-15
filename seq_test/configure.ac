@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59) ## specificy version of autoconf
-AC_INIT(seqkittest, 1.0, jwala@broadinstitute.org)
+AC_INIT(seqlibtest, 1.0, jwala@broadinstitute.org)
 AM_INIT_AUTOMAKE(foreign)
 AC_CONFIG_SRCDIR([seq_test.cpp])
 AC_CONFIG_HEADER([config.h])

@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 
-#include "SeqKit/ReadFilter.h"
+#include "SeqLib/ReadFilter.h"
 
 struct idx_delete {
   void operator()(hts_idx_t* x) { hts_idx_destroy(x); }
@@ -47,7 +47,7 @@ inline char *samfaipath(const char *fn_ref)
   return fn_list;
 }
 
-namespace SeqKit {
+namespace SeqLib {
 
   /** Small class to store a counter to measure BamWalker progress.
    *
@@ -61,18 +61,18 @@ struct ReadCount {
   /** Return the percent of total reads kept
    */
   int percent () const {
-    int perc  = SeqKit::percentCalc<uint64_t>(keep, total); 
+    int perc  = SeqLib::percentCalc<uint64_t>(keep, total); 
     return perc;
   }
 
   /** Return the total reads visited as a comma-formatted string */
   std::string totalString() const {
-    return SeqKit::AddCommas<uint64_t>(total);
+    return SeqLib::AddCommas<uint64_t>(total);
   }
 
   /** Return the kept reads as a comma-formatted string */
   std::string keepString() const {
-    return SeqKit::AddCommas<uint64_t>(keep);
+    return SeqLib::AddCommas<uint64_t>(keep);
   }
 
 };

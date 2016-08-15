@@ -1,4 +1,4 @@
-#include "SeqKit/BWAWrapper.h"
+#include "SeqLib/BWAWrapper.h"
 
 #include <sstream>
 #include <iostream>
@@ -12,7 +12,7 @@ extern "C" {
 #define _set_pac(pac, l, c) ((pac)[(l)>>2] |= (c)<<((~(l)&3)<<1))
 #define _get_pac(pac, l) ((pac)[(l)>>2]>>((~(l)&3)<<1)&3)
 
-namespace SeqKit {
+namespace SeqLib {
 
   int BWAWrapper::NumSequences() const {
     

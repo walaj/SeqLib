@@ -1,11 +1,11 @@
-#include "SeqKit/GenomicRegion.h"
+#include "SeqLib/GenomicRegion.h"
 
 #include <cassert>
 
 // 4 billion
 #define END_MAX 4000000000
 
-namespace SeqKit {
+namespace SeqLib {
 
 // return the width of the genomic region
 int GenomicRegion::width() const {
@@ -62,14 +62,14 @@ int GenomicRegion::getOverlap(const GenomicRegion& gr) const {
 // write genomic region to a string
 std::string GenomicRegion::toString() const {
   std::stringstream out;
-  out << chrToString(chr) << ":" << SeqKit::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
+  out << chrToString(chr) << ":" << SeqLib::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
     strand << ")"; 
   return out.str();
 }
 
   std::string GenomicRegion::pointString() const {
     std::stringstream out;
-    out << chrToString(chr) << ":" << SeqKit::AddCommas<int>(pos1) << "(" << strand << ")";
+    out << chrToString(chr) << ":" << SeqLib::AddCommas<int>(pos1) << "(" << strand << ")";
     return out.str();
   }
 
@@ -126,7 +126,7 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
     throw std::invalid_argument("GenomicRegion constructor - supplied empty BamHeader");
 
   // scrub String
-  std::string reg2 = SeqKit::scrubString(reg, "chr");
+  std::string reg2 = SeqLib::scrubString(reg, "chr");
 
   // use htslib region parsing code
   int tid, beg, end;
@@ -221,15 +221,15 @@ int32_t GenomicRegion::distanceBetweenEnds(const GenomicRegion &gr) const {
 
 void GenomicRegion::random() {
   
-  uint32_t big = rand() % SeqKit::genome_size_XY;
-  //SeqKit::genRandomValue(big, SeqKit::genome_size_XY, seed);
+  uint32_t big = rand() % SeqLib::genome_size_XY;
+  //SeqLib::genRandomValue(big, SeqLib::genome_size_XY, seed);
   
   for (size_t k = 0; k < 25; ++k)
-    if (big < SeqKit::CHR_CLEN[k]) {
+    if (big < SeqLib::CHR_CLEN[k]) {
       assert(k > 0);
       chr = --k;
-      assert(big > SeqKit::CHR_CLEN[chr]);
-      pos1 = big - SeqKit::CHR_CLEN[chr];
+      assert(big > SeqLib::CHR_CLEN[chr]);
+      pos1 = big - SeqLib::CHR_CLEN[chr];
       pos2 = pos1;
       return;
     }
@@ -239,7 +239,7 @@ void GenomicRegion::random() {
   
 }
 
-  GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, const SeqKit::BamHeader& hdr)
+  GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, const SeqLib::BamHeader& hdr)
   {
     // convert the pos strings
     try {
@@ -270,7 +270,7 @@ void GenomicRegion::random() {
 	  else if (tchr == "Y" || tchr == "chrY")
 	    chr = 23;
 	  else 
-	    chr = std::stoi(SeqKit::scrubString(tchr, "chr")) - 1;
+	    chr = std::stoi(SeqLib::scrubString(tchr, "chr")) - 1;
 	} catch(...) {
 	  throw std::invalid_argument("GenomicRegion: error making chr from string " + tchr);
 	}

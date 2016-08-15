@@ -4,10 +4,10 @@
 #include <cassert>
 #include <memory>
 
-#include "SeqKit/ReadFilter.h"
-#include "SeqKit/BamWalker.h"
+#include "SeqLib/ReadFilter.h"
+#include "SeqLib/BamWalker.h"
 
-namespace SeqKit {
+namespace SeqLib {
 
 /** Walk along a BAM or along BAM regions and stream in/out reads
  */

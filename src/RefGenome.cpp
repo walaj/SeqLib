@@ -1,9 +1,9 @@
-#include "SeqKit/RefGenome.h"
+#include "SeqLib/RefGenome.h"
 
 #include <stdexcept>
-#include "SeqKit/SeqKitUtils.h"
+#include "SeqLib/SeqLibUtils.h"
 
-namespace SeqKit {
+namespace SeqLib {
 
   void RefGenome::retrieveIndex(const std::string& file) {
 

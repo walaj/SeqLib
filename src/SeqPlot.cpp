@@ -1,1 +1,1 @@
-#include "SeqKit/SeqPlot.h"
+#include "SeqLib/SeqPlot.h"

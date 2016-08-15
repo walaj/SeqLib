@@ -1,11 +1,11 @@
-#include "SeqKit/BamWalker.h"
-#include "SeqKit/BamWriter.h"
+#include "SeqLib/BamWalker.h"
+#include "SeqLib/BamWriter.h"
 
 //#define DEBUG_WALKER 1
 
-namespace SeqKit {
+namespace SeqLib {
 
-  void BamWriter::SetHeader(const SeqKit::BamHeader& h) {
+  void BamWriter::SetHeader(const SeqLib::BamHeader& h) {
     hdr = h;
   }
 

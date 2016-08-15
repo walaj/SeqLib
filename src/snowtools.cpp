@@ -1,7 +1,7 @@
 #include "json/json.h"
 #include "json/json-forwards.h"
 
-#include "SeqKit/MiniRules2.h"
+#include "SeqLib/MiniRules2.h"
 
 #include <cstdio>
 #include <fstream>
@@ -83,7 +83,7 @@ const string GetScriptContents(string script) {
 
 int main(int argc, char** argv) {
 
-  std::string script = "/xchip/gistic/Jeremiah/GIT/SeqKit/test.json";
+  std::string script = "/xchip/gistic/Jeremiah/GIT/SeqLib/test.json";
   const string document = GetScriptContents(script);
 
   // set up JsonCPP reader and attempt to parse script
@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
   /// make mini rules
   cerr << " ... maing mini rules " << endl;
   
-  SeqKit::MiniRulesCollection mrc(script);
+  SeqLib::MiniRulesCollection mrc(script);
 
 
 }

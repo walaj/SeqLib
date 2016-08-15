@@ -5,10 +5,10 @@
 #include <cstdint>
 #include <iostream>
 
-#include "SeqKit/Histogram.h"
-#include "SeqKit/BamRecord.h"
+#include "SeqLib/Histogram.h"
+#include "SeqLib/BamRecord.h"
 
-namespace SeqKit{
+namespace SeqLib{
 
   /** Store information pertaining to a given read group *
    *

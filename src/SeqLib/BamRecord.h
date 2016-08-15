@@ -16,7 +16,7 @@
 #include "htslib/kstring.h"
 #include "htslib/faidx.h"
 
-#include "SeqKit/GenomicRegion.h"
+#include "SeqLib/GenomicRegion.h"
 
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
@@ -40,7 +40,7 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 #define RRORIENTATION 3
 #define UDORIENTATION 4
 
-namespace SeqKit {
+namespace SeqLib {
 
 enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
 
@@ -630,7 +630,7 @@ class BamRecord {
    * @exception Throws an out_of_range exception if chr id is not in dictionary
    * @return Empty string if chr id < 0, otherwise chromosome name from dictionary.
    */
-  inline std::string ChrName(const SeqKit::BamHeader& h) const {
+  inline std::string ChrName(const SeqLib::BamHeader& h) const {
 
     if (b->core.tid < 0)
       return std::string();

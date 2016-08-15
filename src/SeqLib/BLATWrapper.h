@@ -4,8 +4,8 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include "SeqKit/BamRead.h"
-#include "SeqKit/BamWalker.h"
+#include "SeqLib/BamRead.h"
+#include "SeqLib/BamWalker.h"
 
 extern "C" {
 
@@ -36,7 +36,7 @@ extern "C" {
 
 }
 
-namespace SeqKit {
+namespace SeqLib {
 
   /** Call BLAT on a single sequence
    * 

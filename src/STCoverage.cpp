@@ -1,9 +1,9 @@
-#include "SeqKit/STCoverage.h"
-#include "SeqKit/SeqKitCommon.h"
+#include "SeqLib/STCoverage.h"
+#include "SeqLib/SeqLibCommon.h"
 #include <stdexcept>
 #include <algorithm>
 
-namespace SeqKit {
+namespace SeqLib {
 
   void STCoverage::clear() {
     m_map.clear();
@@ -14,7 +14,7 @@ namespace SeqKit {
     m_grc.mergeOverlappingIntervals();
   }
   
-  STCoverage::STCoverage(const SeqKit::GenomicRegion& gr) {
+  STCoverage::STCoverage(const SeqLib::GenomicRegion& gr) {
     m_gr = gr;
     v = uint16_sp(new std::vector<uint16_t>(gr.width(),0));
   }

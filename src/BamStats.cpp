@@ -1,9 +1,9 @@
-#include "SeqKit/BamStats.h"
+#include "SeqLib/BamStats.h"
 
 #include <cmath>
 
 //#define DEBUG_STATS 1
-namespace SeqKit {
+namespace SeqLib {
 
 BamReadGroup::BamReadGroup(const std::string& name) : reads(0), supp(0), unmap(0), qcfail(0), 
 						      duplicate(0), mate_unmap(0), m_name(name)

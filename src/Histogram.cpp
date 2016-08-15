@@ -1,5 +1,5 @@
-#include "SeqKit/Histogram.h"
-#include "SeqKit/SeqKitUtils.h"
+#include "SeqLib/Histogram.h"
+#include "SeqLib/SeqLibUtils.h"
 #include <fstream>
 #include <cmath>
 #include <algorithm>
@@ -9,7 +9,7 @@
 
 #define DEBUG_HISTOGRAM
 
-namespace SeqKit {
+namespace SeqLib {
 
 Histogram::Histogram(const int32_t& start, const int32_t& end, const uint32_t& width)
 {
