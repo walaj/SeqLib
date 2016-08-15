@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_BAM_RECORD_H__
-#define SNOWTOOLS_BAM_RECORD_H__
+#ifndef SEQLIB_BAM_RECORD_H__
+#define SEQLIB_BAM_RECORD_H__
 
 #include <cstdint>
 #include <vector>

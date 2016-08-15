@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_REF_GENOME_H__
-#define SNOWTOOLS_REF_GENOME_H__
+#ifndef SEQLIB_REF_GENOME_H__
+#define SEQLIB_REF_GENOME_H__
 
 #include <string>
 #include <cstdlib>

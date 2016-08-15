@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_READ_FILTER_H__
-#define SNOWTOOLS_READ_FILTER_H__
+#ifndef SEQLIB_READ_FILTER_H__
+#define SEQLIB_READ_FILTER_H__
 
 #include <string>
 #include <vector>

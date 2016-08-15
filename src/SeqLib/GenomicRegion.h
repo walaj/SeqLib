@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_GENOMIC_REGION_H__
-#define SNOWTOOLS_GENOMIC_REGION_H__
+#ifndef SEQLIB_GENOMIC_REGION_H__
+#define SEQLIB_GENOMIC_REGION_H__
 
 #include <vector>
 #include <iostream>

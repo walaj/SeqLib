@@ -1,5 +1,5 @@
-#ifndef SNOWMAN_SNOWTOOLS_COVERAGE_H__
-#define SNOWMAN_SNOWTOOLS_COVERAGE_H__
+#ifndef SNOWMAN_SEQLIB_COVERAGE_H__
+#define SNOWMAN_SEQLIB_COVERAGE_H__
 
 #include <memory>
 #include <unordered_map>

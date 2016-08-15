@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_BAM_HEADER_H__
-#define SNOWTOOLS_BAM_HEADER_H__
+#ifndef SEQLIB_BAM_HEADER_H__
+#define SEQLIB_BAM_HEADER_H__
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"

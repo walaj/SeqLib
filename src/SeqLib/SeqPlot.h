@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_CONTIG_PLOT_H__
-#define SNOWTOOLS_CONTIG_PLOT_H__
+#ifndef SEQLIB_CONTIG_PLOT_H__
+#define SEQLIB_CONTIG_PLOT_H__
 
 #include "SeqLib/BamRecord.h"
 

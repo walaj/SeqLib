@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_BWAWRAPPER_H__
-#define SNOWTOOLS_BWAWRAPPER_H__
+#ifndef SEQLIB_BWAWRAPPER_H__
+#define SEQLIB_BWAWRAPPER_H__
 
 #include <string>
 #include <vector>

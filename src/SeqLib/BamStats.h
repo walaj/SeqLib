@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_BAMSTATS_H__
-#define SNOWTOOLS_BAMSTATS_H__
+#ifndef SEQLIB_BAMSTATS_H__
+#define SEQLIB_BAMSTATS_H__
 
 #include <unordered_map>
 #include <cstdint>

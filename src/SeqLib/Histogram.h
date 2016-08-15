@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_HISTOGRAM_H__
-#define SNOWTOOLS_HISTOGRAM_H__
+#ifndef SEQLIB_HISTOGRAM_H__
+#define SEQLIB_HISTOGRAM_H__
 
 #include <iostream>
 #include <cassert>

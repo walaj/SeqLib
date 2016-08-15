@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_BLAT_WRAPPER_H__
-#define SNOWTOOLS_BLAT_WRAPPER_H__
+#ifndef SEQLIB_BLAT_WRAPPER_H__
+#define SEQLIB_BLAT_WRAPPER_H__
 
 #include <string>
 #include <iostream>

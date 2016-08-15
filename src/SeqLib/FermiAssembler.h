@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_FERMI_H__
-#define SNOWTOOLS_FERMI_H__
+#ifndef SEQLIB_FERMI_H__
+#define SEQLIB_FERMI_H__
 
 #include <string>
 #include <cstdlib>

@@ -1,5 +1,5 @@
-#ifndef SNOWTOOLS_BAM_WRITER_H__
-#define SNOWTOOLS_BAM_WRITER_H__
+#ifndef SEQLIB_BAM_WRITER_H__
+#define SEQLIB_BAM_WRITER_H__
 
 #include <cassert>
 #include <memory>
