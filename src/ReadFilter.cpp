@@ -11,6 +11,13 @@
 
 namespace SeqLib {
 
+  // return if this rule accepts all reads
+  bool AbstractRule::isEvery() const {
+    return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && 
+      (subsam_frac >= 1) && xp.isEvery();
+  }
+
+
 // define what is a valid condition
 static const std::unordered_set<std::string> valid = 
   { 
@@ -547,19 +554,6 @@ void ReadFilterCollection::sendToBed(std::string file) {
     // parse the subsample data
     parseSubLine(value);
     
-#ifdef HAVE_AHO_CORASICK
-#ifndef __APPLE__
-    // parse aho corasick file, if not already inheretid
-    if (!atm) {
-	parseSeqLine(value);
-	if (atm) {
-	  ac_automata_finalize(atm);
-	  std::cerr << "Done generating Aho-Corasick tree" << std::endl;  
-	}
-      }
-#endif
-#endif
-
   }
 
 
@@ -645,9 +639,6 @@ void ReadFilterCollection::sendToBed(std::string file) {
     
     // if we dont need to because everything is pass, just just pass it
     bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || 
-#ifdef HAVE_AHO_CORASICK
-      atm_file.length() || 
-#endif
       !xp.isEvery();
 
 #ifdef QNAME
@@ -781,16 +772,6 @@ void ReadFilterCollection::sendToBed(std::string file) {
       if (!xp.isValid(r.CountSecondaryAlignments()))
 	return false;
     
-#ifdef HAVE_AHO_CORASICK
-#ifndef __APPLE__
-    if (atm_file.length()) {
-      bool m = ahomatch(r);
-      if ( (!m && !atm_inv) || (m && atm_inv) )
-	return false;
-    }
-#endif
-#endif
-    
 #ifdef QNAME
     if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "****** READ ACCEPTED ****** " << std::endl;
@@ -921,13 +902,6 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
       out << "del:" << ar.del << " -- ";
     if (ar.subsam_frac < 1)
       out << "sub:" << ar.subsam_frac << " -- ";
-#ifdef HAVE_AHO_CORASICK
-#ifndef __APPLE__
-    //#ifdef HAVE_AHOCORASICK_AHOCORASICK_H
-    if (!ar.atm_file.empty())
-      out << (ar.atm_inv ? "NOT " : "") << "matching on " << ar.atm_count << " motifs from " << ar.atm_file << " -- ";
-#endif
-#endif
     out << ar.fr;
   }
   return out;

@@ -102,8 +102,11 @@ class GenomicRegion {
 
   // define how these are to be sorted
   bool operator < (const GenomicRegion& b) const;
+  bool operator > (const GenomicRegion& b) const;
   bool operator==(const GenomicRegion& b) const;
+  bool operator!=(const GenomicRegion& b) const;
   bool operator<=(const GenomicRegion &b) const;
+  bool operator>=(const GenomicRegion &b) const;
   
   /** Check if the GenomicRegion has a complete or partial overlap
    * If the argument contains the calling object, returns 3

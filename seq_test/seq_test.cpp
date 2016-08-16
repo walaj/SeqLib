@@ -21,6 +21,121 @@
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
 
+BOOST_AUTO_TEST_CASE( bam_header_stdout ) {
+
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+
+  h.WriteToStdout();
+  
+}
+
+BOOST_AUTO_TEST_CASE( bam_header_name2id ) {
+
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+
+  BOOST_CHECK_EQUAL(h.Name2ID("2"), 1);  
+  BOOST_CHECK_EQUAL(h.Name2ID("23"), -1);  
+
+}
+
+BOOST_AUTO_TEST_CASE( bam_header_id2name ) {
+  
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+  
+  BOOST_CHECK_EQUAL(h.IDtoName(2), "3");
+  BOOST_CHECK_THROW(h.IDtoName(100), std::out_of_range);
+  BOOST_CHECK_THROW(h.IDtoName(-1), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::BamHeader().IDtoName(1), std::out_of_range);
+}
+
+BOOST_AUTO_TEST_CASE( genomic_ranges_string_constructor) {
+  
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+  
+  const std::string in = "chr2:1,000,000-2,000,000";
+  SeqLib::GenomicRegion gr(in, h);
+  BOOST_CHECK_EQUAL(gr.chr, 1);
+  BOOST_CHECK_EQUAL(gr.pos1, 1000000);
+  BOOST_CHECK_EQUAL(gr.pos2, 2000000);
+
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion(in, SeqLib::BamHeader()), std::invalid_argument);
+
+  BOOST_CHECK_EQUAL(gr.ChrName(h), "2");
+  BOOST_CHECK_EQUAL(gr.ChrName(SeqLib::BamHeader()), "2");
+  gr.chr = 1000;
+  BOOST_CHECK_THROW(gr.ChrName(h), std::invalid_argument);
+
+}
+
+BOOST_AUTO_TEST_CASE( genomic_region_less_than ) {
+
+  SeqLib::GenomicRegion gr1(0, 1, 2);
+  SeqLib::GenomicRegion gr2(1, 1, 2);
+  SeqLib::GenomicRegion gr3(1, 2, 2);
+  SeqLib::GenomicRegion gr4(1, 6, 6);
+
+  BOOST_CHECK(gr1 < gr2);
+  BOOST_CHECK(gr2 > gr1);
+  BOOST_CHECK(!(gr1 > gr2));
+
+  BOOST_CHECK(gr2 < gr3);
+  BOOST_CHECK(gr3 > gr2);
+  BOOST_CHECK(!(gr2 > gr3));
+
+  BOOST_CHECK(gr3 < gr4);
+  BOOST_CHECK(!(gr4 == gr3));
+  BOOST_CHECK(!(gr3 > gr4));
+  BOOST_CHECK(gr4 > gr3);
+
+  BOOST_CHECK(!(gr1 < gr1));
+  BOOST_CHECK(!(gr1 > gr1));
+
+  BOOST_CHECK(!(gr1 != gr1));
+  BOOST_CHECK(gr2 != gr1);
+  BOOST_CHECK(gr3 != gr1);
+  BOOST_CHECK(gr4 != gr3);
+
+  BOOST_CHECK(gr1 >= gr1);
+  BOOST_CHECK(gr2 >= gr2);
+  BOOST_CHECK(gr3 >= gr3);
+  BOOST_CHECK(gr4 >= gr4);
+
+  BOOST_CHECK(gr1 <= gr1);
+  BOOST_CHECK(gr2 <= gr2);
+  BOOST_CHECK(gr3 <= gr3);
+  BOOST_CHECK(gr4 <= gr4);
+
+  BOOST_CHECK(gr1 <= gr2);
+  BOOST_CHECK(gr2 >= gr1);
+
+  BOOST_CHECK(gr2 <= gr3);
+  BOOST_CHECK(gr3 >= gr2);
+
+}
+
+BOOST_AUTO_TEST_CASE( genomic_region_distance ) {
+
+  SeqLib::GenomicRegion gr1(0, 10, 100);
+  SeqLib::GenomicRegion gr2(0, 10, 200);
+  SeqLib::GenomicRegion gr3(1, 10, 100);
+  SeqLib::GenomicRegion gr4(0, 100, 100);
+
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr3), -1);
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr1), 0);
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr2), 100);
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr4), 0);
+
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr3), -1);
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr1), 0);
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr2), 0);
+  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr4), 90);
+
+}
+
 BOOST_AUTO_TEST_CASE( stdinput ) {
 
   // read a BAM from stdin
@@ -46,7 +161,7 @@ BOOST_AUTO_TEST_CASE( large_trie ) {
   const std::string dictionary = "ACTG";
   
   const int string_size = 20;
-  const int string_count = 1000000;
+  const int string_count = 10000;
 
   SeqLib::AhoCorasick aho;
 

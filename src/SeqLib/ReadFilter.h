@@ -13,21 +13,6 @@
 
 #include "SeqLib/aho_corasick.hpp"
 
-// motif matching with ahocorasick not available on OSX
-#ifdef HAVE_AHO_CORASICK
-#ifndef __APPLE__
-
-#include "ahocorasick/ahocorasick.h"
-#include <memory>
-
-// custom deleter for aho-corasick
-struct atm_free_delete {
-  void operator()(void* x) { free((AC_AUTOMATA_t*)x); }
-};
-typedef std::unique_ptr<AC_AUTOMATA_t> atm_ptr;
-#endif
-#endif
-
 #define MINIRULES_MATE_LINKED 1
 #define MINIRULES_MATE_LINKED_EXCLUDE 2
 #define MINIRULES_REGION 3
@@ -96,10 +81,7 @@ CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag
   int ins = 0;
   int del = 0;
   std::string rg;
-
-#ifdef HAVE_AHO_CORASICK
   std::string motif;
-#endif
 
   bool all() const { 
     return !len && !mapq && !nbases && !phred && rg.empty() && !i_flag && !e_flag; 
@@ -292,13 +274,6 @@ class AbstractRule {
 
   void addMotifRule(const std::string& f, bool inverted);
 
-#ifndef __APPLE__
-  #ifdef HAVE_AHO_CORASICK
-  //atm_ptr atm;
-  AC_AUTOMATA_t * atm = 0;
-  #endif
-#endif
-
   /** Query a read against this rule. If the
    * read passes this rule, return true.
    * @param r An aligned sequencing read to query against filter
@@ -315,13 +290,7 @@ class AbstractRule {
   friend std::ostream& operator<<(std::ostream &out, const AbstractRule &fr);
 
   // return if this rule accepts all reads
-  bool isEvery() const {
-    return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && 
-#ifdef HAVE_AHO_CORASICK
-      (atm_file.length() == 0) && 
-#endif
-      (subsam_frac >= 1) && xp.isEvery();
-  }
+  bool isEvery() const;
 
   /** Set the rate to subsample (default 1 = no subsampling) 
    * @param s A rate between 0 and 1
@@ -372,20 +341,6 @@ class AbstractRule {
 
   // data
   uint32_t subsam_seed = 999; // random seed for subsampling
-
-#ifdef HAVE_AHO_CORASICK
-#ifndef __APPLE__
-  // motif data
-  //std::string atm_file; // sequence file
-  //bool atm_inv = false; // is this inverted
-  //size_t atm_count = 0; // number of motifs
-
-
-  bool ahomatch(BamRecord &r);
-  bool ahomatch(const char * seq, unsigned len);
-  void parseSeqLine(const Json::Value& value);
-#endif
-#endif
 
   void parseSubLine(const Json::Value& value);
 

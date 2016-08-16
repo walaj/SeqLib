@@ -98,22 +98,34 @@ bool GenomicRegion::operator<(const GenomicRegion& b) const {
   return (chr < b.chr) || (chr == b.chr && pos1 < b.pos1) || (chr==b.chr && pos1 == b.pos1 && pos2 < b.pos2);
 }
 
+bool GenomicRegion::operator>(const GenomicRegion& b) const {
+  return !(*this == b) && !(*this < b);
+}
+
 bool GenomicRegion::operator==(const GenomicRegion &b) const {
   return (chr == b.chr && pos1 == b.pos1 && b.pos2 == pos2);
+}
+
+bool GenomicRegion::operator!=(const GenomicRegion &b) const {
+  return !(*this == b); 
 }
 
 bool GenomicRegion::operator<=(const GenomicRegion &b) const {
   return (*this < b || *this == b);
 }
 
-  std::string GenomicRegion::toPrettyString() const {
-    
-    std::stringstream ss;
-    ss << (chr + 1) << ":" << AddCommas(pos1) << "-" << AddCommas(pos2);
-    return ss.str();
-    
-  }
+bool GenomicRegion::operator>=(const GenomicRegion &b) const {
+  return (*this > b || *this == b);
+}
 
+std::string GenomicRegion::toPrettyString() const {
+  
+  std::stringstream ss;
+  ss << (chr + 1) << ":" << AddCommas(pos1) << "-" << AddCommas(pos2);
+  return ss.str();
+  
+}
+  
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   out << gr.toString();
   return out;
