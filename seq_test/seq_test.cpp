@@ -5,14 +5,14 @@
 #include <climits>
 #include <boost/test/unit_test.hpp>
 
-#include "SeqKit/GenomicRegion.h"
-#include "SeqKit/BWAWrapper.h"
-#include "SeqKit/GenomicRegionCollection.h"
-#include "SeqKit/BamReader.h"
-#include "SeqKit/BamWriter.h"
-#include "SeqKit/BamWalker.h"
-#include "SeqKit/BamHeader.h"
-#include "SeqKit/ReadFilter.h"
+#include "SeqLib/GenomicRegion.h"
+#include "SeqLib/BWAWrapper.h"
+#include "SeqLib/GenomicRegionCollection.h"
+#include "SeqLib/BamReader.h"
+#include "SeqLib/BamWriter.h"
+#include "SeqLib/BamWalker.h"
+#include "SeqLib/BamHeader.h"
+#include "SeqLib/ReadFilter.h"
 
 #define SBAM "test_data/small.bam"
 #define OBAM "test_data/small_out.bam"
@@ -24,16 +24,16 @@
 BOOST_AUTO_TEST_CASE( stdinput ) {
 
   // read a BAM from stdin
-  SeqKit::BamReader b("test_data/small.bam");
+  SeqLib::BamReader b("test_data/small.bam");
 
   // write it back out
-  SeqKit::BamWriter w(SeqKit::SAM);
+  SeqLib::BamWriter w(SeqLib::SAM);
   
   w.SetHeader(b.Header());
   w.Open("tmp_out_from_stdin.bam");
   w.WriteHeader();
   
-  SeqKit::BamRecord r;
+  SeqLib::BamRecord r;
   bool rule;
   while(b.GetNextRead(r, rule)) {
     w.writeAlignment(r);
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE( large_trie ) {
   const int string_size = 20;
   const int string_count = 1000000;
 
-  SeqKit::AhoCorasick aho;
+  SeqLib::AhoCorasick aho;
 
   std::vector<std::string> k;
 
@@ -82,32 +82,32 @@ BOOST_AUTO_TEST_CASE( large_trie ) {
 BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
 
   // GenomicRegion Constructors
-  SeqKit::GenomicRegion gr(0, 0, 10, '+');
+  SeqLib::GenomicRegion gr(0, 0, 10, '+');
   BOOST_CHECK_EQUAL(gr.width(), 11);
 
-  SeqKit::GenomicRegion gr_empty;
+  SeqLib::GenomicRegion gr_empty;
   BOOST_TEST(gr_empty.isEmpty());
 
-  SeqKit::GenomicRegion gr2("chrX", "0", "10", SeqKit::BamHeader());
+  SeqLib::GenomicRegion gr2("chrX", "0", "10", SeqLib::BamHeader());
   BOOST_CHECK_EQUAL(gr2.width(), 11);
   BOOST_CHECK_EQUAL(gr2.chr, 22);
 
-  SeqKit::GenomicRegion gr3("X", "0", "10", SeqKit::BamHeader());
+  SeqLib::GenomicRegion gr3("X", "0", "10", SeqLib::BamHeader());
   BOOST_TEST(gr2 == gr3);
 
   BOOST_CHECK_EQUAL(gr.distanceBetweenStarts(gr2), -1);
   BOOST_CHECK_EQUAL(gr2.distanceBetweenStarts(gr), -1);
 
   // check negative inputs
-  SeqKit::GenomicRegion grn(-1,-11,-10);
+  SeqLib::GenomicRegion grn(-1,-11,-10);
   BOOST_CHECK_EQUAL(grn.chr, -1);
   BOOST_CHECK_EQUAL(grn.pos1, -11);
   BOOST_CHECK_EQUAL(grn.pos2, -10);
 
   // check strand constructions
-  SeqKit::GenomicRegion gra(0,0,0);
-  SeqKit::GenomicRegion grb(0,10000,10001, '+');
-  SeqKit::GenomicRegion grc(0,0,3, '-');
+  SeqLib::GenomicRegion gra(0,0,0);
+  SeqLib::GenomicRegion grb(0,10000,10001, '+');
+  SeqLib::GenomicRegion grc(0,0,3, '-');
   BOOST_CHECK_EQUAL(gra.strand, '*');
   BOOST_CHECK_EQUAL(grb.strand, '+');
   BOOST_CHECK_EQUAL(grc.strand, '-');
@@ -119,17 +119,17 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
 
 BOOST_AUTO_TEST_CASE( genomic_region_bad_inputs ) {
 
-  BOOST_CHECK_THROW(SeqKit::GenomicRegion(0, 10, 9), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion(0, 10, 9), std::invalid_argument);
 
-  //BOOST_CHECK_THROW(SeqKit::GenomicRegion::chrToString(-1), std::invalid_argument);
+  //BOOST_CHECK_THROW(SeqLib::GenomicRegion::chrToString(-1), std::invalid_argument);
 
-  BOOST_CHECK_THROW(SeqKit::GenomicRegion(0,0,0,'P'), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion(0,0,0,'P'), std::invalid_argument);
 
 }
 
 /*BOOST_AUTO_TEST_CASE( genomic_region_random ) {
 
-  SeqKit::GenomicRegion gr; 
+  SeqLib::GenomicRegion gr; 
   std::srand(42);
   gr.random();
   BOOST_CHECK_EQUAL(gr.pointString(), "9:69,477,830(*)");
@@ -138,8 +138,8 @@ BOOST_AUTO_TEST_CASE( genomic_region_bad_inputs ) {
 
 BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 
-  SeqKit::GenomicRegion gr(0,1,10);
-  SeqKit::GenomicRegion gr2(0,1,11);
+  SeqLib::GenomicRegion gr(0,1,10);
+  SeqLib::GenomicRegion gr2(0,1,11);
   gr.pad(3);
   gr2.pad(-3);
   BOOST_CHECK_EQUAL(gr.pos1,-2);
@@ -154,12 +154,12 @@ BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 /*BOOST_AUTO_TEST_CASE ( genomic_region_comparisons ) {
 
   // grab a header 
-  BOOST_TEST(SeqKit::read_access_test(SBAM));
-  SeqKit::BamWalker bw(SBAM);
+  BOOST_TEST(SeqLib::read_access_test(SBAM));
+  SeqLib::BamWalker bw(SBAM);
 
-  SeqKit::GenomicRegion gr1("1:1-10", bw.header());
-  SeqKit::GenomicRegion gr2("1:2-11", bw.header());
-  SeqKit::GenomicRegion gr3("2:2-11", bw.header());
+  SeqLib::GenomicRegion gr1("1:1-10", bw.header());
+  SeqLib::GenomicRegion gr2("1:2-11", bw.header());
+  SeqLib::GenomicRegion gr3("2:2-11", bw.header());
 
   BOOST_CHECK_EQUAL(gr1 < gr2, true);
   //BOOST_CHECK_EQUAL(gr2 > gr1, false);
@@ -174,50 +174,50 @@ BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 
 BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
 
-  SeqKit::GenomicRegion gr("X", "0","1000", SeqKit::BamHeader());
+  SeqLib::GenomicRegion gr("X", "0","1000", SeqLib::BamHeader());
   BOOST_CHECK_EQUAL(gr.toString(), "X:0-1,000(*)");
 
-  SeqKit::GenomicRegion g2(0, 1, 10, '-');
+  SeqLib::GenomicRegion g2(0, 1, 10, '-');
   BOOST_CHECK_EQUAL(g2.toString(), "1:1-10(-)");
 
   // check default ref to string conversion (no header)
-  BOOST_CHECK_EQUAL(gr.ChrName(SeqKit::BamHeader()), "X");
+  BOOST_CHECK_EQUAL(gr.ChrName(SeqLib::BamHeader()), "X");
 }
 
 /*BOOST_AUTO_TEST_CASE( genomic_region_constructors_with_headers ) {
 
   // grab a header 
-  BOOST_TEST(SeqKit::read_access_test(SBAM));
-  SeqKit::BamWalker bw(SBAM);
+  BOOST_TEST(SeqLib::read_access_test(SBAM));
+  SeqLib::BamWalker bw(SBAM);
 
   // check that it sets the chr number correctly
-  SeqKit::GenomicRegion grh("GL000207.1", "0", "10", bw.header());
+  SeqLib::GenomicRegion grh("GL000207.1", "0", "10", bw.header());
   BOOST_CHECK_EQUAL(grh.chr, 25);
 
   // check that it can handle standard if no header
-  BOOST_CHECK_EQUAL(SeqKit::GenomicRegion("Y", "0", "10").chr, 23);
+  BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("Y", "0", "10").chr, 23);
 
   // and that it can query the header
   BOOST_CHECK_EQUAL(grh.ChrName(bw.header()), "GL000207.1");
 
   // check for samtools string
-  BOOST_CHECK_EQUAL(SeqKit::GenomicRegion("1:1,000,000-2,000,000", bw.header()).chr,0);
-  BOOST_CHECK_EQUAL(SeqKit::GenomicRegion("1:1,000,000-2,000,000", bw.header()).pos1, 1000000);
+  BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("1:1,000,000-2,000,000", bw.header()).chr,0);
+  BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("1:1,000,000-2,000,000", bw.header()).pos1, 1000000);
 
   // check that it handles bad input
-  BOOST_CHECK_THROW(SeqKit::GenomicRegion("1,000,000-2,000,000", bw.header()), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion("1,000,000-2,000,000", bw.header()), std::invalid_argument);
   
   }*/
 
 BOOST_AUTO_TEST_CASE( genomic_check_overlaps ) {
 
-  SeqKit::GenomicRegion gr1(0, 0, 10, '+');
-  SeqKit::GenomicRegion gr2(1, 0, 10, '+');
+  SeqLib::GenomicRegion gr1(0, 0, 10, '+');
+  SeqLib::GenomicRegion gr2(1, 0, 10, '+');
 
-  SeqKit::GenomicRegion gr3(0, 10, 20, '+');
-  SeqKit::GenomicRegion gr4(1, 4, 10, '+');
+  SeqLib::GenomicRegion gr3(0, 10, 20, '+');
+  SeqLib::GenomicRegion gr4(1, 4, 10, '+');
 
-  SeqKit::GenomicRegion gr5(1, 11, 12, '+');
+  SeqLib::GenomicRegion gr5(1, 11, 12, '+');
 
   // partial overlaps should be one
   BOOST_CHECK_EQUAL(gr1.getOverlap(gr3), 1);
@@ -236,10 +236,10 @@ BOOST_AUTO_TEST_CASE( genomic_check_overlaps ) {
 
 BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
-  SeqKit::BWAWrapper bwa;
+  SeqLib::BWAWrapper bwa;
 
   // load a test index
-  BOOST_TEST(SeqKit::read_access_test(TREF));
+  BOOST_TEST(SeqLib::read_access_test(TREF));
   bwa.retrieveIndex(TREF);
 
   BOOST_CHECK_EQUAL(bwa.NumSequences(), 2);
@@ -248,10 +248,10 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref2");
   BOOST_CHECK_THROW(bwa.ChrIDToName(2), std::out_of_range);
 
-  SeqKit::BamHeader hh = bwa.HeaderFromIndex();
+  SeqLib::BamHeader hh = bwa.HeaderFromIndex();
   BOOST_CHECK_EQUAL(hh.NumSequences(), 2);
 
-  SeqKit::USeqVector usv = {
+  SeqLib::USeqVector usv = {
     {"ref3", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
     {"ref4", "CTACTTTATCATCTACACACTGCTACTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"},
     {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   
   // try aligning a sequence
   std::cerr << "...aligning sequences" << std::endl;
-  SeqKit::BamRecordVector brv, brv2;
+  SeqLib::BamRecordVector brv, brv2;
   bool hardclip = false;
   bwa.alignSingleSequence("ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCG", "name", brv, 0.9, hardclip, 1);
   // reverse complement
@@ -308,15 +308,15 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
 BOOST_AUTO_TEST_CASE( bam_reader ) {
 
-  SeqKit::BamReader bw(SBAM);
+  SeqLib::BamReader bw(SBAM);
 
   // open index
-  bw.setBamReaderRegion(SeqKit::GenomicRegion(22, 1000000, 1001000));
+  bw.setBamReaderRegion(SeqLib::GenomicRegion(22, 1000000, 1001000));
 
   // make a set of locations
-  SeqKit::GRC grc;
-  grc.add(SeqKit::GenomicRegion(0, 1, 100));
-  grc.add(SeqKit::GenomicRegion(1, 1, 100));
+  SeqLib::GRC grc;
+  grc.add(SeqLib::GenomicRegion(0, 1, 100));
+  grc.add(SeqLib::GenomicRegion(1, 1, 100));
 
   // set regions
   bw.setBamReaderRegions(grc.asGenomicRegionVector());
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
   //bw.setStripTags("OQ,BI");
 
   // loop through and grab some reads
-  SeqKit::BamRecord r;
+  SeqLib::BamRecord r;
   bool rule;
   size_t count = 0;
   while (bw.GetNextRead(r, rule)) {
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
 
   std::string seq = "actgACGTnTCN";
 
-  SeqKit::rcomplement(seq);
+  SeqLib::rcomplement(seq);
   
   BOOST_CHECK_EQUAL(seq, "NGAnACGTcagt");
 

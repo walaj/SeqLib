@@ -41,7 +41,6 @@ if test "$enable_development"; then
 fi
 
 # Set compiler flags.
-##AC_SUBST(AM_CXXFLAGS, "-g -Wall -Wextra $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
 AC_SUBST(CXXFLAGS, "$CXXFLAGS")
 AC_SUBST(CFLAGS, "$CFLAGS")

@@ -25,12 +25,12 @@ I have successfully compiled with GCC-4.8+ on Linux and with Clang on Mac
 Description
 -----------
 
-SeqLib is a C++ package for querying BAM and SAM files, performing 
-BWA-MEM and BLAT operations in memory, and performing advanced filtering of 
-reads using a hierarchy of rules. Currently, SeqLib wraps the following projects:
+SeqLib is a C++ library for querying BAM/SAM/CRAM files, performing 
+BWA-MEM perations in memory, and performing sequence assembly. Core operations
+in SeqLib are peformed by:
 * [HTSlib][htslib]
 * [BWA-MEM][BWA] (Apache2 branch)
-* [FermiKit][fermi] (Apache2 branch)
+* [FermiKit][fermi]
 
 SeqLib also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
 It uses an [interval tree][int] (provided by Erik Garrison @ekg) to provide for rapid interval queries.
@@ -40,7 +40,7 @@ class extensions to build off of the SeqLib base functionality.
  
 Memory management
 -----------------
-SeqLib is built to automatically handle memory management of C code from BWA-MEM and htslib by using C++ smart
+SeqLib is built to automatically handle memory management of C code from BWA-MEM and HTSlib by using C++ smart
 pointers that handle freeing memory automatically. One of the 
 main motivations behind SeqLib is that all access to sequencing reads, BWA, etc should
 completely avoid ``malloc`` and ``free``. In SeqLib, the speed and compression of HTSlib
@@ -54,7 +54,7 @@ project from the Broad Institute. In short, BamTools has been more widely used a
 Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or BLAT. SeqLib is under active development, while Gamgee
 has been abandoned.
 
-SeqLib/BamTools differences
+Some SeqLib/BamTools differences
 ------------------------------
 > 1. Sort/index functionality is independently implemented in BamTools. In SeqLib, the Samtools 
  sort and index functions are called directly.
@@ -64,11 +64,8 @@ SeqLib/BamTools differences
 > 3. BamTools provides the ``BamMultiReader`` class for reading multiple BAM files at once, while 
  SeqLib does not currently support this functionality.
 > 4. SeqLib contains a built in interface to BWA-MEM for in-memory indexing and querying.
-> 5. SeqLib contains a beta wrapper around BLAT.
-> 6. SeqLib supports reading and writing CRAM files
-> 7. BamTools has been widely used in a number of applications, and is thus substantially more tested.
-> 8. SeqLib is faster at reading/writing BAM files by about 2x.
-> 9. BamTools builds with CMake, SeqLib with Autotools.
+> 5. SeqLib supports reading and writing CRAM files
+> 6. BamTools builds with CMake, SeqLib with Autotools.
 
 Example usages
 --------------

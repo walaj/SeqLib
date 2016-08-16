@@ -4,8 +4,7 @@ seq_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
      -I../bwa \
-     -I../fermi-lite \
-     -I.. --coverage
+     -I../fermi-lite --coverage
 
 seq_test_LDADD = \
 	../src/libseqlib.a \
