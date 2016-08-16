@@ -13,6 +13,7 @@
 #include "SeqLib/BamWalker.h"
 #include "SeqLib/BamHeader.h"
 #include "SeqLib/ReadFilter.h"
+#include "SeqLib/FermiAssembler.h"
 
 #define SBAM "test_data/small.bam"
 #define OBAM "test_data/small_out.bam"
@@ -21,11 +22,30 @@
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
 
+BOOST_AUTO_TEST_CASE( fermi_assemble ) {
+
+  SeqLib::FermiAssembler f;
+
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamRecord r;
+  bool rule;
+  
+  SeqLib::BamRecordVector brv;
+  
+  while(br.GetNextRead(r, rule)) {
+    brv.push_back(r);
+    break;
+  }
+  
+  f.AddReads(brv);
+
+}
+
 BOOST_AUTO_TEST_CASE( bam_header_stdout ) {
 
   SeqLib::BamReader br("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
-
+  
   h.WriteToStdout();
   
 }
@@ -242,14 +262,14 @@ BOOST_AUTO_TEST_CASE( genomic_region_bad_inputs ) {
 
 }
 
-/*BOOST_AUTO_TEST_CASE( genomic_region_random ) {
+// BOOST_AUTO_TEST_CASE( genomic_region_random ) {
 
-  SeqLib::GenomicRegion gr; 
-  std::srand(42);
-  gr.random();
-  BOOST_CHECK_EQUAL(gr.pointString(), "9:69,477,830(*)");
+//   SeqLib::GenomicRegion gr; 
+//   std::srand(42);
+//   gr.random();
+//   BOOST_CHECK_EQUAL(gr.pointString(), "9:69,477,830(*)");
   
-  }*/
+// }
 
 BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 
@@ -266,27 +286,6 @@ BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 
 }
 
-/*BOOST_AUTO_TEST_CASE ( genomic_region_comparisons ) {
-
-  // grab a header 
-  BOOST_TEST(SeqLib::read_access_test(SBAM));
-  SeqLib::BamWalker bw(SBAM);
-
-  SeqLib::GenomicRegion gr1("1:1-10", bw.header());
-  SeqLib::GenomicRegion gr2("1:2-11", bw.header());
-  SeqLib::GenomicRegion gr3("2:2-11", bw.header());
-
-  BOOST_CHECK_EQUAL(gr1 < gr2, true);
-  //BOOST_CHECK_EQUAL(gr2 > gr1, false);
-  BOOST_CHECK_EQUAL(gr1 <= gr2, true);
-  //BOOST_CHECK_EQUAL(gr2 >= gr1, false);
-  BOOST_CHECK_EQUAL(gr1 <= gr1, true);
-  //BOOST_CHECK_EQUAL(gr1 >= gr1, true);
-  BOOST_CHECK_EQUAL(gr1 < gr3, true);
-  //BOOST_CHECK_EQUAL(gr3 > gr1, true);
-
-  }*/
-
 BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
 
   SeqLib::GenomicRegion gr("X", "0","1000", SeqLib::BamHeader());
@@ -298,31 +297,6 @@ BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
   // check default ref to string conversion (no header)
   BOOST_CHECK_EQUAL(gr.ChrName(SeqLib::BamHeader()), "X");
 }
-
-/*BOOST_AUTO_TEST_CASE( genomic_region_constructors_with_headers ) {
-
-  // grab a header 
-  BOOST_TEST(SeqLib::read_access_test(SBAM));
-  SeqLib::BamWalker bw(SBAM);
-
-  // check that it sets the chr number correctly
-  SeqLib::GenomicRegion grh("GL000207.1", "0", "10", bw.header());
-  BOOST_CHECK_EQUAL(grh.chr, 25);
-
-  // check that it can handle standard if no header
-  BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("Y", "0", "10").chr, 23);
-
-  // and that it can query the header
-  BOOST_CHECK_EQUAL(grh.ChrName(bw.header()), "GL000207.1");
-
-  // check for samtools string
-  BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("1:1,000,000-2,000,000", bw.header()).chr,0);
-  BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("1:1,000,000-2,000,000", bw.header()).pos1, 1000000);
-
-  // check that it handles bad input
-  BOOST_CHECK_THROW(SeqLib::GenomicRegion("1,000,000-2,000,000", bw.header()), std::invalid_argument);
-  
-  }*/
 
 BOOST_AUTO_TEST_CASE( genomic_check_overlaps ) {
 
@@ -493,4 +467,3 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
 
 
 }
-

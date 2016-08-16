@@ -11,7 +11,7 @@ namespace SeqLib {
 
 BamHeader::BamHeader(const std::string& hdr)  {
 
-  h = std::shared_ptr<bam_hdr_t>(sam_hdr_read2(hdr)); 
+  h = std::shared_ptr<bam_hdr_t>(sam_hdr_read2(hdr), bam_hdr_delete()); 
 
   ConstructName2IDTable();
 
@@ -26,7 +26,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   BamHeader::BamHeader(const bam_hdr_t * hdr) {
 
-    h = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr));
+    h = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete());
 
     ConstructName2IDTable();
 
@@ -86,9 +86,10 @@ bam_hdr_t* BamHeader::sam_hdr_read2(const std::string& hdr) const {
     }
   */
 
-  if (str.l == 0) kputsn("", 0, &str);
+  if (str.l == 0) 
+    kputsn("", 0, &str);
   hhh = sam_hdr_parse(str.l, str.s);
-  hhh->l_text = str.l; hhh->text = str.s;
+  hhh->l_text = str.l; hhh->text = str.s; // hhh->text needs to be freed
   return hhh;
 }
 

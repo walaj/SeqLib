@@ -101,11 +101,15 @@ bool BamReader::__open_BAM_for_reading()
     return false; 
 
   //br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete()g);
-  m_hdr = BamHeader(bam_hdr_read(fp.get())); //bam_hdr_read(fp.get()), bam_hdr_delete());
+  bam_hdr_t * hdr = bam_hdr_read(fp.get());
+  m_hdr = BamHeader(hdr); // calls BamHeader(bam_hdr_t), makes a copy
   
   if (!m_hdr.get()) 
     return false;
   
+  if (hdr)
+    bam_hdr_destroy(hdr);
+
   return true;
 
 }

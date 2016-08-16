@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "SeqLib/BamRecord.h"
+#include "fermi-lite/fml.h"
+
 namespace SeqLib {
   
   /** Stores an indexed reference genome
@@ -18,8 +21,27 @@ namespace SeqLib {
 
     FermiAssembler ();
     
+    ~FermiAssembler();
+
+    void AddReads(const BamRecordVector& brv);
+
+    void ClearReads();
+
+    void CorrectReads();
+
   private:
 
+    // reads to assemble
+    fseq1_t *m_seqs = 0;
+
+    // number of reads
+    size_t n_seqs = 0;
+    
+    // options
+    fml_opt_t opt;
+    
+
+    
   };
   
 

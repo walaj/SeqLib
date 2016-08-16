@@ -60,8 +60,8 @@ am_seq_test_OBJECTS = seq_test-seq_test.$(OBJEXT) \
 	seq_test-SeqPlot.$(OBJEXT) seq_test-BamHeader.$(OBJEXT) \
 	seq_test-FermiAssembler.$(OBJEXT)
 seq_test_OBJECTS = $(am_seq_test_OBJECTS)
-seq_test_DEPENDENCIES = ../src/libseqlib.a ../bwa/libbwa.a \
-	../htslib/libhts.a
+seq_test_DEPENDENCIES = ../src/libseqlib.a ../fermi-lite/libfml.a \
+	../bwa/libbwa.a ../htslib/libhts.a
 seq_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(seq_test_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -184,12 +184,12 @@ top_srcdir = @top_srcdir@
 seq_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
-     -I../bwa \
-     -I../fermi-lite \
-     -I.. --coverage
+     -I.. \
+     -I../fermi-lite --coverage
 
 seq_test_LDADD = \
 	../src/libseqlib.a \
+	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
 	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono

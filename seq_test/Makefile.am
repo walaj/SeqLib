@@ -3,11 +3,12 @@ bin_PROGRAMS = seq_test
 seq_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
-     -I../bwa \
+     -I.. \
      -I../fermi-lite --coverage
 
 seq_test_LDADD = \
 	../src/libseqlib.a \
+	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
 	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono
