@@ -139,10 +139,11 @@ This project is being actively developed and maintained by Jeremiah Wala (jwala@
 Attributions
 ------------
 * Jeremiah Wala - Harvard MD-PhD candidate, Bioinformatics and Integrative Genomics, Broad Institute
-* Steve Huang - Scientist, Broad Institute
-* Steve Schumacher - Research Scientist, Dana Farber Cancer Institute
+* Steve Huang - Research Scientist, Broad Institute
+* Steve Schumacher - Computational Biologist, Dana Farber Cancer Institute
 * Cheng-Zhong Zhang - Research Scientist, Broad Institute
 * Marcin Imielinski - Assistant Professor, Cornell University
+* Rameen Beroukhim - Assistant Professor, Harvard Medical School
 
 [htslib]: https://github.com/samtools/htslib.git
 

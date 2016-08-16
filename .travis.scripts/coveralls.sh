@@ -12,16 +12,15 @@ echo "...running unit tests and code coverage"
   if [ -z "$REFHG19" ]; then
     sudo pip install cpp-coveralls
   fi
-  cd snow_test
+  cd seq_test
   
   export LD_LIBRARY_PATH=${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}
   echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
   ./configure --with-boost=${BOOST_ROOT}
   make
-  ./snow_test
-  #rm snow_test-snow-test.gcno ## dont get cov on test prog
+  ./seq_test
 
-  EXCL="-e snow_test/snow_test.cpp -e htslib -e bwa -e tools -e snow_test/snow_test_main.cpp -e R -e examples -e doxy -e src/deprecated.h -e fermi-lite -e config.h -e snow_test/config.h -e src/SnowTools/gzstream.h -e snow_test/config.h -e src/jsoncpp.cpp -e src/json -e multifast-v1.4.2"
+  EXCL="-e seq_test/seq_test.cpp -e htslib -e bwa -e fermi-lite -e config.h -e seq_test/config.h -e seq_test/config.h -e src/jsoncpp.cpp -e src/json"
   cpp-coveralls -r ../ -t ${COVERALLS_TOKEN} ${EXCL} ##--dryrun
   #find ./ -type f -regex ".*/[a-z_]+.*gcov" -delete
   #cpp-coveralls -r ../ -t ${COVERALLS_TOKEN} ${EXCL} -n
