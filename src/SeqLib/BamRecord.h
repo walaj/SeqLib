@@ -44,6 +44,20 @@ namespace SeqLib {
 
 enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
 
+/** Storage container for an unaligned reads
+ */
+struct UnalignedRead {
+
+  std::string seq; ///< Genomic sequence (string of ACTG or N)
+
+  std::string name; ///< Read name
+
+  std::string qual; ///< Quality scores
+
+};
+
+ typedef std::vector<UnalignedRead> UnalignedReadVector;
+
 /** Basic container for a single cigar operation
  *
  * Stores a single cigar element in a compact 32bit form (same as HTSlib).

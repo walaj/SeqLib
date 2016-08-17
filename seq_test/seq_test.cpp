@@ -32,12 +32,32 @@ BOOST_AUTO_TEST_CASE( fermi_assemble ) {
   
   SeqLib::BamRecordVector brv;
   
-  while(br.GetNextRead(r, rule)) {
+  size_t count = 0;
+  while(br.GetNextRead(r, rule) && count++ < 1000) {
     brv.push_back(r);
-    break;
   }
   
   f.AddReads(brv);
+
+  f.CorrectReads();
+
+  SeqLib::UnalignedReadVector reads = f.GetSequences();
+  BOOST_CHECK_EQUAL(reads.size(), brv.size());
+
+  for (int i = 0; i < reads.size(); ++i) {
+    if (brv[i].Sequence() != reads[i].seq) {
+      std::cerr << "************" << std::endl;
+      std::cerr << brv[i].Sequence() << std::endl;
+      std::cerr << reads[i].seq << std::endl;
+    }
+  }
+    
+  // peform the assembly
+  std::cerr << "...performing assembly" << std::endl;
+  f.PerformAssembly();
+
+  // retrieve the contigs
+  std::vector<std::string> contigs = f.GetContigs();
 
 }
 

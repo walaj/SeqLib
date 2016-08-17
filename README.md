@@ -47,14 +47,24 @@ completely avoid ``malloc`` and ``free``. In SeqLib, the speed and compression o
 is available, but all the mallocs/frees are handled automatically in the constructors and
 destructors.
 
-Note about BamTools and Gamgee
+Note about BamTools, Gamgee and SeqAn
 ------------------------------
-There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, and the [Gamgee][gam] 
-project from the Broad Institute. In short, BamTools has been more widely used and tested, but is relatively slow compared with SeqLib (~2x).
-Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or BLAT. SeqLib is under active development, while Gamgee
-has been abandoned.
+There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, the [Gamgee][gam] 
+project from the Broad Institute, and the [SeqAn][seqan] library from Freie Universitat Berlin. These three projects 
+provide excellent and high quality APIs. SeqLib provides further performance and capabilites for certain classes of 
+bioinformatics problems, without attempting to replace these projects.
 
-Some SeqLib/BamTools differences
+SeqLib provides some overlapping functionality (eg BAM read/write) but in many cases with improved performance (~2x over BamTools). 
+SeqLib further provides in memory access to BWA-MEM, a chromosome aware interval tree and range operations, and to read correction and 
+sequence assembly with Fermi. BamTools has more support currently for network access and multi-BAM reading. SeqAn provides 
+additional capablities not currently supported in SeqLib, including graph operations and a more expanded suite of multi-sequence alignment
+tools (e.g. banded Smith-Waterman). Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or Fermi. 
+SeqLib is under active development, while Gamgee has been abandoned.
+
+For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
+bioinformatics tools. Feature requests and comments are welcomed.
+
+Some further SeqLib/BamTools differences
 ------------------------------
 > 1. Sort/index functionality is independently implemented in BamTools. In SeqLib, the Samtools 
  sort and index functions are called directly.
@@ -129,6 +139,40 @@ while (GetNextRead(r, rule_passed)) {
 ```
 
 
+##### Perform sequence assembly with Fermi directly from a BAM
+```
+
+#include "SeqLib/FermiAssembler.h"
+using SeqLib;
+
+FermiAssembler f;
+
+// read in data from a BAM
+BamReader br("test_data/small.bam");
+
+// retreive sequencing reads (up to 20,000)
+BamRecord r;
+bool rule;
+BamRecordVector brv;
+size_t count = 0;
+while(br.GetNextRead(r, rule) && count++ < 20000) 
+  brv.push_back(r);
+
+// add the reads and error correct them  
+f.AddReads(brv);
+f.CorrectReads();
+
+// peform the assembly
+f.PerformAssembly();
+
+// retrieve the contigs
+std::vector<std::string> contigs = f.GetContigs();
+
+// write as a fasta to stdout
+for (size_t i = 0; i < contigs.size(); ++i)
+    std::cout << ">contig" << i << std::endl << contigs[i] << std::endl;
+```
+
 Support
 -------
 This project is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org)
@@ -161,6 +205,8 @@ Attributions
 [var]: https://github.com/jwalabroad/VariantBam
 
 [BT]: https://github.com/pezmaster31/bamtools
+
+[seqan]: https://www.seqan.de
 
 [gam]: https://github.com/broadinstitute/gamgee
 
