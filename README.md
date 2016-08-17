@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/jwalabroad/SeqLib.svg?branch=master)](https://travis-ci.org/jwalabroad/SeqLib)
-[![Coverage Status](https://coveralls.io/repos/github/jwalabroad/SeqLib/badge.svg?branch=master)](https://coveralls.io/github/jwalabroad/SeqLib?branch=master)
+<a href='https://coveralls.io/github/jwalabroad/SeqLib?branch=master'><img src='https://coveralls.io/repos/github/jwalabroad/SeqLib/badge.svg?branch=master' alt='Coverage Status' /></a>
+
 
 C++ interface to HTSlib, BWA-MEM and Fermi-kit
 
