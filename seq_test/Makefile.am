@@ -7,7 +7,6 @@ seq_test_CPPFLAGS = \
      -I../fermi-lite --coverage
 
 seq_test_LDADD = \
-	../src/libseqlib.a \
 	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
@@ -21,4 +20,4 @@ seq_test_SOURCES = seq_test.cpp \
 	../src/ReadFilter.cpp ../src/SeqLibUtils.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp ../src/STCoverage.cpp \
         ../src/Fractions.cpp ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
-	../src/FermiAssembler.cpp
+	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp

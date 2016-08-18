@@ -5,6 +5,10 @@
 
 namespace SeqLib {
 
+  void BamReader::SetReadFilterCollection(const ReadFilterCollection& mr) {
+    m_mr = mr;
+  }
+
 // set the bam region
 bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx) {
   

@@ -98,21 +98,19 @@ bool ReadFilter::isValid(BamRecord &r) {
 // contained in these rules
 bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 
+  /* debug
   // if this is a whole genome rule, it overlaps
-  if (m_whole_genome)
+  if (!m_grv.size()) 
     return true;
-
-  assert(!m_grv.empty());
 
   if (m_grv.findOverlapping(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd())))
     return true;
   
   if (!m_applies_to_mate)
     return false;
-  
   if (m_grv.findOverlapping(GenomicRegion(r.MateChrID(), r.MatePosition(), r.MatePosition() + r.Length())))
     return true;
-
+  */ 
   return false;
 }
 
@@ -206,13 +204,13 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     
     // parse if it's a file
     if (SeqLib::read_access_test(file))
-      m_grv.regionFileToGRV(file, pad, hdr);
+      ;//m_grv.regionFileToGRV(file, pad, hdr);
     // samtools style string
     else if (file.find(":") != std::string::npos && file.find("-") != std::string::npos) {
       if (!hdr.isEmpty()) {
 	GenomicRegion gr(file, hdr);
 	gr.pad(pad);
-	m_grv.add(gr);
+	//m_grv.add(gr);
       } else {
 	std::cerr << "!!!!!!!!ReadFilter region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
       }
@@ -225,12 +223,12 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 	exit(EXIT_FAILURE);
       } else {
 	gr.pos2 = hdr.get()->target_len[gr.chr];
-      m_grv.add(gr);
+	//m_grv.add(gr);
     }
   }
 
  
-  if (m_grv.empty()) {
+    /*if (m_grv.empty()) {
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
@@ -239,14 +237,18 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
     return;
-  }
+    }*/
   
   // create the interval tree 
-  m_grv.createTreeMap();
+  //m_grv.createTreeMap();
 
   return;
 }
 
+
+  void ReadFilter::AddRule(const AbstractRule& ar) {
+    m_abstract_rules.push_back(ar);
+  }
 
   // constructor to make a ReadFilterCollection from a rules file.
   // This will reduce each individual BED file and make the 
@@ -288,6 +290,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     int level = 1;
     
     Json::Value glob = root.removeMember("global");
+
     if (!glob.isNull()) {
       rule_all.parseJson(glob);
     }
@@ -299,7 +302,6 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 	exit(EXIT_FAILURE);
 
       ReadFilter mr;
-      mr.mrc = this;
       
       // add global rules (if there are any)
       //for (auto& a : all_rules)
@@ -321,7 +323,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
       
       // actually parse the region
       if (reg == "WG" || reg.empty())
-	mr.m_whole_genome = true;
+	;//mr.m_grv.clear(); // ensure it is whole-genome
       else
 	mr.setRegionFromFile(reg, hdr);
       
@@ -373,9 +375,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 	has_includer = true;
     if (!has_includer) {
       ReadFilter mr;
-      mr.m_whole_genome = true;
       mr.m_abstract_rules.push_back(rule_all);
-      mr.mrc = this; // set the pointer to the collection
       mr.id = "WG_includer";
       m_regions.push_back(mr);
     }
@@ -403,9 +403,10 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 // print a ReadFilter information
 std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
   
-  std::string file_print = mr.m_whole_genome ? "WHOLE GENOME" : mr.m_region_file;
+  /*
+  std::string file_print = !mr.m_grv.size() ? "WHOLE GENOME" : mr.m_region_file;
   out << (mr.excluder ? "--Exclude Region: " : "--Include Region: ") << file_print;
-  if (!mr.m_whole_genome) {
+  if (mr.m_grv.size()) {
     //out << " --Size: " << AddCommas<int>(mr.m_width); 
     out << " Pad: " << mr.pad;
     out << " Matelink: " << (mr.m_applies_to_mate ? "ON" : "OFF");
@@ -419,12 +420,18 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 
   for (auto& it : mr.m_abstract_rules) 
     out << it << std::endl;
-  
+  */
   return out;
 }
 
+  void ReadFilterCollection::AddReadFilter(const ReadFilter& rf) {
+    m_regions.push_back(rf);
+  }
+
+  ReadFilter::~ReadFilter() {}
+
 // merge all of the intervals into one and send to a bed file
-void ReadFilterCollection::sendToBed(std::string file) {
+void ReadFilterCollection::sendToBed(const std::string& file) const {
 
   std::ofstream out(file);
   if (!out) {
@@ -435,7 +442,7 @@ void ReadFilterCollection::sendToBed(std::string file) {
   // make a composite from all the rules
   GenomicRegionCollection<GenomicRegion> comp;
   for (auto& it : m_regions)
-    comp.concat(it.m_grv);
+    ;//comp.concat(it.m_grv);
   
   // merge it down
   comp.mergeOverlappingIntervals();
@@ -1079,13 +1086,15 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
   }
 #endif
 
+#ifdef AHO_CORASICK
   void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
     std::cerr << "...making the AhoCorasick trie from " << f << std::endl;
     aho.TrieFromFile(f);
     std::cerr << "...finished making AhoCorasick trie with " << AddCommas(aho.count) << " motifs" << std::endl;
     aho.inv = inverted;
   }
-  
+#endif  
+
   void AhoCorasick::TrieFromFile(const std::string& f) {
 
     file = f;
@@ -1114,7 +1123,7 @@ GRC ReadFilterCollection::getAllRegions() const
   GRC out;
 
   for (auto& i : m_regions)
-    out.concat(i.m_grv);
+    ;//out.concat(i.m_grv);
 
   out.mergeOverlappingIntervals();
   return out;
@@ -1147,13 +1156,15 @@ const std::string ReadFilterCollection::GetScriptContents(const std::string& scr
 
 }
 
+  ReadFilter::ReadFilter() {}
+
   ReadFilter::ReadFilter(const CommandLineRegion& c, const SeqLib::BamHeader& hdr) {
 
     m_region_file = c.f;
 
     // set a whole genome ALL rule
     if (c.type < 0) {
-      m_whole_genome = true;
+      //m_grv.clear();
       id = "WG";
     } else {
       // set the genomic region this rule applies to

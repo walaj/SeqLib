@@ -6,20 +6,19 @@
 #include <cstdlib>
 #include <list>
 #include <unordered_map>
+#include <memory>
 
-#ifdef BOOST_VERSION
-#include "boost/icl/interval_set.hpp"
-#endif
+//#ifdef BOOST_VERSION
+//#include "boost/icl/interval_set.hpp"
+//#endif
 
 #include "SeqLib/IntervalTree.h"
 #include "SeqLib/GenomicRegion.h"
 #include "SeqLib/BamRecord.h"
 
-/** Class to store vector of intervals on the genome
- */
-
 namespace SeqLib {
 
+/** Class to store vector of intervals on the genome */
 typedef TInterval<int32_t> GenomicInterval;
 typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
 typedef TIntervalTree<int32_t> GenomicIntervalTree;
@@ -38,8 +37,10 @@ class GenomicRegionCollection {
 
   /** Construct an empty GenomicRegionCollection 
    */
-  GenomicRegionCollection() {};
+ GenomicRegionCollection();
 
+ ~GenomicRegionCollection();
+ 
   /** Construct from a plain vector of GenomicRegion objects
    */
   GenomicRegionCollection(std::vector<T>& vec);
@@ -112,19 +113,22 @@ class GenomicRegionCollection {
 
   /** Return the number of GenomicRegions stored 
    */
-  size_t size() const { return m_grv.size(); }
+  size_t size() const { return m_grv->size(); }
 
   /** Add a new GenomicRegion to end
    */
- void add(const T& g) { m_grv.push_back(g); /*createTreeMap();*/ }
+ void add(const T& g) { m_grv->push_back(g); /*createTreeMap();*/ }
 
   /** Is this object empty?
    */
-  bool empty() const { return !m_grv.size(); }
+  bool empty() const { return !m_grv->size(); }
 
   /** Clear out all of the GenomicRegion objects
    */
-  void clear() { m_grv.clear(); m_tree.clear(); idx = 0; }
+  void clear() { m_grv->clear(); 
+		 m_tree->clear(); 
+		 idx = 0;
+  }
 
   /** Retrieve a GenomicRegion at given index. 
    * 
@@ -164,10 +168,10 @@ class GenomicRegionCollection {
  void pad(int v);
 
  /** Set the i'th GenomicRegion */
- T& operator[](size_t i) { return m_grv[i]; }
+ T& operator[](size_t i) { return m_grv->at(i); }
  
  /** Retreive the i'th GenomicRegion */
- const T& operator[](size_t i) const { return m_grv[i]; }
+ const T& operator[](size_t i) const { return m_grv->at(i); }
  
   /** Add two GenomicRegionCollection objects together
    */
@@ -199,38 +203,39 @@ class GenomicRegionCollection {
    */
   void rewind() { idx = 0; }
 
-  GenomicRegionVector asGenomicRegionVector() const { 
-    GenomicRegionVector gg;
-    for (auto& i : m_grv)
-      gg.push_back(GenomicRegion(i.chr, i.pos1, i.pos2, i.strand));
-    return gg; 
-  } 
-  
-  typename std::vector<T>::iterator begin() { return m_grv.begin(); } 
-
-  typename std::vector<T>::iterator end() { return m_grv.end(); } 
+ GenomicRegionVector asGenomicRegionVector() const;
  
-  typename std::vector<T>::const_iterator begin() const { return m_grv.begin(); } 
+  typename std::vector<T>::iterator begin() { return m_grv->begin(); } 
 
-  typename std::vector<T>::const_iterator end() const { return m_grv.end(); } 
-
-  // always construct this object any time m_grv is modifed
-  GenomicIntervalTreeMap m_tree;
-
-#ifdef BOOST_VERSION
-  boost::icl::interval_set<int> m_set;
-#endif
+  typename std::vector<T>::iterator end() { return m_grv->end(); } 
  
+  typename std::vector<T>::const_iterator begin() const { return m_grv->begin(); } 
+
+  typename std::vector<T>::const_iterator end() const { return m_grv->end(); } 
+
   GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
-
+ 
+ //#ifdef BOOST_VERSION
+ // boost::icl::interval_set<int> m_set;
+ //#endif
+ 
+ //#ifdef BOOST_VERSION
  //GenomicRegionCollection<GenomicRegion> complement(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
+ //#endif
 
-  std::vector<T> m_grv;
-  
  private:
+ 
+ // always construct this object any time m_grv is modifed
+ std::shared_ptr<GenomicIntervalTreeMap> m_tree;
+ 
+ // hold the genomic regions
+ std::shared_ptr<std::vector<T>> m_grv; 
+ 
+ // index for current GenomicRegion
+ size_t idx = 0;
 
-  // index for current GenomicRegion
-  size_t idx = 0;
+ // open the memory
+ void __allocate_grc();
 
 };
 

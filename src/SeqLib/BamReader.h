@@ -74,7 +74,7 @@ class BamReader {
   
   /** Explicitly provide a ReadFilterCollection to this BamReader
    */
-  void SetReadFilterCollection(const ReadFilterCollection& mr) { m_mr = mr; }
+  void SetReadFilterCollection(const ReadFilterCollection& mr); 
 
   /** Retrieve the next read from the BAM.
    *
@@ -96,7 +96,7 @@ class BamReader {
   void ReadFilterToFile(const std::string& file) const { m_mr.countsToFile(file); }
 
   /** Set the BamReader to count reads for all rules */
-  void setCountAllRules() { m_mr.m_fall_through = true; }
+  void setCountAllRules() { m_mr.CheckAllFilters(); }
 
   /** Set to have verbose actions */
   void setVerbose() { m_verbose = true; }
@@ -123,6 +123,7 @@ class BamReader {
 
   // define the regions to walk
   size_t m_region_idx = 0;
+
   GenomicRegionVector m_region;
 
   struct timespec start;

@@ -58,16 +58,21 @@ am_seq_test_OBJECTS = seq_test-seq_test.$(OBJEXT) \
 	seq_test-BWAWrapper.$(OBJEXT) seq_test-STCoverage.$(OBJEXT) \
 	seq_test-Fractions.$(OBJEXT) seq_test-RefGenome.$(OBJEXT) \
 	seq_test-SeqPlot.$(OBJEXT) seq_test-BamHeader.$(OBJEXT) \
-	seq_test-FermiAssembler.$(OBJEXT)
+	seq_test-FermiAssembler.$(OBJEXT) seq_test-ssw_cpp.$(OBJEXT) \
+	seq_test-ssw.$(OBJEXT) seq_test-jsoncpp.$(OBJEXT)
 seq_test_OBJECTS = $(am_seq_test_OBJECTS)
-seq_test_DEPENDENCIES = ../src/libseqlib.a ../fermi-lite/libfml.a \
-	../bwa/libbwa.a ../htslib/libhts.a
+seq_test_DEPENDENCIES = ../fermi-lite/libfml.a ../bwa/libbwa.a \
+	../htslib/libhts.a
 seq_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(seq_test_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -188,7 +193,6 @@ seq_test_CPPFLAGS = \
      -I../fermi-lite --coverage
 
 seq_test_LDADD = \
-	../src/libseqlib.a \
 	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
@@ -201,13 +205,13 @@ seq_test_SOURCES = seq_test.cpp \
 	../src/ReadFilter.cpp ../src/SeqLibUtils.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp ../src/STCoverage.cpp \
         ../src/Fractions.cpp ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
-	../src/FermiAssembler.cpp
+	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .cpp .o .obj
+.SUFFIXES: .c .cpp .o .obj
 am--refresh:
 	@:
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -321,7 +325,38 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-STCoverage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-SeqLibUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-SeqPlot.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-jsoncpp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-seq_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-ssw.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-ssw_cpp.Po@am__quote@
+
+.c.o:
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+
+.c.obj:
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+seq_test-ssw.o: ../src/ssw.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT seq_test-ssw.o -MD -MP -MF $(DEPDIR)/seq_test-ssw.Tpo -c -o seq_test-ssw.o `test -f '../src/ssw.c' || echo '$(srcdir)/'`../src/ssw.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/seq_test-ssw.Tpo $(DEPDIR)/seq_test-ssw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../src/ssw.c' object='seq_test-ssw.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o seq_test-ssw.o `test -f '../src/ssw.c' || echo '$(srcdir)/'`../src/ssw.c
+
+seq_test-ssw.obj: ../src/ssw.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT seq_test-ssw.obj -MD -MP -MF $(DEPDIR)/seq_test-ssw.Tpo -c -o seq_test-ssw.obj `if test -f '../src/ssw.c'; then $(CYGPATH_W) '../src/ssw.c'; else $(CYGPATH_W) '$(srcdir)/../src/ssw.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/seq_test-ssw.Tpo $(DEPDIR)/seq_test-ssw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../src/ssw.c' object='seq_test-ssw.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o seq_test-ssw.obj `if test -f '../src/ssw.c'; then $(CYGPATH_W) '../src/ssw.c'; else $(CYGPATH_W) '$(srcdir)/../src/ssw.c'; fi`
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -560,6 +595,34 @@ seq_test-FermiAssembler.obj: ../src/FermiAssembler.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/FermiAssembler.cpp' object='seq_test-FermiAssembler.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-FermiAssembler.obj `if test -f '../src/FermiAssembler.cpp'; then $(CYGPATH_W) '../src/FermiAssembler.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/FermiAssembler.cpp'; fi`
+
+seq_test-ssw_cpp.o: ../src/ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-ssw_cpp.o -MD -MP -MF $(DEPDIR)/seq_test-ssw_cpp.Tpo -c -o seq_test-ssw_cpp.o `test -f '../src/ssw_cpp.cpp' || echo '$(srcdir)/'`../src/ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-ssw_cpp.Tpo $(DEPDIR)/seq_test-ssw_cpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ssw_cpp.cpp' object='seq_test-ssw_cpp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-ssw_cpp.o `test -f '../src/ssw_cpp.cpp' || echo '$(srcdir)/'`../src/ssw_cpp.cpp
+
+seq_test-ssw_cpp.obj: ../src/ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-ssw_cpp.obj -MD -MP -MF $(DEPDIR)/seq_test-ssw_cpp.Tpo -c -o seq_test-ssw_cpp.obj `if test -f '../src/ssw_cpp.cpp'; then $(CYGPATH_W) '../src/ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ssw_cpp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-ssw_cpp.Tpo $(DEPDIR)/seq_test-ssw_cpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ssw_cpp.cpp' object='seq_test-ssw_cpp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-ssw_cpp.obj `if test -f '../src/ssw_cpp.cpp'; then $(CYGPATH_W) '../src/ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ssw_cpp.cpp'; fi`
+
+seq_test-jsoncpp.o: ../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-jsoncpp.o -MD -MP -MF $(DEPDIR)/seq_test-jsoncpp.Tpo -c -o seq_test-jsoncpp.o `test -f '../src/jsoncpp.cpp' || echo '$(srcdir)/'`../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-jsoncpp.Tpo $(DEPDIR)/seq_test-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/jsoncpp.cpp' object='seq_test-jsoncpp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-jsoncpp.o `test -f '../src/jsoncpp.cpp' || echo '$(srcdir)/'`../src/jsoncpp.cpp
+
+seq_test-jsoncpp.obj: ../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-jsoncpp.obj -MD -MP -MF $(DEPDIR)/seq_test-jsoncpp.Tpo -c -o seq_test-jsoncpp.obj `if test -f '../src/jsoncpp.cpp'; then $(CYGPATH_W) '../src/jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/jsoncpp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-jsoncpp.Tpo $(DEPDIR)/seq_test-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/jsoncpp.cpp' object='seq_test-jsoncpp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-jsoncpp.obj `if test -f '../src/jsoncpp.cpp'; then $(CYGPATH_W) '../src/jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/jsoncpp.cpp'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

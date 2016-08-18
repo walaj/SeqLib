@@ -22,6 +22,58 @@
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
 
+BOOST_AUTO_TEST_CASE( read_filter_1 ) {
+
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+
+  // make a new rule set
+  SeqLib::ReadFilterCollection rfc;
+
+  // make a new filter region
+  SeqLib::ReadFilter rf;
+
+  // add an isize rule on whole-genome
+  SeqLib::AbstractRule ar;
+  ar.isize = SeqLib::Range(200, 600, false); // 200 to 600, not inverted
+  ar.mapq  = SeqLib::Range(10, 50, false); // 200 to 600, not inverted
+  ar.nm    = SeqLib::Range(1, 1, false); // 200 to 600, not inverted
+  rf.AddRule(ar);
+
+  // add to the filter collection
+  rfc.AddReadFilter(rf);
+
+  // add to the reader
+  br.SetReadFilterCollection(rfc);
+
+  // read / filter the reads
+  SeqLib::BamRecord rec;
+  bool rule;
+  size_t count = 0;
+
+  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+    if (rule) {
+      // test isize rule
+      if (!(rec.FullInsertSize() >= 200 || rec.FullInsertSize() <= 600)) {
+	std::cerr << rec.FullInsertSize() << std::endl;
+	assert(false);
+      }
+      // test mapq rule
+      if (!(rec.MapQuality() >= 10 || rec.MapQuality() <= 50)) {
+	std::cerr << rec.MapQuality() << std::endl;
+	assert(false);
+      }
+      // test nm rule
+      if (!(rec.GetIntTag("NM") != 1)) {
+	std::cerr << rec.GetIntTag("NM") << std::endl;
+	assert(false);
+      }
+
+    }
+  }
+  
+}
+
 BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
   SeqLib::FermiAssembler f;
@@ -484,6 +536,5 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
   SeqLib::rcomplement(seq);
   
   BOOST_CHECK_EQUAL(seq, "NGAnACGTcagt");
-
 
 }

@@ -1,10 +1,13 @@
 #ifndef SEQLIB_READ_FILTER_H__
 #define SEQLIB_READ_FILTER_H__
 
+#define AHO_CORASICK 1
+
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <climits>
+#include <memory>
 
 #include "json/json.h"
 
@@ -27,10 +30,10 @@ namespace SeqLib {
   struct AhoCorasick {
     
     /** Allocate a new empty trie */
-    AhoCorasick() { aho_trie = new aho_corasick::trie(); }
+    AhoCorasick() { aho_trie = std::shared_ptr<aho_corasick::trie>(new aho_corasick::trie()); } 
 
     /** Deallocate the trie */
-    ~AhoCorasick() { if (aho_trie) delete aho_trie; }
+    ~AhoCorasick() { } //std::cerr << " DESTORY " << aho_trie.get() << std::endl;} 
 
     /** Add a motif to the trie 
      * @note Trie construction is lazy. Won't build trie until 
@@ -53,7 +56,7 @@ namespace SeqLib {
      */
     bool QueryText(const std::string& t) const;
 
-    aho_corasick::trie * aho_trie; ///< The trie for the Aho-Corasick search
+    std::shared_ptr<aho_corasick::trie> aho_trie; ///< The trie for the Aho-Corasick search
     
     std::string file; ///< Name of the file holding the motifs
 
@@ -331,7 +334,9 @@ class AbstractRule {
   size_t m_count = 0;
 
   // the aho-corasick trie
+#ifdef AHO_CORASICK
   AhoCorasick aho;
+#endif
 
   // id for this rule
   std::string id;
@@ -359,56 +364,76 @@ class ReadFilter {
   friend class ReadFilterCollection;
 
   public:
-  ReadFilter() {}
 
-  ~ReadFilter() {}
+  /** Construct an empty filter that passes all reads */
+  ReadFilter();
 
-  /** Make a ReadFilter with a an all exclude or include rule
+  /** Destroy the filter */
+  ~ReadFilter();
+
+  // ReadFilter(const ReadFilter& rf);
+
+  /** Make a ReadFilter with an all exclude or include rule
    * @param Samtools style string, BED file or VCF 
    * @param reg_type The type of rule this will be
    * @param h BAM header that defines available chromosomes
    */
-  //ReadFilter(const CommandLineRegion& c, bam_hdr_t * h);
   ReadFilter(const CommandLineRegion& c, const BamHeader& hdr);
 
-  std::string id;
-  
-  bool excluder = false; // this region is for excluding
-
+  /** Return whether a read passes this filter
+   * @param r A read to query
+   * @note If this is an excluder rule, then this
+   * returns false if the read passes the filter
+   */
   bool isValid(BamRecord &r);
+
+  /** Add a rule to this filter. A read must pass all 
+   * of the rules contained in this filter to pass 
+   * @param ar A rule (eg MAPQ > 30) that the read must satisfy to pass this filter.
+   */
+  void AddRule(const AbstractRule& ar);
    
+  /** Provide the region this filer applies to directly from VCF/BED/MAF file 
+   * @param file A BED, VCF or MAF file
+   * @param hdr A BamHeader that is a sequence dictionary required for parsing.
+   */
   void setRegionFromFile(const std::string& file, const BamHeader& hdr);
 
+  /** Check if a read is overlapping the region defined by this filter 
+   * @param r Read to query whether it overlaps (even partially) the region.
+   * @note If this is a mate-linked region, then the read will overlap
+   * if its mate overlaps as well.
+   */
   bool isReadOverlappingRegion(BamRecord &r);
 
+  /** Print basic information about this filter */
   friend std::ostream& operator<<(std::ostream& out, const ReadFilter &mr);
- 
+
+  /** Return the number of rules in this filter */
   size_t size() const {
     return m_abstract_rules.size();
   }
 
-  void parseDiscordantShortcut(const std::string& line, const AbstractRule& ar);
+ private:
 
-  bool m_whole_genome = false;
+  GRC m_grv; // the interval tree with the regions this rule applies to. Empty is whole-genome
 
-  int m_width = 0;  
-
+  std::string id; // set a unique id for this filter
+ 
+  bool excluder = false; // this filter is such that if read passes, it gets excluded
+ 
   std::string m_region_file;
-  //private:
 
-  GRC m_grv; // the interval tree with the regions this rule applies to
+
 
   int m_level = -1;
 
   int pad = 0; // how much should we pad the region?
 
-  std::vector<AbstractRule> m_abstract_rules;
+  std::vector<AbstractRule> m_abstract_rules; // hold all of the rules
 
   // rule applies to mate too
   bool m_applies_to_mate = false;
-
-  // pointer to its containing ReadFilterCollection
-  ReadFilterCollection * mrc; 
 
   // how many reads pass this MiniRule
   size_t m_count = 0;
@@ -427,30 +452,56 @@ class ReadFilterCollection {
  public: 
   
   /** Construct an empty ReadFilterCollection 
-   * that will pass all reads
+   * that will pass all reads.
    */
   ReadFilterCollection() {}
 
-  AbstractRule rule_all;
-  
-  //ReadFilterCollection(const std::string& script, bam_hdr_t *h);
+  /** Create a new filter collection directly from a JSON */
   ReadFilterCollection(const std::string& script, const SeqLib::BamHeader& h);
 
+  /** Add a new rule to the collection. 
+   * If a read passes this rule, it will be included,
+   * even if it fails the other filters. Or, if this filter
+   * has the excluder tag, then if a read passes this filter
+   * then it will be excluded, regardless of the other filters
+   */
+  void AddReadFilter(const ReadFilter& rf);
+
+  /** Provide a global rule set (applies to each filter)
+   * @param rule A filter specified in JSON format
+   */
   void addGlobalRule(const std::string& rule);
 
+  /** Query a read to see if it passes any one of the
+   * filters contained in this collection */
   bool isValid(BamRecord &r);
   
+  /** Set this collection to check all filters. 
+   * This is useful for tallying what reads pass
+   * what filter sets, rather than just checking if a 
+   * read passes or not.
+   */
+  void CheckAllFilters() { m_fall_through = true; };
+
+  /** Print some basic information about this object */
   friend std::ostream& operator<<(std::ostream& out, const ReadFilterCollection &mr);
-  
-  void sendToBed(std::string file);
 
-  size_t m_count = 0; // passed
-  size_t m_count_seen = 0; // tested
+  /** Merge all of the regions covered and write to BED file */
+  void sendToBed(const std::string& file) const;
 
+  /** Return a GenomicRegionCollection of all
+   * of the regions specified by the filters.
+   */
   GRC getAllRegions() const;
 
+  /** Return the number of filters in this collection */
   size_t size() const { return m_regions.size(); } 
 
+  /** Return the total number of rules in this collection.
+   * Filters are composed of collections of rules, and this
+   * returns the total number of rules (e.g. MAPQ > 30) across
+   * all of the filters
+   */
   size_t numRules() const {
     size_t num = 0;
     for (auto& it : m_regions)
@@ -458,17 +509,23 @@ class ReadFilterCollection {
     return num;
   }
 
-  std::vector<ReadFilter> m_regions;
+  void countsToFile(const std::string& file) const;
 
-  //bam_hdr_t * h = nullptr;// in case we need to convert from text chr to id chr
+ private:  
+
+  // the global rule that all other rules are inherited from
+  AbstractRule rule_all;
+
   BamHeader h;// in case we need to convert from text chr to id chr
 
-  void countsToFile(const std::string& file) const;
+  size_t m_count = 0; // passed
+  size_t m_count_seen = 0; // tested
+
+  // store all of the individual filters
+  std::vector<ReadFilter> m_regions;
 
   // should we keep checking rules, even it passed? (useful for counting)
   bool m_fall_through = false;
-
- private:  
 
   const std::string GetScriptContents(const std::string& script);
 
