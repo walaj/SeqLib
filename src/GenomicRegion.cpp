@@ -131,38 +131,34 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   return out;
 }
 
-  GenomicRegion::GenomicRegion(const std::string& reg, const BamHeader& hdr) 
-{
+  GenomicRegion::GenomicRegion(const std::string& reg, const BamHeader& hdr) {
   
   if (hdr.isEmpty())
     throw std::invalid_argument("GenomicRegion constructor - supplied empty BamHeader");
 
   // scrub String
-  std::string reg2 = SeqLib::scrubString(reg, "chr");
+  //std::string reg2 = SeqLib::scrubString(reg, "chr");
 
   // use htslib region parsing code
   int tid, beg, end;
-  const char * q = hts_parse_reg(reg2.c_str(), &beg, &end);
+  const char * q = hts_parse_reg(reg.c_str(), &beg, &end);
   if (q) {
-    char *tmp = (char*)alloca(q - reg2.c_str() + 1); // stack alloc
-    strncpy(tmp, reg2.c_str(), q - reg2.c_str());
-    tmp[q - reg2.c_str()] = 0;
+    char *tmp = (char*)alloca(q - reg.c_str() + 1); // stack alloc
+    strncpy(tmp, reg.c_str(), q - reg.c_str());
+    tmp[q - reg.c_str()] = 0;
     tid = hdr.Name2ID(std::string(tmp)); //bam_name2id(h.get(), tmp);
     if (tid < 0) {
       std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
       throw std::invalid_argument(inv);
     }
     
-    // check that it wasn't a single region, but if so, fix (e.g. 1:1 gets fixed to 1:1-1)
-    if (end == 2147483647) // at max size = not set. set to pos1
-      end = beg+1;
-
+  } else if ( hdr.Name2ID(reg) != -1) { // single chrom
+    chr = hdr.Name2ID(reg);
+    pos1 = 1;
+    pos2 = hdr.GetSequenceLength(reg);
   } else {
     std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
     throw std::invalid_argument(inv);
-    //tid = bam_name2id(h, reg2.c_str());
-    //beg = 0;
-    //end = END_MAX;
   }
   
   chr = tid;

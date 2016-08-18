@@ -9,6 +9,25 @@
 
 namespace SeqLib {
 
+  int BamHeader::GetSequenceLength(int id) const {
+    if (h && id < NumSequences())
+      return h->target_len[id];
+    return -1;
+      
+  }
+
+  int BamHeader::GetSequenceLength(const std::string& id) const {
+    
+    int nid = Name2ID(id);
+    if (nid == -1)
+      return -1;
+
+    if (h && nid < NumSequences())
+      return h->target_len[nid];
+
+    return -1;
+  }
+
 BamHeader::BamHeader(const std::string& hdr)  {
 
   h = std::shared_ptr<bam_hdr_t>(sam_hdr_read2(hdr), bam_hdr_delete()); 

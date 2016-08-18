@@ -393,12 +393,16 @@ class ReadFilter {
    */
   void AddRule(const AbstractRule& ar);
    
-  /** Provide the region this filer applies to directly from VCF/BED/MAF file 
-   * @param file A BED, VCF or MAF file
-   * @param hdr A BamHeader that is a sequence dictionary required for parsing.
+  /** Provide the region covered by this read filter
+   * @param g Region that this filter applies to
    */
-  void setRegionFromFile(const std::string& file, const BamHeader& hdr);
+  void setRegions(const GRC& g);
 
+  /** Add additional regions to the filtered region 
+   * @param g Additional regions to be included in filter
+   */
+  void addRegions(const GRC& g);
+  
   /** Check if a read is overlapping the region defined by this filter 
    * @param r Read to query whether it overlaps (even partially) the region.
    * @note If this is a mate-linked region, then the read will overlap
@@ -423,8 +427,6 @@ class ReadFilter {
   bool excluder = false; // this filter is such that if read passes, it gets excluded
  
   std::string m_region_file;
-
-
 
   int m_level = -1;
 

@@ -22,6 +22,20 @@
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
 
+BOOST_AUTO_TEST_CASE( read_filter_0 ) {
+
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+
+  SeqLib::BamRecord rec;
+  bool rule;
+  size_t count = 0;
+  
+  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+    
+  }
+}
+
 BOOST_AUTO_TEST_CASE( read_filter_1 ) {
 
   SeqLib::BamReader br("test_data/small.bam");
@@ -39,6 +53,10 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   ar.mapq  = SeqLib::Range(10, 50, false); // 200 to 600, not inverted
   ar.nm    = SeqLib::Range(1, 1, false); // 200 to 600, not inverted
   rf.AddRule(ar);
+
+  SeqLib::GRC g;
+  g.add(SeqLib::GenomicRegion(h.Name2ID("X"), 1100000, 1800000));
+  rf.setRegions(g);
 
   // add to the filter collection
   rfc.AddReadFilter(rf);

@@ -45,9 +45,9 @@ class GenomicRegion {
   /** Construct a GenomicRegion from a samtools style region string.
    *
    * This calls the samtools-like parser, which accepts in form "chr7:10,000-11,100".
-   * Note that this requires that a pointer to the BAM header be provided as well 
+   * Note that this requires that a BamHeader be provided as well 
    * to convert the text representation of the chr to the id number.
-   * @param reg Samtools-style string (e.g. "1:1,000,000-2,000,000")
+   * @param reg Samtools-style string (e.g. "1:1,000,000-2,000,000") or single chr
    * @param h Pointer to BAM header that will be used to convert chr string to ref id
    * @exception throws an invalid_argument exception if cannot parse correctly
    */

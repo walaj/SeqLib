@@ -197,7 +197,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 }
 
   // convert a region BED file into an interval tree map
-  void ReadFilter::setRegionFromFile(const std::string& file, const BamHeader& hdr) {
+  /*  void ReadFilter::setRegionFromFile(const std::string& file, const BamHeader& hdr) {
     
     m_region_file = file;
     id = file;
@@ -228,22 +228,22 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
   }
 
  
-    /*if (m_grv.empty()) {
-    std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-    std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-    std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-    std::cerr << "Warning: No regions detected in region/file: " << file << std::endl;
-    std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-    std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-    std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-    return;
-    }*/
-  
+  if (m_grv.empty()) {
+  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
+  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
+  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
+  std::cerr << "Warning: No regions detected in region/file: " << file << std::endl;
+  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
+  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
+  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
+  return;
+    }
+    
   // create the interval tree 
   //m_grv.createTreeMap();
 
   return;
-}
+}*/
 
 
   void ReadFilter::AddRule(const AbstractRule& ar) {
@@ -325,7 +325,8 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
       if (reg == "WG" || reg.empty())
 	;//mr.m_grv.clear(); // ensure it is whole-genome
       else
-	mr.setRegionFromFile(reg, hdr);
+	mr.setRegions(GRC(reg, hdr));
+	// debug mr.setRegionFromFile(reg, hdr);
       
       // check if its excluder region
       mr.excluder = false; // default is no exclude
@@ -382,6 +383,16 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     
   }
   
+  void ReadFilter::setRegions(const GRC& g) {
+    m_grv = g;
+  }
+
+  void ReadFilter::addRegions(const GRC& g) {
+    m_grv.concat(g);
+    m_grv.mergeOverlappingIntervals();
+  }
+
+
   // print the ReadFilterCollection
   std::ostream& operator<<(std::ostream &out, const ReadFilterCollection &mr) {
     
@@ -1168,7 +1179,8 @@ const std::string ReadFilterCollection::GetScriptContents(const std::string& scr
       id = "WG";
     } else {
       // set the genomic region this rule applies to
-      setRegionFromFile(c.f, hdr);
+      setRegions(GRC(c.f, hdr));
+      //debug setRegionFromFile(c.f, hdr);
     }
 
     // add the abstract rule

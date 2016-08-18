@@ -220,9 +220,7 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 }
 
 template<class T>
-void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pad, const BamHeader& hdr, bool chr_header) {
-
-  header_has_chr_string = chr_header;
+GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, const BamHeader& hdr) {
 
   std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
@@ -236,8 +234,7 @@ void GenomicRegionCollection<T>::regionFileToGRV(const std::string &file, int pa
     std::cerr << "Region file is empty: " << file << std::endl;
   iss.close();
 
-  GenomicRegionCollection<T> grv;
-
+  const int pad = 0;
   // MUTECT CALL STATS
   if ((header.find("MuTect") != std::string::npos) ||
       (file.find("call_stats") != std::string::npos) || 

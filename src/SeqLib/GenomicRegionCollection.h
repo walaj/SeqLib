@@ -13,7 +13,7 @@
 //#endif
 
 #include "SeqLib/IntervalTree.h"
-#include "SeqLib/GenomicRegion.h"
+#include "SeqLib/GenomicRegionCollection.h"
 #include "SeqLib/BamRecord.h"
 
 namespace SeqLib {
@@ -82,7 +82,7 @@ class GenomicRegionCollection {
    */
  void readVCFfile(const std::string &file, int pad, const SeqLib::BamHeader& hdr);
 
-  /** Read in a text file (can be gzipped) and add to GenomicRegionCollection
+  /** Read in a text file (can be gzipped) and construct a GenomicRegionCollection
    *
    * This function will automatically detect which file type is being input:
    * -- ends in .vcf -> readVCFfile
@@ -90,9 +90,9 @@ class GenomicRegionCollection {
    * -- header contains "MuTect" -> readMuTect
    * The values are appended to existing vector of GenomicRegion objects
    * @param file Text file to read and store intervals
-   * @param pad Amount to pad the intervals by (calls GenomicRegion::pad)
+   * @param hdr BamHeader to serve as dictionary for chromosomes
    */
- void regionFileToGRV(const std::string &file, int pad, const BamHeader& hdr, bool chr_header = false);
+   GenomicRegionCollection(const std::string &file, const BamHeader& hdr);
 
   /** Fill in the GenomicIntervalTreeMap stored in this object. 
    *

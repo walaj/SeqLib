@@ -44,6 +44,12 @@ namespace SeqLib {
      */
     int NumSequences() const;
 
+    /** Return the length of the sequence */
+    int GetSequenceLength(int id) const;
+
+    /** Return the length of the sequence */
+    int GetSequenceLength(const std::string& id) const;
+
     /** Convert a numeric sequence ID to a name
      * 
      * @exception Throws an out_of_range if ID is >= then number of 
