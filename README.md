@@ -16,7 +16,7 @@ Installation
 
 #######
 ```bash
-git clone https://github.com/jwalabroad/SeqLib.git
+git clone --recursive https://github.com/jwalabroad/SeqLib.git
 cd SeqLib
 ./configure
 make
