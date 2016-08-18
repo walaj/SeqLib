@@ -4,8 +4,8 @@
 #include "htslib/khash.h"
 #include <unordered_set>
 
-//#define QNAME "H01PEALXX140819:3:2120:19036:18467"
-//#define QFLAG 83
+//#define QNAME "D0EN0ACXX111207:7:2306:6903:136511"
+//#define QFLAG -1
 
 //#define DEBUG_MINI 1
 
@@ -25,7 +25,7 @@ static const std::unordered_set<std::string> valid =
   "rev_strand", "mate_fwd_strand", "mate_rev_strand", "mapped",
   "mate_mapped", "isize","clip", "phred", "length","nm",
   "mapq", "all", "ff", "xp","fr","rr","rf",
-  "ic", "discordant","motif","nbases","!motif","flag", "!flag",
+  "ic", "discordant","motif","nbases","!motif","allflag", "!allflag", "anyflag", "!anyflag",
   "ins","del",  "sub",  "subsample", "rg"
 };
 
@@ -39,9 +39,16 @@ static const std::unordered_set<std::string> valid =
 
 bool ReadFilter::isValid(BamRecord &r) {
 
+  // empty default is pass
+  if (!m_abstract_rules.size())
+    return true;
+
   for (auto& it : m_abstract_rules)
-    if (it.isValid(r)) 
+    if (it.isValid(r)) {
+      ++it.m_count; //update this rule counter
+      ++m_count;
        return true; // it is includable in at least one. 
+    }
       
   return false;
 
@@ -98,7 +105,6 @@ bool ReadFilter::isValid(BamRecord &r) {
 // contained in these rules
 bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 
-  /* debug
   // if this is a whole genome rule, it overlaps
   if (!m_grv.size()) 
     return true;
@@ -110,7 +116,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     return false;
   if (m_grv.findOverlapping(GenomicRegion(r.MateChrID(), r.MatePosition(), r.MatePosition() + r.Length())))
     return true;
-  */ 
+
   return false;
 }
 
@@ -120,131 +126,61 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 
   ++m_count_seen;
 
-  if (m_regions.size() == 0) {
+#ifdef QNAME 
+  if (r.Qname() == QNAME)
+    std::cerr << "...starting valid checking in RFC. Regions size : "  << m_regions.size() << std::endl;
+#endif
+
+  if (m_regions.size() == 0)
     return true;
-  }
+
+
+#ifdef QNAME 
+  if (r.Qname() == QNAME)
+    std::cerr << "...starting valid checking in array of filters in RFC" << std::endl;
+#endif
   
   // need to run all rules if there is an excluder
   if (!m_fall_through)
     for (auto& i : m_regions)
       m_fall_through = m_fall_through || i.excluder;
 
-  size_t which_region = 0;
-  size_t which_rule = 0;
-  
-  // find out which rule it is a part of
-  // lower number rules dominate
-
   bool is_valid = false;
   bool exclude_hit = false; // did we hit excluder rule
 
   for (auto& it : m_regions) {
-    which_rule = 0;
-    bool rule_hit = false;
-    if (it.isReadOverlappingRegion(r)) { // read overlaps a region
 
-      // empty rule. It's a pass
-      if (!it.m_abstract_rules.size()) { 
-	is_valid = true;
-	if (!rule_hit)
-	  ++it.m_count;
-	rule_hit = true;
-      }
-
-      // non-empty, need to check
-      for (auto& jt : it.m_abstract_rules) { 
-	if (jt.isValid(r)) {
+    // only check read validity if it overlaps region
+    if (!it.isReadOverlappingRegion(r)) 
+      continue;
+    
+    // check the region with all its rules
+    if (it.isValid(r)) {
+     
+      // if this is excluder region, exclude read
+      if (it.excluder)
+	exclude_hit = true;
       
-	  // this whole read is valid or not valid
-	  // depending on if this is an excluder region
-	  if (it.excluder)
-	    exclude_hit = true;
-	  // if it excluded already, can never be included
-	  // if its a normal rule, then exclude_hit is F, it.excluder is F and is_valid get T
-	  is_valid = !exclude_hit && !it.excluder; 
-	  
-	  // update the region counter
-	  if (!rule_hit) // first hit for this region?
-	    ++it.m_count;
-
-	  rule_hit = true;
-	  
-	  // update the rule counter within this region
-	  ++jt.m_count;
-	  
-	  if (!m_fall_through)
-	    break;
-	} 
-	++which_rule;
-      } // end rules loop
-    }
-    
-    // found a hit in a rule
-    if ( (rule_hit && !m_fall_through) || exclude_hit)
-      break;
-    
-    // didnt find hit (or fall through checking), move it up one
-    ++which_region;
-  }
-
-  // isn't in a rule or it never satisfied one. Remove
-  if (!is_valid)
-    return false; 
-  
-  ++m_count;
-  return true; 
-  
-}
-
-  // convert a region BED file into an interval tree map
-  /*  void ReadFilter::setRegionFromFile(const std::string& file, const BamHeader& hdr) {
-    
-    m_region_file = file;
-    id = file;
-    
-    // parse if it's a file
-    if (SeqLib::read_access_test(file))
-      ;//m_grv.regionFileToGRV(file, pad, hdr);
-    // samtools style string
-    else if (file.find(":") != std::string::npos && file.find("-") != std::string::npos) {
-      if (!hdr.isEmpty()) {
-	GenomicRegion gr(file, hdr);
-	gr.pad(pad);
-	//m_grv.add(gr);
-      } else {
-	std::cerr << "!!!!!!!!ReadFilter region parsing: Header from BAM not set!!!!!!!!!" << std::endl;
+      // if we don't need to check all regions, quit here
+      if (!m_fall_through) {
+	++m_count;
+	return true;
       }
-    }
-    // it's a single chromosome
-    else if (!file.empty()) {
-      SeqLib::GenomicRegion gr(file, "1", "1", hdr); //file is chr, "1" is dummy
-      if (gr.chr == -1 || gr.chr >= hdr.NumSequences()) {
-	std::cerr << "ERROR: Trying to match chromosome " << file << " to one in header, but no match found" << std::endl;
-	exit(EXIT_FAILURE);
-      } else {
-	gr.pos2 = hdr.get()->target_len[gr.chr];
-	//m_grv.add(gr);
+
+      // in case we do fall through, track that we passed here
+      is_valid = true;
+
     }
   }
 
- 
-  if (m_grv.empty()) {
-  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-  std::cerr << "Warning: No regions detected in region/file: " << file << std::endl;
-  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-  std::cerr << "!!!!!!!!!!!!!!!!!!" << std::endl;
-  return;
+    // found a hit in a rule
+    if (!exclude_hit && is_valid) {
+      ++m_count;
+      return true;
     }
     
-  // create the interval tree 
-  //m_grv.createTreeMap();
-
-  return;
-}*/
-
+    return false;
+}
 
   void ReadFilter::AddRule(const AbstractRule& ar) {
     m_abstract_rules.push_back(ar);
@@ -288,12 +224,12 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     Json::Value null(Json::nullValue);
     
     int level = 1;
-    
-    Json::Value glob = root.removeMember("global");
 
-    if (!glob.isNull()) {
+    // assign the global rule if there is one
+    // remove from the rest of the rules
+    Json::Value glob = root.removeMember("global");
+    if (!glob.isNull()) 
       rule_all.parseJson(glob);
-    }
     
     // iterator over regions
     for (auto& regions : root) {
@@ -323,7 +259,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
       
       // actually parse the region
       if (reg == "WG" || reg.empty())
-	;//mr.m_grv.clear(); // ensure it is whole-genome
+	mr.m_grv.clear(); // ensure it is whole-genome
       else
 	mr.setRegions(GRC(reg, hdr));
 	// debug mr.setRegionFromFile(reg, hdr);
@@ -385,11 +321,13 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
   
   void ReadFilter::setRegions(const GRC& g) {
     m_grv = g;
+    m_grv.createTreeMap();
   }
 
   void ReadFilter::addRegions(const GRC& g) {
     m_grv.concat(g);
     m_grv.mergeOverlappingIntervals();
+    m_grv.createTreeMap();
   }
 
 
@@ -414,7 +352,6 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 // print a ReadFilter information
 std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
   
-  /*
   std::string file_print = !mr.m_grv.size() ? "WHOLE GENOME" : mr.m_region_file;
   out << (mr.excluder ? "--Exclude Region: " : "--Include Region: ") << file_print;
   if (mr.m_grv.size()) {
@@ -431,7 +368,6 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 
   for (auto& it : mr.m_abstract_rules) 
     out << it << std::endl;
-  */
   return out;
 }
 
@@ -480,26 +416,30 @@ void ReadFilterCollection::sendToBed(const std::string& file) const {
   void FlagRule::parseJson(const Json::Value& value) {
 
     Json::Value null(Json::nullValue);
-    if (value == "flag") 
-      m_on_flag = __parse_json_int(value.get("flag", null));
-    if (value == "!flag") 
-      m_off_flag = __parse_json_int(value.get("!flag", null));
-
-    // have to set the na if find flag so that rule knows it cant skip checking
-    if (dup.parseJson(value, "duplicate")) na = false;
-    if (supp.parseJson(value, "supplementary")) na = false;
-    if (qcfail.parseJson(value, "qcfail")) na = false;
-    if (hardclip.parseJson(value, "hardclip")) na = false;
-    if (fwd_strand.parseJson(value, "fwd_strand")) na = false;
-    if (mate_rev_strand.parseJson(value, "mate_rev")) na = false;
-    if (mate_fwd_strand.parseJson(value, "mate_fwd")) na = false;
-    if (mate_mapped.parseJson(value, "mate_mapped")) na = false;
-    if (mapped.parseJson(value, "mapped")) na = false;
-    if (ff.parseJson(value, "ff")) na = false;
-    if (fr.parseJson(value, "fr")) na = false;
-    if (rf.parseJson(value, "rf")) na = false;
-    if (rr.parseJson(value, "rr")) na = false;
-    if (ic.parseJson(value, "ic")) na = false;
+    if (value.isMember("allflag"))
+      setAllOnFlag(__parse_json_int(value.get("allflag", null)));
+    if (value.isMember("!allflag"))
+      setAllOffFlag(__parse_json_int(value.get("!allflag", null)));
+    if (value.isMember("anyflag"))
+      setAnyOnFlag(__parse_json_int(value.get("anyflag", null)));
+    if (value.isMember("!anyflag"))
+      setAnyOffFlag(m_any_off_flag = __parse_json_int(value.get("!anyflag", null)));
+    
+    // have to set the every if find flag so that rule knows it cant skip checking
+    if (dup.parseJson(value, "duplicate")) every = false;
+    if (supp.parseJson(value, "supplementary")) every = false;
+    if (qcfail.parseJson(value, "qcfail")) every = false;
+    if (hardclip.parseJson(value, "hardclip")) every = false;
+    if (fwd_strand.parseJson(value, "fwd_strand")) every = false;
+    if (mate_rev_strand.parseJson(value, "mate_rev")) every = false;
+    if (mate_fwd_strand.parseJson(value, "mate_fwd")) every = false;
+    if (mate_mapped.parseJson(value, "mate_mapped")) every = false;
+    if (mapped.parseJson(value, "mapped")) every = false;
+    if (ff.parseJson(value, "ff")) every = false;
+    if (fr.parseJson(value, "fr")) every = false;
+    if (rf.parseJson(value, "rf")) every = false;
+    if (rr.parseJson(value, "rr")) every = false;
+    if (ic.parseJson(value, "ic")) every = false;
 
   }
   
@@ -596,12 +536,7 @@ void ReadFilterCollection::sendToBed(const std::string& file) const {
       if ((double)(k&0xffffff) / 0x1000000 >= subsam_frac) 
 	return false;
     }
-    /*if (subsample < 100) {
-      int randn = (rand() % 100); // random number between 1 and 100
-      if (subsample < randn)
-      return false;
-      }*/
-    
+
     // check if is discordant
     bool isize_pass = isize.isValid(r.FullInsertSize());
 
@@ -632,7 +567,7 @@ void ReadFilterCollection::sendToBed(const std::string& file) const {
 #endif
     
     // check for valid flags
-    if (!fr.isValid(r))
+    if (!fr.isValid(r)) 
       return false;
 
 #ifdef QNAME
@@ -803,19 +738,30 @@ void ReadFilterCollection::sendToBed(const std::string& file) const {
     
 #ifdef QNAME
     if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
-      std::cerr << " IN FLAG RULE: EVERY? " << isEvery() << " ON NUMBER FLAG " << m_on_flag << " OFF NUMEBR FLAG " << m_off_flag <<  " ON NUM RESULT "  << std::endl;
+      std::cerr << " IN FLAG RULE: EVERY? " << isEvery() << " ON NUMBER FLAG " << m_all_on_flag << " OFF NUMEBR FLAG " << m_all_off_flag <<  " ON NUM RESULT "  << std::endl;
 #endif
+
     if (isEvery())
       return true;
-    
+
     // if have on or off flag, use that
-    if (m_on_flag && !(r.AlignmentFlag() & m_on_flag) )
+    // 0001100 - all flag
+    // 0101000 - flag
+    // -------
+    // 0001000 - should fail all flag. Should pass any flag
+    if (m_all_on_flag && !( (r.AlignmentFlag() & m_all_on_flag)  == m_all_on_flag) ) // if all on, pass
       return false;
-    if (m_off_flag && (r.AlignmentFlag() & m_off_flag))
+    if (m_all_off_flag && ( (r.AlignmentFlag() & m_all_off_flag) == m_all_off_flag) ) // if all on, fail
+      return false;
+
+    // if have on or off flag, use that
+    if (m_any_on_flag && !(r.AlignmentFlag() & m_any_on_flag) ) // if ANY on, pass
+      return false;
+    if (m_any_off_flag && (r.AlignmentFlag() & m_any_off_flag)) // if ANY on, fail
       return false;
        
 #ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
+    if (r.Qname() == QNAME) // && r.AlignmentFlag() == QFLAG)
       std::cerr << " CHECKING NAMED FLAGS " << std::endl;
 #endif
 
@@ -936,10 +882,15 @@ std::ostream& operator<<(std::ostream &out, const FlagRule &fr) {
   std::string keep = "Flag ON: ";
   std::string remo = "Flag OFF: ";
 
-  if (fr.m_on_flag)
-    keep += "[" + std::to_string(fr.m_on_flag) + "],";
-  if (fr.m_off_flag)
-    remo += "[" + std::to_string(fr.m_off_flag) + "],";
+  if (fr.m_all_on_flag)
+    keep += "[(all)" + std::to_string(fr.m_all_on_flag) + "],";
+  if (fr.m_all_off_flag)
+    remo += "[(all)" + std::to_string(fr.m_all_off_flag) + "],";
+
+  if (fr.m_any_on_flag)
+    keep += "[(any)" + std::to_string(fr.m_any_on_flag) + "],";
+  if (fr.m_any_off_flag)
+    remo += "[(any)" + std::to_string(fr.m_any_off_flag) + "],";
 
   if (fr.dup.isOff())
     remo += "duplicate,";
@@ -1134,7 +1085,7 @@ GRC ReadFilterCollection::getAllRegions() const
   GRC out;
 
   for (auto& i : m_regions)
-    ;//out.concat(i.m_grv);
+    out.concat(i.m_grv);
 
   out.mergeOverlappingIntervals();
   return out;
@@ -1188,8 +1139,8 @@ const std::string ReadFilterCollection::GetScriptContents(const std::string& scr
 
     // set the flag
     if (c.i_flag || c.e_flag) {
-      ar.fr.setOnFlag(c.i_flag);
-      ar.fr.setOffFlag(c.e_flag);
+      ar.fr.setAllOnFlag(c.i_flag);
+      ar.fr.setAllOffFlag(c.e_flag);
     }
 
     // set the other fields

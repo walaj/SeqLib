@@ -290,20 +290,22 @@ GenomicRegionVector GenomicRegionCollection<T>::asGenomicRegionVector() const {
 template <class T>
 void GenomicRegionCollection<T>::createTreeMap() {
 
-  // sort the 
+  // sort the genomic intervals
   sort(m_grv->begin(), m_grv->end());
 
+  // loop through and make the intervals for each chromosome
   GenomicIntervalMap map;
-  //for (auto it : *m_grv) {
-  //  map[it.chr].push_back(GenomicInterval(it.pos1, it.pos2, it));
-  //}
   for (size_t i = 0; i < m_grv->size(); ++i) {
     map[m_grv->at(i).chr].push_back(GenomicInterval(m_grv->at(i).pos1, m_grv->at(i).pos2, i));
   }
 
+  // for each chr, make the tree from the intervals
   for (auto it : map) {
     GenomicIntervalTreeMap::iterator ff = m_tree->find(it.first);
-    ff->second = it.second;
+    if (ff != m_tree->end())
+      ff->second = GenomicIntervalTree(it.second);
+    else
+      m_tree->insert(std::pair<int, GenomicIntervalTree>(it.first, GenomicIntervalTree(it.second)));
     //old //m_tree[it.first] = GenomicIntervalTree(it.second);
   }
 

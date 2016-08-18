@@ -76,6 +76,9 @@ CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag
   uint32_t i_flag; // inclusive flags
   uint32_t e_flag; // exclusive flags
 
+  uint32_t any_i_flag; // inclusive any flags (eg if read has any bit of these, keep)
+  uint32_t any_e_flag; // exclusive any flags (eg if read has any bit of these, fail)
+
   int len = 0;
   int mapq = 0;
   int nbases = INT_MAX;
@@ -87,7 +90,7 @@ CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag
   std::string motif;
 
   bool all() const { 
-    return !len && !mapq && !nbases && !phred && rg.empty() && !i_flag && !e_flag; 
+    return !len && !mapq && !nbases && !phred && rg.empty() && !i_flag && !e_flag && !any_i_flag && !any_e_flag; 
   }
 
 };
@@ -222,8 +225,10 @@ struct FlagRule {
     rr = Flag();
     ic = Flag();
     paired = Flag();
-    m_on_flag = 0;
-    m_off_flag = 0;
+    m_all_on_flag = 0;
+    m_all_off_flag = 0;
+    m_any_on_flag = 0;
+    m_any_off_flag = 0;
   }
   
   Flag dup; ///< Filter for duplicated flag 
@@ -231,13 +236,17 @@ struct FlagRule {
   Flag qcfail, hardclip, fwd_strand, rev_strand;
   Flag mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic, paired;
 
-  bool na = true;
-
   void parseJson(const Json::Value& value);
 
-  void setOnFlag(uint32_t f) { m_on_flag = f; na = na && f == 0; } 
+  void setAnyOnFlag(uint32_t f) { m_any_on_flag = f;   every = (every && f == 0); } 
+  //  NOTE: every = (every && f == 0) means to set every to true only if 
+  //  input flag is zero and every was already true
 
-  void setOffFlag(uint32_t f) { m_off_flag = f; na = na && f == 0; } 
+  void setAnyOffFlag(uint32_t f) { m_any_off_flag = f; every = (every && f == 0); } 
+
+  void setAllOnFlag(uint32_t f) { m_all_on_flag = f;   every = (every && f == 0); } 
+
+  void setAllOffFlag(uint32_t f) { m_all_off_flag = f; every = (every && f == 0); } 
 
   // ask whether a read passes the rule
   bool isValid(BamRecord &r);
@@ -245,13 +254,18 @@ struct FlagRule {
   /** Print the flag rule */
   friend std::ostream& operator<<(std::ostream &out, const FlagRule &fr);
 
-  // ask if every flag is set to NA (most permissive)
-  bool isEvery() const { return na; }
+  // ask if every flag is set to EVERY (most permissive)
+  bool isEvery() const { return every; }
 
 private:
 
-  uint32_t m_on_flag;
-  uint32_t m_off_flag;
+  bool every = true; // does this pass all flags? 
+  
+  uint32_t m_all_on_flag;  // if read has all of these, keep
+  uint32_t m_all_off_flag; // if read has all of these, fail
+
+  uint32_t m_any_on_flag; // if read has any of these, keep
+  uint32_t m_any_off_flag;// if read has any of these, fail
 
   int __parse_json_int(const Json::Value& v);
 

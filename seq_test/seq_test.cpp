@@ -36,6 +36,32 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
   }
 }
 
+BOOST_AUTO_TEST_CASE( json_parse ) {
+
+  SeqLib::BamReader br("test_data/small.bam");
+  
+  std::string rules = "{\"global\" : {\"!anyflag\" : 1536, \"phred\" : 4}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
+
+  SeqLib::ReadFilterCollection rfc(rules, br.Header());
+
+  std::cerr << rfc << std::endl;
+  
+  br.SetReadFilterCollection(rfc);
+
+  SeqLib::BamRecord rec;
+  bool rule;
+  size_t count = 0;
+
+  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+    // test global flag rule
+    if ( (rec.QCFailFlag() || rec.DuplicateFlag()) && rule) {
+      std::cerr << rec << std::endl;
+      assert(false);
+    }
+  }
+    
+}
+
 BOOST_AUTO_TEST_CASE( sw_alignment ) {
 
   const std::string ref = "ACTGCGAGCGACTAGCTCGTAGCTAGCTAGCTAGCTAGTGACTGCGGGCGATCATCGATCTTTTATTATCGCGATCGCTACGAC";
@@ -52,6 +78,10 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   SeqLib::BamReader br("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
+  SeqLib::GRC g;
+  g.add(SeqLib::GenomicRegion(h.Name2ID("X"), 1100000, 1800000));
+  g.createTreeMap();
+
   // make a new rule set
   SeqLib::ReadFilterCollection rfc;
 
@@ -65,8 +95,6 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   ar.nm    = SeqLib::Range(1, 1, false); // 200 to 600, not inverted
   rf.AddRule(ar);
 
-  SeqLib::GRC g;
-  g.add(SeqLib::GenomicRegion(h.Name2ID("X"), 1100000, 1800000));
   rf.setRegions(g);
 
   // add to the filter collection
@@ -100,8 +128,8 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
 
     }
   }
-  
-}
+
+  }
 
 BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
@@ -142,6 +170,7 @@ BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
 }
 
+
 BOOST_AUTO_TEST_CASE( bam_header_stdout ) {
 
   SeqLib::BamReader br("test_data/small.bam");
@@ -177,7 +206,7 @@ BOOST_AUTO_TEST_CASE( genomic_ranges_string_constructor) {
   SeqLib::BamReader br("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
   
-  const std::string in = "chr2:1,000,000-2,000,000";
+  const std::string in = "2:1,000,000-2,000,000";
   SeqLib::GenomicRegion gr(in, h);
   BOOST_CHECK_EQUAL(gr.chr, 1);
   BOOST_CHECK_EQUAL(gr.pos1, 1000000);
@@ -567,3 +596,4 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
   BOOST_CHECK_EQUAL(seq, "NGAnACGTcagt");
 
 }
+
