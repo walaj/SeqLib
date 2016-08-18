@@ -5,6 +5,8 @@ C++ interface to HTSlib, BWA-MEM and Fermi
 
 **License:** [Apache2][license]
 
+#NOTE: SeqLib is currently undergoing rapid development changes and some functionality may not be fully implemented.
+
 API Documentation
 -----------------
 [API Documentation][htmldoc]

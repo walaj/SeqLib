@@ -36,6 +36,17 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
   }
 }
 
+BOOST_AUTO_TEST_CASE( sw_alignment ) {
+
+  const std::string ref = "ACTGCGAGCGACTAGCTCGTAGCTAGCTAGCTAGCTAGTGACTGCGGGCGATCATCGATCTTTTATTATCGCGATCGCTACGAC";
+  const std::string seq =                "CTCGTAGCTAGCTGCTAGCTAGTGACTGCGGGCGATCATCGATCTTTTATTATCGCG";
+  const SeqLib::GenomicRegion gr(0,0,0);
+  SeqLib::BamRecord b("test_name", seq, ref, &gr);
+  
+  std::cerr << " SMITH WATERMAN " << std::endl;
+  std::cerr << b << std::endl;
+}
+
 BOOST_AUTO_TEST_CASE( read_filter_1 ) {
 
   SeqLib::BamReader br("test_data/small.bam");
