@@ -86,7 +86,8 @@ namespace SeqLib {
   template <typename T> inline int percentCalc(T numer, T denom) {
     if (denom <= 0)
       return 0;
-    int perc  = static_cast<int>(floor((float)numer / (float)denom * 100.0));
+    int perc = numer * 100 / denom;
+    //int perc  = static_cast<int>(floor((float)numer / (float)denom * 100.0));
     return perc;
   }
 

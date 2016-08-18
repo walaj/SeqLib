@@ -4,6 +4,9 @@
 
 std::string SeqLib::scrubString(const std::string& toscrub, const std::string& toremove) 
 {
+  if (toscrub.empty() || toremove.empty())
+    return toscrub;
+
   std::string::size_type i = toscrub.find(toremove);
   if (i == std::string::npos)
     return toscrub;

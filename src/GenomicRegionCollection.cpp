@@ -461,11 +461,11 @@ bool GenomicRegionCollection<T>::getNextGenomicRegion(T& gr)
 template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection() {
   __allocate_grc();
-};
+}
 
 template<class T>
 GenomicRegionCollection<T>::~GenomicRegionCollection() {
-};
+}
 
 
 template<class T>

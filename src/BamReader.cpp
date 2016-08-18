@@ -21,8 +21,9 @@ bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t>
     idx = passed_idx;
   
   //HTS set region
-  if (!idx) 
+  if (!idx) {
     idx = std::shared_ptr<hts_idx_t>(hts_idx_load(m_in.c_str(), HTS_FMT_BAI), idx_delete());
+  }
   
   if (gp.chr >= m_hdr.NumSequences()) {
     std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << m_hdr.NumSequences() << std::endl;

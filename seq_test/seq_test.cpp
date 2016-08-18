@@ -131,6 +131,70 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
 
   }
 
+BOOST_AUTO_TEST_CASE ( seq_utils ) {
+
+  // add commas
+  BOOST_CHECK_EQUAL(SeqLib::AddCommas(1),"1");
+  BOOST_CHECK_EQUAL(SeqLib::AddCommas(1000000),"1,000,000");
+  
+  // percent calc
+  BOOST_CHECK_EQUAL(SeqLib::percentCalc(10,100), 10);
+  BOOST_CHECK_EQUAL(SeqLib::percentCalc(7,8), 87);
+  BOOST_CHECK_EQUAL(SeqLib::percentCalc(9,10), 90);
+  BOOST_CHECK_EQUAL(SeqLib::percentCalc(2,3), 66);
+
+  // scrub string
+  BOOST_CHECK_EQUAL(SeqLib::scrubString("chr1", "chr"), "1");
+  BOOST_CHECK_EQUAL(SeqLib::scrubString("chr1", ""), "chr1");
+  BOOST_CHECK_EQUAL(SeqLib::scrubString("chr1", "dd"), "chr1");
+  BOOST_CHECK_EQUAL(SeqLib::scrubString("chr1", "1"), "chr");
+
+}
+
+BOOST_AUTO_TEST_CASE( bam_record ) {
+
+  // get a record
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamRecord r;
+  bool rule;
+  
+  SeqLib::BamRecordVector brv;
+  
+  size_t count = 0;
+  br.GetNextRead(r, rule);
+  
+  BOOST_CHECK_EQUAL(r.asGenomicRegion().chr, 22);
+  BOOST_CHECK_EQUAL(r.asGenomicRegion().pos1,999901);
+  BOOST_CHECK_EQUAL(r.asGenomicRegion().pos2,1000002);
+  BOOST_CHECK_EQUAL(r.asGenomicRegion().strand,'+');
+
+  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().chr, 22);
+  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().pos1,999993);
+  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().pos2,1000094);
+  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().strand,'-');
+
+  BOOST_CHECK_EQUAL(std::floor(r.MeanPhred()), 34);
+
+  BOOST_CHECK_EQUAL(r.CountNBases(), 0);
+
+  r.SetQname("testq");
+  BOOST_CHECK_EQUAL(r.Qname(), "testq");
+
+  const std::string s = "ACTGCTAGCTAGCTACTCTGCTACTATATTAGCGCGCATTCGC";
+  r.SetSequence(s);
+  BOOST_CHECK_EQUAL(r.Sequence(), s);
+  
+  r.SmartAddTag("ST", "1");
+  r.SmartAddTag("ST", "3");
+  r.SmartAddTag("ST", "5");
+    
+  BOOST_CHECK_EQUAL(r.GetSmartIntTag("ST").size(), 3);
+  BOOST_CHECK_EQUAL(r.GetSmartIntTag("ST").at(2), 5);
+    
+  BOOST_CHECK_EQUAL(r.GetSmartStringTag("ST").size(), 3);
+  BOOST_CHECK_EQUAL(r.GetSmartStringTag("ST")[1], "3");
+}
+
 BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
   SeqLib::FermiAssembler f;

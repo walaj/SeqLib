@@ -29,11 +29,17 @@ namespace SeqLib {
   }
 
   GenomicRegion BamRecord::asGenomicRegion() const {
-    return GenomicRegion(b->core.tid, b->core.pos, PositionEnd());
+    char s = '*';
+    if (MappedFlag())
+      s = ReverseFlag() ? '-' : '+';
+    return GenomicRegion(b->core.tid, b->core.pos, PositionEnd(), s);
   }
 
   GenomicRegion BamRecord::asGenomicRegionMate() const {
-    return GenomicRegion(b->core.mtid, b->core.mpos, b->core.mpos + Length());
+    char s = '*';
+    if (MateMappedFlag())
+      s = MateReverseFlag() ? '-' : '+';
+    return GenomicRegion(b->core.mtid, b->core.mpos, b->core.mpos + Length(), s);
   }
 
   std::string BamRecord::Sequence() const {
