@@ -32,16 +32,18 @@ class BamReader {
    *
    * This will set the BAM pointer to the given region.
    * @param gp Location to point the BAM to
+   * @return true if the region is found in the index
    */
-  void setBamReaderRegion(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
+  bool setBamReaderRegion(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
 
   /** Set up multiple regions. Overwrites current regions. 
    * 
    * This will set the BAM pointer to the first element of the
    * input list.
    * @param grv Set of location to point BAM to
+   * @return true if the regions are found in the index
    */
-  void setBamReaderRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
+  bool setBamReaderRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
 
   /** Create a string representation of 
    * all of the regions to walk
@@ -68,7 +70,7 @@ class BamReader {
    * 
    * This will call the constructor of ReadFilterCollection, and 
    * parse the provides rules and add it as a rule set to this BamRecorder.
-   * @param rules A string of rules, or a file pointing to a rules script
+   * @param rules A JSON string of filters, or a file pointing to a filter script
    */
   void SetReadFilterCollection(const std::string& rules);
   
@@ -89,11 +91,6 @@ class BamReader {
   /** Return the ReadFilterCollection object used by this BamReader
    */
   const ReadFilterCollection& GetReadFilterCollection() const { return m_mr; }
-
-  /** Send the counts for passed rules to a file 
-   * @param Path to file to write the read statistics to
-   */
-  void ReadFilterToFile(const std::string& file) const { m_mr.countsToFile(file); }
 
   /** Set the BamReader to count reads for all rules */
   void setCountAllRules() { m_mr.CheckAllFilters(); }

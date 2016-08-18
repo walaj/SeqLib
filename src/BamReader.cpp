@@ -52,35 +52,38 @@ void BamReader::resetAll() {
 
 }
 
-void BamReader::setBamReaderRegion(const GenomicRegion& g, std::shared_ptr<hts_idx_t> passed_idx)
+bool BamReader::setBamReaderRegion(const GenomicRegion& g, std::shared_ptr<hts_idx_t> passed_idx)
 {
   m_region.clear();
   m_region.push_back(g);
   m_region_idx = 0; // rewind it
 
   if (m_region.size())
-    __set_region(m_region[0], passed_idx);
-  else
-    m_region.push_back(GenomicRegion(-1,-1,-1));
+    return __set_region(m_region[0], passed_idx);
+
+  m_region.push_back(GenomicRegion(-1,-1,-1));
+  return false;
+  
 }
 
-void BamReader::setBamReaderRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx) 
+bool BamReader::setBamReaderRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx) 
 {
   if (grv.size() == 0)
     {
       std::cerr << "Warning: Trying to set an empty bam region"  << std::endl;
-      return;
+      return false;
     }
   m_region = grv;
   m_region_idx = 0; // rewind it
   //__check_regions_blacklist(); // sets m_region
   if (m_region.size())
-    __set_region(m_region[0], passed_idx);
-  else
-    m_region.push_back(GenomicRegion(-1,-1,-1));
+    return __set_region(m_region[0], passed_idx);
+
+  m_region.push_back(GenomicRegion(-1,-1,-1));
+  return false;
 }
 
-bool BamReader::OpenReadBam(const std::string& bam) 
+  bool BamReader::OpenReadBam(const std::string& bam) 
 {
   m_in = bam;
 

@@ -38,7 +38,8 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
 
 BOOST_AUTO_TEST_CASE( json_parse ) {
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.OpenReadBam("test_data/small.bam");
   
   std::string rules = "{\"global\" : {\"!anyflag\" : 1536, \"phred\" : 4}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
 
@@ -59,6 +60,19 @@ BOOST_AUTO_TEST_CASE( json_parse ) {
       assert(false);
     }
   }
+
+  std::cout << br.GetReadFilterCollection().EmitCounts() << std::endl;
+  
+  /// direct from string
+  br.SetReadFilterCollection(rules);
+  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+    // test global flag rule
+    if ( (rec.QCFailFlag() || rec.DuplicateFlag()) && rule) {
+      std::cerr << rec << std::endl;
+      assert(false);
+    }
+  }
+
     
 }
 
@@ -102,6 +116,10 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
 
   // add to the reader
   br.SetReadFilterCollection(rfc);
+
+  // display
+  std::cerr << br.displayReadFilterCollection() << std::endl;
+  std::cerr << br.printRegions() << std::endl;
 
   // read / filter the reads
   SeqLib::BamRecord rec;

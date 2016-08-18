@@ -145,8 +145,9 @@ class Flag {
  * Can optionally invert the range to make rule the complement of the range
  * (eg insert-size NOT in [300,600]
  */
-struct Range {
+class Range {
 
+public:
   /** Construct a default range with everything accepted
    */
   Range() : m_min(0), m_max(0), m_inverted(false), m_every(true) {}
@@ -206,7 +207,9 @@ private:
  * An alignment can be queried against a FlagRule to check if it 
  * satisfies the requirements for its alignment flag.
  */
-struct FlagRule {
+class FlagRule {
+
+ public:
 
   FlagRule() {
     dup  = Flag();
@@ -525,7 +528,11 @@ class ReadFilterCollection {
     return num;
   }
 
-  void countsToFile(const std::string& file) const;
+  /** Return the a tab-delimited tally of which filters were satisfied.
+   * Includes the header:
+   * total_seen_count total_passed_count region region_passed_count rule rule_passed_count
+   */
+  std::string EmitCounts() const;
 
  private:  
 
@@ -542,8 +549,6 @@ class ReadFilterCollection {
 
   // should we keep checking rules, even it passed? (useful for counting)
   bool m_fall_through = false;
-
-  const std::string GetScriptContents(const std::string& script);
 
   bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
 

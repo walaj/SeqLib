@@ -1091,32 +1091,18 @@ GRC ReadFilterCollection::getAllRegions() const
   return out;
 }
 
-  void ReadFilterCollection::countsToFile(const std::string& file) const
+  std::string ReadFilterCollection::EmitCounts() const
   {
-    std::ofstream of;
-    of.open(file);
+    std::stringstream of;
     char sep = '\t';
     of << "total_seen_count" << sep << "total_passed_count" << sep << "region" << sep << "region_passed_count" << sep << "rule" << sep << "rule_passed_count" << std::endl;
     for (auto& g : m_regions)
       for (auto& r : g.m_abstract_rules)
 	of << m_count_seen << sep << m_count << sep << g.id << sep << g.m_count << sep << r.id << sep << r.m_count << std::endl;
-    of.close();
+
+    return of.str();
     
   }
-
-const std::string ReadFilterCollection::GetScriptContents(const std::string& script) {
-  
-  std::ifstream iss_file(script.c_str());
-
-  std::string output;
-  std::string line;
-  while(getline(iss_file, line, '\n')) {
-    output += line;
-  }
-
-  return(output);
-
-}
 
   ReadFilter::ReadFilter() {}
 
