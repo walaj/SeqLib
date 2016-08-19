@@ -93,14 +93,17 @@ class BWAWrapper {
 
   /** Retrieve a bwa index object from disk
    * @param file path a to an index fasta (index with bwa index)
+   * @return True if successful
+   * @note Will delete the old index if already stored
    */
-  void retrieveIndex(const std::string& file);
+  bool retrieveIndex(const std::string& file);
 
   /** Dump the stored index to files 
    * Note that this does not write the fasta itself
-   * @param index_name write index files (*.sai, *.pac, *.ann, *.bwt, *.amb)
+   * @param index_name Write index files (*.sai, *.pac, *.ann, *.bwt, *.amb)
+   * @return True if able to write index
    */
-  void writeIndex(const std::string& index_name);
+  bool writeIndex(const std::string& index_name);
 
   /** Return the raw index */
   bwaidx_t* getIndex() const { return idx; }
@@ -162,6 +165,9 @@ class BWAWrapper {
   void set5primeClippingPenalty(int p);
 
   /** Set the match score. Scales -TdBOELU
+   * @note Since this scales penalty options, it should be 
+   * probably be specified first, and then other options 
+   * (eg gap penalty) can be set explicitly afterwards.
    * @param a See BWA-MEM -A
    * @exception Throws invalid_argument if a < 0
    */

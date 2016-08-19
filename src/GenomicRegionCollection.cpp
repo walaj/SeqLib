@@ -271,11 +271,14 @@ void GenomicRegionCollection<T>::mergeOverlappingIntervals() {
   }
 
   // move it over to a grv
-  m_grv = nullptr; // clear the old data 
+  m_grv->clear(); // clear the old data 
   std::vector<T> v{ std::make_move_iterator(std::begin(intervals)), 
       std::make_move_iterator(std::end(intervals)) };
   m_grv->insert(m_grv->end(), v.begin(), v.end());
   //m_grv = v;
+
+  // recreate the interval tree
+  createTreeMap();
 
 }
 
@@ -324,6 +327,14 @@ void GenomicRegionCollection<T>::sendToBED(const std::string file) {
     ofile << GenomicRegion::chrToString(it.chr) << "\t" << it.pos1 << "\t" << it.pos2 << "\t" << it.strand << std::endl;
   ofile.close();
 
+}
+
+template<class T>
+int GenomicRegionCollection<T>::width() const{ 
+  int wid = 0; 
+  for (auto& i : *m_grv) 
+    wid += i.width(); 
+  return wid; 
 }
 
 // divide a region into pieces of width and overlaps
@@ -496,7 +507,7 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
 // this is query
 template<class T>
 template<class K>
-GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(const K& gr, bool ignore_strand) const
+GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(const K& gr, bool ignore_strand, OverlapResult& o) const
 {  
 
   GenomicRegionCollection<GenomicRegion> output;
@@ -526,8 +537,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
 
   // loop through the hits and define the GenomicRegion
   for (auto& j : giv) { // giv points to positions on subject
-    if (ignore_strand || (m_grv->at(j.value).strand == gr.strand) )
-      {
+    if (ignore_strand || (m_grv->at(j.value).strand == gr.strand) ) {
 #ifdef DEBUG_OVERLAPS
 	std::cerr << "find overlaps hit " << j.start << " " << j.stop << " -- " << j.value << std::endl;
 #endif
@@ -586,7 +596,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
 #endif
 	  // loop through the hits and define the GenomicRegion
 	  for (auto& j : giv) { // giv points to positions on subject
-	    if (ignore_strand || (subject.m_gr->at(j.value).strand == m_grv->at(i).strand) )
+	    if (ignore_strand || (subject.m_grv->at(j.value).strand == m_grv->at(i).strand) )
 	      {
 		query_id.push_back(i);
 		subject_id.push_back(j.value);

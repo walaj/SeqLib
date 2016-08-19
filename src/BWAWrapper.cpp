@@ -25,9 +25,8 @@ namespace SeqLib {
 
   std::string BWAWrapper::ChrIDToName(int id) const {
 
-    assert(idx);
-    assert(id >= 0);
-
+    if (!idx)
+      throw std::runtime_error("Index has not be loaded / constructed");
     if (id < 0 || id >= idx->bns->n_seqs) 
       throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index for id of " + std::to_string(id) + " on IDX of size " + std::to_string(idx->bns->n_seqs));
 
@@ -99,7 +98,7 @@ namespace SeqLib {
 	throw std::invalid_argument("BWAWrapper::constructIndex - Reference sequences must have non-empty name and seq");
     
     if (idx) {
-      std::cout << "...clearing old index" << std::endl;
+      std::cerr << "...clearing old index" << std::endl;
       bwa_idx_destroy(idx);
       idx = 0;
     }
@@ -255,11 +254,6 @@ namespace SeqLib {
 
       a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
 
-      //if (name == "c_1_1453100_1473100_12")
-      //std::cerr << name << " secondary " << ar.a[i].secondary << " primary_score " << primary_score << " a.score " << ar.a[i].score << " sub_N " << ar.a[i].sub_n << 
-      //	" frac_rep " << ar.a[i].frac_rep << " flag " << a.flag << std::endl;
-
-
       // if score not sufficient or past cap, continue
       bool sec_and_low_score =  ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score;
       bool sec_and_cap_hit = ar.a[i].secondary >= 0 && (int)i > max_secondary;
@@ -270,9 +264,6 @@ namespace SeqLib {
 	primary_score = a.score;
 	//num_secondary = 0;
       }
-
-      //if (i == 0 && a.is_rev)
-      //first_is_rev = true;
 
 #ifdef DEBUG_BWATOOLS
       std::cerr << "allocing bamread" << std::endl;
@@ -329,24 +320,7 @@ namespace SeqLib {
       // allocate the cigar. Reverse if aligned to neg strand, since mem_aln_t stores
       // cigars relative to referemce string oreiatnion, not forward alignment
       memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a.cigar, a.n_cigar<<2);
-      //std::cerr << "ORIGINAL CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
 
-      /*      if (a.is_rev != first_is_rev) {
-	uint32_t temp;
-	int start = 0; 
-	int end = a.n_cigar - 1;
-	uint32_t* arr = bam_get_cigar(b.b);
-	while(start < end) {
-	    temp = arr[start];   
-	    arr[start] = arr[end];
-	    arr[end] = temp;
-	    ++start;
-	    --end;
-	  }  
-	  }*/
-
-      //std::cerr << "NEW CIGAR "  << b.CigarString() << " rev " << a.is_rev << std::endl;
-      
       // convert N to S or H
       int new_val = hardclip ? BAM_CHARD_CLIP : BAM_CSOFT_CLIP;
       uint32_t * cigr = bam_get_cigar(b.b);
@@ -410,7 +384,6 @@ namespace SeqLib {
       s[0] = 0xff;
 
       b.AddIntTag("NA", ar.n); // number of matches
-      //std::cerr << a.NM << std::endl;
       b.AddIntTag("NM", a.NM);
 
       if (a.XA)
@@ -424,21 +397,17 @@ namespace SeqLib {
       if (b.SecondaryFlag())
 	++secondary_count;
 
-      //std::cerr << "BWAWrapper::cname "  << name << " sub_n " << ar.a[i].sub_n << " secondary flag " << b.SecondaryFlag() << std::endl;
-      
       vec.push_back(b);
 
-      //#ifdef DEBUG_BWATOOLS
-      // print alignment
-      //printf("\t%c\t%s\t%ld\t%d\t", /*ks->name.s,*/ "+-"[a.is_rev], idx->bns->anns[a.rid].name, (long)a.pos, a.mapq);
-      //for (int k = 0; k < a.n_cigar; ++k) // print CIGAR
-      //	printf("%d%c", a.cigar[k]>>4, "MIDSH"[a.cigar[k]&0xf]);
-      // printf("\t%d\n", a.NM); // print edit distance
-      //#endif
 #ifdef DEBUG_BWATOOLS
+      // print alignment
+      printf("\t%c\t%s\t%ld\t%d\t", /*ks->name.s,*/ "+-"[a.is_rev], idx->bns->anns[a.rid].name, (long)a.pos, a.mapq);
+      for (int k = 0; k < a.n_cigar; ++k) // print CIGAR
+      	printf("%d%c", a.cigar[k]>>4, "MIDSH"[a.cigar[k]&0xf]);
+      printf("\t%d\n", a.NM); // print edit distance
       std::cerr << "final done" << std::endl;
 #endif
-
+      
       free(a.cigar); // don't forget to deallocate CIGAR
     }
     free (ar.a); // dealloc the hit list
@@ -645,33 +614,32 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   }
 
   
-  void BWAWrapper::retrieveIndex(const std::string& file)
+  bool BWAWrapper::retrieveIndex(const std::string& file)
   {
+
+    // read in the bwa index
+    std::cerr << "...loading in the index for BWA from location: " << file << std::endl;
+    bwaidx_t* idx_new = bwa_idx_load(file.c_str(), BWA_IDX_ALL);
+
+    if (!idx_new) 
+      return false;
 
     if (idx) {
       std::cerr << "...clearing old index" << std::endl;
       bwa_idx_destroy(idx);
-      idx = 0;
-    }
+    } 
     
-    // read in the bwa index
-    std::cerr << "...loading in the index for BWA from location: " << file << std::endl;
-    idx = bwa_idx_load(file.c_str(), BWA_IDX_ALL);
-    if (idx == NULL) {
-      std::cerr << "Could not load the reference: " << file << std::endl;
-      exit(EXIT_FAILURE);
-    }
+    idx = idx_new;
+    return true;
   }
 
 
-  void BWAWrapper::writeIndex(const std::string& index_name)
+  bool BWAWrapper::writeIndex(const std::string& index_name)
   {
     
-    if (!idx) {
-      std::cerr << "Error: No index initialized. Can't write to file " << std::endl;
-      return;
-    }
-
+    if (!idx) 
+      return false;
+    
     std::string bwt_name = index_name + ".bwt";
     std::string sa_name = index_name + ".sa";
     bwt_dump_bwt(bwt_name.c_str(), idx->bwt); 

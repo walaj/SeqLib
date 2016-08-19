@@ -18,6 +18,10 @@
 
 namespace SeqLib {
 
+  /** Simple structure to store overlap results 
+   */
+  typedef std::pair<size_t, size_t> OverlapResult;
+
 /** Class to store vector of intervals on the genome */
 typedef TInterval<int32_t> GenomicInterval;
 typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
@@ -155,11 +159,11 @@ class GenomicRegionCollection {
  GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand = false) const;
 
  template<class K>
- GenomicRegionCollection<GenomicRegion> findOverlaps(const K& gr, bool ignore_strand) const;
+ GenomicRegionCollection<GenomicRegion> findOverlaps(const K& gr, bool ignore_strand, OverlapResult& o) const;
 
- /** The total amount spanned by this collection
+ /** Return the total amount spanned by this collection
   */
- int width() const { int wid = 0; for (auto& i : m_grv) wid += i.width(); return wid; }
+ int width() const; 
 
  /** Increase the left and right ends of each contained GenomicRegion by 
   * the pad value.

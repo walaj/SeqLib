@@ -36,6 +36,68 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
   }
 }
 
+BOOST_AUTO_TEST_CASE( merge ) {
+
+  SeqLib::GRC grc;
+  // add two more that we know of
+  grc.add(SeqLib::GenomicRegion(23, 10,100));
+  grc.add(SeqLib::GenomicRegion(23, 20,110));
+
+  grc.add(SeqLib::GenomicRegion(2, 10,100));
+  grc.add(SeqLib::GenomicRegion(2, 20,110));
+  grc.add(SeqLib::GenomicRegion(2, 200,310));
+
+  grc.mergeOverlappingIntervals();
+  BOOST_CHECK_EQUAL(grc.size(), 3);
+  BOOST_CHECK_EQUAL(grc[0].chr, 2);
+  BOOST_CHECK_EQUAL(grc[1].chr, 2);
+  BOOST_CHECK_EQUAL(grc[2].chr, 23);
+  BOOST_CHECK_EQUAL(grc[2].pos2, 110);
+  BOOST_CHECK_EQUAL(grc[2].pos1, 10);
+}
+
+BOOST_AUTO_TEST_CASE ( interval_queries ) {
+
+  SeqLib::GRC grc;
+
+  // create a large GRC
+  for (int i = 0; i < 10; ++i) {
+    int chr = rand() % 23;
+    int pos = rand() % 10000;
+    grc.add(SeqLib::GenomicRegion(chr, pos, pos + 100));
+  }
+  grc.mergeOverlappingIntervals();
+
+  // add two more that we know of
+  grc.add(SeqLib::GenomicRegion(23, 10,100));
+  grc.add(SeqLib::GenomicRegion(23, 20,110));
+
+  // create the interval tree
+  grc.createTreeMap();
+
+  SeqLib::OverlapResult orl;
+  SeqLib::GRC results = grc.findOverlaps(SeqLib::GenomicRegion(23, 10, 100), true, orl);
+
+  for (auto& i : results)
+    std::cerr << " GRC overlaps results " << i << std::endl;
+  
+  BOOST_CHECK_EQUAL(results.size(), 2);
+  BOOST_CHECK_EQUAL(results[1].pos2, 100);
+
+  grc.mergeOverlappingIntervals();
+
+  for(auto& r : grc)
+    std::cerr << r << std::endl;
+
+  std::vector<int32_t> q, s;
+  results = grc.findOverlaps(grc, q, s, true);
+
+  std::cerr << " results.size " << results.size() << " Input size " << grc.size() << std::endl;
+  BOOST_CHECK_EQUAL(results.size(), grc.size());
+  BOOST_CHECK_EQUAL(results.width(), grc.width());
+  
+}
+
 BOOST_AUTO_TEST_CASE( json_parse ) {
 
   SeqLib::BamReader br;
@@ -539,6 +601,30 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
   SeqLib::BWAWrapper bwa;
 
+  // set some options
+  bwa.setGapOpen(32);
+  bwa.setGapExtension(1);
+  bwa.setMismatchPenalty(18);
+  bwa.setAScore(2);
+  bwa.setZDropoff(100);
+  bwa.set3primeClippingPenalty(5);
+  bwa.set5primeClippingPenalty(5);
+  bwa.setBandwidth(1000);
+  bwa.setReseedTrigger(1.5);
+
+  BOOST_CHECK_THROW(bwa.setGapOpen(-1), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.setGapExtension(-1), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.setMismatchPenalty(-18), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.setAScore(-2), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.setZDropoff(-100), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.set3primeClippingPenalty(-5), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.set5primeClippingPenalty(-5), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.setBandwidth(-1000), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.setReseedTrigger(-1.5), std::invalid_argument);
+
+  // no index loaded yet
+  BOOST_CHECK_THROW(bwa.ChrIDToName(1), std::runtime_error);
+
   // load a test index
   BOOST_TEST(SeqLib::read_access_test(TREF));
   bwa.retrieveIndex(TREF);
@@ -549,23 +635,50 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref2");
   BOOST_CHECK_THROW(bwa.ChrIDToName(2), std::out_of_range);
 
+  BOOST_CHECK(!bwa.retrieveIndex("test_data/small.bam"));
+
   SeqLib::BamHeader hh = bwa.HeaderFromIndex();
   BOOST_CHECK_EQUAL(hh.NumSequences(), 2);
 
+  // error check the index construction
+  SeqLib::USeqVector usv_bad1 = {
+    {"ref1", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
+    {"ref4", ""},
+    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
+  SeqLib::USeqVector usv_bad2 = {
+    {"", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
+    {"ref4", "ACCATCGCAGCAGCTATCTATTATATCGGCAGCATCTAGC"},
+    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
+  BOOST_CHECK_THROW(bwa.constructIndex(usv_bad1), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.constructIndex(usv_bad2), std::invalid_argument);
+
+  // construct a normal index
   SeqLib::USeqVector usv = {
     {"ref3", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
-    {"ref4", "CTACTTTATCATCTACACACTGCTACTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"},
+    {"ref4", "CTACTTTATCATCTACACACTGCCTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"},
     {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
 
+
   bwa.constructIndex(usv);
+
+  BOOST_CHECK_EQUAL(bwa.NumSequences(), 3);
+  bwa.ChrIDToName(1);
+
+  BOOST_CHECK_THROW(bwa.ChrIDToName(-1), std::out_of_range);
+  BOOST_CHECK_THROW(bwa.ChrIDToName(10000), std::out_of_range);
+
+  std::cerr << bwa.ChrIDToName(0) << std::endl;
+  std::cerr << bwa.ChrIDToName(1) << std::endl;
+  std::cerr << bwa.ChrIDToName(2) << std::endl;
 
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(0), "ref3");
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref4");
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(2), "ref5");
   BOOST_CHECK_THROW(bwa.ChrIDToName(3), std::out_of_range);
 
+
   // write the index
-  bwa.writeIndex(OREF);
+  BOOST_CHECK(bwa.writeIndex(OREF));
 
   // write the fasta
   std::ofstream os;
@@ -576,7 +689,7 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
     std::endl;
 
   // read it back
-  bwa.retrieveIndex(OREF);
+  BOOST_CHECK(bwa.retrieveIndex(OREF));
 
   // check that its good
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(0), "ref3");
@@ -604,7 +717,6 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
   // print info 
   std::cerr << bwa << std::endl;
-  
 }
 
 BOOST_AUTO_TEST_CASE( bam_reader ) {
