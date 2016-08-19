@@ -21,7 +21,7 @@
 #define HGREF "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta"
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
-/*
+
 BOOST_AUTO_TEST_CASE( read_filter_0 ) {
 
   SeqLib::BamReader br("test_data/small.bam");
@@ -797,7 +797,7 @@ BOOST_AUTO_TEST_CASE( gr_random ) {
   std::cerr << " RANDOM " << gr << std::endl;
 
 }
-*/
+
 BOOST_AUTO_TEST_CASE( bam_write ) {
 
 
@@ -806,7 +806,11 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   SeqLib::BamRecord rec;
 
+  // empty constructor
   SeqLib::BamWriter w;
+  
+  // specify bam explicitly
+  w = SeqLib::BamWriter(SeqLib::BAM);
 
   BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
   BOOST_CHECK_THROW(w.CloseBam(), std::runtime_error);
@@ -834,4 +838,8 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   w.CloseBam();
 
   w.makeIndex();
+
+  // print some info
+  std::cerr << w << std::endl;
+
 }
