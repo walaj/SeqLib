@@ -59,14 +59,6 @@ int GenomicRegion::getOverlap(const GenomicRegion& gr) const {
   }
 
   
-// write genomic region to a string
-std::string GenomicRegion::toString() const {
-  std::stringstream out;
-  out << chrToString(chr) << ":" << SeqLib::AddCommas<int>(pos1) << "-" << AddCommas<int>(pos2) << "(" << 
-    strand << ")"; 
-  return out.str();
-}
-
   std::string GenomicRegion::pointString() const {
     std::stringstream out;
     out << chrToString(chr) << ":" << SeqLib::AddCommas<int>(pos1) << "(" << strand << ")";
@@ -118,16 +110,9 @@ bool GenomicRegion::operator>=(const GenomicRegion &b) const {
   return (*this > b || *this == b);
 }
 
-std::string GenomicRegion::toPrettyString() const {
-  
-  std::stringstream ss;
-  ss << (chr + 1) << ":" << AddCommas(pos1) << "-" << AddCommas(pos2);
-  return ss.str();
-  
-}
-  
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
-  out << gr.toString();
+  out << gr.chrToString(gr.chr) << ":" << SeqLib::AddCommas<int>(gr.pos1) << "-" << AddCommas<int>(gr.pos2) << "(" << 
+    gr.strand << ")"; 
   return out;
 }
 
@@ -183,12 +168,11 @@ GenomicRegion::GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char
 
 }
 
-std::string GenomicRegion::chrToString(int32_t ref) {
+std::string GenomicRegion::chrToString(int32_t ref) const {
 
   std::string ref_id;
   if (ref < 0)
     ref_id = std::to_string(ref);
-  //throw std::invalid_argument( "GenomicRegion::chrToString - ref id must be >= 0" );
 
   if (ref == 22)
     ref_id = "X";
@@ -250,56 +234,23 @@ void GenomicRegion::random() {
   GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, const SeqLib::BamHeader& hdr)
   {
     // convert the pos strings
-    try {
-      pos1 = std::stoi(tpos1);
-    }
-    catch (...) {
-      std::cerr << "GenomicRegion: error making pos1 from " << tpos1 << std::endl;
-      pos1 = 0;
-    }
+    // throws invalid_argument if conversion can't be performed
+    // or throws an out_of_range if it is too big for result
+    pos1 = std::stoi(tpos1);
+    pos2 = std::stoi(tpos2);
     
-    // convert the pos strings
-    try {
-      pos2 = std::stoi(tpos2);
+    // if no header, assume that it is "standard"
+    if (hdr.isEmpty()) {
+      if (tchr == "X" || tchr == "chrX")
+	chr = 22;
+      else if (tchr == "Y" || tchr == "chrY")
+	chr = 23;
+      else 
+	chr = std::stoi(SeqLib::scrubString(tchr, "chr")) - 1;
+      return;
+    } else {
+      chr = hdr.Name2ID(tchr); //bam_name2id(hdr.get(), tchr.c_str());
     }
-    catch (...) {
-      std::cerr << " tchr " << tchr << " tpos1 " << tpos1 << std::endl;
-      std::cerr << "GenomicRegion: error making pos2 from " << tpos2 << std::endl;
-      pos2 = 0;
-    }
-    
-      chr = -1;
-
-      // if no header, assume that it is "standard"
-      if (hdr.isEmpty()) {
-	try { 
-	  if (tchr == "X" || tchr == "chrX")
-	    chr = 22;
-	  else if (tchr == "Y" || tchr == "chrY")
-	    chr = 23;
-	  else 
-	    chr = std::stoi(SeqLib::scrubString(tchr, "chr")) - 1;
-	} catch(...) {
-	  throw std::invalid_argument("GenomicRegion: error making chr from string " + tchr);
-	}
-	return;
-      } else {
-	chr = hdr.Name2ID(tchr); //bam_name2id(hdr.get(), tchr.c_str());
-      }
-
-      // TODO slow.
-      //bool found = false;
-      /*for (int i = 0; i < h->n_targets; ++i)
-	if (strcmp(tchr.c_str(), h->target_name[i]) == 0)
-	  {
-	    chr = i;
-	    //	    found = true;
-	    break;
-	  }
-      */
-      //debug turn this back on
-      //if (!found) 
-      //	std::cerr << "GenomicRegion: error, could not find matching chr in header for chr string " << tchr << std::endl;
-
   }
 }
+

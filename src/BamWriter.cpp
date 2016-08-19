@@ -37,10 +37,7 @@ namespace SeqLib {
     if (!fop)
       throw std::runtime_error("BamWriter::CloseBam() - Trying to close BAM that is already closed or never opened");
 
-    sam_close(fop.get());
-
-    // clear the shared_ptr to output BAM
-    fop = nullptr;
+    fop = nullptr; // this clears shared_ptr, calls sam_close
   }
 
 void BamWriter::makeIndex() const {
@@ -48,6 +45,9 @@ void BamWriter::makeIndex() const {
   // throw an error if BAM is not already closed
   if (fop)
     throw std::runtime_error("BamWriter::makeIndex - Trying to index open BAM. Close first with CloseBam()");
+
+  if (m_out.empty())
+    throw std::runtime_error("Trying to make index, but no BAM specified");    
   
   // call to htslib to build bai index
   if (bam_index_build(m_out.c_str(), 0) < 0) // 0 is "min_shift", which is 0 for bai index

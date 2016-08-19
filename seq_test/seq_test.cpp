@@ -21,7 +21,7 @@
 #define HGREF "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta"
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
-
+/*
 BOOST_AUTO_TEST_CASE( read_filter_0 ) {
 
   SeqLib::BamReader br("test_data/small.bam");
@@ -504,8 +504,14 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
   SeqLib::GenomicRegion gr3("X", "0", "10", SeqLib::BamHeader());
   BOOST_TEST(gr2 == gr3);
 
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion gr3("X", "a", "10", SeqLib::BamHeader()), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion gr3("X", "1000000000000000000000000000000000000000000000000000000000000000000000000000000", "10", SeqLib::BamHeader()), std::out_of_range);
+
   BOOST_CHECK_EQUAL(gr.distanceBetweenStarts(gr2), -1);
   BOOST_CHECK_EQUAL(gr2.distanceBetweenStarts(gr), -1);
+
+  SeqLib::BamReader br("test_data/small.bam");
+  BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("X","1","100", br.Header()).chr, 22);
 
   // check negative inputs
   SeqLib::GenomicRegion grn(-1,-11,-10);
@@ -523,6 +529,11 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
 
   // check point string
   BOOST_CHECK_EQUAL(grb.pointString(), "1:10,000(+)");
+
+  // check pretty string
+  std::stringstream ss;
+  ss << grb;
+  BOOST_CHECK_EQUAL(ss.str(), "1:10,000-10,001(+)");
 
 }
 
@@ -558,18 +569,6 @@ BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 
   BOOST_CHECK_THROW(gr.pad(-10), std::out_of_range);
 
-}
-
-BOOST_AUTO_TEST_CASE( genomic_region_check_to_string ) {
-
-  SeqLib::GenomicRegion gr("X", "0","1000", SeqLib::BamHeader());
-  BOOST_CHECK_EQUAL(gr.toString(), "X:0-1,000(*)");
-
-  SeqLib::GenomicRegion g2(0, 1, 10, '-');
-  BOOST_CHECK_EQUAL(g2.toString(), "1:1-10(-)");
-
-  // check default ref to string conversion (no header)
-  BOOST_CHECK_EQUAL(gr.ChrName(SeqLib::BamHeader()), "X");
 }
 
 BOOST_AUTO_TEST_CASE( genomic_check_overlaps ) {
@@ -789,4 +788,50 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
   
   BOOST_CHECK_EQUAL(seq, "NGAnACGTcagt");
 
+}
+
+BOOST_AUTO_TEST_CASE( gr_random ) {
+
+  SeqLib::GenomicRegion gr;
+  gr.random();
+  std::cerr << " RANDOM " << gr << std::endl;
+
+}
+*/
+BOOST_AUTO_TEST_CASE( bam_write ) {
+
+
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+
+  SeqLib::BamRecord rec;
+
+  SeqLib::BamWriter w;
+
+  BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
+  BOOST_CHECK_THROW(w.CloseBam(), std::runtime_error);
+  BOOST_CHECK_THROW(w.makeIndex(), std::runtime_error);
+  BOOST_CHECK_THROW(w.writeAlignment(rec), std::runtime_error);
+
+  w.Open("tmp.out.bam");
+
+  BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
+
+  w.SetHeader(h);
+
+  w.WriteHeader();
+
+
+  bool rule;
+  size_t count = 0;
+
+  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+    w.writeAlignment(rec);
+  }
+
+
+  BOOST_CHECK_THROW(w.makeIndex(), std::runtime_error);
+  w.CloseBam();
+
+  w.makeIndex();
 }

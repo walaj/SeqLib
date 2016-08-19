@@ -7,23 +7,23 @@
 #include "SeqLib/ReadFilter.h"
 
 struct idx_delete {
-  void operator()(hts_idx_t* x) { hts_idx_destroy(x); }
+  void operator()(hts_idx_t* x) { if (x) hts_idx_destroy(x); }
 };
 
 struct hts_itr_delete {
-  void operator()(hts_itr_t* x) { hts_itr_destroy(x); }
+  void operator()(hts_itr_t* x) { if (x) hts_itr_destroy(x); }
 };
 
 struct bgzf_delete {
-  void operator()(BGZF* x) { bgzf_close(x); }
+  void operator()(BGZF* x) { if(x) bgzf_close(x); }
 };
 
 struct bam_hdr_delete {
-  void operator()(bam_hdr_t* x) { bam_hdr_destroy(x); }
+  void operator()(bam_hdr_t* x) { if (x) bam_hdr_destroy(x); }
 };
 
 struct sam_write_delete {
-  void operator()(htsFile* x) { sam_close(x); }
+  void operator()(htsFile* x) { if (x) sam_close(x); }
 };
 
 

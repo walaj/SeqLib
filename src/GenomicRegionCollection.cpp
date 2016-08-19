@@ -104,7 +104,7 @@ void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, co
 
 	// parse the strings and send to genomci region
 	T gr(chr, pos, pos, hdr);
-	if (gr.valid()) {
+	if (gr.chr >= 0) {
 	  gr.pad(pad);
 	  m_grv->push_back(gr);
 	}
@@ -159,7 +159,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
       // construct the GenomicRegion
       T gr(chr, pos1, pos2, hdr);
 
-      if (gr.valid()) {
+      if (gr.chr >= 0) {
 	gr.pad(pad);
 	m_grv->push_back(gr);
       }
@@ -205,7 +205,7 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 
 	  // construct the GenomicRegion
 	  T gr(chr, pos, pos, hdr);
-	  if (gr.valid()) {
+	  if (gr.chr >= 0) {
 	    gr.pad(pad);
 	    m_grv->push_back(gr);
 	  }
