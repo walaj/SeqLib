@@ -16,8 +16,6 @@ typedef TInterval<Bin> BinInterval;
 typedef TIntervalTree<Bin> BinIntervalTree;
 typedef std::vector<BinInterval> BinIntervalVector;
 
-typedef uint32_t S;
-
 #define INTERCHR 250000000
 
 namespace SeqLib {
@@ -100,6 +98,10 @@ class Histogram {
   Histogram() {}
 
   /** Construct a new histogram with bins spaced evenly
+   * @param start Min value covered
+   * @param end Max value covered
+   * @param width Fixed bin width
+   * @exception Throws an invalid_argument if end <= start
    */
   Histogram(const int32_t& start, const int32_t& end, const uint32_t& width);
 
@@ -119,9 +121,9 @@ class Histogram {
    */
   std::vector<int32_t>::iterator end() { return m_ind.end(); }
   
-  /** initialize histogram from a vector of spans 
+  /** Initialize histogram from a vector of numeric values
    */
-  void initialSpans(size_t num_bins, std::vector<S>* pspanv, size_t min_bin_width = 0);
+  void Initialize(size_t num_bins, std::vector<int32_t>* pspanv, size_t min_bin_width = 0);
 
   /** Add an element to the histogram
    * @param elem Length of event to add

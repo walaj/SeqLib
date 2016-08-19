@@ -14,7 +14,8 @@ namespace SeqLib {
 Histogram::Histogram(const int32_t& start, const int32_t& end, const uint32_t& width)
 {
   
-  assert(end >= start);
+  if (end >= start)
+    throw std::invalid_argument("Histogram end must be > start");
 
   Bin bin;
   bin.bounds.first = start;
@@ -39,10 +40,10 @@ Histogram::Histogram(const int32_t& start, const int32_t& end, const uint32_t& w
   m_ind.push_back(bin.bounds.first);
 
   // add a final bin
-  bin.bounds.first = end+1;
-  bin.bounds.second = 250000000;
-  m_bins.push_back(bin);
-  m_ind.push_back(bin.bounds.first);
+  //bin.bounds.first = end+1;
+  //bin.bounds.second = INT_MAX;
+  //m_bins.push_back(bin);
+  //m_ind.push_back(bin.bounds.first);
 
 }
 
@@ -114,7 +115,7 @@ size_t Histogram::retrieveBinID(const int32_t& elem) const {
   return 0;
 }
 
-void Histogram::initialSpans(size_t num_bins, std::vector<S>* pspanv, size_t min_bin_width) {
+void Histogram::initialize(size_t num_bins, std::vector<int32_t>* pspanv, size_t min_bin_width) {
 
   // ensure that they spans are sorted
   std::sort(pspanv->begin(), pspanv->end());

@@ -16,8 +16,8 @@ seq_test_LDFLAGS = --coverage
 
 seq_test_SOURCES = seq_test.cpp \
 	../src/GenomicRegion.cpp \
-	../src/Histogram.cpp ../src/BamWriter.cpp ../src/BamReader.cpp ../src/BamStats.cpp \
+	../src/BamWriter.cpp ../src/BamReader.cpp \
 	../src/ReadFilter.cpp ../src/SeqLibUtils.cpp ../src/BamRecord.cpp \
-	../src/BWAWrapper.cpp ../src/STCoverage.cpp \
-        ../src/Fractions.cpp ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
+	../src/BWAWrapper.cpp \
+        ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
 	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp

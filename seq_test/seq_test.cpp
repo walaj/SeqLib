@@ -790,4 +790,3 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
   BOOST_CHECK_EQUAL(seq, "NGAnACGTcagt");
 
 }
-

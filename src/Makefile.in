@@ -51,15 +51,12 @@ am_libseqlib_a_OBJECTS = libseqlib_a-ReadFilter.$(OBJEXT) \
 	libseqlib_a-SeqPlot.$(OBJEXT) libseqlib_a-jsoncpp.$(OBJEXT) \
 	libseqlib_a-ssw_cpp.$(OBJEXT) libseqlib_a-ssw.$(OBJEXT) \
 	libseqlib_a-GenomicRegion.$(OBJEXT) \
-	libseqlib_a-Histogram.$(OBJEXT) \
 	libseqlib_a-RefGenome.$(OBJEXT) \
 	libseqlib_a-BamWriter.$(OBJEXT) \
-	libseqlib_a-BamReader.$(OBJEXT) libseqlib_a-BamStats.$(OBJEXT) \
+	libseqlib_a-BamReader.$(OBJEXT) \
 	libseqlib_a-SeqLibUtils.$(OBJEXT) \
 	libseqlib_a-BWAWrapper.$(OBJEXT) \
 	libseqlib_a-BamRecord.$(OBJEXT) \
-	libseqlib_a-STCoverage.$(OBJEXT) \
-	libseqlib_a-Fractions.$(OBJEXT) \
 	libseqlib_a-FermiAssembler.$(OBJEXT) \
 	libseqlib_a-BamHeader.$(OBJEXT)
 libseqlib_a_OBJECTS = $(am_libseqlib_a_OBJECTS)
@@ -175,15 +172,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libseqlib.a
 libseqlib_a_CPPFLAGS = \
-        -I.. \
-        -I../htslib -I../bwa -I../fermi-lite
+        -I.. -I../htslib -I../bwa -I../fermi-lite
 
 libseqlib_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
-			GenomicRegion.cpp Histogram.cpp RefGenome.cpp \
-			BamWriter.cpp BamReader.cpp BamStats.cpp SeqLibUtils.cpp \
-			BWAWrapper.cpp BamRecord.cpp \
-		        STCoverage.cpp Fractions.cpp FermiAssembler.cpp \
-			BamHeader.cpp
+			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp SeqLibUtils.cpp \
+			BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
 
 all: all-am
 
@@ -237,15 +230,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamHeader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamReader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamRecord.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamStats.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamWriter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-FermiAssembler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-Fractions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-GenomicRegion.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-Histogram.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-ReadFilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-RefGenome.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-STCoverage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-SeqLibUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-SeqPlot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-jsoncpp.Po@am__quote@
@@ -364,20 +353,6 @@ libseqlib_a-GenomicRegion.obj: GenomicRegion.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-GenomicRegion.obj `if test -f 'GenomicRegion.cpp'; then $(CYGPATH_W) 'GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/GenomicRegion.cpp'; fi`
 
-libseqlib_a-Histogram.o: Histogram.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-Histogram.o -MD -MP -MF $(DEPDIR)/libseqlib_a-Histogram.Tpo -c -o libseqlib_a-Histogram.o `test -f 'Histogram.cpp' || echo '$(srcdir)/'`Histogram.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-Histogram.Tpo $(DEPDIR)/libseqlib_a-Histogram.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Histogram.cpp' object='libseqlib_a-Histogram.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-Histogram.o `test -f 'Histogram.cpp' || echo '$(srcdir)/'`Histogram.cpp
-
-libseqlib_a-Histogram.obj: Histogram.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-Histogram.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-Histogram.Tpo -c -o libseqlib_a-Histogram.obj `if test -f 'Histogram.cpp'; then $(CYGPATH_W) 'Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/Histogram.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-Histogram.Tpo $(DEPDIR)/libseqlib_a-Histogram.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Histogram.cpp' object='libseqlib_a-Histogram.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-Histogram.obj `if test -f 'Histogram.cpp'; then $(CYGPATH_W) 'Histogram.cpp'; else $(CYGPATH_W) '$(srcdir)/Histogram.cpp'; fi`
-
 libseqlib_a-RefGenome.o: RefGenome.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-RefGenome.o -MD -MP -MF $(DEPDIR)/libseqlib_a-RefGenome.Tpo -c -o libseqlib_a-RefGenome.o `test -f 'RefGenome.cpp' || echo '$(srcdir)/'`RefGenome.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-RefGenome.Tpo $(DEPDIR)/libseqlib_a-RefGenome.Po
@@ -420,20 +395,6 @@ libseqlib_a-BamReader.obj: BamReader.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamReader.obj `if test -f 'BamReader.cpp'; then $(CYGPATH_W) 'BamReader.cpp'; else $(CYGPATH_W) '$(srcdir)/BamReader.cpp'; fi`
 
-libseqlib_a-BamStats.o: BamStats.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BamStats.o -MD -MP -MF $(DEPDIR)/libseqlib_a-BamStats.Tpo -c -o libseqlib_a-BamStats.o `test -f 'BamStats.cpp' || echo '$(srcdir)/'`BamStats.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BamStats.Tpo $(DEPDIR)/libseqlib_a-BamStats.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamStats.cpp' object='libseqlib_a-BamStats.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamStats.o `test -f 'BamStats.cpp' || echo '$(srcdir)/'`BamStats.cpp
-
-libseqlib_a-BamStats.obj: BamStats.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BamStats.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-BamStats.Tpo -c -o libseqlib_a-BamStats.obj `if test -f 'BamStats.cpp'; then $(CYGPATH_W) 'BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/BamStats.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BamStats.Tpo $(DEPDIR)/libseqlib_a-BamStats.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamStats.cpp' object='libseqlib_a-BamStats.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamStats.obj `if test -f 'BamStats.cpp'; then $(CYGPATH_W) 'BamStats.cpp'; else $(CYGPATH_W) '$(srcdir)/BamStats.cpp'; fi`
-
 libseqlib_a-SeqLibUtils.o: SeqLibUtils.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-SeqLibUtils.o -MD -MP -MF $(DEPDIR)/libseqlib_a-SeqLibUtils.Tpo -c -o libseqlib_a-SeqLibUtils.o `test -f 'SeqLibUtils.cpp' || echo '$(srcdir)/'`SeqLibUtils.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-SeqLibUtils.Tpo $(DEPDIR)/libseqlib_a-SeqLibUtils.Po
@@ -475,34 +436,6 @@ libseqlib_a-BamRecord.obj: BamRecord.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamRecord.cpp' object='libseqlib_a-BamRecord.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamRecord.obj `if test -f 'BamRecord.cpp'; then $(CYGPATH_W) 'BamRecord.cpp'; else $(CYGPATH_W) '$(srcdir)/BamRecord.cpp'; fi`
-
-libseqlib_a-STCoverage.o: STCoverage.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-STCoverage.o -MD -MP -MF $(DEPDIR)/libseqlib_a-STCoverage.Tpo -c -o libseqlib_a-STCoverage.o `test -f 'STCoverage.cpp' || echo '$(srcdir)/'`STCoverage.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-STCoverage.Tpo $(DEPDIR)/libseqlib_a-STCoverage.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='STCoverage.cpp' object='libseqlib_a-STCoverage.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-STCoverage.o `test -f 'STCoverage.cpp' || echo '$(srcdir)/'`STCoverage.cpp
-
-libseqlib_a-STCoverage.obj: STCoverage.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-STCoverage.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-STCoverage.Tpo -c -o libseqlib_a-STCoverage.obj `if test -f 'STCoverage.cpp'; then $(CYGPATH_W) 'STCoverage.cpp'; else $(CYGPATH_W) '$(srcdir)/STCoverage.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-STCoverage.Tpo $(DEPDIR)/libseqlib_a-STCoverage.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='STCoverage.cpp' object='libseqlib_a-STCoverage.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-STCoverage.obj `if test -f 'STCoverage.cpp'; then $(CYGPATH_W) 'STCoverage.cpp'; else $(CYGPATH_W) '$(srcdir)/STCoverage.cpp'; fi`
-
-libseqlib_a-Fractions.o: Fractions.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-Fractions.o -MD -MP -MF $(DEPDIR)/libseqlib_a-Fractions.Tpo -c -o libseqlib_a-Fractions.o `test -f 'Fractions.cpp' || echo '$(srcdir)/'`Fractions.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-Fractions.Tpo $(DEPDIR)/libseqlib_a-Fractions.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Fractions.cpp' object='libseqlib_a-Fractions.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-Fractions.o `test -f 'Fractions.cpp' || echo '$(srcdir)/'`Fractions.cpp
-
-libseqlib_a-Fractions.obj: Fractions.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-Fractions.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-Fractions.Tpo -c -o libseqlib_a-Fractions.obj `if test -f 'Fractions.cpp'; then $(CYGPATH_W) 'Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/Fractions.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-Fractions.Tpo $(DEPDIR)/libseqlib_a-Fractions.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Fractions.cpp' object='libseqlib_a-Fractions.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-Fractions.obj `if test -f 'Fractions.cpp'; then $(CYGPATH_W) 'Fractions.cpp'; else $(CYGPATH_W) '$(srcdir)/Fractions.cpp'; fi`
 
 libseqlib_a-FermiAssembler.o: FermiAssembler.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-FermiAssembler.o -MD -MP -MF $(DEPDIR)/libseqlib_a-FermiAssembler.Tpo -c -o libseqlib_a-FermiAssembler.o `test -f 'FermiAssembler.cpp' || echo '$(srcdir)/'`FermiAssembler.cpp

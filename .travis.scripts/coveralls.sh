@@ -20,7 +20,7 @@ echo "...running unit tests and code coverage"
   make
   ./seq_test
 
-  EXCL="-e seq_test/seq_test.cpp -e htslib -e bwa -e fermi-lite -e config.h -e seq_test/config.h -e seq_test/config.h -e src/jsoncpp.cpp -e src/json"
+  EXCL="-e src/non_api -e seq_test/seq_test.cpp -e htslib -e bwa -e fermi-lite -e config.h -e seq_test/config.h -e seq_test/config.h -e src/jsoncpp.cpp -e src/json"
   cpp-coveralls -r ../ -t ${COVERALLS_TOKEN} ${EXCL} ##--dryrun
   #find ./ -type f -regex ".*/[a-z_]+.*gcov" -delete
   #cpp-coveralls -r ../ -t ${COVERALLS_TOKEN} ${EXCL} -n
