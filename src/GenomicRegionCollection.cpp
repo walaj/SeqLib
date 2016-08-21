@@ -324,7 +324,7 @@ void GenomicRegionCollection<T>::sendToBED(const std::string file) {
 
   std::ofstream ofile(file.c_str(), std::ios::out);
   for (auto it : *m_grv)
-    ofile << GenomicRegion::chrToString(it.chr) << "\t" << it.pos1 << "\t" << it.pos2 << "\t" << it.strand << std::endl;
+    ofile << it << std::endl;
   ofile.close();
 
 }

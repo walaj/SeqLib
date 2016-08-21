@@ -229,9 +229,9 @@ namespace aho_corasick {
 		}
 	};
 
-	// class emit
+	// class ahoemit
 	template<typename CharType>
-	class emit: public interval {
+	class ahoemit: public interval {
 	public:
 		typedef std::basic_string<CharType>  string_type;
 		typedef std::basic_string<CharType>& string_ref_type;
@@ -240,11 +240,11 @@ namespace aho_corasick {
 		string_type d_keyword;
 
 	public:
-		emit()
+		ahoemit()
 			: interval(-1, -1)
 			, d_keyword() {}
 
-		emit(size_t start, size_t end, string_type keyword)
+		ahoemit(size_t start, size_t end, string_type keyword)
 			: interval(start, end)
 			, d_keyword(keyword) {}
 
@@ -263,27 +263,27 @@ namespace aho_corasick {
 
 		using string_type     = std::basic_string<CharType>;
 		using string_ref_type = std::basic_string<CharType>&;
-		using emit_type       = emit<CharType>;
+		using ahoemit_type       = ahoemit<CharType>;
 
 	private:
 		token_type  d_type;
 		string_type d_fragment;
-		emit_type   d_emit;
+		ahoemit_type   d_ahoemit;
 
 	public:
 		token(string_ref_type fragment)
 			: d_type(TYPE_FRAGMENT)
 			, d_fragment(fragment)
-			, d_emit() {}
+			, d_ahoemit() {}
 
-		token(string_ref_type fragment, const emit_type& e)
+		token(string_ref_type fragment, const ahoemit_type& e)
 			: d_type(TYPE_MATCH)
 			, d_fragment(fragment)
-			, d_emit(e) {}
+			, d_ahoemit(e) {}
 
 		bool is_match() const { return (d_type == TYPE_MATCH); }
 		string_type get_fragment() const { return string_type(d_fragment); }
-		emit_type get_emit() const { return d_emit; }
+		ahoemit_type get_ahoemit() const { return d_ahoemit; }
 	};
 
 	// class state
@@ -303,7 +303,7 @@ namespace aho_corasick {
 		ptr                            d_root;
 		std::map<CharType, unique_ptr> d_success;
 		ptr                            d_failure;
-		string_collection              d_emits;
+		string_collection              d_ahoemits;
 
 	public:
 		state(): state(0) {}
@@ -313,7 +313,7 @@ namespace aho_corasick {
 			, d_root(depth == 0 ? this : nullptr)
 			, d_success()
 			, d_failure(nullptr)
-			, d_emits() {}
+			, d_ahoemits() {}
 
 		ptr next_state(CharType character) const {
 			return next_state(character, false);
@@ -334,18 +334,18 @@ namespace aho_corasick {
 
 		size_t get_depth() const { return d_depth; }
 
-		void add_emit(string_ref_type keyword) {
-			d_emits.insert(keyword);
+		void add_ahoemit(string_ref_type keyword) {
+			d_ahoemits.insert(keyword);
 		}
 
-		void add_emit(const string_collection& emits) {
-			for (const auto& e : emits) {
+		void add_ahoemit(const string_collection& ahoemits) {
+			for (const auto& e : ahoemits) {
 				string_type str(e);
-				add_emit(str);
+				add_ahoemit(str);
 			}
 		}
 
-		string_collection get_emits() const { return d_emits; }
+		string_collection get_ahoemits() const { return d_ahoemits; }
 
 		ptr failure() const { return d_failure; }
 
@@ -389,9 +389,9 @@ namespace aho_corasick {
 		typedef state<CharType>         state_type;
 		typedef state<CharType>*        state_ptr_type;
 		typedef token<CharType>         token_type;
-		typedef emit<CharType>          emit_type;
+		typedef ahoemit<CharType>          ahoemit_type;
 		typedef std::vector<token_type> token_collection;
-		typedef std::vector<emit_type>  emit_collection;
+		typedef std::vector<ahoemit_type>  ahoemit_collection;
 
 		class config {
 			bool d_allow_overlaps;
@@ -449,7 +449,7 @@ namespace aho_corasick {
 			for (const auto& ch : keyword) {
 				cur_state = cur_state->add_state(ch);
 			}
-			cur_state->add_emit(keyword);
+			cur_state->add_ahoemit(keyword);
 		}
 
 		template<class InputIterator>
@@ -461,9 +461,9 @@ namespace aho_corasick {
 
 		token_collection tokenise(string_type text) {
 			token_collection tokens;
-			auto collected_emits = parse_text(text);
+			auto collected_ahoemits = parse_text(text);
 			size_t last_pos = -1;
-			for (const auto& e : collected_emits) {
+			for (const auto& e : collected_ahoemits) {
 				if (e.get_start() - last_pos > 1) {
 					tokens.push_back(create_fragment(e, text, last_pos));
 				}
@@ -471,37 +471,37 @@ namespace aho_corasick {
 				last_pos = e.get_end();
 			}
 			if (text.size() - last_pos > 1) {
-				tokens.push_back(create_fragment(typename token_type::emit_type(), text, last_pos));
+				tokens.push_back(create_fragment(typename token_type::ahoemit_type(), text, last_pos));
 			}
 			return token_collection(tokens);
 		}
 
-		emit_collection parse_text(string_type text) {
+		ahoemit_collection parse_text(string_type text) {
 			check_construct_failure_states();
 			size_t pos = 0;
 			state_ptr_type cur_state = d_root.get();
-			emit_collection collected_emits;
+			ahoemit_collection collected_ahoemits;
 			for (auto c : text) {
 				if (d_config.is_case_insensitive()) {
 					c = std::tolower(c);
 				}
 				cur_state = get_state(cur_state, c);
-				store_emits(pos, cur_state, collected_emits);
+				store_ahoemits(pos, cur_state, collected_ahoemits);
 				pos++;
 			}
 			if (d_config.is_only_whole_words()) {
-				remove_partial_matches(text, collected_emits);
+				remove_partial_matches(text, collected_ahoemits);
 			}
 			if (!d_config.is_allow_overlaps()) {
-				interval_tree<emit_type> tree(typename interval_tree<emit_type>::interval_collection(collected_emits.begin(), collected_emits.end()));
-				auto tmp = tree.remove_overlaps(collected_emits);
-				collected_emits.swap(tmp);
+				interval_tree<ahoemit_type> tree(typename interval_tree<ahoemit_type>::interval_collection(collected_ahoemits.begin(), collected_ahoemits.end()));
+				auto tmp = tree.remove_overlaps(collected_ahoemits);
+				collected_ahoemits.swap(tmp);
 			}
-			return emit_collection(collected_emits);
+			return ahoemit_collection(collected_ahoemits);
 		}
 
 	private:
-		token_type create_fragment(const typename token_type::emit_type& e, string_ref_type text, size_t last_pos) const {
+		token_type create_fragment(const typename token_type::ahoemit_type& e, string_ref_type text, size_t last_pos) const {
 			auto start = last_pos + 1;
 			auto end = (e.is_empty()) ? text.size() : e.get_start();
 			auto len = end - start;
@@ -509,7 +509,7 @@ namespace aho_corasick {
 			return token_type(str);
 		}
 
-		token_type create_match(const typename token_type::emit_type& e, string_ref_type text) const {
+		token_type create_match(const typename token_type::ahoemit_type& e, string_ref_type text) const {
 			auto start = e.get_start();
 			auto end = e.get_end() + 1;
 			auto len = end - start;
@@ -517,20 +517,20 @@ namespace aho_corasick {
 			return token_type(str, e);
 		}
 
-		void remove_partial_matches(string_ref_type search_text, emit_collection& collected_emits) const {
+		void remove_partial_matches(string_ref_type search_text, ahoemit_collection& collected_ahoemits) const {
 			size_t size = search_text.size();
-			emit_collection remove_emits;
-			for (const auto& e : collected_emits) {
+			ahoemit_collection remove_ahoemits;
+			for (const auto& e : collected_ahoemits) {
 				if ((e.get_start() == 0 || !std::isalpha(search_text.at(e.get_start() - 1))) &&
 					(e.get_end() + 1 == size || !std::isalpha(search_text.at(e.get_end() + 1)))
 					) {
 					continue;
 				}
-				remove_emits.push_back(e);
+				remove_ahoemits.push_back(e);
 			}
-			for (auto& e : remove_emits) {
-				collected_emits.erase(
-					std::find(collected_emits.begin(), collected_emits.end(), e)
+			for (auto& e : remove_ahoemits) {
+				collected_ahoemits.erase(
+					std::find(collected_ahoemits.begin(), collected_ahoemits.end(), e)
 					);
 			}
 		}
@@ -570,18 +570,18 @@ namespace aho_corasick {
 					}
 					state_ptr_type new_failure_state = trace_failure_state->next_state(transition);
 					target_state->set_failure(new_failure_state);
-					target_state->add_emit(new_failure_state->get_emits());
+					target_state->add_ahoemit(new_failure_state->get_ahoemits());
 				}
 				q.pop();
 			}
 		}
 
-		void store_emits(size_t pos, state_ptr_type cur_state, emit_collection& collected_emits) const {
-			auto emits = cur_state->get_emits();
-			if (!emits.empty()) {
-				for (const auto& str : emits) {
-					auto emit_str = typename emit_type::string_type(str);
-					collected_emits.push_back(emit_type(pos - emit_str.size() + 1, pos, emit_str));
+		void store_ahoemits(size_t pos, state_ptr_type cur_state, ahoemit_collection& collected_ahoemits) const {
+			auto ahoemits = cur_state->get_ahoemits();
+			if (!ahoemits.empty()) {
+				for (const auto& str : ahoemits) {
+					auto ahoemit_str = typename ahoemit_type::string_type(str);
+					collected_ahoemits.push_back(ahoemit_type(pos - ahoemit_str.size() + 1, pos, ahoemit_str));
 				}
 			}
 		}
