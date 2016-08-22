@@ -19,7 +19,7 @@ std::string SeqLib::scrubString(const std::string& toscrub, const std::string& t
   return ts;
 }
 
-int SeqLib::weightedRandom(const std::vector<double>& cs) {
+/*int SeqLib::weightedRandom(const std::vector<double>& cs) {
 
   // get a weighted random number
   size_t al = 0;
@@ -30,5 +30,5 @@ int SeqLib::weightedRandom(const std::vector<double>& cs) {
     ++al;
   }
   return al;
-}
+  }*/
 

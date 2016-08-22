@@ -66,7 +66,7 @@ namespace SeqLib {
     
   };
 
-struct CommandLineRegion {
+  /*struct CommandLineRegion {
   
 CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag(0), e_flag(0) {}
 
@@ -94,7 +94,7 @@ CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag
   }
 
 };
-
+  */
 
 /** Stores a rule for a single alignment flag.
  *
@@ -390,12 +390,12 @@ class ReadFilter {
 
   // ReadFilter(const ReadFilter& rf);
 
-  /** Make a ReadFilter with an all exclude or include rule
-   * @param Samtools style string, BED file or VCF 
-   * @param reg_type The type of rule this will be
-   * @param h BAM header that defines available chromosomes
-   */
-  ReadFilter(const CommandLineRegion& c, const BamHeader& hdr);
+  // Make a ReadFilter with an all exclude or include rule
+  // @param Samtools style string, BED file or VCF 
+  // @param reg_type The type of rule this will be
+  // @param h BAM header that defines available chromosomes
+  ///
+  //ReadFilter(const CommandLineRegion& c, const BamHeader& hdr);
 
   /** Return whether a read passes this filter
    * @param r A read to query

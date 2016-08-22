@@ -51,16 +51,6 @@ namespace SeqLib {
     
   }
 
-  int32_t BamRecord::AlignmentLength() const {
-    uint32_t* c = bam_get_cigar(b);
-    int32_t len = 0;
-    for (int k = 0; k < b->core.n_cigar; ++k) 
-      if (bam_cigar_type(bam_cigar_op(c[k]))&1 || bam_cigar_opchr(c[k]) == 'H') // consumes query
-	len += bam_cigar_oplen(c[k]);
-    //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
-    return len;
-  }
-
   BamRecord::BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
 
     StripedSmithWaterman::Aligner aligner;
@@ -154,7 +144,7 @@ namespace SeqLib {
     AddZTag(tag, tmp);
   }
 
-  void BamRecord::clearSeqQualAndTags() {
+  void BamRecord::ClearSeqQualAndTags() {
 
     int new_size = b->core.l_qname + ((b)->core.n_cigar<<2);// + 1; ///* 0xff seq */ + 1 /* 0xff qual */;
     b->data = (uint8_t*)realloc(b->data, new_size);

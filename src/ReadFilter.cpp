@@ -1106,7 +1106,7 @@ GRC ReadFilterCollection::getAllRegions() const
 
   ReadFilter::ReadFilter() {}
 
-  ReadFilter::ReadFilter(const CommandLineRegion& c, const SeqLib::BamHeader& hdr) {
+  /*  ReadFilter::ReadFilter(const CommandLineRegion& c, const SeqLib::BamHeader& hdr) {
 
     m_region_file = c.f;
 
@@ -1185,6 +1185,7 @@ GRC ReadFilterCollection::getAllRegions() const
     }
     
   }
+  */
 
 }
 

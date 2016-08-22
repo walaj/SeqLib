@@ -810,21 +810,20 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   SeqLib::BamWriter w;
   
   // specify bam explicitly
-  w = SeqLib::BamWriter(SeqLib::BAM);
+  //w = SeqLib::BamWriter(SeqLib::BAM);
 
   BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
   BOOST_CHECK_THROW(w.CloseBam(), std::runtime_error);
   BOOST_CHECK_THROW(w.makeIndex(), std::runtime_error);
   BOOST_CHECK_THROW(w.writeAlignment(rec), std::runtime_error);
 
-  w.Open("tmp.out.bam");
+  w.Open("tmp_out.bam");
 
   BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
 
   w.SetHeader(h);
 
   w.WriteHeader();
-
 
   bool rule;
   size_t count = 0;
@@ -841,5 +840,27 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   // print some info
   std::cerr << w << std::endl;
+
+}
+
+BOOST_AUTO_TEST_CASE( bam_record_more ) {
+
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamHeader h = br.Header();
+
+  SeqLib::BamRecord rec;
+  bool rule;
+  size_t count = 0;
+  
+  while(br.GetNextRead(rec, rule) && count++ < 100) {
+    rec.ClearSeqQualAndTags();
+    assert(rec.Sequence().empty());
+    assert(rec.Qualities().empty());
+    assert(rec.GetIntTag("NM") == 0);
+  }
+
+  br.resetAll();
+
+  SeqLib::ReadFilterCollection rf;
 
 }

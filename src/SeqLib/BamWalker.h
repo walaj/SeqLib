@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 
-#include "SeqLib/ReadFilter.h"
+#include "SeqLib/BamRecord.h"
 
 struct idx_delete {
   void operator()(hts_idx_t* x) { if (x) hts_idx_destroy(x); }

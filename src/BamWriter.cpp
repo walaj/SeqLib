@@ -49,10 +49,12 @@ void BamWriter::makeIndex() const {
   if (m_out.empty())
     throw std::runtime_error("Trying to make index, but no BAM specified");    
   
+  std::cerr << " BUILDING " << m_out.c_str() << std::endl;
+  std::cerr << " INDEX OUT " << sam_index_build(m_out.c_str(), 0) << std::endl;
   // call to htslib to build bai index
-  if (bam_index_build(m_out.c_str(), 0) < 0) // 0 is "min_shift", which is 0 for bai index
+  if (sam_index_build(m_out.c_str(), 0) < 0) // 0 is "min_shift", which is 0 for bai index
     throw std::runtime_error("BamWriter::makeIndex - Failed to create index");
-  
+  std::cerr << " FAILED TRINY TO BUILD INDEX FOR " << m_out << std::endl;  
 
 }
 
