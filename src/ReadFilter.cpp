@@ -377,31 +377,6 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 
   ReadFilter::~ReadFilter() {}
 
-// merge all of the intervals into one and send to a bed file
-void ReadFilterCollection::sendToBed(const std::string& file) const {
-
-  std::ofstream out(file);
-  if (!out) {
-    std::cerr << "Cannot write BED file: " << file << std::endl;
-    return;
-  }
-
-  // make a composite from all the rules
-  GenomicRegionCollection<GenomicRegion> comp;
-  for (auto& it : m_regions)
-    ;//comp.concat(it.m_grv);
-  
-  // merge it down
-  comp.mergeOverlappingIntervals();
-
-  // send to BED file
-  out << comp.sendToBED();
-  out.close();
-
-  return;
-}
-
-  
   bool Flag::parseJson(const Json::Value& value, const std::string& name) {
 
     if (value.isMember(name.c_str())) {
@@ -719,10 +694,9 @@ void ReadFilterCollection::sendToBed(const std::string& file) const {
       std::cerr << "MINIRULES CLIP AND LEN PASS. ID " << id << " "  << r << std::endl;
 #endif
 
-    
     // check for secondary alignments
     if (!xp.isEvery()) 
-      if (!xp.isValid(r.CountSecondaryAlignments()))
+      if (!xp.isValid(r.CountBWASecondaryAlignments()))
 	return false;
     
 #ifdef QNAME
@@ -1087,7 +1061,6 @@ GRC ReadFilterCollection::getAllRegions() const
   for (auto& i : m_regions)
     out.concat(i.m_grv);
 
-  out.mergeOverlappingIntervals();
   return out;
 }
 

@@ -3,6 +3,7 @@
 #include<boost/test/unit_test.hpp>
 
 #include <climits>
+#include <string>
 #include <boost/test/unit_test.hpp>
 
 #include "SeqLib/GenomicRegion.h"
@@ -27,6 +28,14 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
   SeqLib::BamReader br("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
+  // a BAM header check
+  BOOST_CHECK_EQUAL(h.GetSequenceLength(0), 249250621);
+  BOOST_CHECK_EQUAL(h.GetSequenceLength(3), 191154276);
+  BOOST_CHECK_EQUAL(h.GetSequenceLength("1"), 249250621);
+  BOOST_CHECK_EQUAL(h.GetSequenceLength("4"), 191154276);
+  BOOST_CHECK_EQUAL(h.GetSequenceLength("d4"), -1);
+  BOOST_CHECK_EQUAL(h.GetSequenceLength(10000), -1);
+
   SeqLib::BamRecord rec;
   bool rule;
   size_t count = 0;
@@ -34,6 +43,7 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
   while(br.GetNextRead(rec, rule) && count++ < 10000) {
     
   }
+
 }
 
 BOOST_AUTO_TEST_CASE( merge ) {
@@ -179,6 +189,12 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   // add to the reader
   br.SetReadFilterCollection(rfc);
 
+  SeqLib::GRC gback = rfc.getAllRegions();
+  BOOST_CHECK_EQUAL(gback.size(), g.size());
+  for (size_t i = 0; i < gback.size(); ++i)
+    assert(g[i] == gback[i]);
+  
+
   // display
   std::cerr << br.displayReadFilterCollection() << std::endl;
   std::cerr << br.printRegions() << std::endl;
@@ -270,6 +286,8 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
     
   BOOST_CHECK_EQUAL(r.GetSmartIntTag("ST").size(), 3);
   BOOST_CHECK_EQUAL(r.GetSmartIntTag("ST").at(2), 5);
+  BOOST_CHECK_EQUAL(r.GetSmartDoubleTag("ST").size(), 3);
+  BOOST_CHECK_EQUAL(r.GetSmartDoubleTag("ST").at(2), 5.0);
     
   BOOST_CHECK_EQUAL(r.GetSmartStringTag("ST").size(), 3);
   BOOST_CHECK_EQUAL(r.GetSmartStringTag("ST")[1], "3");
@@ -448,6 +466,29 @@ BOOST_AUTO_TEST_CASE( stdinput ) {
     w.writeAlignment(r);
   }
 
+}
+
+BOOST_AUTO_TEST_CASE( small_trie_from_file) {
+
+  SeqLib::AbstractRule ar;
+  const bool inverted = false;
+  ar.addMotifRule("test_data/motif.txt", inverted);
+
+  SeqLib::ReadFilterCollection rfc;
+  SeqLib::ReadFilter rf;
+  rf.AddRule(ar);
+  rfc.AddReadFilter(rf);
+
+  SeqLib::BamReader br;
+  br.OpenReadBam("test_data/small.bam");
+  br.SetReadFilterCollection(rfc);
+
+  SeqLib::BamRecord rec;
+  bool rule;
+  size_t count = 0;
+  while (br.GetNextRead(rec, rule) && count++ < 1000){
+  }
+  
 }
 
 BOOST_AUTO_TEST_CASE( large_trie ) {
@@ -666,9 +707,7 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_THROW(bwa.ChrIDToName(-1), std::out_of_range);
   BOOST_CHECK_THROW(bwa.ChrIDToName(10000), std::out_of_range);
 
-  std::cerr << bwa.ChrIDToName(0) << std::endl;
-  std::cerr << bwa.ChrIDToName(1) << std::endl;
-  std::cerr << bwa.ChrIDToName(2) << std::endl;
+  std::cout << bwa.ChrIDToName(2) << std::endl;
 
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(0), "ref3");
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref4");
@@ -702,8 +741,6 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   // reverse complement
   bwa.alignSingleSequence("CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGC", "name", brv2, 0.9, hardclip, 2);
 
-  std::cerr << "...checking aligned sequences" << std::endl;
-  std::cerr << "...brv.size() " << brv.size() << std::endl;
   BOOST_CHECK_EQUAL(brv[0].Qname(), "name");
   BOOST_CHECK_EQUAL(brv[0].ChrID(), 2);
   BOOST_CHECK_EQUAL(brv[0].Sequence(), "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT");
@@ -857,10 +894,63 @@ BOOST_AUTO_TEST_CASE( bam_record_more ) {
     assert(rec.Sequence().empty());
     assert(rec.Qualities().empty());
     assert(rec.GetIntTag("NM") == 0);
+    assert(rec.GetZTag("XA").empty() == (rec.CountBWASecondaryAlignments()==0));
+    rec.CountBWAChimericAlignments();
   }
 
   br.resetAll();
 
   SeqLib::ReadFilterCollection rf;
+
+}
+
+BOOST_AUTO_TEST_CASE( bam_record_maniuplation ) {
+
+  SeqLib::Cigar cig;
+
+  // manually construct a cigar
+  cig.add(SeqLib::CigarField('M', 10));
+  cig.add(SeqLib::CigarField('I', 1));
+  cig.add(SeqLib::CigarField('M', 10));
+  cig.add(SeqLib::CigarField('D', 1));
+  cig.add(SeqLib::CigarField('M', 10));
+  cig.add(SeqLib::CigarField('S', 10));
+  
+  // make a sequence
+  const std::string seq = std::string(10, 'A') + std::string(1, 'T') + std::string(10, 'C') + std::string(10, 'G') + std::string(10, 'A');
+
+  // check   
+  BOOST_CHECK_EQUAL(cig.NumQueryConsumed(), 41);
+  BOOST_CHECK_EQUAL(cig.NumReferenceConsumed(), 31);
+
+  std::stringstream ss;
+  ss << cig;
+
+  // cigar from string
+  SeqLib::Cigar cig2 = SeqLib::cigarFromString(ss.str());
+
+  // check that the string from / to are consistent
+  assert(cig == cig2);
+  assert(!(cig != cig2));
+  for (int i = 0; i < cig.size(); ++i)
+    assert(cig[i] == cig2[i]);
+  for (int i = 0; i < cig.size(); ++i)
+    assert(!(cig[i] != cig2[i]));
+
+  // manually make a read
+  SeqLib::GenomicRegion gr_wrong(0, 100, 131); 
+  SeqLib::GenomicRegion gr(0, 100, 130); 
+  
+  BOOST_CHECK_THROW(SeqLib::BamRecord("dumname", seq, &gr_wrong, cig), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::BamRecord("dumname", seq + "A", &gr, cig), std::invalid_argument);
+
+  SeqLib::BamRecord br("dumname", seq, &gr, cig);
+
+  BOOST_CHECK_EQUAL(br.Sequence(), seq);
+  BOOST_CHECK_EQUAL(br.GetCigar(), cig);
+  BOOST_CHECK_EQUAL(br.Qname(), "dumname");
+  BOOST_CHECK_EQUAL(br.Position(), 100);
+  BOOST_CHECK_EQUAL(br.Length(), 41);
+  BOOST_CHECK_EQUAL(br.ChrID(), 0);
 
 }

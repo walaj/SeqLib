@@ -4,10 +4,6 @@
 #include <bitset>
 #include <cctype>
 
-//#ifdef HAVE_BOOST
-//#include <boost/algorithm/string.hpp>
-//#endif
-
 #include "SeqLib/ssw_cpp.h"
 
 #define TAG_DELIMITER "^"
@@ -285,23 +281,33 @@ namespace SeqLib {
     
   }
 
-  int32_t BamRecord::CountSecondaryAlignments() const 
+  int32_t BamRecord::CountBWASecondaryAlignments() const 
   {
     int xp_count = 0;
     
     // xa tag
     std::string xar_s = GetZTag("XA");
-    //r_get_Z_tag(r, "XA", xar_s);
     if (xar_s.length()) {
       xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
     }
+
+    return xp_count;
     
-    // xp tag
+  }
+
+  int32_t BamRecord::CountBWAChimericAlignments() const 
+  {
+    int xp_count = 0;
+    
+    // sa tag (post bwa mem v0.7.5)
+    std::string xar_s = GetZTag("SA");
+    if (xar_s.length()) 
+      xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
+
+    // xp tag (pre bwa mem v0.7.5)
     std::string xpr_s = GetZTag("XP");
-    //r_get_Z_tag(r, "XP", xpr_s);
-    if (xpr_s.length()) {
+    if (xpr_s.length()) 
       xp_count += std::count(xpr_s.begin(), xpr_s.end(), ';');
-    }
 
     return xp_count;
     
@@ -435,11 +441,10 @@ namespace SeqLib {
     if (tmp.find(TAG_DELIMITER) != std::string::npos) {
       std::istringstream iss(tmp);
       std::string line;
-      while (std::getline(iss, line, CTAG_DELIMITER)) {
-	try { out.push_back(stoi(line)); } catch (...) { std::cerr << "Failed to read parsed int tag " << tag << " for value " << tmp << " with line " << line << std::endl; std::exit(EXIT_FAILURE); }
-      }
+      while (std::getline(iss, line, CTAG_DELIMITER))
+	out.push_back(stoi(line)); 
     } else {
-      try { out.push_back(stoi(tmp)); } catch (...) { std::cerr << "Failed to read int tag " << tag << " for value " << tmp << std::endl; std::exit(EXIT_FAILURE); }
+	out.push_back(stoi(tmp)); 
     }
     
     assert(out.size());
@@ -447,102 +452,42 @@ namespace SeqLib {
     
   }
 
-  bool BamRecord::coveredBase(int pos) const {
-
-    if (pos < 0) 
-      return false;
-
-    if (NumClip() == 0) 
-      return true;
+  std::vector<double> BamRecord::GetSmartDoubleTag(const std::string& tag) const {
     
-    Cigar cig = GetCigar();
-    assert(cig.size() > 1); // are clips, so has to be at least two fields
-
-    // get length of read (whether hardclipped or not)
-    int len = 0;
-    for (auto& c : cig) 
-      if (c.ConsumesQuery())
-	len += c.Length(); 
-
-    int lbound  = 0, posr = 0, rbound = len - 1;
-
-    // progress the left side
-    for (auto& c : cig) {
-      if (c.ConsumesQuery()) {
-	lbound = posr;
-	break;
-      }
-      posr += c.Length();
+    std::vector<double> out;
+    std::string tmp;
+    
+    tmp = GetZTag(tag);
+    if (tmp.empty())
+      return std::vector<double>();
+    
+    if (tmp.find(TAG_DELIMITER) != std::string::npos) {
+      std::istringstream iss(tmp);
+      std::string line;
+      while (std::getline(iss, line, CTAG_DELIMITER))
+	out.push_back(stod(line)); 
+    } else { // single entry
+	out.push_back(stod(tmp)); 
     }
-
-    // progress the right side
-    posr = Length() - 1;
-    for (auto& c : cig) {
-      if (c.ConsumesQuery()) {
-	rbound = posr;
-	break;
-      }
-      posr -= c.Length();
-    }
-
-    return pos >= lbound && pos <= rbound;
+    
+    assert(out.size());
+    return out;
+    
   }
 
-  bool BamRecord::coveredMatchBase(int pos) const {
-
-    if (pos < 0) 
-      return false;
-
-    if (NumClip() == 0) 
-      return true;
-    
-    Cigar cig = GetCigar();
-    assert(cig.size() > 1); // are clips, so has to be at least two fields
-
-    // get length of read (whether hardclipped or not)
-    int len = 0;
-    for (auto& c : cig) 
-      if (c.ConsumesQuery())
-	len += c.Length(); 
-
-    int lbound  = 0, posr = 0, rbound = len - 1;
-
-    // progress the left side
-    for (auto& c : cig) {
-      if (c.Type() == 'M') {
-	lbound = posr;
-	break;
-      }
-      posr += c.Length();
-    }
-
-    // progress the right side
-    posr = Length() - 1;
-    for (auto& c : cig) {
-      if (c.Type() == 'M') {
-	rbound = posr;
-	break;
-      }
-      posr -= c.Length();
-    }
-
-    return pos >= lbound && pos <= rbound;
-  }
-
-  
   BamRecord::BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig) {
 
     // make sure cigar fits with sequence
-    size_t clen = 0;
-    for (auto& i : cig)
-      if (i.ConsumesQuery())
-	//if (i.RawType() == BAM_CMATCH || i.RawType() == BAM_CSOFT_CLIP || i.RawType() == BAM_CINS)
-	clen += i.Length();
-    assert(seq.length() == clen);
+    if (cig.NumQueryConsumed() != seq.length())
+      throw std::invalid_argument("Sequence string length mismatches cigar consumed query bases");
+
+    // make sure alignment fits
+    if (cig.NumReferenceConsumed() != gr->width())
+      throw std::invalid_argument("Alignment position mismatches cigar consumed reference bases");
 
     init();
     b->core.tid = gr->chr;
-    b->core.pos = gr->pos1 + 1;
+    b->core.pos = gr->pos1; //gr->pos1 + 1;
     b->core.qual = 60;
     b->core.flag = 0;
     b->core.n_cigar = cig.size();
@@ -682,5 +627,17 @@ namespace SeqLib {
 */
 
   }
+
+  bool Cigar::operator==(const Cigar& c) const { 
+     if (m_data.size() != c.size())
+       return false;
+     if (!m_data.size()) // both empty
+       return true;
+     for (size_t i = 0; i < m_data.size(); ++i)
+       if (m_data[i].Type() != c[i].Type() || m_data[i].Length() != c[i].Length())
+	 return false;
+     return true;
+  }
+
   
 }

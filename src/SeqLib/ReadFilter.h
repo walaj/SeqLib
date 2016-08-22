@@ -505,11 +505,11 @@ class ReadFilterCollection {
   /** Print some basic information about this object */
   friend std::ostream& operator<<(std::ostream& out, const ReadFilterCollection &mr);
 
-  /** Merge all of the regions covered and write to BED file */
-  void sendToBed(const std::string& file) const;
-
   /** Return a GenomicRegionCollection of all
    * of the regions specified by the filters.
+   * @note This returns the raw regions. It may be useful
+   * to run mergeOverlappingIntervals on the output to see
+   * the minimal covered regions.
    */
   GRC getAllRegions() const;
 

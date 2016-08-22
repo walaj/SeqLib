@@ -93,6 +93,12 @@ class CigarField {
   /** Returuns true cigar op matches bases on the query (MIS=X) */
   inline bool ConsumesQuery() const { return bam_cigar_type(bam_cigar_op(data))&1;  }
 
+  /** Return whether two CigarField objects have same op and len */
+  inline bool operator==(const CigarField& c) const { return c.Type() == Type() && c.Length() == Length(); }
+
+  /** Return whether two CigarField objects have different op and/or len */
+  inline bool operator!=(const CigarField& c) const { return !(c == *this); } 
+
  private:
 
   // first 4 bits hold op, last 28 hold len
@@ -133,18 +139,42 @@ class CigarField {
    inline CigarField& front() { return m_data.front(); }
 
    /** Returns the number of cigar ops */
-   size_t size() const { return m_data.size(); }
+   inline size_t size() const { return m_data.size(); }
 
    /** Returns the i'th cigar op */
-   CigarField& operator[](size_t i) { return m_data[i]; }
+   inline CigarField& operator[](size_t i) { return m_data[i]; }
 
    /** Returns the i'th cigar op (const) */
    const CigarField& operator[](size_t i) const { return m_data[i]; }
 
+   /** Return the number of query-consumed bases */
+   inline int NumQueryConsumed() const {
+     int out = 0;
+     for (auto& c : m_data)
+       if (c.ConsumesQuery())
+	 out += c.Length();
+     return out;
+   }
+
+   /** Return the number of reference-consumed bases */
+   inline int NumReferenceConsumed() const {
+     int out = 0;
+     for (auto& c : m_data)
+       if (c.ConsumesReference())
+	 out += c.Length();
+     return out;
+   }
+
    /** Add a new cigar op */
-   void add(const CigarField& c) { 
+   inline void add(const CigarField& c) { 
      m_data.push_back(c); 
    }
+
+   /** Return whether two Cigar objects are equivalent */
+   bool operator==(const Cigar& c) const;
+   
+   /** Return whether two Cigar objects are not equivalent */
+   bool operator!=(const Cigar& c) const { return !(c == *this); }
 
   /** Print cigar string (eg 35M25S) */
   friend std::ostream& operator<<(std::ostream& out, const Cigar& c);
@@ -176,7 +206,15 @@ class BamRecord {
 
  public:
 
-  /** Construct a BamRecord with perfect "alignment"
+  /** Construct a BamRecord manually from a name, sequence, cigar and location
+   * @param name Name of the read
+   * @param seq Sequence of the read (compsed of ACTG or N).
+   * @param gr Location of the alignment
+   * @param cig Cigar alignment
+   * @exception Throws an invalid_argument exception if length of seq is not commensurate
+   * with number of query-bases consumed in cigar. 
+   * @exception Throws an invalid_argument exception if width of gr is not commensurate
+   * with number of reference-bases consumed in cigar. 
    */
   BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
   
@@ -290,8 +328,18 @@ class BamRecord {
   /** Get the alignment position of mate */
   inline int32_t MatePosition() const { return b ? b->core.mpos: -1; }
 
-  /** Count the number of secondary alignments by looking at XA and XP tags */
-  int32_t CountSecondaryAlignments() const;
+  /** Count the number of secondary alignments by looking at XA tag.
+   * @note A secondary alignment is an alternative mapping. This may not
+   * work for non-BWA aligners that may not place the XA tag.
+   */
+  int32_t CountBWASecondaryAlignments() const;
+
+  /** Count the number of chimeric alignments by looking at XP and SA tags 
+   * @note A secondary alignment is an alternative mapping. This may not
+   * work for non-BWA aligners that may not place the XP/SA tags. BWA-MEM 
+   * used the XP tag prior to v0.7.5, and SA aftewards.
+   */
+  int32_t CountBWAChimericAlignments() const;
 
   /** Get the end of the alignment */
   inline int32_t PositionEnd() const { return b ? bam_endpos(b.get()) : -1; }
@@ -546,13 +594,21 @@ class BamRecord {
    */
   std::string GetZTag(const std::string& tag) const;
   
-  /** Get a vector of ints from a Z tag delimited by "x"
+  /** Get a vector of type int from a Z tag delimited by "^"
    * @param tag Name of the tag eg "AL"
    * @return A vector of ints, retrieved from the x delimited Z tag
+   * @exception Throws an invalid_argument if cannot convert delimited field val to int
    */
   std::vector<int> GetSmartIntTag(const std::string& tag) const;
 
-  /** Get a vector of strings from a Z tag delimited by "x"
+  /** Get a vector of type double from a Z tag delimited by "x"
+   * @param tag Name of the tag eg "AL"
+   * @return A vector of double elems, retrieved from the "^" delimited Z tag
+   * @exception Throws an invalid_argument if cannot convert delimited field val to double
+   */
+  std::vector<double> GetSmartDoubleTag(const std::string& tag) const;
+
+  /** Get a vector of strings from a Z tag delimited by "^"
    * @param tag Name of the tag eg "CN"
    * @return A vector of strngs, retrieved from the x delimited Z tag
    */
@@ -690,26 +746,9 @@ class BamRecord {
   /** Return the raw pointer */
   inline bam1_t* raw() const { return b.get(); }
 
-  /** Check if base at position on read is covered by alignment M or I (not clip)
-   *
-   * Example: Alignment with 50M10I10M20S -- 
-   * 0-79: true, 80+ false
-   * @param pos Position on base (0 is start)
-   * @return true if that base is aligned (I or M)
-   */
-  bool coveredBase(int pos) const;
-
-  /** Check if base at position on read is covered by match only (M)
-   *
-   * Example: Alignment with 10S50M20S -- 
-   * 0-9: false, 10-59: true, 60+: false
-   * @param pos Position on base (0 is start)
-   * @return true if that base is aligned (M)
-   */
-  bool coveredMatchBase(int pos) const;
-
-  std::shared_ptr<bam1_t> b; // need to move this to private  
   private:
+  
+  std::shared_ptr<bam1_t> b; // need to move this to private  
 
 };
 
