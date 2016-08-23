@@ -14,12 +14,6 @@ namespace SeqLib {
     if (hdr.isEmpty())
       throw std::runtime_error("BamWriter::WriteHeader - No header supplied. Provide with SetWriteHeader");
 
-    // hts open the writer
-    //if (!fop) { // default is bam. if already set by flag, don't reopen
-    //  assert(m_out.length());
-    //  fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), "wb"), sam_write_delete());
-    // }
-    
     if (!fop) 
       throw std::runtime_error("BamWriter::WriteHeader - Output not open for writing. Open with Open()");
     
@@ -60,8 +54,7 @@ void BamWriter::makeIndex() const {
     m_out = f;
 
     // hts open the writer
-    //fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), output_format.c_str()), sam_write_delete());
-    fop = std::shared_ptr<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), sam_write_delete());
+    fop = std::shared_ptr<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), htsFile_delete());
 
     if (!fop)
       throw std::runtime_error("BamWriter::Open - Cannot open output file: " + f);

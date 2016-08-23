@@ -1,11 +1,6 @@
 #include "SeqLib/BamWalker.h"
 #include "SeqLib/BamReader.h"
 
-extern "C" {
-#include "htslib/cram/cram.h"
-#include "htslib/cram/cram_io.h"
-}
-
 //#define DEBUG_WALKER 1
 
 namespace SeqLib {
@@ -26,9 +21,8 @@ bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t>
     idx = passed_idx;
   
   //HTS set region
-  if (!idx) {
-    idx = std::shared_ptr<hts_idx_t>(hts_idx_load(m_in.c_str(), HTS_FMT_BAI), idx_delete());
-  }
+  if (!idx) 
+    idx = std::shared_ptr<hts_idx_t>(sam_index_load(fp_htsfile.get(), m_in.c_str()), idx_delete());
   
   if (gp.chr >= m_hdr.NumSequences()) {
     std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << m_hdr.NumSequences() << std::endl;
@@ -40,6 +34,7 @@ bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t>
     std::cerr << "...suggest rebuilding index with samtools index" << std::endl;
     return false;
   }
+
   hts_itr = std::shared_ptr<hts_itr_t>(sam_itr_queryi(idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
 
   if (!hts_itr) {
@@ -107,10 +102,7 @@ BamReader::BamReader() {}
 bool BamReader::__open_BAM_for_reading()
 {
 
-  // HTS open the reader
-  //fp = (m_in == "-" ) ? std::shared_ptr<BGZF>(bgzf_fdopen(fileno(stdin), "r")) : std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
-  //const char format = 'b';
-  fp_htsfile = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r")); 
+  fp_htsfile = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
 
   // open cram reference
   if (!m_cram_reference.empty()) {
@@ -175,7 +167,6 @@ void BamReader::printRuntimeMessage(const ReadCount &rc_main, const BamRecord &r
 bool BamReader::GetNextRead(BamRecord& r, bool& rule)
 {
   
-  void* dum = 0;
   bam1_t* b = bam_init1(); 
 
   int32_t valid;

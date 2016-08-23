@@ -40,6 +40,6 @@ read_write_SOURCES = read_write.cpp \
 	../src/GenomicRegion.cpp \
 	../src/BamWriter.cpp ../src/BamReader.cpp \
 	../src/ReadFilter.cpp ../src/SeqLibUtils.cpp ../src/BamRecord.cpp \
-	../src/BWAWrapper.cpp \
+	../src/BWAWrapper.cpp ../src/BamPolyReader.cpp \
         ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
-	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp
+	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp 

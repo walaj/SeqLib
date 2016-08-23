@@ -1,5 +1,6 @@
 #include "SeqLib/BamPolyReader.h"
 
+
 //#define DEBUG_WALKER 1
 
 namespace SeqLib {
@@ -17,9 +18,9 @@ bool BamPolyReader::__set_region(const GenomicRegion& gp) {
   
   //HTS set region for all of the indicies
   for (auto& b : m_bams) {
-    if (!b.idx) {
-      b.idx = std::shared_ptr<hts_idx_t>(hts_idx_load(b.m_in.c_str(), HTS_FMT_BAI), idx_delete());
-    }
+    if ( (b.fp->format.format == 4 || b.fp->format.format == 6) && !b.idx)  // BAM (4) or CRAM (6)
+      b.idx = std::shared_ptr<hts_idx_t>(sam_index_load(b.fp.get(), b.m_in.c_str()), idx_delete());
+    
     if (!b.idx) {
       std::cerr << "Failed to load index file for file " << b.m_in << std::endl;
       std::cerr << "...suggest rebuilding index with samtools index" << std::endl;
@@ -29,8 +30,10 @@ bool BamPolyReader::__set_region(const GenomicRegion& gp) {
       std::cerr << "Failed to set region on " << gp << ". Chr ID is bigger than n_targets=" << b.m_hdr.NumSequences() << std::endl;
       return false;
     }
- 
+
+    // should work for BAM or CRAM
     b.hts_itr = std::shared_ptr<hts_itr_t>(sam_itr_queryi(b.idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
+
     if (!b.hts_itr)
       std::cerr << "Error: Failed to set region: " << gp << std::endl; 
   }
@@ -77,7 +80,15 @@ bool BamPolyReader::setBamReaderRegion(const GenomicRegion& g)
 }
 
   bool BamPolyReader::OpenReadBam(const std::string& bam) {
+    
+    // id will be bam file name, unless
+    // its here mutliple times, then name + random num
+    std::string id = bam;
+    for (auto& b : m_bams)
+      if (b.id == bam)
+	id = id + ":" + std::to_string(rand() % 10000);
     m_bams.push_back(_Bam(bam));
+    m_bams.back().id = id;
     return m_bams.back().open_BAM_for_reading();
   }
   
@@ -87,13 +98,12 @@ bool _Bam::open_BAM_for_reading()
 {
 
   // HTS open the reader
-  fp = m_in == "-" ? std::shared_ptr<BGZF>(bgzf_fdopen(fileno(stdin), "r")) : std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
-  
+  fp = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+
   if (!fp) 
     return false; 
 
-  //br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete()g);
-  bam_hdr_t * hdr = bam_hdr_read(fp.get());
+  bam_hdr_t * hdr = sam_hdr_read(fp.get());
   m_hdr = BamHeader(hdr); // calls BamHeader(bam_hdr_t), makes a copy
   
   if (!m_hdr.get()) 
@@ -108,10 +118,94 @@ bool _Bam::open_BAM_for_reading()
 
 bool BamPolyReader::GetNextRead(BamRecord& r, bool& rule)
 {
-  
-  return true;
-}
 
+  bool found = false;
+
+  // loop the files and load the next read
+  // for the one that was emptied last
+  for (auto& bam : m_bams) {
+
+    if (!bam.empty)
+      continue; // read not loaded, make it
+    
+    bam1_t* b = bam_init1(); 
+    int32_t valid;
+    
+    if (bam.hts_itr == 0) {
+      valid = sam_read1(bam.fp.get(), bam.m_hdr.get_(), b);    
+      if (valid < 0) { 
+	
+#ifdef DEBUG_WALKER
+	std::cerr << "ended reading on null hts_itr" << std::endl;
+#endif
+	goto endloop;
+      } 
+    } else {
+      
+      //changed to sam from hts_itr_next
+      valid = sam_itr_next(bam.fp.get(), bam.hts_itr.get(), b);
+    }
+    
+    if (valid < 0) { // read not found
+      do {
+	
+#ifdef DEBUG_WALKER
+	std::cerr << "Failed read, trying next region. Moving counter to " << m_region_idx << " of " << m_region.size() << " FP: "  << fp_htsfile << " hts_itr " << std::endl;
+#endif
+	
+	// try next region, return if no others to try
+	++m_region_idx; // increment to next region
+	if (m_region_idx >= m_region.size()) 
+	  goto endloop;
+	
+	// next region exists, try it
+	__set_region(m_region[m_region_idx]);
+	valid = sam_itr_next(bam.fp.get(), bam.hts_itr.get(), b);
+      } while (valid <= 0); // keep trying regions until works
+      
+      
+    }
+    
+    bam.empty = false;
+    bam.next_read.assign(b); // = std::shared_ptr<bam1_t> (b, free_delete());
+    continue;
+
+    // couldn't find a valid read anywhere, move to next BAM
+  endloop:
+    bam_destroy1(b);
+    bam.empty = true;
+    continue;
+  }
+
+  // choose the one to return
+  // sort based on chr and left-most alignment pos. Same as samtools
+  int min_chr = INT_MAX;
+  int min_pos = INT_MAX;
+  size_t hit = 0, count = 0;
+  for (auto& bam : m_bams) {
+    ++count;
+
+    // dont check if already marked for removal
+    if (bam.empty) 
+      continue;
+    
+    found = true;
+    if (bam.next_read.ChrID() < min_chr || 
+	(bam.next_read.Position() <  min_pos && bam.next_read.ChrID() == min_chr)) {
+      min_pos = bam.next_read.Position();
+      min_chr = bam.next_read.ChrID();
+      r = bam.next_read;
+      hit = count - 1;
+    }
+  }
+  
+  // mark the one we just found as empty
+  if (found)
+    m_bams[hit].empty = true;
+
+  return found;
+}
+  
 std::string BamPolyReader::printRegions() const {
 
   std::stringstream ss;

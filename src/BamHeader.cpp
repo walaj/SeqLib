@@ -38,7 +38,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   void BamHeader::WriteToStdout() const {
 
-    std::shared_ptr<htsFile> f = std::shared_ptr<htsFile>(sam_open("-", "w"), sam_write_delete());
+    std::shared_ptr<htsFile> f = std::shared_ptr<htsFile>(sam_open("-", "w"), htsFile_delete());
     f->format.format == text_format;
     sam_hdr_write(f.get(), h.get());
   }

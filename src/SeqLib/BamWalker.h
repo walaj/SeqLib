@@ -6,6 +6,11 @@
 
 #include "SeqLib/BamRecord.h"
 
+extern "C" {
+#include "htslib/cram/cram.h"
+#include "htslib/cram/cram_io.h"
+}
+
 struct idx_delete {
   void operator()(hts_idx_t* x) { if (x) hts_idx_destroy(x); }
 };
@@ -22,10 +27,9 @@ struct bam_hdr_delete {
   void operator()(bam_hdr_t* x) { if (x) bam_hdr_destroy(x); }
 };
 
-struct sam_write_delete {
+struct htsFile_delete { // shoudl also close cram index
   void operator()(htsFile* x) { if (x) sam_close(x); }
 };
-
 
 // Phred score transformations
 inline int char2phred(char b) {

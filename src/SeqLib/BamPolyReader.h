@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BAM_READER_H__
-#define SEQLIB_BAM_READER_H__
+#ifndef SEQLIB_BAM_POLYREADER_H__
+#define SEQLIB_BAM_POLYREADER_H__
 
 #include <cassert>
 #include <memory>
@@ -12,19 +12,25 @@ namespace SeqLib {
   // store file accessors for single BAM
   struct _Bam {
     
-    _Bam(const std::string& m) : m_in(m) {}
+  _Bam(const std::string& m) : m_in(m) {}
     ~_Bam() {}
     
-    std::shared_ptr<BGZF> fp;
+    std::shared_ptr<htsFile> fp;
     std::shared_ptr<hts_idx_t> idx;
     std::shared_ptr<hts_itr_t> hts_itr;
     std::string m_in;
     BamHeader m_hdr;
 
+    BamRecord next_read;
+
+    bool empty = true;
+    
     bool open_BAM_for_reading();
 
-  };
+    std::string id;
 
+  };
+  
 /** Walk along a BAM or along BAM regions and stream in/out reads
  */
 class BamPolyReader {
@@ -92,6 +98,9 @@ class BamPolyReader {
 
   /** Reset all the counters and regions, but keep the loaded index */
   void resetAll();
+
+  /** Return a header to the first file */
+  BamHeader Header() const { if (m_bams.size()) return m_bams[0].m_hdr; return BamHeader(); }
 
  protected:
 
