@@ -28,10 +28,6 @@ namespace SeqLib {
     
   }
   
-  void BamWriter::SetWriteHeader(bam_hdr_t* hdr) {
-    hdr_write = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete()); 
-  }
-
   void BamWriter::CloseBam() {
 
     if (!fop)
@@ -64,7 +60,8 @@ void BamWriter::makeIndex() const {
     m_out = f;
 
     // hts open the writer
-    fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), output_format.c_str()), sam_write_delete());
+    //fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), output_format.c_str()), sam_write_delete());
+    fop = std::shared_ptr<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), sam_write_delete());
 
     if (!fop)
       throw std::runtime_error("BamWriter::Open - Cannot open output file: " + f);
@@ -73,9 +70,9 @@ void BamWriter::makeIndex() const {
   BamWriter::BamWriter(int o) {
 
     switch(o) {
-    case BAM : output_format = "wb";
-    case CRAM : output_format = "wc";
-    case SAM : output_format = "w";
+    case BAM :  output_format = "wb"; break;
+    case CRAM : output_format = "wc"; break;
+    case SAM :  output_format = "w"; break;
     }
 
   }
@@ -108,14 +105,11 @@ std::ostream& operator<<(std::ostream& out, const BamWriter& b)
   return out;
 }
 
-void BamWriter::setCram(const std::string& ref) {
+bool BamWriter::SetCramReference(const std::string& ref) {
 
-  fop = std::shared_ptr<htsFile>(sam_open(m_out.c_str(), "wc"), sam_write_delete()); 
-  if (!fop) {
-    std::cerr << "!!!\n!!!\n!!!\nCannot open CRAM file for writing. Will try BAM next. File: " <<  m_out << std::endl;
-    return;
-  }
-  
+  if (!fop)
+    return false;
+
   // need to open reference for CRAM writing 
   char* fn_list = samfaipath(ref.c_str());
   if (fn_list) {
@@ -125,11 +119,6 @@ void BamWriter::setCram(const std::string& ref) {
   } else {
     std::cerr << "Failed to get the reference for CRAM compression" << std::endl;
   }
-  m_print_header = true; 
-}
-
-void BamWriter::setStdout() {
-  fop = std::shared_ptr<htsFile>(sam_open("-", "w"), sam_write_delete()); 
 }
 
 }

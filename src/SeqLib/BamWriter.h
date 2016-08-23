@@ -7,10 +7,9 @@
 
 namespace SeqLib {
 
-  const int BAM = 0;
-  const int SAM = 1;
-  const int CRAM = 2;
-  const int STDOUT = 3;
+  const int BAM = 4;
+  const int SAM = 3;
+  const int CRAM = 6;
 
 /** Walk along a BAM or along BAM regions and stream in/out reads
  */
@@ -70,38 +69,24 @@ class BamWriter  {
    */
   void writeAlignment(BamRecord &r);
 
-  /** Set a flag to say if we should print reads to stdout */
-  void setStdout();
-
-  /** Set a flag to say if we should print reads to CRAM format
-   * @param out Output CRAM file to write to
-   * @param ref File with the reference genome used for compression
+  /** Explicitly set a reference genome to be used to decode CRAM file.
+   * If no reference is specified, will automatically load from
+   * file pointed to in CRAM header using the @SQ tags. 
+   * @note This function is useful if the reference path pointed
+   * to by the UR field of @SQ is not on your system, and you would
+   * like to explicitly provide one.
+   * @param ref Path to an index reference genome
+   * @return Returns true if reference loaded.
    */
-  void setCram(const std::string& ref);
+  bool SetCramReference(const std::string& ref);
 
-  /** If set to true, will print header in output 
-   * @param val Set whether to print the hader
-   */
-  void setPrintHeader(bool val) { 
-    m_print_header = val;
-  }
-  
-  /** Return a pointer to the BAM header */
-  bam_hdr_t * header() const { return br.get(); };
-
-  /** Explicitly provide the output BAM a header. 
-   * 
-   * This will create a copy of the bam_hdr_t for this BamWriter.
-   */
-  void SetWriteHeader(bam_hdr_t* hdr);
+  /** Return the BAM header */
+  BamHeader Header() const { return hdr; };
 
  protected:
 
   // path to output file
   std::string m_out; 
-
-  // for stdout mode, print header?
-  bool m_print_header = false;
 
   // open m_out, true if success
   void __open_BAM_for_writing();
@@ -110,16 +95,7 @@ class BamWriter  {
   std::string output_format = "wb";
   
   // hts
-  std::shared_ptr<BGZF> fp;
-  std::shared_ptr<hts_idx_t> idx;
-  std::shared_ptr<hts_itr_t> hts_itr;
-  std::shared_ptr<bam_hdr_t> br;
-  std::shared_ptr<bam_hdr_t> hdr_write;
-
   std::shared_ptr<htsFile> fop;
-
-  // which tags to strip
-  std::vector<std::string> m_tag_list;
 
   // header
   SeqLib::BamHeader hdr;

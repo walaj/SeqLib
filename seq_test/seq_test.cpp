@@ -448,26 +448,6 @@ BOOST_AUTO_TEST_CASE( genomic_region_distance ) {
 
 }
 
-BOOST_AUTO_TEST_CASE( stdinput ) {
-
-  // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.bam");
-
-  // write it back out
-  SeqLib::BamWriter w(SeqLib::SAM);
-  
-  w.SetHeader(b.Header());
-  w.Open("tmp_out_from_stdin.bam");
-  w.WriteHeader();
-  
-  SeqLib::BamRecord r;
-  bool rule;
-  while(b.GetNextRead(r, rule)) {
-    w.writeAlignment(r);
-  }
-
-}
-
 BOOST_AUTO_TEST_CASE( small_trie_from_file) {
 
   SeqLib::AbstractRule ar;

@@ -1,6 +1,11 @@
 #include "SeqLib/BamWalker.h"
 #include "SeqLib/BamReader.h"
 
+extern "C" {
+#include "htslib/cram/cram.h"
+#include "htslib/cram/cram_io.h"
+}
+
 //#define DEBUG_WALKER 1
 
 namespace SeqLib {
@@ -103,15 +108,25 @@ bool BamReader::__open_BAM_for_reading()
 {
 
   // HTS open the reader
-  fp = m_in == "-" ? std::shared_ptr<BGZF>(bgzf_fdopen(fileno(stdin), "r")) : std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
+  //fp = (m_in == "-" ) ? std::shared_ptr<BGZF>(bgzf_fdopen(fileno(stdin), "r")) : std::shared_ptr<BGZF>(bgzf_open(m_in.c_str(), "r"), bgzf_delete()); 
+  //const char format = 'b';
+  fp_htsfile = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r")); 
+
+  // open cram reference
+  if (!m_cram_reference.empty()) {
+    char * m_cram_reference_cstr = strdup(m_cram_reference.c_str());
+    int ret = cram_load_reference(fp_htsfile->fp.cram, m_cram_reference_cstr);
+    free(m_cram_reference_cstr);
+    if (ret < 0) 
+      throw std::invalid_argument("Could not read reference genome " + m_cram_reference + " for CRAM opt");
+  }
   
-  if (!fp) 
+  if (!fp_htsfile) 
     return false; 
 
-  //br = std::shared_ptr<bam_hdr_t>(bam_hdr_read(fp.get()), bam_hdr_delete()g);
-  bam_hdr_t * hdr = bam_hdr_read(fp.get());
+  bam_hdr_t * hdr = sam_hdr_read(fp_htsfile.get());
   m_hdr = BamHeader(hdr); // calls BamHeader(bam_hdr_t), makes a copy
-  
+
   if (!m_hdr.get()) 
     return false;
   
@@ -151,6 +166,12 @@ void BamReader::printRuntimeMessage(const ReadCount &rc_main, const BamRecord &r
   
 }
 
+  bool BamReader::SetCramReference(const std::string& ref) {
+    
+    m_cram_reference = ref;
+
+  }
+
 bool BamReader::GetNextRead(BamRecord& r, bool& rule)
 {
   
@@ -159,7 +180,7 @@ bool BamReader::GetNextRead(BamRecord& r, bool& rule)
 
   int32_t valid;
   if (hts_itr == 0) {
-    valid = bam_read1(fp.get(), b);    
+    valid = sam_read1(fp_htsfile.get(), m_hdr.get_(), b);    
     if (valid < 0) { 
 
 #ifdef DEBUG_WALKER
@@ -169,15 +190,16 @@ bool BamReader::GetNextRead(BamRecord& r, bool& rule)
       return false;
     } 
   } else {
-
-    valid = hts_itr_next(fp.get(), hts_itr.get(), b, dum);
+    
+    //changed to sam from hts_itr_next
+    valid = sam_itr_next(fp_htsfile.get(), hts_itr.get(), b);
   }
 
-  if (valid <= 0) { // read not found
+  if (valid < 0) { // read not found
     do {
 
 #ifdef DEBUG_WALKER
-      std::cerr << "Failed read, trying next region. Moving counter to " << m_region_idx << " of " << m_region.size() << " FP: "  << fp << " hts_itr " << std::endl;
+      std::cerr << "Failed read, trying next region. Moving counter to " << m_region_idx << " of " << m_region.size() << " FP: "  << fp_htsfile << " hts_itr " << std::endl;
 #endif
 
       // try next region, return if no others to try
@@ -191,7 +213,7 @@ bool BamReader::GetNextRead(BamRecord& r, bool& rule)
       }
       // next region exists, try it
       __set_region(m_region[m_region_idx]);
-      valid = hts_itr_next(fp.get(), hts_itr.get(), b, dum);
+      valid = sam_itr_next(fp_htsfile.get(), hts_itr.get(), b);
     } while (valid <= 0); // keep trying regions until works
   }
   

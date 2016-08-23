@@ -65,6 +65,9 @@ namespace SeqLib {
     /** Return the raw bam_hdr_t */
     const bam_hdr_t* get() const { return h.get(); }
 
+    /** Return the raw bam_hdr_t */
+    bam_hdr_t* get_() const { return h.get(); }
+
     /** Get the numeric ID associated with a sequence name.
      * @param name Name of the sequence
      * @return ID of named sequence, or -1 if not in dictionary

@@ -50,6 +50,7 @@ libseqlib_a_LIBADD =
 am_libseqlib_a_OBJECTS = libseqlib_a-ReadFilter.$(OBJEXT) \
 	libseqlib_a-SeqPlot.$(OBJEXT) libseqlib_a-jsoncpp.$(OBJEXT) \
 	libseqlib_a-ssw_cpp.$(OBJEXT) libseqlib_a-ssw.$(OBJEXT) \
+	libseqlib_a-BamPolyReader.$(OBJEXT) \
 	libseqlib_a-GenomicRegion.$(OBJEXT) \
 	libseqlib_a-RefGenome.$(OBJEXT) \
 	libseqlib_a-BamWriter.$(OBJEXT) \
@@ -174,7 +175,7 @@ noinst_LIBRARIES = libseqlib.a
 libseqlib_a_CPPFLAGS = \
         -I.. -I../htslib -I../bwa -I../fermi-lite
 
-libseqlib_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
+libseqlib_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c BamPolyReader.cpp \
 			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp SeqLibUtils.cpp \
 			BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
 
@@ -228,6 +229,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamHeader.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamPolyReader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamReader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamRecord.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamWriter.Po@am__quote@
@@ -338,6 +340,20 @@ libseqlib_a-ssw_cpp.obj: ssw_cpp.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ssw_cpp.cpp' object='libseqlib_a-ssw_cpp.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-ssw_cpp.obj `if test -f 'ssw_cpp.cpp'; then $(CYGPATH_W) 'ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/ssw_cpp.cpp'; fi`
+
+libseqlib_a-BamPolyReader.o: BamPolyReader.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BamPolyReader.o -MD -MP -MF $(DEPDIR)/libseqlib_a-BamPolyReader.Tpo -c -o libseqlib_a-BamPolyReader.o `test -f 'BamPolyReader.cpp' || echo '$(srcdir)/'`BamPolyReader.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BamPolyReader.Tpo $(DEPDIR)/libseqlib_a-BamPolyReader.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamPolyReader.cpp' object='libseqlib_a-BamPolyReader.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamPolyReader.o `test -f 'BamPolyReader.cpp' || echo '$(srcdir)/'`BamPolyReader.cpp
+
+libseqlib_a-BamPolyReader.obj: BamPolyReader.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BamPolyReader.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-BamPolyReader.Tpo -c -o libseqlib_a-BamPolyReader.obj `if test -f 'BamPolyReader.cpp'; then $(CYGPATH_W) 'BamPolyReader.cpp'; else $(CYGPATH_W) '$(srcdir)/BamPolyReader.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BamPolyReader.Tpo $(DEPDIR)/libseqlib_a-BamPolyReader.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamPolyReader.cpp' object='libseqlib_a-BamPolyReader.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamPolyReader.obj `if test -f 'BamPolyReader.cpp'; then $(CYGPATH_W) 'BamPolyReader.cpp'; else $(CYGPATH_W) '$(srcdir)/BamPolyReader.cpp'; fi`
 
 libseqlib_a-GenomicRegion.o: GenomicRegion.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-GenomicRegion.o -MD -MP -MF $(DEPDIR)/libseqlib_a-GenomicRegion.Tpo -c -o libseqlib_a-GenomicRegion.o `test -f 'GenomicRegion.cpp' || echo '$(srcdir)/'`GenomicRegion.cpp

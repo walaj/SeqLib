@@ -28,7 +28,7 @@ Description
 -----------
 
 SeqLib is a C++ library for querying BAM/SAM/CRAM files, performing 
-BWA-MEM perations in memory, and performing sequence assembly. Core operations
+BWA-MEM operations in memory, and performing sequence assembly. Core operations
 in SeqLib are peformed by:
 * [HTSlib][htslib]
 * [BWA-MEM][BWA] (Apache2 branch)
@@ -37,7 +37,7 @@ in SeqLib are peformed by:
 SeqLib also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
 It uses an [interval tree][int] (provided by Erik Garrison @ekg) to provide for rapid interval queries.
 
-SeqLib is built to be extendable. See [Variant Bam][var] for examples of how to take advantage of C++
+SeqLib is built to be extendable. See [VariantBam][var] for examples of how to take advantage of C++
 class extensions to build off of the SeqLib base functionality. 
  
 Memory management
@@ -45,14 +45,13 @@ Memory management
 SeqLib is built to automatically handle memory management of C code from BWA-MEM and HTSlib by using C++ smart
 pointers that handle freeing memory automatically. One of the 
 main motivations behind SeqLib is that all access to sequencing reads, BWA, etc should
-completely avoid ``malloc`` and ``free``. In SeqLib, the speed and compression of HTSlib
-is available, but all the mallocs/frees are handled automatically in the constructors and
+completely avoid ``malloc`` and ``free``. In SeqLib all the mallocs/frees are handled automatically in the constructors and
 destructors.
 
 Note about BamTools, Gamgee and SeqAn
 ------------------------------
 There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, the [Gamgee][gam] 
-project from the Broad Institute, and the [SeqAn][seqan] library from Freie Universitat Berlin. These three projects 
+project from the Broad Institute, and the [SeqAn][seqan] library from Freie Universitat Berlin. These projects 
 provide excellent and high quality APIs. SeqLib provides further performance and capabilites for certain classes of 
 bioinformatics problems, without attempting to replace these projects.
 
@@ -98,7 +97,7 @@ bwa.constructIndex(usv);
 
 ## align an example string with BWA-MEM
 std::string querySeq = "CAGCCTCACCCAGGAAAGCAGCTGGGGGTCCACTGGGCTCAGGGAAG";
-BamReadVector results;
+BamRecordVector results;
 // hardclip=false, secondary score cutoff=0.9, max secondary alignments=10
 bwa.alignSingleSequence("my_seq", querySeq, results, false, 0.9, 10); 
 
@@ -110,33 +109,33 @@ for (auto& i : results)
 
 ##### Read a BAM line by line, realign reads with BWA-MEM, write to new BAM
 ```
-#include "SeqLib/BamWalker.h"
+#include "SeqLib/BamReader.h"
 #include "SeqLib/BWAWrapper.h"
 using SeqLib;
 
-// open the reader BAM
-BamWalker bw("test.bam");
+// open the reader BAM/SAM/CRAM
+BamReader bw("test.bam");
 
 // open a new interface to BWA-MEM
 BWAWrapper bwa;
 bwa.retrieveIndex("hg19.fasta");
 
-// open the output bam
-BamWalker writer;
-write.SetWriteHeader(bwa.HeaderFromIndex());
-write.OpenWriteBam("out.bam");
+// open the output BAM
+BamWriter writer; // or writer(SeqLib::SAM) or writer(SeqLib::CRAM) 
+writer.SetWriteHeader(bwa.HeaderFromIndex());
+writer.Open("out.bam");
 
-BamRead r;
+BamRecord r;
 bool rule_passed; // can set rules for what reads to accept. Default is accept all reads. See VariantBam
 bool hardclip = false;
 float secondary_cutoff = 0.90; // secondary alignments must have score >= 0.9*top_score
 int secondary_cap = 10; // max number of secondary alignments to return
 while (GetNextRead(r, rule_passed)) {
-      BamReadVector results; // alignment results (can have multiple alignments)
+      BamRecordVector results; // alignment results (can have multiple alignments)
       bwa.alignSingleSequence(r.Sequence(), r.Qname(), results, hardclip, secondary_cutoff, secondary_cap);
 
       for (auto& i : results)
-        writeAlignment(i);
+        writer.writeAlignment(i);
 }
 ```
 

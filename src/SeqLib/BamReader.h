@@ -7,6 +7,12 @@
 #include "SeqLib/ReadFilter.h"
 #include "SeqLib/BamWalker.h"
 
+// notes
+// htsFile->format.format
+//    // sam = 3
+//    // bam = 4
+//    // cram = 6
+
 namespace SeqLib {
 
 /** Walk along a BAM or along BAM regions and stream in/out reads
@@ -36,6 +42,17 @@ class BamReader {
    */
   bool setBamReaderRegion(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
 
+  /** Explicitly set a reference genome to be used to decode CRAM file.
+   * If no reference is specified, will automatically load from
+   * file pointed to in CRAM header using the @SQ tags. 
+   * @note This function is useful if the reference path pointed
+   * to by the UR field of @SQ is not on your system, and you would
+   * like to explicitly provide one.
+   * @param ref Path to an index reference genome
+   * @return Returns true if reference loaded.
+   */
+  bool SetCramReference(const std::string& ref);
+  
   /** Set up multiple regions. Overwrites current regions. 
    * 
    * This will set the BAM pointer to the first element of the
@@ -127,12 +144,15 @@ class BamReader {
 
   // hts
   std::shared_ptr<BGZF> fp;
+  std::shared_ptr<htsFile> fp_htsfile;
   std::shared_ptr<hts_idx_t> idx;
   std::shared_ptr<hts_itr_t> hts_itr;
 
   BamHeader m_hdr;
 
   bool m_verbose = false;
+
+  std::string m_cram_reference;
 
 };
 

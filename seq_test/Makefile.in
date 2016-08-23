@@ -32,7 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = seq_test$(EXEEXT)
+bin_PROGRAMS = seq_test$(EXEEXT) read_write$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(srcdir)/../depcomp \
 	$(srcdir)/../install-sh $(srcdir)/../missing \
@@ -50,6 +50,22 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am_read_write_OBJECTS = read_write-read_write.$(OBJEXT) \
+	read_write-GenomicRegion.$(OBJEXT) \
+	read_write-BamWriter.$(OBJEXT) read_write-BamReader.$(OBJEXT) \
+	read_write-ReadFilter.$(OBJEXT) \
+	read_write-SeqLibUtils.$(OBJEXT) \
+	read_write-BamRecord.$(OBJEXT) read_write-BWAWrapper.$(OBJEXT) \
+	read_write-RefGenome.$(OBJEXT) read_write-SeqPlot.$(OBJEXT) \
+	read_write-BamHeader.$(OBJEXT) \
+	read_write-FermiAssembler.$(OBJEXT) \
+	read_write-ssw_cpp.$(OBJEXT) read_write-ssw.$(OBJEXT) \
+	read_write-jsoncpp.$(OBJEXT)
+read_write_OBJECTS = $(am_read_write_OBJECTS)
+read_write_DEPENDENCIES = ../fermi-lite/libfml.a ../bwa/libbwa.a \
+	../htslib/libhts.a
+read_write_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(read_write_LDFLAGS) $(LDFLAGS) -o $@
 am_seq_test_OBJECTS = seq_test-seq_test.$(OBJEXT) \
 	seq_test-GenomicRegion.$(OBJEXT) seq_test-BamWriter.$(OBJEXT) \
 	seq_test-BamReader.$(OBJEXT) seq_test-ReadFilter.$(OBJEXT) \
@@ -76,8 +92,8 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(seq_test_SOURCES)
-DIST_SOURCES = $(seq_test_SOURCES)
+SOURCES = $(read_write_SOURCES) $(seq_test_SOURCES)
+DIST_SOURCES = $(read_write_SOURCES) $(seq_test_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -205,6 +221,27 @@ seq_test_SOURCES = seq_test.cpp \
         ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
 	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp
 
+read_write_CPPFLAGS = \
+     -I../src \
+     -I../htslib \
+     -I.. \
+     -I../fermi-lite --coverage
+
+read_write_LDADD = \
+	../fermi-lite/libfml.a \
+	../bwa/libbwa.a \
+	../htslib/libhts.a \
+	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono
+
+read_write_LDFLAGS = --coverage
+read_write_SOURCES = read_write.cpp \
+	../src/GenomicRegion.cpp \
+	../src/BamWriter.cpp ../src/BamReader.cpp \
+	../src/ReadFilter.cpp ../src/SeqLibUtils.cpp ../src/BamRecord.cpp \
+	../src/BWAWrapper.cpp \
+        ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
+	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp
+
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -298,6 +335,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+read_write$(EXEEXT): $(read_write_OBJECTS) $(read_write_DEPENDENCIES) 
+	@rm -f read_write$(EXEEXT)
+	$(read_write_LINK) $(read_write_OBJECTS) $(read_write_LDADD) $(LIBS)
 seq_test$(EXEEXT): $(seq_test_OBJECTS) $(seq_test_DEPENDENCIES) 
 	@rm -f seq_test$(EXEEXT)
 	$(seq_test_LINK) $(seq_test_OBJECTS) $(seq_test_LDADD) $(LIBS)
@@ -308,6 +348,21 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-BWAWrapper.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-BamHeader.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-BamReader.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-BamRecord.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-BamWriter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-FermiAssembler.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-GenomicRegion.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-ReadFilter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-RefGenome.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-SeqLibUtils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-SeqPlot.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-jsoncpp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-read_write.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-ssw.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_write-ssw_cpp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BamHeader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BamReader.Po@am__quote@
@@ -338,6 +393,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
+read_write-ssw.o: ../src/ssw.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT read_write-ssw.o -MD -MP -MF $(DEPDIR)/read_write-ssw.Tpo -c -o read_write-ssw.o `test -f '../src/ssw.c' || echo '$(srcdir)/'`../src/ssw.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/read_write-ssw.Tpo $(DEPDIR)/read_write-ssw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../src/ssw.c' object='read_write-ssw.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o read_write-ssw.o `test -f '../src/ssw.c' || echo '$(srcdir)/'`../src/ssw.c
+
+read_write-ssw.obj: ../src/ssw.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT read_write-ssw.obj -MD -MP -MF $(DEPDIR)/read_write-ssw.Tpo -c -o read_write-ssw.obj `if test -f '../src/ssw.c'; then $(CYGPATH_W) '../src/ssw.c'; else $(CYGPATH_W) '$(srcdir)/../src/ssw.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/read_write-ssw.Tpo $(DEPDIR)/read_write-ssw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../src/ssw.c' object='read_write-ssw.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o read_write-ssw.obj `if test -f '../src/ssw.c'; then $(CYGPATH_W) '../src/ssw.c'; else $(CYGPATH_W) '$(srcdir)/../src/ssw.c'; fi`
+
 seq_test-ssw.o: ../src/ssw.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT seq_test-ssw.o -MD -MP -MF $(DEPDIR)/seq_test-ssw.Tpo -c -o seq_test-ssw.o `test -f '../src/ssw.c' || echo '$(srcdir)/'`../src/ssw.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/seq_test-ssw.Tpo $(DEPDIR)/seq_test-ssw.Po
@@ -365,6 +434,202 @@ seq_test-ssw.obj: ../src/ssw.c
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+read_write-read_write.o: read_write.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-read_write.o -MD -MP -MF $(DEPDIR)/read_write-read_write.Tpo -c -o read_write-read_write.o `test -f 'read_write.cpp' || echo '$(srcdir)/'`read_write.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-read_write.Tpo $(DEPDIR)/read_write-read_write.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='read_write.cpp' object='read_write-read_write.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-read_write.o `test -f 'read_write.cpp' || echo '$(srcdir)/'`read_write.cpp
+
+read_write-read_write.obj: read_write.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-read_write.obj -MD -MP -MF $(DEPDIR)/read_write-read_write.Tpo -c -o read_write-read_write.obj `if test -f 'read_write.cpp'; then $(CYGPATH_W) 'read_write.cpp'; else $(CYGPATH_W) '$(srcdir)/read_write.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-read_write.Tpo $(DEPDIR)/read_write-read_write.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='read_write.cpp' object='read_write-read_write.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-read_write.obj `if test -f 'read_write.cpp'; then $(CYGPATH_W) 'read_write.cpp'; else $(CYGPATH_W) '$(srcdir)/read_write.cpp'; fi`
+
+read_write-GenomicRegion.o: ../src/GenomicRegion.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-GenomicRegion.o -MD -MP -MF $(DEPDIR)/read_write-GenomicRegion.Tpo -c -o read_write-GenomicRegion.o `test -f '../src/GenomicRegion.cpp' || echo '$(srcdir)/'`../src/GenomicRegion.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-GenomicRegion.Tpo $(DEPDIR)/read_write-GenomicRegion.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/GenomicRegion.cpp' object='read_write-GenomicRegion.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-GenomicRegion.o `test -f '../src/GenomicRegion.cpp' || echo '$(srcdir)/'`../src/GenomicRegion.cpp
+
+read_write-GenomicRegion.obj: ../src/GenomicRegion.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-GenomicRegion.obj -MD -MP -MF $(DEPDIR)/read_write-GenomicRegion.Tpo -c -o read_write-GenomicRegion.obj `if test -f '../src/GenomicRegion.cpp'; then $(CYGPATH_W) '../src/GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/GenomicRegion.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-GenomicRegion.Tpo $(DEPDIR)/read_write-GenomicRegion.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/GenomicRegion.cpp' object='read_write-GenomicRegion.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-GenomicRegion.obj `if test -f '../src/GenomicRegion.cpp'; then $(CYGPATH_W) '../src/GenomicRegion.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/GenomicRegion.cpp'; fi`
+
+read_write-BamWriter.o: ../src/BamWriter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamWriter.o -MD -MP -MF $(DEPDIR)/read_write-BamWriter.Tpo -c -o read_write-BamWriter.o `test -f '../src/BamWriter.cpp' || echo '$(srcdir)/'`../src/BamWriter.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamWriter.Tpo $(DEPDIR)/read_write-BamWriter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamWriter.cpp' object='read_write-BamWriter.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamWriter.o `test -f '../src/BamWriter.cpp' || echo '$(srcdir)/'`../src/BamWriter.cpp
+
+read_write-BamWriter.obj: ../src/BamWriter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamWriter.obj -MD -MP -MF $(DEPDIR)/read_write-BamWriter.Tpo -c -o read_write-BamWriter.obj `if test -f '../src/BamWriter.cpp'; then $(CYGPATH_W) '../src/BamWriter.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamWriter.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamWriter.Tpo $(DEPDIR)/read_write-BamWriter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamWriter.cpp' object='read_write-BamWriter.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamWriter.obj `if test -f '../src/BamWriter.cpp'; then $(CYGPATH_W) '../src/BamWriter.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamWriter.cpp'; fi`
+
+read_write-BamReader.o: ../src/BamReader.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamReader.o -MD -MP -MF $(DEPDIR)/read_write-BamReader.Tpo -c -o read_write-BamReader.o `test -f '../src/BamReader.cpp' || echo '$(srcdir)/'`../src/BamReader.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamReader.Tpo $(DEPDIR)/read_write-BamReader.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamReader.cpp' object='read_write-BamReader.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamReader.o `test -f '../src/BamReader.cpp' || echo '$(srcdir)/'`../src/BamReader.cpp
+
+read_write-BamReader.obj: ../src/BamReader.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamReader.obj -MD -MP -MF $(DEPDIR)/read_write-BamReader.Tpo -c -o read_write-BamReader.obj `if test -f '../src/BamReader.cpp'; then $(CYGPATH_W) '../src/BamReader.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamReader.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamReader.Tpo $(DEPDIR)/read_write-BamReader.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamReader.cpp' object='read_write-BamReader.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamReader.obj `if test -f '../src/BamReader.cpp'; then $(CYGPATH_W) '../src/BamReader.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamReader.cpp'; fi`
+
+read_write-ReadFilter.o: ../src/ReadFilter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-ReadFilter.o -MD -MP -MF $(DEPDIR)/read_write-ReadFilter.Tpo -c -o read_write-ReadFilter.o `test -f '../src/ReadFilter.cpp' || echo '$(srcdir)/'`../src/ReadFilter.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-ReadFilter.Tpo $(DEPDIR)/read_write-ReadFilter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ReadFilter.cpp' object='read_write-ReadFilter.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-ReadFilter.o `test -f '../src/ReadFilter.cpp' || echo '$(srcdir)/'`../src/ReadFilter.cpp
+
+read_write-ReadFilter.obj: ../src/ReadFilter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-ReadFilter.obj -MD -MP -MF $(DEPDIR)/read_write-ReadFilter.Tpo -c -o read_write-ReadFilter.obj `if test -f '../src/ReadFilter.cpp'; then $(CYGPATH_W) '../src/ReadFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ReadFilter.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-ReadFilter.Tpo $(DEPDIR)/read_write-ReadFilter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ReadFilter.cpp' object='read_write-ReadFilter.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-ReadFilter.obj `if test -f '../src/ReadFilter.cpp'; then $(CYGPATH_W) '../src/ReadFilter.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ReadFilter.cpp'; fi`
+
+read_write-SeqLibUtils.o: ../src/SeqLibUtils.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-SeqLibUtils.o -MD -MP -MF $(DEPDIR)/read_write-SeqLibUtils.Tpo -c -o read_write-SeqLibUtils.o `test -f '../src/SeqLibUtils.cpp' || echo '$(srcdir)/'`../src/SeqLibUtils.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-SeqLibUtils.Tpo $(DEPDIR)/read_write-SeqLibUtils.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqLibUtils.cpp' object='read_write-SeqLibUtils.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-SeqLibUtils.o `test -f '../src/SeqLibUtils.cpp' || echo '$(srcdir)/'`../src/SeqLibUtils.cpp
+
+read_write-SeqLibUtils.obj: ../src/SeqLibUtils.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-SeqLibUtils.obj -MD -MP -MF $(DEPDIR)/read_write-SeqLibUtils.Tpo -c -o read_write-SeqLibUtils.obj `if test -f '../src/SeqLibUtils.cpp'; then $(CYGPATH_W) '../src/SeqLibUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqLibUtils.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-SeqLibUtils.Tpo $(DEPDIR)/read_write-SeqLibUtils.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqLibUtils.cpp' object='read_write-SeqLibUtils.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-SeqLibUtils.obj `if test -f '../src/SeqLibUtils.cpp'; then $(CYGPATH_W) '../src/SeqLibUtils.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqLibUtils.cpp'; fi`
+
+read_write-BamRecord.o: ../src/BamRecord.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamRecord.o -MD -MP -MF $(DEPDIR)/read_write-BamRecord.Tpo -c -o read_write-BamRecord.o `test -f '../src/BamRecord.cpp' || echo '$(srcdir)/'`../src/BamRecord.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamRecord.Tpo $(DEPDIR)/read_write-BamRecord.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamRecord.cpp' object='read_write-BamRecord.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamRecord.o `test -f '../src/BamRecord.cpp' || echo '$(srcdir)/'`../src/BamRecord.cpp
+
+read_write-BamRecord.obj: ../src/BamRecord.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamRecord.obj -MD -MP -MF $(DEPDIR)/read_write-BamRecord.Tpo -c -o read_write-BamRecord.obj `if test -f '../src/BamRecord.cpp'; then $(CYGPATH_W) '../src/BamRecord.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamRecord.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamRecord.Tpo $(DEPDIR)/read_write-BamRecord.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamRecord.cpp' object='read_write-BamRecord.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamRecord.obj `if test -f '../src/BamRecord.cpp'; then $(CYGPATH_W) '../src/BamRecord.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamRecord.cpp'; fi`
+
+read_write-BWAWrapper.o: ../src/BWAWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BWAWrapper.o -MD -MP -MF $(DEPDIR)/read_write-BWAWrapper.Tpo -c -o read_write-BWAWrapper.o `test -f '../src/BWAWrapper.cpp' || echo '$(srcdir)/'`../src/BWAWrapper.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BWAWrapper.Tpo $(DEPDIR)/read_write-BWAWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BWAWrapper.cpp' object='read_write-BWAWrapper.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BWAWrapper.o `test -f '../src/BWAWrapper.cpp' || echo '$(srcdir)/'`../src/BWAWrapper.cpp
+
+read_write-BWAWrapper.obj: ../src/BWAWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BWAWrapper.obj -MD -MP -MF $(DEPDIR)/read_write-BWAWrapper.Tpo -c -o read_write-BWAWrapper.obj `if test -f '../src/BWAWrapper.cpp'; then $(CYGPATH_W) '../src/BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BWAWrapper.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BWAWrapper.Tpo $(DEPDIR)/read_write-BWAWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BWAWrapper.cpp' object='read_write-BWAWrapper.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BWAWrapper.obj `if test -f '../src/BWAWrapper.cpp'; then $(CYGPATH_W) '../src/BWAWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BWAWrapper.cpp'; fi`
+
+read_write-RefGenome.o: ../src/RefGenome.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-RefGenome.o -MD -MP -MF $(DEPDIR)/read_write-RefGenome.Tpo -c -o read_write-RefGenome.o `test -f '../src/RefGenome.cpp' || echo '$(srcdir)/'`../src/RefGenome.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-RefGenome.Tpo $(DEPDIR)/read_write-RefGenome.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/RefGenome.cpp' object='read_write-RefGenome.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-RefGenome.o `test -f '../src/RefGenome.cpp' || echo '$(srcdir)/'`../src/RefGenome.cpp
+
+read_write-RefGenome.obj: ../src/RefGenome.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-RefGenome.obj -MD -MP -MF $(DEPDIR)/read_write-RefGenome.Tpo -c -o read_write-RefGenome.obj `if test -f '../src/RefGenome.cpp'; then $(CYGPATH_W) '../src/RefGenome.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/RefGenome.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-RefGenome.Tpo $(DEPDIR)/read_write-RefGenome.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/RefGenome.cpp' object='read_write-RefGenome.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-RefGenome.obj `if test -f '../src/RefGenome.cpp'; then $(CYGPATH_W) '../src/RefGenome.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/RefGenome.cpp'; fi`
+
+read_write-SeqPlot.o: ../src/SeqPlot.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-SeqPlot.o -MD -MP -MF $(DEPDIR)/read_write-SeqPlot.Tpo -c -o read_write-SeqPlot.o `test -f '../src/SeqPlot.cpp' || echo '$(srcdir)/'`../src/SeqPlot.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-SeqPlot.Tpo $(DEPDIR)/read_write-SeqPlot.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqPlot.cpp' object='read_write-SeqPlot.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-SeqPlot.o `test -f '../src/SeqPlot.cpp' || echo '$(srcdir)/'`../src/SeqPlot.cpp
+
+read_write-SeqPlot.obj: ../src/SeqPlot.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-SeqPlot.obj -MD -MP -MF $(DEPDIR)/read_write-SeqPlot.Tpo -c -o read_write-SeqPlot.obj `if test -f '../src/SeqPlot.cpp'; then $(CYGPATH_W) '../src/SeqPlot.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqPlot.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-SeqPlot.Tpo $(DEPDIR)/read_write-SeqPlot.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/SeqPlot.cpp' object='read_write-SeqPlot.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-SeqPlot.obj `if test -f '../src/SeqPlot.cpp'; then $(CYGPATH_W) '../src/SeqPlot.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/SeqPlot.cpp'; fi`
+
+read_write-BamHeader.o: ../src/BamHeader.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamHeader.o -MD -MP -MF $(DEPDIR)/read_write-BamHeader.Tpo -c -o read_write-BamHeader.o `test -f '../src/BamHeader.cpp' || echo '$(srcdir)/'`../src/BamHeader.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamHeader.Tpo $(DEPDIR)/read_write-BamHeader.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamHeader.cpp' object='read_write-BamHeader.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamHeader.o `test -f '../src/BamHeader.cpp' || echo '$(srcdir)/'`../src/BamHeader.cpp
+
+read_write-BamHeader.obj: ../src/BamHeader.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-BamHeader.obj -MD -MP -MF $(DEPDIR)/read_write-BamHeader.Tpo -c -o read_write-BamHeader.obj `if test -f '../src/BamHeader.cpp'; then $(CYGPATH_W) '../src/BamHeader.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamHeader.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-BamHeader.Tpo $(DEPDIR)/read_write-BamHeader.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BamHeader.cpp' object='read_write-BamHeader.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-BamHeader.obj `if test -f '../src/BamHeader.cpp'; then $(CYGPATH_W) '../src/BamHeader.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BamHeader.cpp'; fi`
+
+read_write-FermiAssembler.o: ../src/FermiAssembler.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-FermiAssembler.o -MD -MP -MF $(DEPDIR)/read_write-FermiAssembler.Tpo -c -o read_write-FermiAssembler.o `test -f '../src/FermiAssembler.cpp' || echo '$(srcdir)/'`../src/FermiAssembler.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-FermiAssembler.Tpo $(DEPDIR)/read_write-FermiAssembler.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/FermiAssembler.cpp' object='read_write-FermiAssembler.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-FermiAssembler.o `test -f '../src/FermiAssembler.cpp' || echo '$(srcdir)/'`../src/FermiAssembler.cpp
+
+read_write-FermiAssembler.obj: ../src/FermiAssembler.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-FermiAssembler.obj -MD -MP -MF $(DEPDIR)/read_write-FermiAssembler.Tpo -c -o read_write-FermiAssembler.obj `if test -f '../src/FermiAssembler.cpp'; then $(CYGPATH_W) '../src/FermiAssembler.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/FermiAssembler.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-FermiAssembler.Tpo $(DEPDIR)/read_write-FermiAssembler.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/FermiAssembler.cpp' object='read_write-FermiAssembler.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-FermiAssembler.obj `if test -f '../src/FermiAssembler.cpp'; then $(CYGPATH_W) '../src/FermiAssembler.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/FermiAssembler.cpp'; fi`
+
+read_write-ssw_cpp.o: ../src/ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-ssw_cpp.o -MD -MP -MF $(DEPDIR)/read_write-ssw_cpp.Tpo -c -o read_write-ssw_cpp.o `test -f '../src/ssw_cpp.cpp' || echo '$(srcdir)/'`../src/ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-ssw_cpp.Tpo $(DEPDIR)/read_write-ssw_cpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ssw_cpp.cpp' object='read_write-ssw_cpp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-ssw_cpp.o `test -f '../src/ssw_cpp.cpp' || echo '$(srcdir)/'`../src/ssw_cpp.cpp
+
+read_write-ssw_cpp.obj: ../src/ssw_cpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-ssw_cpp.obj -MD -MP -MF $(DEPDIR)/read_write-ssw_cpp.Tpo -c -o read_write-ssw_cpp.obj `if test -f '../src/ssw_cpp.cpp'; then $(CYGPATH_W) '../src/ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ssw_cpp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-ssw_cpp.Tpo $(DEPDIR)/read_write-ssw_cpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ssw_cpp.cpp' object='read_write-ssw_cpp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-ssw_cpp.obj `if test -f '../src/ssw_cpp.cpp'; then $(CYGPATH_W) '../src/ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ssw_cpp.cpp'; fi`
+
+read_write-jsoncpp.o: ../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-jsoncpp.o -MD -MP -MF $(DEPDIR)/read_write-jsoncpp.Tpo -c -o read_write-jsoncpp.o `test -f '../src/jsoncpp.cpp' || echo '$(srcdir)/'`../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-jsoncpp.Tpo $(DEPDIR)/read_write-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/jsoncpp.cpp' object='read_write-jsoncpp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-jsoncpp.o `test -f '../src/jsoncpp.cpp' || echo '$(srcdir)/'`../src/jsoncpp.cpp
+
+read_write-jsoncpp.obj: ../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT read_write-jsoncpp.obj -MD -MP -MF $(DEPDIR)/read_write-jsoncpp.Tpo -c -o read_write-jsoncpp.obj `if test -f '../src/jsoncpp.cpp'; then $(CYGPATH_W) '../src/jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/jsoncpp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/read_write-jsoncpp.Tpo $(DEPDIR)/read_write-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/jsoncpp.cpp' object='read_write-jsoncpp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(read_write_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o read_write-jsoncpp.obj `if test -f '../src/jsoncpp.cpp'; then $(CYGPATH_W) '../src/jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/jsoncpp.cpp'; fi`
 
 seq_test-seq_test.o: seq_test.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-seq_test.o -MD -MP -MF $(DEPDIR)/seq_test-seq_test.Tpo -c -o seq_test-seq_test.o `test -f 'seq_test.cpp' || echo '$(srcdir)/'`seq_test.cpp
