@@ -65,19 +65,6 @@ SeqLib is under active development, while Gamgee has been abandoned.
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools. Feature requests and comments are welcomed.
 
-Some further SeqLib/BamTools differences
-------------------------------
-> 1. Sort/index functionality is independently implemented in BamTools. In SeqLib, the Samtools 
- sort and index functions are called directly.
-> 2. BamTools stores quality scores and sequences as strings. In SeqLib, the HTSlib ``bam1_t`` format
- is used instead, which uses only 4 bits per base, rather than 8. 
- Conversion to C++ style ``std::string`` is provided with the ``Sequence`` function.
-> 3. BamTools provides the ``BamMultiReader`` class for reading multiple BAM files at once, while 
- SeqLib does not currently support this functionality.
-> 4. SeqLib contains a built in interface to BWA-MEM for in-memory indexing and querying.
-> 5. SeqLib supports reading and writing CRAM files
-> 6. BamTools builds with CMake, SeqLib with Autotools.
-
 Example usages
 --------------
 ##### Targeted re-alignment of reads to a given region with BWA-MEM
