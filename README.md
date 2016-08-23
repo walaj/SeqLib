@@ -34,6 +34,8 @@ in SeqLib are peformed by:
 * [BWA-MEM][BWA] (Apache2 branch)
 * [FermiKit][fermi]
 
+The primary developer for these three projects is Heng Li.
+
 SeqLib also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
 It uses an [interval tree][int] (provided by Erik Garrison @ekg) to provide for rapid interval queries.
 
@@ -163,11 +165,15 @@ for (size_t i = 0; i < contigs.size(); ++i)
 
 Support
 -------
-This project is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org)
+This project is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org). 
 
 Attributions
 ------------
-* Jeremiah Wala - Harvard MD-PhD candidate, Bioinformatics and Integrative Genomics, Broad Institute
+We would like to thank Heng Li (htslib/bwa/fermi), Erik Garrison (interval tree), Christopher Gilbert (aho corasick), 
+and Mengyao Zhao (sw alignment), for providing open-source and robust bioinformatics solutions, and Derek Barnett and
+the SeqAn team for providing BamTools and SeqAn.
+
+Development, support, guidance, testing:
 * Steve Huang - Research Scientist, Broad Institute
 * Steve Schumacher - Computational Biologist, Dana Farber Cancer Institute
 * Cheng-Zhong Zhang - Research Scientist, Broad Institute
