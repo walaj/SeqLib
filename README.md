@@ -24,6 +24,21 @@ make
  
 I have successfully compiled with GCC-4.8+ on Linux and with Clang on Mac
 
+Integrating into build system
+-----------------------------
+
+After building, you will need to add the relevant header directories:
+```bash
+SEQ=<path_to_seqlib>
+C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib:$SEQ/src:$SEQ/fermi-lite
+```
+
+And need to link the following libraries
+```bash
+SEQ=<path_to_seqlib>
+LDADD="$LDADD -L$SEQ/src/libseqlib.a -L$SEQ/fermi-lite/libfml.a -L$SEQ/libbwa.a -L$SEQ/htslib/libhts.a"
+```
+
 Description
 -----------
 
@@ -183,7 +198,7 @@ s.SetPadding(20);
 std::cout << s.PlotAlignmentRecords(brv);
 ```
 
-Output (from NA12878):
+Trimmed output from above (NA12878):
 ```
 CTATCTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTATCTATCATCTAACTATCTGTCCATCCATCCATCCATCCA
 CTATCTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTAT                    CATCCATCCATCCATCCATCCACCCATTCATCCATCCACCTATCCATCTATCAATCCATCCATCCATCCA
@@ -197,6 +212,26 @@ CTATCTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTAT                    
     CTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTATCTATCATCTAACTATCTG----TCCATCCATCCATCCATCCACCCATTC                                                                 
       ATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTATCTATCATCTAACTATCTG----TCCATCCATCCATCCATCCACCCATTCAT                                                               
       ATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTATCTATCATCTAACTATCTG----TCCATCCATCCATCCATCCACCCATTCAT                                                               
+```
+
+##### Read simultaneously from a BAM, CRAM and SAM file and send to stdout
+```
+using SeqLib;
+#include "SeqLib/BamPolyReader.h"
+BamPolyReader r;
+  
+r.Open("test_data/small.bam");
+r.Open("test_data/small.cram");
+r.Open("test_data/small.sam");
+
+BamWriter w(SeqLib::SAM);
+w.Open("-");
+w.SetHeader(r.Header());
+w.WriteHeader();
+
+BamRecord rec;
+while(r.GetNextRecord(rec)) 
+  w.WriteRecord(rec);
 ```
 
 Support
