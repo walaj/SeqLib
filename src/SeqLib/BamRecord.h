@@ -147,6 +147,14 @@ class CigarField {
    /** Returns the i'th cigar op (const) */
    const CigarField& operator[](size_t i) const { return m_data[i]; }
 
+   /** Return the sum of all of the lengths for all kinds */
+   inline int TotalLength() const {
+     int t = 0;
+     for (auto& c : m_data)
+       t += c.Length();
+     return t;
+   }
+
    /** Return the number of query-consumed bases */
    inline int NumQueryConsumed() const {
      int out = 0;

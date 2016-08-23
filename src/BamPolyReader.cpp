@@ -5,10 +5,6 @@
 
 namespace SeqLib {
 
-  void BamPolyReader::SetReadFilterCollection(const ReadFilterCollection& mr) {
-    m_mr = mr;
-  }
-
 // set the bam region
 bool BamPolyReader::__set_region(const GenomicRegion& gp) {
   
@@ -41,45 +37,45 @@ bool BamPolyReader::__set_region(const GenomicRegion& gp) {
   return true;
 }
 
-void BamPolyReader::resetAll() {
+void BamPolyReader::Reset() {
 
   m_region_idx = 0;
-  m_region = GenomicRegionVector();
+  m_region = GRC();
 
 }
 
-bool BamPolyReader::setBamReaderRegion(const GenomicRegion& g)
+bool BamPolyReader::SetRegion(const GenomicRegion& g)
 {
   m_region.clear();
-  m_region.push_back(g);
+  m_region.add(g);
   m_region_idx = 0; // rewind it
 
   if (m_region.size())
     return __set_region(m_region[0]);
 
-  m_region.push_back(GenomicRegion(-1,-1,-1));
+  m_region.add(GenomicRegion(-1,-1,-1));
   return false;
   
 }
 
-  bool BamPolyReader::setBamReaderRegions(const GenomicRegionVector& grv) 
+  bool BamPolyReader::SetMultipleRegions(const GRC& grc) 
 {
-  if (grv.size() == 0)
-    {
+  if (grc.size() == 0) {
       std::cerr << "Warning: Trying to set an empty bam region"  << std::endl;
       return false;
     }
-  m_region = grv;
+
+  m_region = grc;
   m_region_idx = 0; // rewind it
-  //__check_regions_blacklist(); // sets m_region
+  
   if (m_region.size())
     return __set_region(m_region[0]);
-
-  m_region.push_back(GenomicRegion(-1,-1,-1));
+  
+  m_region.add(GenomicRegion(-1,-1,-1));
   return false;
 }
 
-  bool BamPolyReader::OpenReadBam(const std::string& bam) {
+  bool BamPolyReader::Open(const std::string& bam) {
     
     // id will be bam file name, unless
     // its here mutliple times, then name + random num
@@ -94,11 +90,20 @@ bool BamPolyReader::setBamReaderRegion(const GenomicRegion& g)
   
 BamPolyReader::BamPolyReader() {}
 
-bool _Bam::open_BAM_for_reading()
+  bool _Bam::open_BAM_for_reading()
 {
 
   // HTS open the reader
   fp = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+
+  // open cram reference
+  if (!m_cram_reference.empty()) {
+    char * m_cram_reference_cstr = strdup(m_cram_reference.c_str());
+    int ret = cram_load_reference(fp->fp.cram, m_cram_reference_cstr);
+    free(m_cram_reference_cstr);
+    if (ret < 0) 
+      throw std::invalid_argument("Could not read reference genome " + m_cram_reference + " for CRAM opt");
+  }
 
   if (!fp) 
     return false; 
@@ -116,7 +121,13 @@ bool _Bam::open_BAM_for_reading()
 
 }
 
-bool BamPolyReader::GetNextRead(BamRecord& r, bool& rule)
+  bool BamPolyReader::SetCramReference(const std::string& ref) {
+    m_cram_reference = ref;
+    for (auto& b : m_bams)
+      b.m_cram_reference = ref;
+  }
+
+bool BamPolyReader::GetNextRecord(BamRecord& r)
 {
 
   bool found = false;
@@ -206,7 +217,7 @@ bool BamPolyReader::GetNextRead(BamRecord& r, bool& rule)
   return found;
 }
   
-std::string BamPolyReader::printRegions() const {
+std::string BamPolyReader::PrintRegions() const {
 
   std::stringstream ss;
   for (auto& r : m_region)

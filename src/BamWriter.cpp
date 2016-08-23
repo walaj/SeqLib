@@ -18,30 +18,30 @@ namespace SeqLib {
       throw std::runtime_error("BamWriter::WriteHeader - Output not open for writing. Open with Open()");
     
     if (sam_hdr_write(fop.get(), hdr.get()) < 0) 
-      throw std::runtime_error("BamWriter - Cannot write header. sam_hdr_write exited with < 0");
+      throw std::runtime_error("Cannot write header. sam_hdr_write exited with < 0");
     
   }
   
-  void BamWriter::CloseBam() {
+  void BamWriter::Close() {
 
     if (!fop)
-      throw std::runtime_error("BamWriter::CloseBam() - Trying to close BAM that is already closed or never opened");
+      throw std::runtime_error("Trying to close BAM that is already closed or never opened");
 
     fop = nullptr; // this clears shared_ptr, calls sam_close
   }
 
-void BamWriter::makeIndex() const {
+void BamWriter::BuildIndex() const {
   
   // throw an error if BAM is not already closed
   if (fop)
-    throw std::runtime_error("BamWriter::makeIndex - Trying to index open BAM. Close first with CloseBam()");
+    throw std::runtime_error("Trying to index open BAM. Close first with Close()");
 
   if (m_out.empty())
     throw std::runtime_error("Trying to make index, but no BAM specified");    
   
   // call to htslib to build bai index
   if (sam_index_build(m_out.c_str(), 0) < 0) // 0 is "min_shift", which is 0 for bai index
-    throw std::runtime_error("BamWriter::makeIndex - Failed to create index");
+    throw std::runtime_error("Failed to create index");
 
 }
 
@@ -71,7 +71,7 @@ void BamWriter::makeIndex() const {
   }
   
 
-void BamWriter::writeAlignment(BamRecord &r)
+void BamWriter::WriteRecord(BamRecord &r)
 {
   if (!fop) {
     throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. Did you forget to open the Bam for writing (OpenWriteBam)?");

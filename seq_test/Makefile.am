@@ -1,4 +1,4 @@
-bin_PROGRAMS = seq_test read_write
+bin_PROGRAMS = seq_test read_write 
 
 seq_test_CPPFLAGS = \
      -I../src \

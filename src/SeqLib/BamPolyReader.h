@@ -29,9 +29,12 @@ namespace SeqLib {
 
     std::string id;
 
+    // hold the reference for CRAM reading
+    std::string m_cram_reference;
+
   };
   
-/** Walk along a BAM or along BAM regions and stream in/out reads
+/** Walk along a collection of BAM/SAM/CRAM stream in reads
  */
 class BamPolyReader {
 
@@ -47,77 +50,76 @@ class BamPolyReader {
    */
   ~BamPolyReader() { }
 
+  /** Explicitly set a reference genome to be used to decode CRAM file.
+   * If no reference is specified, will automatically load from
+   * file pointed to in CRAM header using the @SQ tags. 
+   * @note This function is useful if the reference path pointed
+   * to by the UR field of @SQ is not on your system, and you would
+   * like to explicitly provide one.
+   * @param ref Path to an index reference genome
+   * @return Returns true if reference loaded.
+   * @exception Throws an invalid_argument if reference cannot be loaded
+   */
+  bool SetCramReference(const std::string& ref);
+
   /** Set a part of the BAM to walk.
    *
    * This will set the BAM pointer to the given region.
    * @param gp Location to point the BAM to
    * @return true if the region is found in the index
    */
-  bool setBamReaderRegion(const GenomicRegion& gp);
+  bool SetRegion(const GenomicRegion& gp);
 
   /** Set up multiple regions. Overwrites current regions. 
    * 
    * This will set the BAM pointer to the first element of the
    * input list.
-   * @param grv Set of location to point BAM to
+   * @param grc Set of location to point BAM to
    * @return true if the regions are found in the index
    */
-  bool setBamReaderRegions(const GenomicRegionVector& grv);
+  bool SetMultipleRegions(const GRC& grc);
 
   /** Create a string representation of 
    * all of the regions to walk
    */
-  std::string printRegions() const;
+  std::string PrintRegions() const;
 
-  /** Print out some basic info about this walker, 
-   * including Minz0iRules
-   */
+  /** Print out some basic info about this reader */
   friend std::ostream& operator<<(std::ostream& out, const BamPolyReader& b);
 
-  /** Open a BAM file for streaming in
-   */
-  bool OpenReadBam(const std::string& bam);
+  /** Open a BAM/SAM/CRAM/STDIN file for streaming in */
+  bool Open(const std::string& bam);
 
-  /** Explicitly provide a ReadFilterCollection to this BamReader
-   */
-  void SetReadFilterCollection(const ReadFilterCollection& mr); 
-
-  /** Retrieve the next read from the BAM.
-   *
-   * If a ReadFilterCollection is defined for this BAM
-   * will grab the next valid read.
-   * r Read to fill with data
-   * rule bool identifying if this read passed the rules
+  /** Retrieve the next read from the available input streams.
+   * @note Will chose the read with the lowest left-alignment position
+   * from the available streams.
+   * @param r Read to fill with data
    * @return true if the next read is available
    */
-  bool GetNextRead(BamRecord &r, bool& rule);
-
-  /** Return the ReadFilterCollection object used by this BamReader
-   */
-  const ReadFilterCollection& GetReadFilterCollection() const { return m_mr; }
+  bool GetNextRecord(BamRecord &r);
 
   /** Reset all the counters and regions, but keep the loaded index */
-  void resetAll();
+  void Reset();
 
   /** Return a header to the first file */
   BamHeader Header() const { if (m_bams.size()) return m_bams[0].m_hdr; return BamHeader(); }
 
  protected:
 
-  ReadFilterCollection m_mr; ///< filter collection
-
   // point index to this region of bam
   bool __set_region(const GenomicRegion& gp);
 
-  // open bam, true if success
-  bool __open_BAM_for_reading();
-
-  // define the regions to walk
+  // which region are we on
   size_t m_region_idx = 0;
 
-  GenomicRegionVector m_region;
+  // regions to walk
+  GRC m_region;
 
+  // store the file pointers etc to BAM files
   std::vector<_Bam> m_bams;
+
+  // hold the reference for CRAM reading
+  std::string m_cram_reference;
 
 };
 

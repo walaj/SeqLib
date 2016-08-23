@@ -35,25 +35,25 @@ class BamWriter  {
   /** Write the BAM header */
   void WriteHeader() const;
 
-  
+  /** Provide a header to this writer 
+   * @param h Header for this writer. Copies contents
+   */
   void SetHeader(const SeqLib::BamHeader& h);
 
-  /** Close a BAM file explitily. This is required before indexing with makeIndex.
+  /** Close a file explitily. This is required before indexing with makeIndex.
    * @note If not called, BAM will close properly on object destruction
    * @exception Throws a runtime_error if BAM already closed or was never opened
    */
-  void CloseBam();
+  void Close();
 
   /** Create the index file for the output bam in BAI format.
    *
    * This will make a call to HTSlib bam_index_build for the output file. 
    * @exception Throws a runtime_error if sam_index_build2 exits with < 0 status
    */
-  void makeIndex() const;
+  void BuildIndex() const;
 
-  /** Print out some basic info about this walker, 
-   * including Minz0iRules
-   */
+  /** Print out some basic info about this writer */
   friend std::ostream& operator<<(std::ostream& out, const BamWriter& b);
 
   /** Open a BAM file for streaming out.
@@ -67,7 +67,7 @@ class BamWriter  {
    * @param r The BamRecord to save
    * @exception Throws a runtime_error if cannot write alignment
    */
-  void writeAlignment(BamRecord &r);
+  void WriteRecord(BamRecord &r);
 
   /** Explicitly set a reference genome to be used to decode CRAM file.
    * If no reference is specified, will automatically load from

@@ -5,20 +5,12 @@
 
 namespace SeqLib {
 
-  void BamReader::SetReadFilterCollection(const ReadFilterCollection& mr) {
-    m_mr = mr;
-  }
-
 // set the bam region
-bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx) {
+bool BamReader::__set_region(const GenomicRegion& gp) {
   
 #ifdef DEBUG_WALKER
   std::cerr << "trying to set the region for "<< m_in << " and on region " << gp << std::endl;
 #endif
-  
-  // store the pre-loaded idx rather than re-load
-  if (!idx && passed_idx) 
-    idx = passed_idx;
   
   //HTS set region
   if (!idx) 
@@ -45,49 +37,47 @@ bool BamReader::__set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t>
   return true;
 }
 
-void BamReader::resetAll() {
+void BamReader::Reset() {
 
   m_region_idx = 0;
-  m_region = GenomicRegionVector();
+  m_region = GRC();
 
 }
 
-bool BamReader::setBamReaderRegion(const GenomicRegion& g, std::shared_ptr<hts_idx_t> passed_idx)
+bool BamReader::SetRegion(const GenomicRegion& g)
 {
   m_region.clear();
-  m_region.push_back(g);
+  m_region.add(g);
   m_region_idx = 0; // rewind it
 
   if (m_region.size())
-    return __set_region(m_region[0], passed_idx);
+    return __set_region(m_region[0]);
 
-  m_region.push_back(GenomicRegion(-1,-1,-1));
+  m_region.add(GenomicRegion(-1,-1,-1));
   return false;
   
 }
 
-bool BamReader::setBamReaderRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx) 
+bool BamReader::SetMultipleRegions(const GRC& grv) 
 {
-  if (grv.size() == 0)
-    {
+  if (grv.size() == 0) {
       std::cerr << "Warning: Trying to set an empty bam region"  << std::endl;
       return false;
     }
   m_region = grv;
   m_region_idx = 0; // rewind it
+
   //__check_regions_blacklist(); // sets m_region
   if (m_region.size())
-    return __set_region(m_region[0], passed_idx);
+    return __set_region(m_region[0]);
 
-  m_region.push_back(GenomicRegion(-1,-1,-1));
+  m_region.add(GenomicRegion(-1,-1,-1));
   return false;
 }
 
-  bool BamReader::OpenReadBam(const std::string& bam) 
-{
-  m_in = bam;
-
-  return __open_BAM_for_reading();
+  bool BamReader::Open(const std::string& bam) {
+    m_in = bam;
+    return __open_BAM_for_reading();
 }
 
 BamReader::BamReader(const std::string& in) : m_in(in)
@@ -129,55 +119,23 @@ bool BamReader::__open_BAM_for_reading()
 
 }
 
-void BamReader::SetReadFilterCollection(const std::string& rules)
-{
-
-  // construct the minirules
-  m_mr = ReadFilterCollection(rules, m_hdr.get());
-
-  // check that it worked
-  if (!m_mr.size()) {
-    //std::cerr << "No ReadFilter were successfully parsed" << std::endl;
-    //throw 20;
-  }
-}
-
-void BamReader::printRuntimeMessage(const ReadCount &rc_main, const BamRecord &r) const {
-
-  char buffer[100];
-  std::string posstring = AddCommas<int>(r.Position());
-  sprintf (buffer, "Reading read %11s at position %2s:%-11s. Kept %11s (%2d%%) [running count across whole BAM]",  
-	   rc_main.totalString().c_str(), r.ChrName().c_str(), posstring.c_str(),  
-	   rc_main.keepString().c_str(), rc_main.percent());
-  printf ("%s | ",buffer);
-
-#ifndef __APPLE__
-  displayRuntime(start);
-#endif
-  std::cerr << std::endl;
-  
-}
-
   bool BamReader::SetCramReference(const std::string& ref) {
-    
     m_cram_reference = ref;
-
   }
-
-bool BamReader::GetNextRead(BamRecord& r, bool& rule)
-{
   
-  bam1_t* b = bam_init1(); 
-
-  int32_t valid;
-  if (hts_itr == 0) {
-    valid = sam_read1(fp_htsfile.get(), m_hdr.get_(), b);    
-    if (valid < 0) { 
-
+  bool BamReader::GetNextRecord(BamRecord& r) {
+    
+    bam1_t* b = bam_init1(); 
+    
+    int32_t valid;
+    if (hts_itr == 0) {
+      valid = sam_read1(fp_htsfile.get(), m_hdr.get_(), b);    
+      if (valid < 0) { 
+	
 #ifdef DEBUG_WALKER
-      std::cerr << "ended reading on null hts_itr" << std::endl;
+	std::cerr << "ended reading on null hts_itr" << std::endl;
 #endif
-      bam_destroy1(b); 
+	bam_destroy1(b); 
       return false;
     } 
   } else {
@@ -208,15 +166,12 @@ bool BamReader::GetNextRead(BamRecord& r, bool& rule)
     } while (valid <= 0); // keep trying regions until works
   }
   
-  r.assign(b); // = std::shared_ptr<bam1_t> (b, free_delete());
-
-  // check if it passed the rules
-  rule = m_mr.isValid(r);
+  r.assign(b); 
 
   return true;
 }
 
-std::string BamReader::printRegions() const {
+std::string BamReader::PrintRegions() const {
 
   std::stringstream ss;
   for (auto& r : m_region)
@@ -229,7 +184,6 @@ std::ostream& operator<<(std::ostream& out, const BamReader& b)
 {
   out << "Read"; 
   out << ":" << b.m_in << std::endl; 
-  out << b.m_mr << std::endl;
   if (b.m_region.size() && b.m_region.size() < 20) {
     out << " ------- BamReader Regions ----------" << std::endl;;
     for (auto& i : b.m_region)
@@ -248,13 +202,5 @@ std::ostream& operator<<(std::ostream& out, const BamReader& b)
   out <<   " ------------------------------------";
   return out;
 }
-
-std::string BamReader::displayReadFilterCollection() const 
-{
-  std::stringstream ss;
-  ss << m_mr;
-  return ss.str();
-}
-
 
 }

@@ -15,7 +15,7 @@
 
 namespace SeqLib {
 
-/** Walk along a BAM or along BAM regions and stream in/out reads
+/** Walk along a BAM/SAM/CRAM/STDIN and stream in reads
  */
 class BamReader {
 
@@ -34,13 +34,13 @@ class BamReader {
    */
   ~BamReader() { }
 
-  /** Set a part of the BAM to walk.
+  /** Set a part of the BAM/CRAM (ie able to be indexed) to walk.
    *
    * This will set the BAM pointer to the given region.
    * @param gp Location to point the BAM to
    * @return true if the region is found in the index
    */
-  bool setBamReaderRegion(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
+  bool SetRegion(const GenomicRegion& gp);
 
   /** Explicitly set a reference genome to be used to decode CRAM file.
    * If no reference is specified, will automatically load from
@@ -50,6 +50,7 @@ class BamReader {
    * like to explicitly provide one.
    * @param ref Path to an index reference genome
    * @return Returns true if reference loaded.
+   * @exception Throws an invalid_argument if reference cannot be loaded
    */
   bool SetCramReference(const std::string& ref);
   
@@ -60,40 +61,19 @@ class BamReader {
    * @param grv Set of location to point BAM to
    * @return true if the regions are found in the index
    */
-  bool setBamReaderRegions(const GenomicRegionVector& grv, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
+  bool SetMultipleRegions(const GRC& grv);
 
   /** Create a string representation of 
    * all of the regions to walk
    */
-  std::string printRegions() const;
+  std::string PrintRegions() const;
 
-  /** Print a run-time message to stdout.
-   *
-   * Prints a message about all of the reads that have been visited, and informaiton
-   * about the current read
-   */
-  void printRuntimeMessage(const ReadCount &rc_main, const BamRecord &r) const;
-
-  /** Print out some basic info about this walker, 
-   * including Minz0iRules
-   */
+  /** Print out some basic info about this reader */
   friend std::ostream& operator<<(std::ostream& out, const BamReader& b);
 
   /** Open a BAM file for streaming in
    */
-  bool OpenReadBam(const std::string& bam);
-
-  /** Pass a ReadFilter script to the BAM.
-   * 
-   * This will call the constructor of ReadFilterCollection, and 
-   * parse the provides rules and add it as a rule set to this BamRecorder.
-   * @param rules A JSON string of filters, or a file pointing to a filter script
-   */
-  void SetReadFilterCollection(const std::string& rules);
-  
-  /** Explicitly provide a ReadFilterCollection to this BamReader
-   */
-  void SetReadFilterCollection(const ReadFilterCollection& mr); 
+  bool Open(const std::string& bam);
 
   /** Retrieve the next read from the BAM.
    *
@@ -103,17 +83,7 @@ class BamReader {
    * rule bool identifying if this read passed the rules
    * @return true if the next read is available
    */
-  bool GetNextRead(BamRecord &r, bool& rule);
-
-  /** Return the ReadFilterCollection object used by this BamReader
-   */
-  const ReadFilterCollection& GetReadFilterCollection() const { return m_mr; }
-
-  /** Set the BamReader to count reads for all rules */
-  void setCountAllRules() { m_mr.CheckAllFilters(); }
-
-  /** Set to have verbose actions */
-  void setVerbose() { m_verbose = true; }
+  bool GetNextRecord(BamRecord &r);
 
   /** Return the ReadFilterCollection as a string */
   std::string displayReadFilterCollection() const;
@@ -121,16 +91,14 @@ class BamReader {
   const BamHeader& Header() const { return m_hdr; }
   
   /** Reset all the counters and regions, but keep the loaded index */
-  void resetAll();
+  void Reset();
 
  protected:
 
   std::string m_in; ///< file name
 
-  ReadFilterCollection m_mr; ///< filter collection
-
   // point index to this region of bam
-  bool __set_region(const GenomicRegion& gp, std::shared_ptr<hts_idx_t> passed_idx = std::shared_ptr<hts_idx_t>(nullptr));
+  bool __set_region(const GenomicRegion& gp);
 
   // open bam, true if success
   bool __open_BAM_for_reading();
@@ -138,9 +106,8 @@ class BamReader {
   // define the regions to walk
   size_t m_region_idx = 0;
 
-  GenomicRegionVector m_region;
-
-  struct timespec start;
+  // regions to access
+  GRC m_region;
 
   // hts
   std::shared_ptr<BGZF> fp;
@@ -150,8 +117,7 @@ class BamReader {
 
   BamHeader m_hdr;
 
-  bool m_verbose = false;
-
+  // hold the reference for CRAM reading
   std::string m_cram_reference;
 
 };

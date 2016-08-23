@@ -37,10 +37,9 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
   BOOST_CHECK_EQUAL(h.GetSequenceLength(10000), -1);
 
   SeqLib::BamRecord rec;
-  bool rule;
   size_t count = 0;
   
-  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+  while(br.GetNextRecord(rec) && count++ < 10000) {
     
   }
 
@@ -111,35 +110,35 @@ BOOST_AUTO_TEST_CASE ( interval_queries ) {
 BOOST_AUTO_TEST_CASE( json_parse ) {
 
   SeqLib::BamReader br;
-  br.OpenReadBam("test_data/small.bam");
+  br.Open("test_data/small.bam");
   
   std::string rules = "{\"global\" : {\"!anyflag\" : 1536, \"phred\" : 4}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
 
   SeqLib::ReadFilterCollection rfc(rules, br.Header());
 
   std::cerr << rfc << std::endl;
-  
-  br.SetReadFilterCollection(rfc);
 
   SeqLib::BamRecord rec;
-  bool rule;
   size_t count = 0;
 
-  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+  while(br.GetNextRecord(rec) && count++ < 10000) {
+    if (!rfc.isValid(rec))
+      continue;
     // test global flag rule
-    if ( (rec.QCFailFlag() || rec.DuplicateFlag()) && rule) {
+    if ( (rec.QCFailFlag() || rec.DuplicateFlag())) {
       std::cerr << rec << std::endl;
       assert(false);
     }
   }
 
-  std::cout << br.GetReadFilterCollection().EmitCounts() << std::endl;
-  
   /// direct from string
-  br.SetReadFilterCollection(rules);
-  while(br.GetNextRead(rec, rule) && count++ < 10000) {
+  SeqLib::ReadFilterCollection rfc2(rules, br.Header());
+
+  while(br.GetNextRecord(rec) && count++ < 10000) {
+    if (!rfc.isValid(rec))
+      continue;
     // test global flag rule
-    if ( (rec.QCFailFlag() || rec.DuplicateFlag()) && rule) {
+    if ( (rec.QCFailFlag() || rec.DuplicateFlag())) {
       std::cerr << rec << std::endl;
       assert(false);
     }
@@ -186,9 +185,6 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   // add to the filter collection
   rfc.AddReadFilter(rf);
 
-  // add to the reader
-  br.SetReadFilterCollection(rfc);
-
   SeqLib::GRC gback = rfc.getAllRegions();
   BOOST_CHECK_EQUAL(gback.size(), g.size());
   for (size_t i = 0; i < gback.size(); ++i)
@@ -196,39 +192,38 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   
 
   // display
-  std::cerr << br.displayReadFilterCollection() << std::endl;
-  std::cerr << br.printRegions() << std::endl;
+  std::cerr << br.PrintRegions() << std::endl;
 
   // read / filter the reads
   SeqLib::BamRecord rec;
-  bool rule;
   size_t count = 0;
 
-  while(br.GetNextRead(rec, rule) && count++ < 10000) {
-    if (rule) {
-      // test isize rule
-      if (!(rec.FullInsertSize() >= 200 || rec.FullInsertSize() <= 600)) {
-	std::cerr << rec.FullInsertSize() << std::endl;
-	assert(false);
-      }
-      // test mapq rule
-      if (!(rec.MapQuality() >= 10 || rec.MapQuality() <= 50)) {
-	std::cerr << rec.MapQuality() << std::endl;
-	assert(false);
-      }
-      // test nm rule
-      if (!(rec.GetIntTag("NM") != 1)) {
-	std::cerr << rec.GetIntTag("NM") << std::endl;
-	assert(false);
-      }
+  while(br.GetNextRecord(rec) && count++ < 10000) {
 
+    if (!rfc.isValid(rec))
+      continue;
+
+    // test isize rule
+    if (!(rec.FullInsertSize() >= 200 || rec.FullInsertSize() <= 600)) {
+      std::cerr << rec.FullInsertSize() << std::endl;
+      assert(false);
     }
+    // test mapq rule
+    if (!(rec.MapQuality() >= 10 || rec.MapQuality() <= 50)) {
+      std::cerr << rec.MapQuality() << std::endl;
+      assert(false);
+    }
+    // test nm rule
+    if (!(rec.GetIntTag("NM") != 1)) {
+      std::cerr << rec.GetIntTag("NM") << std::endl;
+      assert(false);
+    }
+    
   }
-
-  }
+}
 
 BOOST_AUTO_TEST_CASE ( seq_utils ) {
-
+  
   // add commas
   BOOST_CHECK_EQUAL(SeqLib::AddCommas(1),"1");
   BOOST_CHECK_EQUAL(SeqLib::AddCommas(1000000),"1,000,000");
@@ -257,7 +252,7 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
   SeqLib::BamRecordVector brv;
   
   size_t count = 0;
-  br.GetNextRead(r, rule);
+  br.GetNextRecord(r);
   
   BOOST_CHECK_EQUAL(r.asGenomicRegion().chr, 22);
   BOOST_CHECK_EQUAL(r.asGenomicRegion().pos1,999901);
@@ -299,12 +294,11 @@ BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
   SeqLib::BamReader br("test_data/small.bam");
   SeqLib::BamRecord r;
-  bool rule;
-  
+
   SeqLib::BamRecordVector brv;
   
   size_t count = 0;
-  while(br.GetNextRead(r, rule) && count++ < 1000) {
+  while(br.GetNextRecord(r) && count++ < 1000) {
     brv.push_back(r);
   }
   
@@ -460,13 +454,12 @@ BOOST_AUTO_TEST_CASE( small_trie_from_file) {
   rfc.AddReadFilter(rf);
 
   SeqLib::BamReader br;
-  br.OpenReadBam("test_data/small.bam");
-  br.SetReadFilterCollection(rfc);
+  br.Open("test_data/small.bam");
 
   SeqLib::BamRecord rec;
   bool rule;
   size_t count = 0;
-  while (br.GetNextRead(rec, rule) && count++ < 1000){
+  while (br.GetNextRecord(rec) && count++ < 1000){
   }
   
 }
@@ -740,7 +733,7 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
   SeqLib::BamReader bw(SBAM);
 
   // open index
-  bw.setBamReaderRegion(SeqLib::GenomicRegion(22, 1000000, 1001000));
+  bw.SetRegion(SeqLib::GenomicRegion(22, 1000000, 1001000));
 
   // make a set of locations
   SeqLib::GRC grc;
@@ -748,11 +741,11 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
   grc.add(SeqLib::GenomicRegion(1, 1, 100));
 
   // set regions
-  bw.setBamReaderRegions(grc.asGenomicRegionVector());
+  bw.SetMultipleRegions(grc);
 
   // write index of new bam
   // should print a warning since no write bam is specified
-  //bw.makeIndex();
+  //bw.BuildIndex();
 
   // open an output BAM
   //bw.OpenWriteBam(OBAM);
@@ -762,21 +755,20 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
 
   // loop through and grab some reads
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while (bw.GetNextRead(r, rule)) {
+  while (bw.GetNextRecord(r)) {
     //if (++count % 10 == 0)
-    //  bw.writeAlignment(r);
+    //  bw.WriteRecord(r);
   }
   
   // display info about BAM
   std::cerr << bw << std::endl;
 
   // write index of new bam
-  //bw.makeIndex();
+  //bw.BuildIndex();
 
   // reset the walker
-  bw.resetAll();
+  bw.Reset();
 
   // write as a cram
   //bw.OpenWriteBam(OCRAM);
@@ -787,10 +779,10 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
   // print cram writer
   //std::cerr << bw << std::endl;
   // write the CRAM
-  //while (bw.GetNextRead(r, rule)) {
+  //while (bw.GetNextRecord(r, rule)) {
   //  if (++count % 10 == 0) {
   //    std::cerr << count << std::endl;
-  //    bw.writeAlignment(r);
+  //    bw.WriteRecord(r);
   //  }
   //}
 
@@ -830,9 +822,9 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   //w = SeqLib::BamWriter(SeqLib::BAM);
 
   BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
-  BOOST_CHECK_THROW(w.CloseBam(), std::runtime_error);
-  BOOST_CHECK_THROW(w.makeIndex(), std::runtime_error);
-  BOOST_CHECK_THROW(w.writeAlignment(rec), std::runtime_error);
+  BOOST_CHECK_THROW(w.Close(), std::runtime_error);
+  BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
+  BOOST_CHECK_THROW(w.WriteRecord(rec), std::runtime_error);
 
   w.Open("tmp_out.bam");
 
@@ -842,18 +834,17 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   w.WriteHeader();
 
-  bool rule;
   size_t count = 0;
 
-  while(br.GetNextRead(rec, rule) && count++ < 10000) {
-    w.writeAlignment(rec);
+  while(br.GetNextRecord(rec) && count++ < 10000) {
+    w.WriteRecord(rec);
   }
 
 
-  BOOST_CHECK_THROW(w.makeIndex(), std::runtime_error);
-  w.CloseBam();
+  BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
+  w.Close();
 
-  w.makeIndex();
+  w.BuildIndex();
 
   // print some info
   std::cerr << w << std::endl;
@@ -866,10 +857,9 @@ BOOST_AUTO_TEST_CASE( bam_record_more ) {
   SeqLib::BamHeader h = br.Header();
 
   SeqLib::BamRecord rec;
-  bool rule;
   size_t count = 0;
   
-  while(br.GetNextRead(rec, rule) && count++ < 100) {
+  while(br.GetNextRecord(rec) && count++ < 100) {
     rec.ClearSeqQualAndTags();
     assert(rec.Sequence().empty());
     assert(rec.Qualities().empty());
@@ -878,7 +868,7 @@ BOOST_AUTO_TEST_CASE( bam_record_more ) {
     rec.CountBWAChimericAlignments();
   }
 
-  br.resetAll();
+  br.Reset();
 
   SeqLib::ReadFilterCollection rf;
 

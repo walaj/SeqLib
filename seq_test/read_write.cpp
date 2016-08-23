@@ -8,6 +8,7 @@
 #include "SeqLib/BamWriter.h"
 #include "SeqLib/BamReader.h"
 #include "SeqLib/BamPolyReader.h"
+#include "SeqLib/SeqPlot.h"
 
 BOOST_AUTO_TEST_CASE( stdinput ) {
 
@@ -17,9 +18,8 @@ BOOST_AUTO_TEST_CASE( stdinput ) {
 
   // write it back out
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
+  while(b.GetNextRecord(r) && count++ < 1) {
     std::cerr << " STDIN " << r << std::endl;
   }
 #endif
@@ -31,9 +31,8 @@ BOOST_AUTO_TEST_CASE( cramin ) {
   SeqLib::BamReader b("test_data/small.cram"); 
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
+  while(b.GetNextRecord(r) && count++ < 1) {
     std::cerr << "CRAM " << r << std::endl;
   }
 }
@@ -42,12 +41,11 @@ BOOST_AUTO_TEST_CASE( cramin_new_ref ) {
 
   // read a BAM from stdin
   SeqLib::BamReader b;
-  b.OpenReadBam("test_data/small.cram");
+  b.Open("test_data/small.cram");
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 10) {
+  while(b.GetNextRecord(r) && count++ < 10) {
     std::cerr << "CRAM " << r << std::endl;
   }
 }
@@ -59,9 +57,8 @@ BOOST_AUTO_TEST_CASE( bamin ) {
   SeqLib::BamReader b("test_data/small.bam"); 
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
+  while(b.GetNextRecord(r) && count++ < 1) {
     std::cerr << "BAM " << r << std::endl;
   }
 }
@@ -72,9 +69,8 @@ BOOST_AUTO_TEST_CASE( samin ) {
   SeqLib::BamReader b("test_data/small.sam"); 
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
+  while(b.GetNextRecord(r) && count++ < 1) {
     std::cerr << "SAM " << r << std::endl;
   }
 }
@@ -91,12 +87,11 @@ BOOST_AUTO_TEST_CASE( bamout ) {
   w.WriteHeader();
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
-    w.writeAlignment(r);
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
   }
-  w.CloseBam();
+  w.Close();
   
 }
 
@@ -111,12 +106,11 @@ BOOST_AUTO_TEST_CASE( samout ) {
   w.WriteHeader();
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
-    w.writeAlignment(r);
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
   }
-  w.CloseBam();
+  w.Close();
   
 }
 
@@ -132,12 +126,11 @@ BOOST_AUTO_TEST_CASE( cramout ) {
   w.WriteHeader();
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
-    w.writeAlignment(r);
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
   }
-  w.CloseBam();
+  w.Close();
   
 }
 
@@ -153,12 +146,11 @@ BOOST_AUTO_TEST_CASE( samout_to_stdout ) {
   w.WriteHeader();
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
-    w.writeAlignment(r);
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
   }
-  w.CloseBam();
+  w.Close();
 #endif
 }
 
@@ -179,12 +171,11 @@ BOOST_AUTO_TEST_CASE( bamout_to_stdout ) {
   w.WriteHeader();
 
   SeqLib::BamRecord r;
-  bool rule;
   size_t count = 0;
-  while(b.GetNextRead(r, rule) && count++ < 1) {
-    w.writeAlignment(r);
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
   }
-  w.CloseBam();
+  w.Close();
 #endif
   
 }
@@ -193,10 +184,10 @@ BOOST_AUTO_TEST_CASE( bam_poly ) {
 
   SeqLib::BamPolyReader r;
   
-  r.OpenReadBam("test_data/small.bam");
-  r.OpenReadBam("test_data/small.cram");
+  r.Open("test_data/small.bam");
+  r.Open("test_data/small.cram");
 
-  r.setBamReaderRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100));
+  r.SetRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100));
 
   SeqLib::BamWriter w(SeqLib::BAM);
   w.Open("tmp_out_poly.bam");
@@ -204,9 +195,33 @@ BOOST_AUTO_TEST_CASE( bam_poly ) {
   w.WriteHeader();
 
   SeqLib::BamRecord rec;
-  bool rule;
-  while(r.GetNextRead(rec, rule)) {
-    w.writeAlignment(rec);
+  while(r.GetNextRecord(rec)) {
+    w.WriteRecord(rec);
   }
+
+}
+
+
+BOOST_AUTO_TEST_CASE( plot_test ) {
+
+  SeqLib::BamReader r;
+  r.Open("test_data/small.bam");
+
+  SeqLib::GenomicRegion gr("X:1,002,942-1,003,294", r.Header());
+  r.SetRegion(gr);
+
+  SeqLib::SeqPlot s;
+
+  s.SetView(gr);
+
+  SeqLib::BamRecord rec;
+  SeqLib::BamRecordVector brv;
+  while(r.GetNextRecord(rec))
+    if (!rec.CountNBases() && rec.MappedFlag())
+      brv.push_back(rec);
+
+  s.SetPadding(20);
+
+  std::cout << s.PlotAlignmentRecords(brv);
 
 }
