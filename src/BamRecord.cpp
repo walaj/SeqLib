@@ -57,9 +57,9 @@ namespace SeqLib {
 	cigr[i] = c[i].raw();
       return;
     }
-    
+
     // make the new cigar structure
-    uint32_t* new_cig = (uint32_t*)malloc(c.size());
+    uint8_t* new_cig = (uint8_t*)malloc(4 * c.size());
     for (size_t i = 0; i < c.size(); ++i)
       new_cig[i] = c[i].raw();
     
@@ -67,6 +67,9 @@ namespace SeqLib {
     int old_seqaux_spot = (b->core.n_cigar<<2) + b->core.l_qname;
     int old_seqaux_len = bam_get_l_aux(b) + ((b->core.l_qseq + 1)>>1) + b->core.l_qseq;
     
+    // set the new cigar size
+    b->core.n_cigar = c.size();
+
     // copy out all the old data
     uint8_t* oldd = (uint8_t*)malloc(b->l_data);
     memcpy(oldd, b->data, b->l_data);
@@ -76,17 +79,17 @@ namespace SeqLib {
     b->data = (uint8_t*)calloc(new_size, sizeof(uint8_t)); 
     
     // add back the qname
-    memcpy(b->data, oldd, b->core.l_qname); // + (b->core.n_cigar<<2));
+    memcpy(b->data, oldd, b->core.l_qname); 
     
     // add in the new cigar
     memcpy(b->data + b->core.l_qname, new_cig, c.size()<<2);
 
     // add back the rest of the data
-    memcpy(b->data + b->core.l_qname + c.size()<<2, old_seqaux_spot, old_seqaux_len);
+    memcpy(b->data + b->core.l_qname + (b->core.n_cigar<<2), oldd + old_seqaux_spot, old_seqaux_len);
     
     // update the sizes
     // >>1 shift is because only 4 bits needed per ATCGN base
-    b->l_data = new_size; //b->l_data - ((b->core.l_qseq + 1)>>1) - b->core.l_qseq + ((seq.length()+1)>>1) + seq.length();
+    b->l_data = new_size; 
     b->core.n_cigar = c.size();
     
     free(oldd);
@@ -105,8 +108,8 @@ namespace SeqLib {
 
     init();
     b->core.tid = gr->chr;
-    b->core.pos = gr->pos1 + alignment.ref_begin;
-    b->core.qual = alignment.sw_score;
+    b->core.pos = gr->pos1 + alignment.ref_begin + 1; // add to make it 1-indexed, not 0-indexed
+    b->core.qual = 60; //alignment.sw_score;
     b->core.flag = 0;
     b->core.n_cigar = alignment.cigar.size();
     
@@ -121,19 +124,14 @@ namespace SeqLib {
     b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
     b.get()->data = (uint8_t*)malloc(b.get()->l_data);
 
-    // allocate all the data
-    b->core.l_qname = name.length() + 1;
-    b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
-    b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
-    b.get()->data = (uint8_t*)malloc(b.get()->l_data);
-    
     // allocate the qname
     memcpy(b->data, name.c_str(), name.length() + 1);
 
     // allocate the cigar. 32 bits per elem (4 type, 28 length)
     uint32_t * cigr = bam_get_cigar(b);
-    for (size_t i = 0; i < alignment.cigar.size(); ++i)
+    for (size_t i = 0; i < alignment.cigar.size(); ++i) {
       cigr[i] = alignment.cigar[i]; //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
+    }
 
     // allocate the sequence
     uint8_t* m_bases = b->data + b->core.l_qname + (b->core.n_cigar<<2);
@@ -156,6 +154,9 @@ namespace SeqLib {
       m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
       
     }
+
+    // add in the actual alignment score
+    AddIntTag("AS", alignment.sw_score);
       
   }
 
@@ -536,12 +537,6 @@ namespace SeqLib {
     // if alignment is reverse, set it
     if (gr->strand == '-') // just choose this convention to reverse
       b->core.flag |= BAM_FREVERSE;
-    
-    // allocate all the data
-    b->core.l_qname = name.length() + 1;
-    b->core.l_qseq = seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
-    b->l_data = b->core.l_qname + (b->core.n_cigar<<2) + ((b->core.l_qseq+1)>>1) + (b->core.l_qseq);
-    b.get()->data = (uint8_t*)malloc(b.get()->l_data);
     
     // allocate all the data
     b->core.l_qname = name.length() + 1;

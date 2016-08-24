@@ -3,16 +3,11 @@
 #include<boost/test/unit_test.hpp>
 
 #include <climits>
-#include <string>
 #include <boost/test/unit_test.hpp>
 
-#include "SeqLib/GenomicRegion.h"
 #include "SeqLib/BWAWrapper.h"
-#include "SeqLib/GenomicRegionCollection.h"
 #include "SeqLib/BamReader.h"
 #include "SeqLib/BamWriter.h"
-#include "SeqLib/BamWalker.h"
-#include "SeqLib/BamHeader.h"
 #include "SeqLib/ReadFilter.h"
 #include "SeqLib/FermiAssembler.h"
 
@@ -150,7 +145,8 @@ BOOST_AUTO_TEST_CASE( json_parse ) {
 BOOST_AUTO_TEST_CASE( sw_alignment ) {
 
   const std::string ref = "ACTGCGAGCGACTAGCTCGTAGCTAGCTAGCTAGCTAGTGACTGCGGGCGATCATCGATCTTTTATTATCGCGATCGCTACGAC";
-  const std::string seq =                "CTCGTAGCTAGCTGCTAGCTAGTGACTGCGGGCGATCATCGATCTTTTATTATCGCG";
+  const std::string seq = "ACTGCGAGCGACTAGCTCGTAGCTAGCTAGCTAGCTAGTGACTGCGGGCGATCATCGATCTTTTATTATCGCGATCGCTACGAC";
+  //const std::string seq =                "CTCGTAGCTAGCTGCTAGCTAGTGACTGCGGGCGATCATCGATCTTTTATTATCGCG";
   const SeqLib::GenomicRegion gr(0,0,0);
   SeqLib::BamRecord b("test_name", seq, ref, &gr);
   
@@ -247,7 +243,6 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
   // get a record
   SeqLib::BamReader br("test_data/small.bam");
   SeqLib::BamRecord r;
-  bool rule;
   
   SeqLib::BamRecordVector brv;
   
@@ -874,7 +869,7 @@ BOOST_AUTO_TEST_CASE( bam_record_more ) {
 
 }
 
-BOOST_AUTO_TEST_CASE( bam_record_maniuplation ) {
+BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
 
   SeqLib::Cigar cig;
 
@@ -922,5 +917,42 @@ BOOST_AUTO_TEST_CASE( bam_record_maniuplation ) {
   BOOST_CHECK_EQUAL(br.Position(), 100);
   BOOST_CHECK_EQUAL(br.Length(), 41);
   BOOST_CHECK_EQUAL(br.ChrID(), 0);
+
+}
+
+BOOST_AUTO_TEST_CASE( change_bam_record ) {
+
+  // get a record
+  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamRecord r;
+  
+  SeqLib::BamRecordVector brv;
+  
+  size_t count = 0;
+  br.GetNextRecord(r);
+
+  SeqLib::Cigar c = r.GetCigar();
+  std::cerr << c << std::endl;
+
+  // try replace with cigar of same size
+  SeqLib::Cigar c2;
+  c2.add(SeqLib::CigarField('S', 101));
+  r.SetCigar(c2);
+  std::cerr << r << std::endl;
+
+  // try replace with new cigar
+  SeqLib::Cigar c3;
+  c3.add(SeqLib::CigarField('S', 10));
+  c3.add(SeqLib::CigarField('M', 91));
+  r.SetCigar(c3);
+  std::cerr << r << std::endl;
+
+  const std::string new_seq = "ACTGGACTACAC";
+
+  r.SetSequence(new_seq);
+  std::cerr << r << std::endl;
+
+  r.SetQname("dummy_qname");
+  std::cerr << r << std::endl;
 
 }
