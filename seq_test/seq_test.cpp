@@ -18,9 +18,12 @@
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
 
+using namespace SeqLib::Filter;
+
 BOOST_AUTO_TEST_CASE( read_filter_0 ) {
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
   // a BAM header check
@@ -109,7 +112,7 @@ BOOST_AUTO_TEST_CASE( json_parse ) {
   
   std::string rules = "{\"global\" : {\"!anyflag\" : 1536, \"phred\" : 4}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
 
-  SeqLib::ReadFilterCollection rfc(rules, br.Header());
+  ReadFilterCollection rfc(rules, br.Header());
 
   std::cerr << rfc << std::endl;
 
@@ -127,7 +130,7 @@ BOOST_AUTO_TEST_CASE( json_parse ) {
   }
 
   /// direct from string
-  SeqLib::ReadFilterCollection rfc2(rules, br.Header());
+  ReadFilterCollection rfc2(rules, br.Header());
 
   while(br.GetNextRecord(rec) && count++ < 10000) {
     if (!rfc.isValid(rec))
@@ -156,7 +159,8 @@ BOOST_AUTO_TEST_CASE( sw_alignment ) {
 
 BOOST_AUTO_TEST_CASE( read_filter_1 ) {
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
   SeqLib::GRC g;
@@ -164,16 +168,16 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   g.createTreeMap();
 
   // make a new rule set
-  SeqLib::ReadFilterCollection rfc;
+  ReadFilterCollection rfc;
 
   // make a new filter region
-  SeqLib::ReadFilter rf;
+  ReadFilter rf;
 
   // add an isize rule on whole-genome
-  SeqLib::AbstractRule ar;
-  ar.isize = SeqLib::Range(200, 600, false); // 200 to 600, not inverted
-  ar.mapq  = SeqLib::Range(10, 50, false); // 200 to 600, not inverted
-  ar.nm    = SeqLib::Range(1, 1, false); // 200 to 600, not inverted
+  AbstractRule ar;
+  ar.isize = Range(200, 600, false); // 200 to 600, not inverted
+  ar.mapq  = Range(10, 50, false); // 200 to 600, not inverted
+  ar.nm    = Range(1, 1, false); // 200 to 600, not inverted
   rf.AddRule(ar);
 
   rf.setRegions(g);
@@ -241,7 +245,8 @@ BOOST_AUTO_TEST_CASE ( seq_utils ) {
 BOOST_AUTO_TEST_CASE( bam_record ) {
 
   // get a record
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamRecord r;
   
   SeqLib::BamRecordVector brv;
@@ -287,7 +292,8 @@ BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
   SeqLib::FermiAssembler f;
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamRecord r;
 
   SeqLib::BamRecordVector brv;
@@ -324,7 +330,8 @@ BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
 BOOST_AUTO_TEST_CASE( bam_header_stdout ) {
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
   std::cout << h.AsString() << std::endl;
@@ -332,7 +339,8 @@ BOOST_AUTO_TEST_CASE( bam_header_stdout ) {
 
 BOOST_AUTO_TEST_CASE( bam_header_name2id ) {
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
   BOOST_CHECK_EQUAL(h.Name2ID("2"), 1);  
@@ -342,7 +350,8 @@ BOOST_AUTO_TEST_CASE( bam_header_name2id ) {
 
 BOOST_AUTO_TEST_CASE( bam_header_id2name ) {
   
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
   
   BOOST_CHECK_EQUAL(h.IDtoName(2), "3");
@@ -353,7 +362,8 @@ BOOST_AUTO_TEST_CASE( bam_header_id2name ) {
 
 BOOST_AUTO_TEST_CASE( genomic_ranges_string_constructor) {
   
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
   
   const std::string in = "2:1,000,000-2,000,000";
@@ -438,12 +448,12 @@ BOOST_AUTO_TEST_CASE( genomic_region_distance ) {
 
 BOOST_AUTO_TEST_CASE( small_trie_from_file) {
 
-  SeqLib::AbstractRule ar;
+  AbstractRule ar;
   const bool inverted = false;
   ar.addMotifRule("test_data/motif.txt", inverted);
 
-  SeqLib::ReadFilterCollection rfc;
-  SeqLib::ReadFilter rf;
+  ReadFilterCollection rfc;
+  ReadFilter rf;
   rf.AddRule(ar);
   rfc.AddReadFilter(rf);
 
@@ -465,7 +475,7 @@ BOOST_AUTO_TEST_CASE( large_trie ) {
   const int string_size = 20;
   const int string_count = 10000;
 
-  SeqLib::AhoCorasick aho;
+  SeqLib::Filter::AhoCorasick aho;
 
   std::vector<std::string> k;
 
@@ -518,7 +528,8 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
   BOOST_CHECK_EQUAL(gr.distanceBetweenStarts(gr2), -1);
   BOOST_CHECK_EQUAL(gr2.distanceBetweenStarts(gr), -1);
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   BOOST_CHECK_EQUAL(SeqLib::GenomicRegion("X","1","100", br.Header()).chr, 22);
 
   // check negative inputs
@@ -724,7 +735,8 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
 BOOST_AUTO_TEST_CASE( bam_reader ) {
 
-  SeqLib::BamReader bw(SBAM);
+  SeqLib::BamReader bw;
+  bw.Open(SBAM);
 
   // open index
   bw.SetRegion(SeqLib::GenomicRegion(22, 1000000, 1001000));
@@ -804,7 +816,8 @@ BOOST_AUTO_TEST_CASE( gr_random ) {
 BOOST_AUTO_TEST_CASE( bam_write ) {
 
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
   SeqLib::BamRecord rec;
@@ -854,7 +867,8 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
 BOOST_AUTO_TEST_CASE( bam_record_more ) {
 
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
 
   SeqLib::BamRecord rec;
@@ -871,7 +885,7 @@ BOOST_AUTO_TEST_CASE( bam_record_more ) {
 
   br.Reset();
 
-  SeqLib::ReadFilterCollection rf;
+  SeqLib::Filter::ReadFilterCollection rf;
 
 }
 
@@ -929,7 +943,8 @@ BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
 BOOST_AUTO_TEST_CASE( change_bam_record ) {
 
   // get a record
-  SeqLib::BamReader br("test_data/small.bam");
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
   SeqLib::BamRecord r;
   
   SeqLib::BamRecordVector brv;

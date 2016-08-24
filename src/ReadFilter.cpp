@@ -11,7 +11,7 @@
 
 namespace SeqLib {
 
-  namespace ReadFilter {
+  namespace Filter {
   // return if this rule accepts all reads
   bool AbstractRule::isEvery() const {
     return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && 

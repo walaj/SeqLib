@@ -7,14 +7,14 @@
 
 #include "SeqLib/BamWriter.h"
 #include "SeqLib/BamReader.h"
-#include "SeqLib/BamPolyReader.h"
 #include "SeqLib/SeqPlot.h"
 
 BOOST_AUTO_TEST_CASE( stdinput ) {
 
 #ifdef RUN_STDIN
   // read a BAM from stdin
-  SeqLib::BamReader b("-"); 
+  SeqLib::BamReader b;
+  b.Open("-"); 
 
   // write it back out
   SeqLib::BamRecord r;
@@ -28,7 +28,8 @@ BOOST_AUTO_TEST_CASE( stdinput ) {
 BOOST_AUTO_TEST_CASE( cramin ) {
 
   // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.cram"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.cram"); 
 
   SeqLib::BamRecord r;
   size_t count = 0;
@@ -54,7 +55,8 @@ BOOST_AUTO_TEST_CASE( cramin_new_ref ) {
 BOOST_AUTO_TEST_CASE( bamin ) {
 
   // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.bam"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.bam"); 
 
   SeqLib::BamRecord r;
   size_t count = 0;
@@ -66,7 +68,8 @@ BOOST_AUTO_TEST_CASE( bamin ) {
 BOOST_AUTO_TEST_CASE( samin ) {
 
   // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.sam"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
 
   SeqLib::BamRecord r;
   size_t count = 0;
@@ -78,7 +81,8 @@ BOOST_AUTO_TEST_CASE( samin ) {
 BOOST_AUTO_TEST_CASE( bamout ) {
 
   // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.sam"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
 
   SeqLib::BamWriter w(SeqLib::BAM);
   //SeqLib::BamWriter w;
@@ -98,7 +102,8 @@ BOOST_AUTO_TEST_CASE( bamout ) {
 BOOST_AUTO_TEST_CASE( samout ) {
 
   // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.sam"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
 
   SeqLib::BamWriter w(SeqLib::SAM);
   w.Open("tmp_out.sam");
@@ -117,8 +122,8 @@ BOOST_AUTO_TEST_CASE( samout ) {
 
 BOOST_AUTO_TEST_CASE( cramout ) {
 
-  // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.cram"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.cram"); 
 
   SeqLib::BamWriter w(SeqLib::CRAM);
   w.Open("tmp_out.cram");
@@ -138,7 +143,8 @@ BOOST_AUTO_TEST_CASE( samout_to_stdout ) {
 
 #ifdef RUN_SAM_STDOUT
   // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.sam"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
 
   SeqLib::BamWriter w(SeqLib::SAM);
   w.Open("-");
@@ -163,7 +169,8 @@ BOOST_AUTO_TEST_CASE( bamout_to_stdout ) {
 
 #ifdef RUN_BAM_STDOUT
   // read a BAM from stdin
-  SeqLib::BamReader b("test_data/small.sam"); 
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
 
   SeqLib::BamWriter w(SeqLib::BAM);
   w.Open("-");
@@ -182,7 +189,7 @@ BOOST_AUTO_TEST_CASE( bamout_to_stdout ) {
 
 BOOST_AUTO_TEST_CASE( bam_poly ) {
 
-  SeqLib::BamPolyReader r;
+  SeqLib::BamReader r;
   
   r.Open("test_data/small.bam");
   r.Open("test_data/small.cram");
@@ -225,3 +232,4 @@ BOOST_AUTO_TEST_CASE( plot_test ) {
   std::cout << s.PlotAlignmentRecords(brv);
 
 }
+

@@ -217,14 +217,15 @@ CTATCTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTAT                    
 ##### Read simultaneously from a BAM, CRAM and SAM file and send to stdout
 ```
 using SeqLib;
-#include "SeqLib/BamPolyReader.h"
-BamPolyReader r;
+#include "SeqLib/BamReader.h"
+BamPReader r;
   
+// read from multiple streams (in coordinate order)
 r.Open("test_data/small.bam");
 r.Open("test_data/small.cram");
 r.Open("test_data/small.sam");
 
-BamWriter w(SeqLib::SAM);
+BamWriter w(SeqLib::SAM); // set uncompressed output
 w.Open("-");
 w.SetHeader(r.Header());
 w.WriteHeader();
