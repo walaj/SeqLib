@@ -87,8 +87,17 @@ class BamPolyReader {
   /** Print out some basic info about this reader */
   friend std::ostream& operator<<(std::ostream& out, const BamPolyReader& b);
 
-  /** Open a BAM/SAM/CRAM/STDIN file for streaming in */
+  /** Open a BAM/SAM/CRAM/STDIN file for streaming in 
+   * @param bam Path to a SAM/CRAM/BAM file, or "-" for stdin
+   * @return True if open was successful
+   */
   bool Open(const std::string& bam);
+
+  /** Open a set of BAM/SAM/CRAM/STDIN files for streaming in 
+   * @param bams Path to a vector fo SAM/CRAM/BAM files, or "-" for stdin
+   * @return True if open was successful
+   */
+  bool Open(const std::vector<std::string>& bams);
 
   /** Retrieve the next read from the available input streams.
    * @note Will chose the read with the lowest left-alignment position

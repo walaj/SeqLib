@@ -87,6 +87,14 @@ bool BamPolyReader::SetRegion(const GenomicRegion& g)
     m_bams.back().id = id;
     return m_bams.back().open_BAM_for_reading();
   }
+
+  bool BamPolyReader::Open(const std::vector<std::string>& bams) {
+    
+    bool pass = true;
+    for (auto& i : bams)
+      pass = pass && Open(i);
+    return pass;
+  }
   
 BamPolyReader::BamPolyReader() {}
 
