@@ -260,8 +260,11 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
       // actually parse the region
       if (reg == "WG" || reg.empty())
 	mr.m_grv.clear(); // ensure it is whole-genome
-      else
-	mr.setRegions(GRC(reg, hdr));
+      else {
+	GRC regr(reg, hdr);
+	regr.pad(mr.pad);
+	mr.setRegions(regr);
+      }
 	// debug mr.setRegionFromFile(reg, hdr);
       
       // check if its excluder region

@@ -66,35 +66,6 @@ namespace SeqLib {
     
   };
 
-  /*struct CommandLineRegion {
-  
-CommandLineRegion(const std::string& mf, int t) : f(mf), type(t), pad(0), i_flag(0), e_flag(0) {}
-
-  std::string f; // file
-  int type; // mate linked, excluder, etc
-  int pad;
-  uint32_t i_flag; // inclusive flags
-  uint32_t e_flag; // exclusive flags
-
-  uint32_t any_i_flag; // inclusive any flags (eg if read has any bit of these, keep)
-  uint32_t any_e_flag; // exclusive any flags (eg if read has any bit of these, fail)
-
-  int len = 0;
-  int mapq = 0;
-  int nbases = INT_MAX;
-  int phred = 0;
-  int clip = 0;
-  int ins = 0;
-  int del = 0;
-  std::string rg;
-  std::string motif;
-
-  bool all() const { 
-    return !len && !mapq && !nbases && !phred && rg.empty() && !i_flag && !e_flag && !any_i_flag && !any_e_flag; 
-  }
-
-};
-  */
 
 /** Stores a rule for a single alignment flag.
  *
@@ -435,6 +406,15 @@ class ReadFilter {
     return m_abstract_rules.size();
   }
 
+  /** Set as an excluder region 
+   * An excluder region is such that if a read satisfies
+   * this rule, then it will fail isValid, rather than pass
+   */
+  void SetExcluder(bool e) { excluder = e; }
+
+  /** Set as a mate linked region */
+  void SetMateLinked(bool e) { m_applies_to_mate = e; }
+  
  private:
 
   GRC m_grv; // the interval tree with the regions this rule applies to. Empty is whole-genome
@@ -539,8 +519,6 @@ class ReadFilterCollection {
   // the global rule that all other rules are inherited from
   AbstractRule rule_all;
 
-  BamHeader h;// in case we need to convert from text chr to id chr
-
   size_t m_count = 0; // passed
   size_t m_count_seen = 0; // tested
 
@@ -548,7 +526,8 @@ class ReadFilterCollection {
   std::vector<ReadFilter> m_regions;
 
   // should we keep checking rules, even it passed? (useful for counting)
-  bool m_fall_through = false;
+  // NEW set this to always on, for simplicity
+  bool m_fall_through = true; //false;
 
   bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
 

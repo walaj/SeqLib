@@ -7,8 +7,8 @@
 #include "SeqLib/BamRecord.h"
 
 extern "C" {
-#include "htslib/cram/cram.h"
-#include "htslib/cram/cram_io.h"
+#include "cram/cram.h"
+#include "cram/cram_io.h"
 }
 
 struct idx_delete {
