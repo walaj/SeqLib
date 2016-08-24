@@ -228,6 +228,8 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
     exit(EXIT_FAILURE);
   }
 
+  __allocate_grc();
+
   // get the header line to check format
   std::string header;
   if (!std::getline(iss, header, '\n'))
