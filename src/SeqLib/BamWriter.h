@@ -63,6 +63,9 @@ class BamWriter  {
    * @return False if cannot openf for writing
    */
   bool Open(const std::string& f);
+  
+  /** Return if the writer has opened the file */
+  bool IsOpen() const { return fop != 0; }
 
   /** Write an alignment to the output BAM file 
    * @param r The BamRecord to save

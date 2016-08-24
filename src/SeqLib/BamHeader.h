@@ -68,6 +68,9 @@ namespace SeqLib {
     /** Return the length of the sequence */
     int GetSequenceLength(const std::string& id) const;
 
+    /** Return if the header has been opened  */
+    bool IsOpen() const { return h != 0; }
+
     /** Return the full text of the header */
     std::string AsString() const;
 

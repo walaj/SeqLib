@@ -63,6 +63,9 @@ class BamReader {
    */
   bool SetMultipleRegions(const GRC& grv);
 
+  /** Return if the reader has opened the file */
+  bool IsOpen() const { return fp_htsfile != 0; }
+
   /** Create a string representation of 
    * all of the regions to walk
    */
@@ -110,7 +113,6 @@ class BamReader {
   GRC m_region;
 
   // hts
-  std::shared_ptr<BGZF> fp;
   std::shared_ptr<htsFile> fp_htsfile;
   std::shared_ptr<hts_idx_t> idx;
   std::shared_ptr<hts_itr_t> hts_itr;
