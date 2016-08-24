@@ -1,10 +1,12 @@
-#ifndef __INTERVAL_TREE_H
-#define __INTERVAL_TREE_H
+#ifndef SEQLIB_INTERVAL_TREE_H__
+#define SEQLIB_INTERVAL_TREE_H__
 
 #include <vector>
 #include <algorithm>
 #include <iostream>
 #include <memory>
+
+namespace SeqLib {
 
 template <class T, typename K = std::size_t>
 class TInterval {
@@ -208,4 +210,5 @@ public:
 
 };
 
+}
 #endif
