@@ -326,9 +326,8 @@ BOOST_AUTO_TEST_CASE( bam_header_stdout ) {
 
   SeqLib::BamReader br("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
-  
-  h.WriteToStdout();
-  
+
+  std::cout << h.AsString() << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE( bam_header_name2id ) {

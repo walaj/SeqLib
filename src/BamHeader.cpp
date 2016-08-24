@@ -36,6 +36,15 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
 }
 
+  std::string BamHeader::AsString() const {
+    
+    std::stringstream ss;
+    
+    ss << h->text;
+    return ss.str();
+    
+  }
+
   void BamHeader::WriteToStdout() const {
 
     std::shared_ptr<htsFile> f = std::shared_ptr<htsFile>(sam_open("-", "w"), htsFile_delete());
@@ -112,6 +121,16 @@ bam_hdr_t* BamHeader::sam_hdr_read2(const std::string& hdr) const {
   return hhh;
 }
 
+  /** Return the reference sequences as vector of HeaderSequence objects */
+  HeaderSequenceVector BamHeader::GetHeaderSequenceVector() const {
+
+    std::vector<HeaderSequence> out;
+    for (int i = 0; i < h->n_targets; ++i)
+      out.push_back(HeaderSequence(std::string(h->target_name[i]), h->target_len[i]));
+    return out;
+  }
+
+
 int BamHeader::NumSequences() const {
   
   if (!h)
@@ -135,4 +154,55 @@ std::string BamHeader::IDtoName(int id) const {
 
 }
 
+  // copied from htslib - sam.c
+  /*
+  std::string BamHeader::sam_hdr_write2(htsFile *fp, const bam_hdr_t *h)
+  {
+    switch (fp->format.format) {
+    case binary_format:
+      fp->format.category = sequence_data;
+      fp->format.format = bam;
+      // fall-through 
+    case bam:
+      if (bam_hdr_write(fp->fp.bgzf, h) < 0) return -1;
+      break;
+
+    case cram: {
+      cram_fd *fd = fp->fp.cram;
+      SAM_hdr *hdr = bam_header_to_cram((bam_hdr_t *)h);
+      if (! hdr) return -1;
+      if (cram_set_header(fd, hdr) < 0) return -1;
+      if (fp->fn_aux)
+	cram_load_reference(fd, fp->fn_aux);
+      if (cram_write_SAM_hdr(fd, fd->header) < 0) return -1;
+    }
+      break;
+
+    case text_format:
+      fp->format.category = sequence_data;
+      fp->format.format = sam;
+      // fall-through
+    case sam: {
+      char *p;
+      hputs(h->text, fp->fp.hfile);
+      p = strstr(h->text, "@SQ\t"); // FIXME: we need a loop to make sure "@SQ\t" does not match something unwanted!!!
+      if (p == 0) {
+	int i;
+	for (i = 0; i < h->n_targets; ++i) {
+	  fp->line.l = 0;
+	  kputsn("@SQ\tSN:", 7, &fp->line); kputs(h->target_name[i], &fp->line);
+	  kputsn("\tLN:", 4, &fp->line); kputw(h->target_len[i], &fp->line); kputc('\n', &fp->line);
+	  if ( hwrite(fp->fp.hfile, fp->line.s, fp->line.l) != fp->line.l ) return -1;
+	}
+      }
+      if ( hflush(fp->fp.hfile) != 0 ) return -1;
+    }
+      break;
+
+    default:
+      abort();
+    }
+    return 0;
+  }
+  */
 }

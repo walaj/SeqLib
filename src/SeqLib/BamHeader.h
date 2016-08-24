@@ -8,10 +8,28 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include <unordered_map>
 
 namespace SeqLib {
-  
+
+  /** Store a reference chromosome and its length
+   * @note This parallels the data found in @SQ tag of BAM header
+   */
+  struct HeaderSequence {
+    
+    /** Make a new header sequence 
+     * @param Name of the chromosome
+     * @param Length of the chromosome
+     */
+  HeaderSequence(const std::string& n, uint32_t l) : Name(n), Length(l) {}
+
+    std::string Name; ///< Name of the sequence (eg "1")
+    uint32_t Length; ///< Length of the sequence (eg LN:191469)
+  };
+
+  typedef std::vector<HeaderSequence> HeaderSequenceVector;
+
   /** Store a header to a BAM file 
    *
    * Stores a BAM header, which also acts as a dictionary of 
@@ -50,6 +68,9 @@ namespace SeqLib {
     /** Return the length of the sequence */
     int GetSequenceLength(const std::string& id) const;
 
+    /** Return the full text of the header */
+    std::string AsString() const;
+
     /** Convert a numeric sequence ID to a name
      * 
      * @exception Throws an out_of_range if ID is >= then number of 
@@ -75,6 +96,10 @@ namespace SeqLib {
     int Name2ID(const std::string& name) const;
 
     void WriteToStdout() const;
+
+    /** Return the reference sequences as vector of HeaderSequence objects */
+    HeaderSequenceVector GetHeaderSequenceVector() const;
+
   private:
 
     // adapted from sam.c - bam_nam2id
