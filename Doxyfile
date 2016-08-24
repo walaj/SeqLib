@@ -489,11 +489,16 @@ EXCLUDE                = bwa \
 		         htslib \
 		         multifast-v1.4.2 \
 		         blat \
+			 non_api \
 			 fermi-lite \
+			 src/SeqLib/BLATWrapper.h \
+			 src/BLATWrapper.cpp \
 			 src/json \
 			 src/old \
 			 src/ssw.c \
 			 src/ssw_cpp.cpp \
+			 src/SeqLib/ssw.h \
+			 src/SeqLib/ssw_cpp.h \
 			 src/gzstream.C \
 		         SGA \
 		         seq_test \ 
@@ -508,7 +513,7 @@ EXCLUDE                = bwa \
 EXCLUDE_SYMLINKS       = NO
 
 EXCLUDE_SYMBOLS	       = atm_free_delete bam_hdr_delete bgzf_delete s_align sam_write_delete \
-                         idx_delete hts_itr_delete
+                         idx_delete hts_itr_delete htsFile_delete _Bam
 
 # If the value of the INPUT tag contains directories, you can use the 
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude 

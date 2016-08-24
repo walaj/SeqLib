@@ -23,6 +23,7 @@
 
 namespace SeqLib {
 
+  namespace ReadFilter {
   /** Tool for using the Aho-Corasick method for substring queries of 
    * using large dictionaries 
    * @note Trie construction / searching implemented by https://github.com/blockchaindev/aho_corasick
@@ -536,4 +537,5 @@ class ReadFilterCollection {
 
 }
 
+}
 #endif
