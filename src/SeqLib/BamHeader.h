@@ -95,8 +95,6 @@ namespace SeqLib {
      */
     int Name2ID(const std::string& name) const;
 
-    void WriteToStdout() const;
-
     /** Return the reference sequences as vector of HeaderSequence objects */
     HeaderSequenceVector GetHeaderSequenceVector() const;
 
@@ -109,7 +107,7 @@ namespace SeqLib {
 
     // make the name 2 id map (to be used by Name2ID)
     // replaces part of bam_name2id that makes the hash table
-    int ConstructName2IDTable();
+    void ConstructName2IDTable();
 
     // hash table for name to id
     std::shared_ptr<std::unordered_map<std::string, int>> n2i;

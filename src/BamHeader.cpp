@@ -45,13 +45,6 @@ BamHeader::BamHeader(const std::string& hdr)  {
     
   }
 
-  void BamHeader::WriteToStdout() const {
-
-    std::shared_ptr<htsFile> f = std::shared_ptr<htsFile>(sam_open("-", "w"), htsFile_delete());
-    f->format.format == text_format;
-    sam_hdr_write(f.get(), h.get());
-  }
-
   BamHeader::BamHeader(const bam_hdr_t * hdr) {
 
     h = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete());
@@ -60,7 +53,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   }
 
-  int BamHeader::ConstructName2IDTable() {
+  void BamHeader::ConstructName2IDTable() {
 
     // create the lookup table if not already made
     if (!n2i) {

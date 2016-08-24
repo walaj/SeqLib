@@ -57,10 +57,8 @@ class BamPolyReader {
    * to by the UR field of @SQ is not on your system, and you would
    * like to explicitly provide one.
    * @param ref Path to an index reference genome
-   * @return Returns true if reference loaded.
-   * @exception Throws an invalid_argument if reference cannot be loaded
    */
-  bool SetCramReference(const std::string& ref);
+  void SetCramReference(const std::string& ref);
 
   /** Set a part of the BAM to walk.
    *

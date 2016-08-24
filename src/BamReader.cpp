@@ -121,6 +121,7 @@ bool BamReader::__open_BAM_for_reading()
 
   bool BamReader::SetCramReference(const std::string& ref) {
     m_cram_reference = ref;
+    return true;
   }
   
   bool BamReader::GetNextRecord(BamRecord& r) {

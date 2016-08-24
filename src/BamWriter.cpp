@@ -109,6 +109,8 @@ bool BamWriter::WriteRecord(BamRecord &r)
       return false;
       //throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. sam_write1 exited with < 0");      
   }
+
+  return true;
 }
 
 std::ostream& operator<<(std::ostream& out, const BamWriter& b)
@@ -138,10 +140,14 @@ bool BamWriter::SetCramReference(const std::string& ref) {
   if (fn_list) {
     if (hts_set_fai_filename(fop.get(), fn_list) != 0) {
       fprintf(stderr, "Failed to use reference \"%s\".\n", fn_list);
+      return false;
     }
   } else {
     std::cerr << "Failed to get the reference for CRAM compression" << std::endl;
+    return false;
   }
+
+  return true;
 }
 
 }

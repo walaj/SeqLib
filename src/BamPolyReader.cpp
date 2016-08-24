@@ -129,10 +129,11 @@ BamPolyReader::BamPolyReader() {}
 
 }
 
-  bool BamPolyReader::SetCramReference(const std::string& ref) {
+  void BamPolyReader::SetCramReference(const std::string& ref) {
     m_cram_reference = ref;
     for (auto& b : m_bams)
       b.m_cram_reference = ref;
+    
   }
 
 bool BamPolyReader::GetNextRecord(BamRecord& r)
