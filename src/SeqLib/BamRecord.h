@@ -111,20 +111,15 @@ class CigarField {
  * Constructed as a vector of CigarField objects. 
  */
  class Cigar {
-   
+
  public:
 
-   /** Iterator to first cigar op */
-   typename std::vector<CigarField>::iterator begin() { return m_data.begin(); } 
-
-   /** Iterator to last cigar op */
-   typename std::vector<CigarField>::iterator end() { return m_data.end(); }
-
-   /** Const iterator to end of cigar op */
-   typename std::vector<CigarField>::const_iterator begin() const { return m_data.begin(); } 
-
-   /** Const iterator to end of cigar op */
-   typename std::vector<CigarField>::const_iterator end() const { return m_data.end(); }
+   typedef std::vector<CigarField>::iterator iterator; ///< Iterator for move between CigarField ops
+   typedef std::vector<CigarField>::const_iterator const_iterator; ///< Iterator (const) for move between CigarField ops
+   iterator begin() { return m_data.begin(); } ///< Iterator (aka std::vector<CigarField>.begin()
+   iterator end()   { return m_data.end(); } ///< Iterator (aka std::vector<CigarField>.end()
+   const_iterator begin() const { return m_data.begin(); } ///< Iterator (aka std::vector<CigarField>.begin()
+   const_iterator end() const   { return m_data.end(); } ///< Iterator (aka std::vector<CigarField>.end() 
 
    /** Const reference to last cigar op */
    inline const CigarField& back() const { return m_data.back(); }
@@ -419,6 +414,9 @@ class BamRecord {
 
   /** Set the sequence name */
   void SetSequence(const std::string& seq);
+
+  /** Set the cigar field explicitly */
+  void SetCigar(const Cigar& c);
 
   /** Print a SAM-lite record for this alignment */
   friend std::ostream& operator<<(std::ostream& out, const BamRecord &r);

@@ -47,6 +47,52 @@ namespace SeqLib {
     
   }
 
+  void BamRecord::SetCigar(const Cigar& c) {
+
+    // case where they are equal, just swap them out
+    if (c.size() == b->core.n_cigar) {
+      b->core.n_cigar = c.size();
+      uint32_t * cigr = bam_get_cigar(b);
+      for (size_t i = 0; i < b->core.n_cigar; ++i)
+	cigr[i] = c[i].raw();
+      return;
+    }
+    
+    // make the new cigar structure
+    uint32_t* new_cig = (uint32_t*)malloc(c.size());
+    for (size_t i = 0; i < c.size(); ++i)
+      new_cig[i] = c[i].raw();
+    
+    int new_size = b->l_data - (b->core.n_cigar<<2) + (c.size()<<2);
+    int old_seqaux_spot = (b->core.n_cigar<<2) + b->core.l_qname;
+    int old_seqaux_len = bam_get_l_aux(b) + ((b->core.l_qseq + 1)>>1) + b->core.l_qseq;
+    
+    // copy out all the old data
+    uint8_t* oldd = (uint8_t*)malloc(b->l_data);
+    memcpy(oldd, b->data, b->l_data);
+    
+    // clear out the old data and alloc the new amount
+    free(b->data);
+    b->data = (uint8_t*)calloc(new_size, sizeof(uint8_t)); 
+    
+    // add back the qname
+    memcpy(b->data, oldd, b->core.l_qname); // + (b->core.n_cigar<<2));
+    
+    // add in the new cigar
+    memcpy(b->data + b->core.l_qname, new_cig, c.size()<<2);
+
+    // add back the rest of the data
+    memcpy(b->data + b->core.l_qname + c.size()<<2, old_seqaux_spot, old_seqaux_len);
+    
+    // update the sizes
+    // >>1 shift is because only 4 bits needed per ATCGN base
+    b->l_data = new_size; //b->l_data - ((b->core.l_qseq + 1)>>1) - b->core.l_qseq + ((seq.length()+1)>>1) + seq.length();
+    b->core.n_cigar = c.size();
+    
+    free(oldd);
+    free(new_cig);
+  }
+
   BamRecord::BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
 
     StripedSmithWaterman::Aligner aligner;
@@ -201,6 +247,8 @@ namespace SeqLib {
 
     // reset the max size
     b->m_data = b->l_data;
+
+    free(oldd); //just added
     
   }
   
@@ -215,7 +263,7 @@ namespace SeqLib {
     free(b->data);
     b->data = (uint8_t*)calloc(nonq_len + n.length() + 1, 1);
     
-    // add in the new qnamev
+    // add in the new qname
     memcpy(b->data, (uint8_t*)n.c_str(), n.length() + 1); // +1 for \0
 
     // update the sizes
@@ -229,18 +277,6 @@ namespace SeqLib {
     // reset the max size
     b->m_data = b->l_data;
   }
-
-  /*void BamRecord::SetSequence(std::string s)
-  {
-
-    // change the size to accomodate new sequence. Clear the quality string
-    //std::cout << "osize " << b->l_data << " calcsize " << (b->core.l_qseq + b->core.l_qname + (b->core.n_cigar<<2)) << std::endl;
-    b->data = (uint8_t*)realloc(b->data, b->core.l_qname + s.length() + (b->core.n_cigar<<2));
-    
-    // copy in the new sequence
-    memcpy(b->data + b->core.l_qname + (b->core.n_cigar<<2), (uint8_t*)s.c_str(), s.length());
-
-    }*/
 
   double BamRecord::MeanPhred() const {
 
