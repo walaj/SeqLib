@@ -138,7 +138,7 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
     }
     
   } else if ( hdr.Name2ID(reg) != -1) { // single chrom
-    chr = hdr.Name2ID(reg);
+    tid = hdr.Name2ID(reg);
     pos1 = 1;
     pos2 = hdr.GetSequenceLength(reg);
   } else {
