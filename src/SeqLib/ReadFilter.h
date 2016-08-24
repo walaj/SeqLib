@@ -375,15 +375,6 @@ class ReadFilter {
    */
   bool isValid(BamRecord &r);
 
-  /** Set this rule to only apply to single read-group
-   * @note If a read is not in this read group, the read
-   * will fail isValid. If no read-group is present, then 
-   * checking against the read group is ignored (eg it could either
-   * pass or fail isValid)
-   * @param r A read group specifier
-   */
-  void SetToOnlyReadGroup(const std::string& r) { read_group = r; }; 
-
   /** Add a rule to this filter. A read must pass all 
    * of the rules contained in this filter to pass 
    * @param ar A rule (eg MAPQ > 30) that the read must satisfy to pass this filter.
