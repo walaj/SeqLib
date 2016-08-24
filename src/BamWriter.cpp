@@ -9,55 +9,83 @@ namespace SeqLib {
     hdr = h;
   }
 
-  void BamWriter::WriteHeader() const {
+  bool BamWriter::WriteHeader() const {
     
-    if (hdr.isEmpty())
-      throw std::runtime_error("BamWriter::WriteHeader - No header supplied. Provide with SetWriteHeader");
+    if (hdr.isEmpty()) {
+      //throw std::runtime_error("BamWriter::WriteHeader - No header supplied. Provide with SetWriteHeader");
+      std::cerr << "BamWriter::WriteHeader - No header supplied. Provide with SetWriteHeader" << std::endl;
+      return false;
+    }
 
-    if (!fop) 
-      throw std::runtime_error("BamWriter::WriteHeader - Output not open for writing. Open with Open()");
+    if (!fop) {
+      std::cerr << "BamWriter::WriteHeader - Output not open for writing. Open with Open()" << std::endl;
+      //throw std::runtime_error("BamWriter::WriteHeader - Output not open for writing. Open with Open()");
+      return false;
+    }
     
-    if (sam_hdr_write(fop.get(), hdr.get()) < 0) 
-      throw std::runtime_error("Cannot write header. sam_hdr_write exited with < 0");
+    if (sam_hdr_write(fop.get(), hdr.get()) < 0) {
+      //throw std::runtime_error("Cannot write header. sam_hdr_write exited with < 0");
+      std::cerr << "Cannot write header. sam_hdr_write exited with < 0" << std::endl;
+      return false;
+    }
+
+    return true;
     
   }
   
-  void BamWriter::Close() {
+  bool BamWriter::Close() {
 
     if (!fop)
-      throw std::runtime_error("Trying to close BAM that is already closed or never opened");
+      return false;
+      //throw std::runtime_error("Trying to close BAM that is already closed or never opened");
 
     fop = nullptr; // this clears shared_ptr, calls sam_close
+
+    return true;
   }
 
-void BamWriter::BuildIndex() const {
+bool BamWriter::BuildIndex() const {
   
   // throw an error if BAM is not already closed
-  if (fop)
-    throw std::runtime_error("Trying to index open BAM. Close first with Close()");
+  if (fop) {
+    //throw std::runtime_error("Trying to index open BAM. Close first with Close()");
+    std::cerr << "Trying to index open BAM. Close first with Close()" << std::endl;
+    return false;
+  }
 
-  if (m_out.empty())
-    throw std::runtime_error("Trying to make index, but no BAM specified");    
+  if (m_out.empty()) {
+    std::cerr << "Trying to make index, but no BAM specified" << std::endl;
+    //throw std::runtime_error("Trying to make index, but no BAM specified");    
+    return false;
+  }
   
   // call to htslib to build bai index
-  if (sam_index_build(m_out.c_str(), 0) < 0) // 0 is "min_shift", which is 0 for bai index
-    throw std::runtime_error("Failed to create index");
+  if (sam_index_build(m_out.c_str(), 0) < 0) { // 0 is "min_shift", which is 0 for bai index
+    std::cerr << "Failed to create index";
+    return false;
+  }
+
+  return true;
 
 }
 
-  void BamWriter::Open(const std::string& f) {
+  bool BamWriter::Open(const std::string& f) {
 
     // don't reopen
     if (fop)
-      return;
+      return false;
 
     m_out = f;
 
     // hts open the writer
     fop = std::shared_ptr<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), htsFile_delete());
 
-    if (!fop)
-      throw std::runtime_error("BamWriter::Open - Cannot open output file: " + f);
+    if (!fop) {
+      return false;
+      //throw std::runtime_error("BamWriter::Open - Cannot open output file: " + f);
+    }
+
+    return true;
   }
 
   BamWriter::BamWriter(int o) {
@@ -71,13 +99,15 @@ void BamWriter::BuildIndex() const {
   }
   
 
-void BamWriter::WriteRecord(BamRecord &r)
+bool BamWriter::WriteRecord(BamRecord &r)
 {
   if (!fop) {
-    throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. Did you forget to open the Bam for writing (OpenWriteBam)?");
+    //throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. Did you forget to open the Bam for writing (OpenWriteBam)?");
+    return false;
   } else {
     if (sam_write1(fop.get(), hdr.get(), r.raw()) < 0)
-      throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. sam_write1 exited with < 0");      
+      return false;
+      //throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. sam_write1 exited with < 0");      
   }
 }
 

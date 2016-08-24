@@ -32,8 +32,10 @@ class BamWriter  {
    */
   ~BamWriter() {}
 
-  /** Write the BAM header */
-  void WriteHeader() const;
+  /** Write the BAM header 
+   * @return False if cannot write header
+   */
+  bool WriteHeader() const;
 
   /** Provide a header to this writer 
    * @param h Header for this writer. Copies contents
@@ -42,32 +44,32 @@ class BamWriter  {
 
   /** Close a file explitily. This is required before indexing with makeIndex.
    * @note If not called, BAM will close properly on object destruction
-   * @exception Throws a runtime_error if BAM already closed or was never opened
+   * @return False if BAM already closed or was never opened
    */
-  void Close();
+  bool Close();
 
   /** Create the index file for the output bam in BAI format.
    *
    * This will make a call to HTSlib bam_index_build for the output file. 
-   * @exception Throws a runtime_error if sam_index_build2 exits with < 0 status
+   * @return Returns false if sam_index_build exits with < 0 status
    */
-  void BuildIndex() const;
+  bool BuildIndex() const;
 
   /** Print out some basic info about this writer */
   friend std::ostream& operator<<(std::ostream& out, const BamWriter& b);
 
   /** Open a BAM file for streaming out.
-   * @param f Path to the output BAM file
-   * @exception Throws a runtime_error if cannot write BAM
-   * @note Calling this function will immediately write the BAM with its header
+   * @param f Path to the output BAM/SAM/CRAM or "-" for stdout
+   * @return False if cannot openf for writing
    */
-  void Open(const std::string& f);
+  bool Open(const std::string& f);
 
   /** Write an alignment to the output BAM file 
    * @param r The BamRecord to save
+   * @return False if cannot write alignment
    * @exception Throws a runtime_error if cannot write alignment
    */
-  void WriteRecord(BamRecord &r);
+  bool WriteRecord(BamRecord &r);
 
   /** Explicitly set a reference genome to be used to decode CRAM file.
    * If no reference is specified, will automatically load from

@@ -815,14 +815,20 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   // specify bam explicitly
   //w = SeqLib::BamWriter(SeqLib::BAM);
 
-  BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
-  BOOST_CHECK_THROW(w.Close(), std::runtime_error);
-  BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
-  BOOST_CHECK_THROW(w.WriteRecord(rec), std::runtime_error);
+  //BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
+  //BOOST_CHECK_THROW(w.Close(), std::runtime_error);
+  //BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
+  //BOOST_CHECK_THROW(w.WriteRecord(rec), std::runtime_error);
+
+  BOOST_CHECK(!w.WriteHeader());
+  BOOST_CHECK(!w.Close());
+  BOOST_CHECK(!w.BuildIndex());
+  BOOST_CHECK(!w.WriteRecord(rec));
 
   w.Open("tmp_out.bam");
 
-  BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
+  //BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
+  BOOST_CHECK(!w.WriteHeader());
 
   w.SetHeader(h);
 
@@ -835,7 +841,8 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   }
 
 
-  BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
+  BOOST_CHECK(!w.BuildIndex());
+  //BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
   w.Close();
 
   w.BuildIndex();
