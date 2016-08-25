@@ -509,11 +509,11 @@ class ReadFilterCollection {
     return num;
   }
 
-  /** Return the a tab-delimited tally of which filters were satisfied.
-   * Includes the header:
-   * total_seen_count total_passed_count region region_passed_count rule rule_passed_count
-   */
-  std::string EmitCounts() const;
+  // Return the a tab-delimited tally of which filters were satisfied.
+   // Includes the header:
+   // total_seen_count total_passed_count region region_passed_count rule rule_passed_count
+   //
+  //std::string EmitCounts() const;
 
  private:  
 

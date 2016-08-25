@@ -32,21 +32,22 @@ namespace SeqLib {
     
     /** Query a region to get the sequence
      * @param chr_name name of the chr to query
-     * @param p1 position 1
-     * @param p2 position 2
+     * @param p1 position 1. Zero-based
+     * @param p2 position 2. Zero-based
      * 
      * @exception Throws an invalid_argument if p1 > p2, p1 < 0, p2 < 0, chr not found, or seq not found
      * @note This is currently NOT thread safe
      */
-    std::string queryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const;
+    std::string QueryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const;
 
     /** Load an indexed reference sequence 
      * @param file Path to an indexed reference genome. See samtools faidx to create
+     * @return True if succesfully loaded
      */
-    void retrieveIndex(const std::string& file);
+    bool LoadIndex(const std::string& file);
     
     /** Check if reference has been loaded */
-    bool empty() const { 
+    bool IsEmpty() const { 
       return (index == nullptr); 
     }
     

@@ -192,10 +192,23 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
   // GenomicIntervalTreeMap
   ReadFilterCollection::ReadFilterCollection(const std::string& script, const BamHeader& hdr) {
 
+    // if is a file, read into a string
+    std::ifstream iscript(script);
+    std::stringstream ss;
+    std::string tscript = script;
+    if (iscript.is_open()) {
+      char c = iscript.get();
+      while (iscript.good()) {
+	ss << c;
+	c = iscript.get();
+      }
+      tscript = ss.str();;
+    }
+
     // set up JsonCPP reader and attempt to parse script
     Json::Value root;
     Json::Reader reader;
-    if ( !reader.parse(script, root)) {
+    if ( !reader.parse(tscript, root)) {
       
       if (script.empty()) {
 	std::cerr << "JSON script is empty. Setting default to filter all reads" << std::endl;
@@ -1068,7 +1081,7 @@ GRC ReadFilterCollection::getAllRegions() const
   return out;
 }
 
-  std::string ReadFilterCollection::EmitCounts() const
+    /*  std::string ReadFilterCollection::EmitCounts() const
   {
     std::stringstream of;
     char sep = '\t';
@@ -1079,7 +1092,7 @@ GRC ReadFilterCollection::getAllRegions() const
 
     return of.str();
     
-  }
+    }*/
 
   ReadFilter::ReadFilter() {}
 

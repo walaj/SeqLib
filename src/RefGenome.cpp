@@ -5,7 +5,7 @@
 
 namespace SeqLib {
 
-  void RefGenome::retrieveIndex(const std::string& file) {
+  bool RefGenome::LoadIndex(const std::string& file) {
 
     // clear the old one
     if (index)  
@@ -15,21 +15,27 @@ namespace SeqLib {
     
     // check that its readable
     if (!read_access_test(file)) {
-      throw std::invalid_argument("RefGenome: file not found - " + file);
+      return false;
+      //throw std::invalid_argument("RefGenome: file not found - " + file);
     }
     
     // load it in
     index = fai_load(file.c_str());
 
+    if (!index)
+      return false;
+
+    return true;
+
   }
   
   RefGenome::RefGenome(const std::string& file ) {
 
-    retrieveIndex(file);
+    LoadIndex(file);
     
   }
 
-  std::string RefGenome::queryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const {
+  std::string RefGenome::QueryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const {
     
     // check that we have a loaded index
     if (!index) 
