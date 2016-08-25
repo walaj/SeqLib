@@ -8,6 +8,11 @@
 #include "SeqLib/ReadFilter.h"
 #include "SeqLib/BamWalker.h"
 
+// forward declare this from hts.c
+extern "C" {
+int hts_useek(htsFile *file, long uoffset, int where);
+}
+
 class BamReader;
 
 namespace SeqLib {
@@ -33,6 +38,19 @@ namespace SeqLib {
       empty = true;
       mark_for_closure = false;
       m_region_idx = 0;
+      
+      // close and reopen, only way I know how to do right now
+      //fp = nullptr; // calls destructor on htsFile
+      //hts_itr = nullptr;
+      
+      // re-read it in
+      //fp = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+      
+      // other attempts at a true rewind
+      //hts_useek(fp.get(), 0, 0);
+      //ks_rewind((kstream_t*)fp->fp.voidp);
+      //hts_itr = nullptr; // reset to beginning
+
     }
 
     // close this bam
@@ -42,7 +60,11 @@ namespace SeqLib {
       fp = nullptr; // calls destructor actually
       idx = nullptr;
       hts_itr = nullptr;
-      reset();
+
+      empty = true;
+      mark_for_closure = false;
+      m_region_idx = 0;
+
       return true;
     }
 

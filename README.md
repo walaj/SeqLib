@@ -221,21 +221,22 @@ CTATCTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTAT                    
 ```
 using SeqLib;
 #include "SeqLib/BamReader.h"
-BamPReader r;
+BamReader r;
   
-// read from multiple streams (in coordinate order)
+// read from multiple streams coordinate-sorted order
 r.Open("test_data/small.bam");
 r.Open("test_data/small.cram");
 r.Open("test_data/small.sam");
 
 BamWriter w(SeqLib::SAM); // set uncompressed output
-w.Open("-");
-w.SetHeader(r.Header());
-w.WriteHeader();
+w.Open("-");              // write to stdout
+w.SetHeader(r.Header());  // specify the header
+w.WriteHeader();          // write out the header
 
 BamRecord rec;
 while(r.GetNextRecord(rec)) 
   w.WriteRecord(rec);
+w.Close();               // Optional. Will close on destruction
 ```
 
 Support
@@ -245,8 +246,7 @@ This project is being actively developed and maintained by Jeremiah Wala (jwala@
 Attributions
 ------------
 We would like to thank Heng Li (htslib/bwa/fermi), Erik Garrison (interval tree), Christopher Gilbert (aho corasick), 
-and Mengyao Zhao (sw alignment), for providing open-source and robust bioinformatics solutions, and Derek Barnett and
-the SeqAn team for providing BamTools and SeqAn.
+and Mengyao Zhao (sw alignment), for providing open-source and robust bioinformatics solutions.
 
 Development, support, guidance, testing:
 * Steve Huang - Research Scientist, Broad Institute

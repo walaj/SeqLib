@@ -18,7 +18,7 @@ namespace SeqLib {
   static bool header_has_chr_string = false;
 
   template<class T>
-  void GenomicRegionCollection<T>::gsort() {
+  void GenomicRegionCollection<T>::CoordinateSort() {
     
     std::sort(m_grv->begin(), m_grv->end());
   }
@@ -31,15 +31,17 @@ namespace SeqLib {
     
     std::sort(m_grv->begin(), m_grv->end());
 
-    if (max < m_grv->back().pos2) {
-      std::cerr << "GenomicRegionCollection::SortAndStrech Can't stretch to max, as we are already past max. Max: " << max << " highest GRC " << m_grv->back() << std::endl;
-      exit(EXIT_FAILURE);
+    if (max > 0 && max < m_grv->back().pos2) {
+      //std::cerr << "GenomicRegionCollection::SortAndStrech Can't stretch to max, as we are already past max. Max: " << max << " highest GRC " << m_grv->back() << std::endl;
+      throw std::out_of_range("GenomicRegionCollection::SortAndStrech Can't stretch to max, as we are already past max.");
     }
 
     for (size_t i = 0; i < m_grv->size() - 1; ++i) {
       m_grv->at(i).pos2 = m_grv->at(i+1).pos1 - 1;
     }
-    m_grv->back().pos2 = max;
+
+    if (max > 0)
+      m_grv->back().pos2 = max;
     
   }
 
@@ -51,12 +53,14 @@ namespace SeqLib {
 
     std::sort(m_grv->begin(), m_grv->end());
 
-    if (min < m_grv->begin()->pos1) {
+    if (min >= 0 && min < m_grv->begin()->pos1) {
       std::cerr << "GenomicRegionCollection::SortAndStrechLeft Can't stretch to min, as we are already past max" << std::endl;
       exit(EXIT_FAILURE);
     }
 
-    m_grv->at(0).pos1 = min;
+    if (min >= 0)
+      m_grv->at(0).pos1 = min;
+
     for (size_t i = 1; i < m_grv->size(); ++i) {
       m_grv->at(i).pos1 = m_grv->at(i-1).pos2 + 1;
     }
@@ -65,18 +69,15 @@ namespace SeqLib {
 
 
 
-template<class T>
-void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, const BamHeader& hdr) {
-  
-  assert(pad >= 0);
+  /*template<class T>
+bool GenomicRegionCollection<T>::ReadMuTect(const std::string &file, const BamHeader& hdr) {
 
-  std::cerr << "Reading MuTect CallStats"  << std::endl;
   std::string curr_chr = "dum";
   
   std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "MuTect call-stats file does not exist: " << file << std::endl;
-    exit(EXIT_FAILURE);
+    return false;
   }
 
   std::string line;
@@ -93,7 +94,7 @@ void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, co
 	  }
 	  if (counter >= 1)
 	    break;
-	  counter++;
+	  ++counter;
 	  
 	  if (curr_chr != chr) {
 	    std::cerr << "...reading MuTect call-stats -- chr" << chr << std::endl;
@@ -105,23 +106,23 @@ void GenomicRegionCollection<T>::readMuTect(const std::string &file, int pad, co
 	// parse the strings and send to genomci region
 	T gr(chr, pos, pos, hdr);
 	if (gr.chr >= 0) {
-	  gr.pad(pad);
 	  m_grv->push_back(gr);
 	}
 
       } // end "keep" conditional
     } // end main while
+
+  return true;
 }
+  */
 
 template<class T>
-void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, const BamHeader& hdr) {
-
-  assert(pad >= 0);
+bool GenomicRegionCollection<T>::ReadBED(const std::string & file, const BamHeader& hdr) {
 
   std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "BED file does not exist: " << file << std::endl;
-    exit(EXIT_FAILURE);
+    return false;
   }
 
   std::string line;
@@ -142,7 +143,7 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
 	}
 	if (counter >= 2)
 	  break;
-	counter++;
+	++counter;
 	
 	if (chr != curr_chr) {
 	  //std::cerr << "...reading from BED - chr" << chr << std::endl;
@@ -160,7 +161,6 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
       T gr(chr, pos1, pos2, hdr);
 
       if (gr.chr >= 0) {
-	gr.pad(pad);
 	m_grv->push_back(gr);
       }
 	
@@ -168,23 +168,20 @@ void GenomicRegionCollection<T>::readBEDfile(const std::string & file, int pad, 
     } // end "keep" conditional
   } // end main while
 
-  
+  return true;
 }
 
 template<class T>
-void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, const BamHeader& hdr) {
-
-  assert(pad >= 0);
+bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHeader& hdr) {
 
   std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "VCF file does not exist: " << file << std::endl;
-    exit(EXIT_FAILURE);
+    return false;
   }
 
   std::string line;
   
-  std::cerr << "Parsing VCF file "  << std::endl;
   while (std::getline(iss, line, '\n')) {
     if (line.length() > 0) {
       if (line.at(0) != '#') { // its a valid line
@@ -201,12 +198,12 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
 	}
 	if (count < 3) {
 	  std::cerr << "Didn't parse VCF line properly: " << line << std::endl;
+	  return false;
 	} else {
 
 	  // construct the GenomicRegion
 	  T gr(chr, pos, pos, hdr);
 	  if (gr.chr >= 0) {
-	    gr.pad(pad);
 	    m_grv->push_back(gr);
 	  }
 	}
@@ -215,7 +212,7 @@ void GenomicRegionCollection<T>::readVCFfile(const std::string & file, int pad, 
     }
   }
   
-  std::cerr << "...parsed " << m_grv->size() << " VCF lines " << std::endl;
+  return true;
   
 }
 
@@ -225,36 +222,37 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
   std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "Region file does not exist: " << file << std::endl;
-    exit(EXIT_FAILURE);
+    return;
   }
 
   __allocate_grc();
 
   // get the header line to check format
   std::string header;
-  if (!std::getline(iss, header, '\n'))
+  if (!std::getline(iss, header, '\n')) {
     std::cerr << "Region file is empty: " << file << std::endl;
+    return;
+  }
   iss.close();
 
-  const int pad = 0;
   // MUTECT CALL STATS
   if ((header.find("MuTect") != std::string::npos) ||
       (file.find("call_stats") != std::string::npos) || 
       (file.find("callstats") != std::string::npos))
-    readMuTect(file, pad, hdr);
+    std::cerr << "MuTect reading not currently available" << std::endl; //ReadMuTect(file, hdr);
   // BED file
   else if (file.find(".bed") != std::string::npos)
-    readBEDfile(file, pad, hdr);
+    ReadBED(file, hdr);
   // VCF file
   else if (file.find(".vcf") != std::string::npos) 
-    readVCFfile(file, pad, hdr);
+    ReadVCF(file, hdr);
   else // default is BED file
-    readBEDfile(file, pad, hdr);    
+    ReadBED(file, hdr);    
 }
 
 // reduce a set of GenomicRegions into the minium overlapping set (same as GenomicRanges "reduce")
 template <class T>
-void GenomicRegionCollection<T>::mergeOverlappingIntervals() {
+void GenomicRegionCollection<T>::MergeOverlappingIntervals() {
 
   // make the list
   std::list<T> intervals(m_grv->begin(), m_grv->end());
@@ -280,12 +278,12 @@ void GenomicRegionCollection<T>::mergeOverlappingIntervals() {
   //m_grv = v;
 
   // recreate the interval tree
-  createTreeMap();
+  CreateTreeMap();
 
 }
 
 template <class T>
-GenomicRegionVector GenomicRegionCollection<T>::asGenomicRegionVector() const { 
+GenomicRegionVector GenomicRegionCollection<T>::AsGenomicRegionVector() const { 
   GenomicRegionVector gg;
   for (auto& i : *m_grv)
     gg.push_back(GenomicRegion(i.chr, i.pos1, i.pos2, i.strand));
@@ -293,7 +291,7 @@ GenomicRegionVector GenomicRegionCollection<T>::asGenomicRegionVector() const {
 } 
   
 template <class T>
-void GenomicRegionCollection<T>::createTreeMap() {
+void GenomicRegionCollection<T>::CreateTreeMap() {
 
   // sort the genomic intervals
   sort(m_grv->begin(), m_grv->end());
@@ -316,26 +314,11 @@ void GenomicRegionCollection<T>::createTreeMap() {
 
 }
 
-template <class T>
-void GenomicRegionCollection<T>::sendToBED(const std::string file) {
-  
-  if (m_grv->size() ==  0) {
-    std::cerr << "sendToBED: GenomicRegionCollection is empty" << std::endl;
-    return; 
-  }
-
-  std::ofstream ofile(file.c_str(), std::ios::out);
-  for (auto it : *m_grv)
-    ofile << it << std::endl;
-  ofile.close();
-
-}
-
 template<class T>
-int GenomicRegionCollection<T>::width() const{ 
+int GenomicRegionCollection<T>::TotalWidth() const{ 
   int wid = 0; 
   for (auto& i : *m_grv) 
-    wid += i.width(); 
+    wid += i.Width(); 
   return wid; 
 }
 
@@ -379,7 +362,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
 }
 
 template<class T>
-size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) const {
+size_t GenomicRegionCollection<T>::CountOverlaps(const T &gr) const {
 
   if (m_tree->size() == 0 && m_grv->size() != 0) 
     {
@@ -397,7 +380,7 @@ size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) const {
 }
 
   template<class T>
-  bool GenomicRegionCollection<T>::overlapSameBin(const T &gr1, const T &gr2) const {
+  bool GenomicRegionCollection<T>::OverlapSameInterval(const T &gr1, const T &gr2) const {
 
     if (m_tree->size() == 0 && m_grv->size() != 0) 
      {
@@ -441,7 +424,7 @@ size_t GenomicRegionCollection<T>::findOverlapping(const T &gr) const {
   }
 
 template<class T>
-std::string GenomicRegionCollection<T>::sendToBED() const {
+std::string GenomicRegionCollection<T>::AsBEDString() const {
   
   if (m_grv->size() ==  0)
     return ""; 
@@ -455,13 +438,13 @@ std::string GenomicRegionCollection<T>::sendToBED() const {
 }
 
 template<class T>
-void GenomicRegionCollection<T>::concat(const GenomicRegionCollection<T>& g)
+void GenomicRegionCollection<T>::Concat(const GenomicRegionCollection<T>& g)
 {
   m_grv->insert(m_grv->end(), g.m_grv->begin(), g.m_grv->end());
 }
 
 template<class T>
-bool GenomicRegionCollection<T>::getNextGenomicRegion(T& gr)
+bool GenomicRegionCollection<T>::GetNextGenomicRegion(T& gr)
 {
   if (idx >= m_grv->size())
     return false;
@@ -509,7 +492,7 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
 // this is query
 template<class T>
 template<class K>
-GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(const K& gr, bool ignore_strand, OverlapResult& o) const
+GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::FindOverlaps(const K& gr, bool ignore_strand) const
 {  
 
   GenomicRegionCollection<GenomicRegion> output;
@@ -554,7 +537,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(
   // this is query
   template<class T>
   template<class K>
-GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::findOverlaps(GenomicRegionCollection<K>& subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const
+GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::FindOverlaps(GenomicRegionCollection<K>& subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const
 {  
 
   GenomicRegionCollection<GenomicRegion> output;
@@ -627,91 +610,15 @@ template<class T>
 GRC GenomicRegionCollection<T>::intersection(GRC& subject, bool ignore_strand /* false */)
 {
   std::vector<int32_t> sub, que;
-  GRC out = this->findOverlaps(subject, que, sub, ignore_strand);
+  GRC out = this->FindOverlaps(subject, que, sub, ignore_strand);
   return out;
 }
 
-  /*
 template<class T>
-GRC GenomicRegionCollection<T>::complement(GRC& subject, bool ignore_strand)
+void GenomicRegionCollection<T>::Pad(int v)
 {
-
-  GRC out;
-  // get this - that
-  
-#ifdef BOOST_CONFIG_HPP_dum
-  using namespace boost::icl;
-  typedef interval_set<int> TIntervalSet; 
-  
-  // flatten each
-  subject.mergeOverlappingIntervals();
-  this->mergeOverlappingIntervals();
-
-  // get list of THAT chr to go through
-  std::set<int> chr;
-  for (auto& i : subject)
-    if (!chr.count(i.chr))
-      chr.insert(i.chr);
-
-  // the THIS events that have chr not in THAT, automatically get added
-  for (auto& i : m_grv)
-    if (!chr.count(i.chr))
-      out.add(i);
-
-  // loop through the chromosomes of THAT to subtract
-  for (auto& c : chr) 
-    {
-      TIntervalSet intSetA;
-      TIntervalSet intSetB;
-  
-      // build up the intervals for THIS
-      for (auto& i : m_grv)
-	if (i.chr == c)
-	  intSetA += discrete_interval<int>::closed(i.pos1, i.pos2);
-      // build up the intervals for THAT
-      for (auto& i : subject)
-	if (i.chr == c)
-	  intSetB += discrete_interval<int>::closed(i.pos1, i.pos2);
-      
-      TIntervalSet intSetD = intSetA - intSetB;
-
-      for (auto& i : intSetD)
-	out.add(GenomicRegion(c, first(i), upper(i)));
-    }
-
-  return out;
-
-#else
-  std::cerr << "No Boost library detected. GenomicRegionCollection::complement will not function. Returning Empty GRC" << std::endl;
-
-  // sort this
-  //gsort();
-
-  // sort that
-  //subject.gsort();
-
-  subject.createTreeMap();
-  createTreeMap();
-
-  std::vector<int32_t> sub, que;
-  GRC tt = findOverlaps(subject, sub, que, true);
-  for (auto& i : tt)
-    std::cerr << i << std::endl;
-  
-  
-  return out;
-#endif
-
-}
-  */
-
-template<class T>
-void GenomicRegionCollection<T>::pad(int v)
-{
-
   for (auto& i : *m_grv)
-    i.pad(v);
-
+    i.Pad(v);
 }
 
 }

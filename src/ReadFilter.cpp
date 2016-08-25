@@ -110,12 +110,12 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
   if (!m_grv.size()) 
     return true;
 
-  if (m_grv.findOverlapping(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd())))
+  if (m_grv.CountOverlaps(GenomicRegion(r.ChrID(), r.Position(), r.PositionEnd())))
     return true;
   
   if (!m_applies_to_mate)
     return false;
-  if (m_grv.findOverlapping(GenomicRegion(r.MateChrID(), r.MatePosition(), r.MatePosition() + r.Length())))
+  if (m_grv.CountOverlaps(GenomicRegion(r.MateChrID(), r.MatePosition(), r.MatePosition() + r.Length())))
     return true;
 
   return false;
@@ -263,7 +263,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 	mr.m_grv.clear(); // ensure it is whole-genome
       else {
 	GRC regr(reg, hdr);
-	regr.pad(mr.pad);
+	regr.Pad(mr.pad);
 	mr.setRegions(regr);
       }
 	// debug mr.setRegionFromFile(reg, hdr);
@@ -325,13 +325,13 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
   
   void ReadFilter::setRegions(const GRC& g) {
     m_grv = g;
-    m_grv.createTreeMap();
+    m_grv.CreateTreeMap();
   }
 
   void ReadFilter::addRegions(const GRC& g) {
-    m_grv.concat(g);
-    m_grv.mergeOverlappingIntervals();
-    m_grv.createTreeMap();
+    m_grv.Concat(g);
+    m_grv.MergeOverlappingIntervals();
+    m_grv.CreateTreeMap();
   }
 
 
@@ -1063,7 +1063,7 @@ GRC ReadFilterCollection::getAllRegions() const
   GRC out;
 
   for (auto& i : m_regions)
-    out.concat(i.m_grv);
+    out.Concat(i.m_grv);
 
   return out;
 }

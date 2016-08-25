@@ -16,8 +16,8 @@ bool _Bam::__set_region(const GenomicRegion& gp) {
     idx = std::shared_ptr<hts_idx_t>(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
   
   if (!idx) {
-    std::cerr << "Failed to load index file for file " << m_in << std::endl;
-    std::cerr << "...suggest rebuilding index with samtools index" << std::endl;
+    std::cerr << "Failed to load index for " << m_in << ". Rebuild samtools index" << std::endl;
+    return false;
   }
   
   if (gp.chr >= m_hdr.NumSequences()) {
@@ -28,8 +28,10 @@ bool _Bam::__set_region(const GenomicRegion& gp) {
   // should work for BAM or CRAM
   hts_itr = std::shared_ptr<hts_itr_t>(sam_itr_queryi(idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
   
-  if (!hts_itr)
+  if (!hts_itr) {
     std::cerr << "Error: Failed to set region: " << gp << std::endl; 
+    return false;
+  }
   
   return true;
 }
@@ -318,7 +320,7 @@ std::ostream& operator<<(std::ostream& out, const BamReader& b)
   else if (b.m_region.size() >= 20) {
     int wid = 0;
     for (auto& i : b.m_region)
-      wid += i.width();
+      wid += i.Width();
     out << " ------- BamReader Regions ----------" << std::endl;;
     out << " -- " << b.m_region.size() << " regions covering " << AddCommas(wid) << " bp of sequence"  << std::endl;
   }

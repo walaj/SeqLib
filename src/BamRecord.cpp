@@ -519,7 +519,7 @@ namespace SeqLib {
       throw std::invalid_argument("Sequence string length mismatches cigar consumed query bases");
 
     // make sure alignment fits
-    if (cig.NumReferenceConsumed() != gr->width())
+    if (cig.NumReferenceConsumed() != gr->Width())
       throw std::invalid_argument("Alignment position mismatches cigar consumed reference bases");
 
     init();

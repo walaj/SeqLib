@@ -18,6 +18,8 @@
 #define HGREF "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta"
 #define TREF "test_data/test_ref.fa"
 #define OREF "tmp_output.fa"
+#define BEDFILE "test_data/test.bed"
+#define VCFFILE "test_data/test.vcf"
 
 using namespace SeqLib::Filter;
 
@@ -56,7 +58,7 @@ BOOST_AUTO_TEST_CASE( merge ) {
   grc.add(SeqLib::GenomicRegion(2, 20,110));
   grc.add(SeqLib::GenomicRegion(2, 200,310));
 
-  grc.mergeOverlappingIntervals();
+  grc.MergeOverlappingIntervals();
   BOOST_CHECK_EQUAL(grc.size(), 3);
   BOOST_CHECK_EQUAL(grc[0].chr, 2);
   BOOST_CHECK_EQUAL(grc[1].chr, 2);
@@ -75,17 +77,16 @@ BOOST_AUTO_TEST_CASE ( interval_queries ) {
     int pos = rand() % 10000;
     grc.add(SeqLib::GenomicRegion(chr, pos, pos + 100));
   }
-  grc.mergeOverlappingIntervals();
+  grc.MergeOverlappingIntervals();
 
   // add two more that we know of
   grc.add(SeqLib::GenomicRegion(23, 10,100));
   grc.add(SeqLib::GenomicRegion(23, 20,110));
 
   // create the interval tree
-  grc.createTreeMap();
+  grc.CreateTreeMap();
 
-  SeqLib::OverlapResult orl;
-  SeqLib::GRC results = grc.findOverlaps(SeqLib::GenomicRegion(23, 10, 100), true, orl);
+  SeqLib::GRC results = grc.FindOverlaps(SeqLib::GenomicRegion(23, 10, 100), true);
 
   for (auto& i : results)
     std::cerr << " GRC overlaps results " << i << std::endl;
@@ -93,17 +94,17 @@ BOOST_AUTO_TEST_CASE ( interval_queries ) {
   BOOST_CHECK_EQUAL(results.size(), 2);
   BOOST_CHECK_EQUAL(results[1].pos2, 100);
 
-  grc.mergeOverlappingIntervals();
+  grc.MergeOverlappingIntervals();
 
   for(auto& r : grc)
     std::cerr << r << std::endl;
 
   std::vector<int32_t> q, s;
-  results = grc.findOverlaps(grc, q, s, true);
+  results = grc.FindOverlaps(grc, q, s, true);
 
   std::cerr << " results.size " << results.size() << " Input size " << grc.size() << std::endl;
   BOOST_CHECK_EQUAL(results.size(), grc.size());
-  BOOST_CHECK_EQUAL(results.width(), grc.width());
+  BOOST_CHECK_EQUAL(results.TotalWidth(), grc.TotalWidth());
   
 }
 
@@ -167,7 +168,7 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
 
   SeqLib::GRC g;
   g.add(SeqLib::GenomicRegion(h.Name2ID("X"), 1100000, 1800000));
-  g.createTreeMap();
+  g.CreateTreeMap();
 
   // make a new rule set
   ReadFilterCollection rfc;
@@ -247,8 +248,13 @@ BOOST_AUTO_TEST_CASE ( seq_utils ) {
 BOOST_AUTO_TEST_CASE( bam_record ) {
 
   // get a record
-  SeqLib::BamReader br;
-  br.Open("test_data/small.bam");
+  SeqLib::BamReader br, br2;
+
+  // try multiple open
+  std::vector<std::string> bs = {"test_data/small.bam", "test_data/small.bam"};
+  BOOST_CHECK(!br2.Open(bs)); // should be false, no dups
+  bs = {"test_data/small.bam", "test_data/small.cram"};
+  BOOST_CHECK(br.Open(bs)); // should be true
   SeqLib::BamRecord r;
   
   SeqLib::BamRecordVector brv;
@@ -436,15 +442,15 @@ BOOST_AUTO_TEST_CASE( genomic_region_distance ) {
   SeqLib::GenomicRegion gr3(1, 10, 100);
   SeqLib::GenomicRegion gr4(0, 100, 100);
 
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr3), -1);
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr1), 0);
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr2), 100);
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenEnds(gr4), 0);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenEnds(gr3), -1);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenEnds(gr1), 0);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenEnds(gr2), 100);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenEnds(gr4), 0);
 
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr3), -1);
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr1), 0);
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr2), 0);
-  BOOST_CHECK_EQUAL(gr1.distanceBetweenStarts(gr4), 90);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenStarts(gr3), -1);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenStarts(gr1), 0);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenStarts(gr2), 0);
+  BOOST_CHECK_EQUAL(gr1.DistanceBetweenStarts(gr4), 90);
 
 }
 
@@ -512,13 +518,13 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
 
   // GenomicRegion Constructors
   SeqLib::GenomicRegion gr(0, 0, 10, '+');
-  BOOST_CHECK_EQUAL(gr.width(), 11);
+  BOOST_CHECK_EQUAL(gr.Width(), 11);
 
   SeqLib::GenomicRegion gr_empty;
-  BOOST_TEST(gr_empty.isEmpty());
+  BOOST_TEST(gr_empty.IsEmpty());
 
   SeqLib::GenomicRegion gr2("chrX", "0", "10", SeqLib::BamHeader());
-  BOOST_CHECK_EQUAL(gr2.width(), 11);
+  BOOST_CHECK_EQUAL(gr2.Width(), 11);
   BOOST_CHECK_EQUAL(gr2.chr, 22);
 
   SeqLib::GenomicRegion gr3("X", "0", "10", SeqLib::BamHeader());
@@ -527,8 +533,8 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
   BOOST_CHECK_THROW(SeqLib::GenomicRegion gr3("X", "a", "10", SeqLib::BamHeader()), std::invalid_argument);
   BOOST_CHECK_THROW(SeqLib::GenomicRegion gr3("X", "1000000000000000000000000000000000000000000000000000000000000000000000000000000", "10", SeqLib::BamHeader()), std::out_of_range);
 
-  BOOST_CHECK_EQUAL(gr.distanceBetweenStarts(gr2), -1);
-  BOOST_CHECK_EQUAL(gr2.distanceBetweenStarts(gr), -1);
+  BOOST_CHECK_EQUAL(gr.DistanceBetweenStarts(gr2), -1);
+  BOOST_CHECK_EQUAL(gr2.DistanceBetweenStarts(gr), -1);
 
   SeqLib::BamReader br;
   br.Open("test_data/small.bam");
@@ -549,7 +555,7 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
   BOOST_CHECK_EQUAL(grc.strand, '-');
 
   // check point string
-  BOOST_CHECK_EQUAL(grb.pointString(), "1:10,000(+)");
+  BOOST_CHECK_EQUAL(grb.PointString(), "1:10,000(+)");
 
   // check pretty string
   std::stringstream ss;
@@ -561,8 +567,6 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
 BOOST_AUTO_TEST_CASE( genomic_region_bad_inputs ) {
 
   BOOST_CHECK_THROW(SeqLib::GenomicRegion(0, 10, 9), std::invalid_argument);
-
-  //BOOST_CHECK_THROW(SeqLib::GenomicRegion::chrToString(-1), std::invalid_argument);
 
   BOOST_CHECK_THROW(SeqLib::GenomicRegion(0,0,0,'P'), std::invalid_argument);
 
@@ -581,14 +585,14 @@ BOOST_AUTO_TEST_CASE( genomic_region_range_operations ) {
 
   SeqLib::GenomicRegion gr(0,1,10);
   SeqLib::GenomicRegion gr2(0,1,11);
-  gr.pad(3);
-  gr2.pad(-3);
+  gr.Pad(3);
+  gr2.Pad(-3);
   BOOST_CHECK_EQUAL(gr.pos1,-2);
   BOOST_CHECK_EQUAL(gr.pos2,13);
   BOOST_CHECK_EQUAL(gr2.pos1,4);
   BOOST_CHECK_EQUAL(gr2.pos2,8);
 
-  BOOST_CHECK_THROW(gr.pad(-10), std::out_of_range);
+  BOOST_CHECK_THROW(gr.Pad(-10), std::out_of_range);
 
 }
 
@@ -603,17 +607,17 @@ BOOST_AUTO_TEST_CASE( genomic_check_overlaps ) {
   SeqLib::GenomicRegion gr5(1, 11, 12, '+');
 
   // partial overlaps should be one
-  BOOST_CHECK_EQUAL(gr1.getOverlap(gr3), 1);
+  BOOST_CHECK_EQUAL(gr1.GetOverlap(gr3), 1);
 
   // argument contained gets 2
-  BOOST_CHECK_EQUAL(gr2.getOverlap(gr4), 2);
+  BOOST_CHECK_EQUAL(gr2.GetOverlap(gr4), 2);
 
   // object contained gets 3 
-  BOOST_CHECK_EQUAL(gr4.getOverlap(gr2), 3);
+  BOOST_CHECK_EQUAL(gr4.GetOverlap(gr2), 3);
 
   // same chr, no overlap
-  BOOST_CHECK_EQUAL(gr4.getOverlap(gr5), 0);
-  BOOST_CHECK_EQUAL(gr5.getOverlap(gr4), 0);
+  BOOST_CHECK_EQUAL(gr4.GetOverlap(gr5), 0);
+  BOOST_CHECK_EQUAL(gr5.GetOverlap(gr4), 0);
 
 }
 
@@ -729,6 +733,12 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(brv[0].GetCigar()[0].Type(), 'M');
   BOOST_CHECK_EQUAL(brv[0].GetCigar()[0].Length(), 38);
 
+  // check from iterator
+  SeqLib::Cigar ccc = brv[0].GetCigar();
+  
+  //SeqLib::Cigar::const_iterator f = brv[0].GetCigar().begin();
+  BOOST_CHECK_EQUAL(ccc.begin()->Length(), 38);
+
   // check that it got both alignments
   BOOST_CHECK_EQUAL(brv2.size(), 2);
 
@@ -811,7 +821,7 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
 BOOST_AUTO_TEST_CASE( gr_random ) {
 
   SeqLib::GenomicRegion gr;
-  gr.random();
+  gr.Random();
   std::cerr << " RANDOM " << gr << std::endl;
 
 }
@@ -1021,6 +1031,12 @@ BOOST_AUTO_TEST_CASE( cramin_new_ref ) {
   while(b.GetNextRecord(r) && count++ < 10) {
     std::cerr << "CRAM " << r << std::endl;
   }
+
+  b.Reset();
+  
+  // should fail
+  
+
 }
 
 
@@ -1088,7 +1104,7 @@ BOOST_AUTO_TEST_CASE( samout ) {
     w.WriteRecord(r);
   }
   w.Close();
-  
+  b.Close();
 }
 
 
@@ -1163,10 +1179,11 @@ BOOST_AUTO_TEST_CASE( bam_poly ) {
 
   SeqLib::BamReader r;
   
-  r.Open("test_data/small.bam");
-  r.Open("test_data/small.cram");
+  BOOST_CHECK(r.Open("test_data/small.bam"));
+  BOOST_CHECK(r.Open("test_data/small.cram"));
 
-  r.SetRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100));
+  BOOST_CHECK(r.SetRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100)));
+  BOOST_CHECK(!r.SetRegion(SeqLib::GenomicRegion(1000, 1001000, 1001100))); // should fail
 
   SeqLib::BamWriter w(SeqLib::BAM);
   w.Open("tmp_out_poly.bam");
@@ -1178,6 +1195,19 @@ BOOST_AUTO_TEST_CASE( bam_poly ) {
     w.WriteRecord(rec);
   }
 
+  BOOST_CHECK(r.Reset("test_data/small.bam"));
+  BOOST_CHECK(!r.Reset("dum"));
+
+  BOOST_CHECK(r.Close("test_data/small.bam"));
+  BOOST_CHECK(r.Close("test_data/small.cram"));
+  
+  SeqLib::BamReader r2;
+  BOOST_CHECK(r2.Open("tmp_out_poly.bam"));
+  // should return false, no index
+  BOOST_CHECK(!r2.SetRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100)));
+
+
+
 }
 
 
@@ -1185,6 +1215,9 @@ BOOST_AUTO_TEST_CASE( plot_test ) {
 
   SeqLib::BamReader r;
   r.Open("test_data/small.bam");
+  
+  // should return false on empty region
+  BOOST_CHECK(!r.SetMultipleRegions(SeqLib::GRC()));
 
   SeqLib::GenomicRegion gr("X:1,002,942-1,003,294", r.Header());
   r.SetRegion(gr);
@@ -1206,3 +1239,44 @@ BOOST_AUTO_TEST_CASE( plot_test ) {
 }
 
 
+// CURRENTLY DOES NOT WORK
+// need to find how to do reset
+/***BOOST_AUTO_TEST_CASE ( reset_works ) {
+
+  SeqLib::BamReader r;
+  r.Open("test_data/small.bam");
+  //r.Open("test_data/small.cram");
+
+  SeqLib::BamRecord rec1, rec2;
+  r.GetNextRecord(rec1);
+  r.Reset();
+  std::cerr << " AFTER RESET " << std::endl;
+  std::cerr << r.GetNextRecord(rec2) << std::endl;
+
+  BOOST_CHECK_EQUAL(rec1.Qname(), rec2.Qname());
+  }***/
+
+
+BOOST_AUTO_TEST_CASE( bed_read ) {
+  
+  SeqLib::BamReader r;
+  r.Open("test_data/small.bam");
+ 
+  SeqLib::GRC g(BEDFILE, r.Header());
+
+  BOOST_CHECK_EQUAL(g.size(), 3);
+  BOOST_CHECK_EQUAL(g[2].chr, 22);
+  
+}
+
+BOOST_AUTO_TEST_CASE( vcf_read ) {
+  
+  SeqLib::BamReader r;
+  r.Open("test_data/small.bam");
+ 
+  SeqLib::GRC g(VCFFILE, r.Header());
+
+  BOOST_CHECK_EQUAL(g.size(), 30);
+  BOOST_CHECK_EQUAL(g[29].chr, 22);
+  
+}

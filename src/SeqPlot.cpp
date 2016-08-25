@@ -63,7 +63,7 @@ std::string SeqPlot::PlotAlignmentRecords(const BamRecordVector& brv) const {
     if (!found) { // didn't fit anywhere, so make a new line
       PlottedReadLine prl;
       prl.pad = m_pad;
-      prl.contig_len = m_view.width(); //ac.getSequence().length();
+      prl.contig_len = m_view.Width(); //ac.getSequence().length();
       prl.addRead(&i);
       line_vec.push_back(prl);
     }

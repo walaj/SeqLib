@@ -55,6 +55,8 @@ class GenomicRegionCollection {
   GenomicRegionCollection(const T& gr);
 
   /** Construct from a vector of reads
+   * 
+   * @note See BamRecord::AsGenomicRegion 
    */
   GenomicRegionCollection(const BamRecordVector& brv);
 
@@ -66,26 +68,26 @@ class GenomicRegionCollection {
    */
   GenomicRegionCollection(int width, int ovlp, const T &gr);
 
-  /** Read in a MuTect call-stats file and adds to GenomicRegionCollection object.
-   *
-   * Reads a MuTect call-stats file and imports only
-   * lines with KEEP marked. 
-   * @param file Path to call-stats file
-   * @param pad Amount to pad intervals by
-   */
- void readMuTect(const std::string &file, int pad, const SeqLib::BamHeader& hdr);
+ // Read in a MuTect call-stats file and adds to GenomicRegionCollection object.
+   //
+   // Reads a MuTect call-stats file and imports only
+   // lines with KEEP marked. 
+   // @param file Path to call-stats file
+   // @param pad Amount to pad intervals by
+   // @return True if file was succesfully read
+   //
+   //bool ReadMuTect(const std::string &file, const SeqLib::BamHeader& hdr);
 
   /** Read in a BED file and adds to GenomicRegionCollection object
    * @param file Path to BED file
-   * @param pad Amount to pad intervals by
+   * @return True if file was succesfully read
    */
- void readBEDfile(const std::string &file, int pad, const SeqLib::BamHeader& hdr);
+   bool ReadBED(const std::string &file, const SeqLib::BamHeader& hdr);
 
   /** Read in a VCF file and adds to GenomicRegionCollection object
-   * @param file Path to BED file
-   * @param pad Amount to pad intervals by
+   * @param file Path to VCF file. All elements will be width = 1 (just read start point)
    */
- void readVCFfile(const std::string &file, int pad, const SeqLib::BamHeader& hdr);
+  bool ReadVCF(const std::string &file, const SeqLib::BamHeader& hdr);
 
   /** Read in a text file (can be gzipped) and construct a GenomicRegionCollection
    *
@@ -99,22 +101,18 @@ class GenomicRegionCollection {
    */
    GenomicRegionCollection(const std::string &file, const BamHeader& hdr);
 
-  /** Fill in the GenomicIntervalTreeMap stored in this object. 
+  /** Create the set of interval trees (one per chromosome) 
    *
    * A GenomicIntervalTreeMap is an unordered_map of GenomicIntervalTrees for 
    * each chromosome. A GenomicIntervalTree is an interval tree on the ranges
    * defined by the genomic interval, with cargo set at the same GenomicRegion object.
    */
-  void createTreeMap();
+  void CreateTreeMap();
   
-  /** Send the GenomicRegionCollection to a BED file
-  * @param file Output file
-  */
-  void sendToBED(const std::string file);
-  
-  /** Reduces the GenomicRegion objects to minimal set
+  /** Reduces the GenomicRegion objects to minimal set by merging overlapping intervals
+   * @note This will also call CreateTreeMap() at end to re-create the interval tree
    */
-  void mergeOverlappingIntervals();
+  void MergeOverlappingIntervals();
 
   /** Return the number of GenomicRegions stored 
    */
@@ -126,7 +124,7 @@ class GenomicRegionCollection {
 
   /** Is this object empty?
    */
-  bool empty() const { return !m_grv->size(); }
+  bool IsEmpty() const { return !m_grv->size(); }
 
   /** Clear out all of the GenomicRegion objects
    */
@@ -150,27 +148,42 @@ class GenomicRegionCollection {
    * @param gr Region to test
    * @return Number of overlapping elements in this GenomicRegionCollection
    */
- size_t findOverlapping(const T &gr) const;
+ size_t CountOverlaps(const T &gr) const;
 
- bool overlapSameBin(const T &gr1, const T &gr2) const;
-
- size_t countContained(const T &gr);
- 
- template<class K>
- GenomicRegionCollection<GenomicRegion> findOverlaps(GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand = false) const;
-
- template<class K>
- GenomicRegionCollection<GenomicRegion> findOverlaps(const K& gr, bool ignore_strand, OverlapResult& o) const;
-
- /** Return the total amount spanned by this collection
+ /** Test if two intervals overlap the same element in the collection
   */
- int width() const; 
+ bool OverlapSameInterval(const T &gr1, const T &gr2) const;
+
+ /** Count the number of intervals in the collection contained in this range */
+ size_t CountContained(const T &gr);
+
+ /** Return the overlaps between the collection and the query collection
+  * @param gr Query collection of intervals
+  * @param ignore_strand If true, won't exclude overlap if on different strand
+  * @return A collection of overlapping intervals from this collection, trimmed to be contained
+  * inside the query collection
+  */
+ template<class K>
+ GenomicRegionCollection<GenomicRegion> FindOverlaps(GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const;
+
+ /** Return the overlaps between the collection and the query interval
+  * @param gr Query region 
+  * @param ignore_strand If true, won't exclude overlap if on different strand
+  * @return A collection of overlapping intervals from this collection, trimmed to be contained
+  * inside gr
+  */
+ template<class K>
+ GenomicRegionCollection<GenomicRegion> FindOverlaps(const K& gr, bool ignore_strand) const;
+
+ /** Return the total amount spanned by this collection */
+ int TotalWidth() const; 
 
  /** Increase the left and right ends of each contained GenomicRegion by 
   * the pad value.
   * @param v Amount to pad each end by. Result is increase in width by 2*pad.
+  * @note See GenomicRegion::Pad
   */
- void pad(int v);
+ void Pad(int v);
 
  /** Set the i'th GenomicRegion */
  T& operator[](size_t i) { return m_grv->at(i); }
@@ -178,37 +191,43 @@ class GenomicRegionCollection {
  /** Retreive the i'th GenomicRegion */
  const T& operator[](size_t i) const { return m_grv->at(i); }
  
-  /** Add two GenomicRegionCollection objects together
-   */
-  void concat(const GenomicRegionCollection<T>& g);
+  /** Add two GenomicRegionCollection objects together */
+  void Concat(const GenomicRegionCollection<T>& g);
 
   /** Output the GenomicRegionCollection to a BED format
    *
    * Currently just outputs chr   pos   pos2 with no header.
    * @return BED formated string reprsentation 
    */
-  std::string sendToBED() const;
+  std::string AsBEDString() const;
 
   /** Fill the next GenomicRegion object. 
    * @return false if add end of vector
    */
-  bool getNextGenomicRegion(T& gr);
+  bool GetNextGenomicRegion(T& gr);
 
-  void gsort();
+ /** Coordinate sort the interval collection */
+  void CoordinateSort();
 
- /** Expand all the elements so they are sorted and become adjacent by 
-     stretching them to the right up to max */
+ /** Expand all the elements so they are sorted and become adjacent 
+  * by stretching them to the right up to max 
+  * @param max Element furthest to the right will be stretched to max. If set to 0, will not stretch furthest right element.
+  * @exception Throws an out_of_range if furthest right position is > max
+  */
   void SortAndStretchRight(int max);
 
- /** Expand all the elements so they are sorted and become adjacent by 
-     stretching them to the left down to min */
+ /** Expand all the elements so they are sorted and become adjacent 
+  * by stretching them to the left down to min.
+  * @param min Element furthest to the left will be stretched to min. If set to < 0, will not stretch furthest right element.
+  * @exception Throws an out_of_range if furthest left is < min
+  */
  void SortAndStretchLeft(int min);
 
-  /** Rewind the element pointer to the first GenomicRegion
-   */
-  void rewind() { idx = 0; }
+  /** Rewind the element pointer to the first GenomicRegion */
+  void Rewind() { idx = 0; }
 
- GenomicRegionVector asGenomicRegionVector() const;
+ /** Return elements as an STL vector of GenomicRegion objects */
+  GenomicRegionVector AsGenomicRegionVector() const;
  
   typename std::vector<T>::iterator begin() { return m_grv->begin(); } 
 
@@ -218,16 +237,11 @@ class GenomicRegionCollection {
 
   typename std::vector<T>::const_iterator end() const { return m_grv->end(); } 
 
+  /** Shortcut to FindOverlaps that just returns the intersecting regions
+   * without keeping track of the query / subject ids
+   */
   GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
  
- //#ifdef BOOST_VERSION
- // boost::icl::interval_set<int> m_set;
- //#endif
- 
- //#ifdef BOOST_VERSION
- //GenomicRegionCollection<GenomicRegion> complement(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
- //#endif
-
  private:
  
  // always construct this object any time m_grv is modifed

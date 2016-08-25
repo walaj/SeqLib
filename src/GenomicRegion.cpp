@@ -8,12 +8,12 @@
 namespace SeqLib {
 
 // return the width of the genomic region
-int GenomicRegion::width() const {
+int GenomicRegion::Width() const {
   return pos2 - pos1 + 1;
 }
 
 // returns 0 for no overlaps, 1 for partial and 2 for complete
-int GenomicRegion::getOverlap(const GenomicRegion& gr) const {
+int GenomicRegion::GetOverlap(const GenomicRegion& gr) const {
 
   if (gr.chr != chr)
     return 0;
@@ -59,15 +59,15 @@ int GenomicRegion::getOverlap(const GenomicRegion& gr) const {
   }
 
   
-  std::string GenomicRegion::pointString() const {
+  std::string GenomicRegion::PointString() const {
     std::stringstream out;
     out << chrToString(chr) << ":" << SeqLib::AddCommas<int>(pos1) << "(" << strand << ")";
     return out.str();
   }
 
-void GenomicRegion::pad(int32_t pad) {
+void GenomicRegion::Pad(int32_t pad) {
 
-  if (-pad*2 > width())
+  if (-pad*2 > Width())
     throw std::out_of_range(
          "GenomicRegion::pad - negative pad values can't obliterate GenomicRegion with val " + 
 	 std::to_string(chr) + ":" + std::to_string(pos1) + "-" + std::to_string(pos2) + 
@@ -167,7 +167,7 @@ GenomicRegion::GenomicRegion(int32_t t_chr, int32_t t_pos1, int32_t t_pos2, char
   strand = t_strand;
 
 }
-
+  //private
 std::string GenomicRegion::chrToString(int32_t ref) const {
 
   std::string ref_id;
@@ -187,12 +187,12 @@ std::string GenomicRegion::chrToString(int32_t ref) const {
 }
 
 // checks whether a GenomicRegion is empty
-bool GenomicRegion::isEmpty() const {
+bool GenomicRegion::IsEmpty() const {
   return chr == -1 && pos1 == 0 && pos2 == 0;
 }
 
 
-int32_t GenomicRegion::distanceBetweenStarts(const GenomicRegion &gr) const {
+int32_t GenomicRegion::DistanceBetweenStarts(const GenomicRegion &gr) const {
 
   if (gr.chr != chr)
     return -1;
@@ -201,7 +201,7 @@ int32_t GenomicRegion::distanceBetweenStarts(const GenomicRegion &gr) const {
 
 }
 
-int32_t GenomicRegion::distanceBetweenEnds(const GenomicRegion &gr) const {
+int32_t GenomicRegion::DistanceBetweenEnds(const GenomicRegion &gr) const {
 
   if (gr.chr != chr)
     return -1;
@@ -211,7 +211,7 @@ int32_t GenomicRegion::distanceBetweenEnds(const GenomicRegion &gr) const {
 }
 
 
-void GenomicRegion::random() {
+void GenomicRegion::Random() {
   
   uint32_t big = rand() % SeqLib::genome_size_XY;
   //SeqLib::genRandomValue(big, SeqLib::genome_size_XY, seed);
@@ -227,7 +227,7 @@ void GenomicRegion::random() {
     }
   
   std::cerr << "Value of " << big << " outside of expected range."  << std::endl;
-  exit(EXIT_FAILURE);
+  assert(false);
   
 }
 

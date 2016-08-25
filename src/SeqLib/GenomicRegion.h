@@ -65,7 +65,7 @@ class GenomicRegion {
   /** Return a string representation of just the first base-pair 
    * e.g. 1:10,000
    */
-  std::string pointString() const;
+  std::string PointString() const;
 
   /** Randomize the position of this GenomicRegion on the genome
    * 
@@ -73,24 +73,24 @@ class GenomicRegion {
    * with val <= genome_size_XY and then converts to GenomicRegion
    * @note Seed is set before-hand at any time with srand
    */
-  void random();
+  void Random();
 
   /** Check if the GenomicRegion is empty (aka chr -1 and pos1=pos2=0)   */
-  bool isEmpty() const;
+  bool IsEmpty() const;
 
   /** Find the absolute distance between start of two GenomicRegion objects 
    * 
    * If chr1 != chr2, then -1 is returned
    * @param gr GenomicRegion object to compare with
    */
-  int32_t distanceBetweenStarts(const GenomicRegion &gr) const;
+  int32_t DistanceBetweenStarts(const GenomicRegion &gr) const;
 
   /** Find the absolute distance between ends of two GenomicRegion objects 
    * 
    * If chr1 != chr2, then -1 is returned
    * @param gr GenomicRegion object to compare with
    */
-  int32_t distanceBetweenEnds(const GenomicRegion &gr) const;
+  int32_t DistanceBetweenEnds(const GenomicRegion &gr) const;
 
   /** Returns true if a.chr < b.chr or a.pos1 < a.pos1 if on same chrome, or if a.pos2 < b.pos2 if same chrom and same pos1 */
   bool operator < (const GenomicRegion& b) const;
@@ -117,7 +117,7 @@ class GenomicRegion {
    * If the argument and calling object do not overlap, returns 0
    * @param gr GenomicRegion to compare against
    */
-  int getOverlap(const GenomicRegion& gr) const;
+  int GetOverlap(const GenomicRegion& gr) const;
 
   /** Print with chr ID bumped up by one to make eg ID 0
    * print as "1"
@@ -134,12 +134,12 @@ class GenomicRegion {
    * @param pad Amount to pad by.
    * @exception throws an out_of_bounds if for pad < -width/2
    */
-  void pad(int32_t pad);
+  void Pad(int32_t pad);
 
   /** Return the width (inclusive)
    * @note Width is inclusive, so that if pos1=1 and pos2=2, width is 2
    */
-  int width() const;
+  int Width() const;
 
   int32_t chr = 0; ///< Chromosome ID
 
