@@ -134,11 +134,6 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
 
   DEBUGIV(r, "starting RFC isValid with non-empty regions")
   
-  // need to run all rules if there is an excluder
-  if (!m_fall_through)
-    for (auto& i : m_regions)
-      m_fall_through = m_fall_through || i.excluder;
-
   bool is_valid = false;
   bool exclude_hit = false; // did we hit excluder rule
 
@@ -155,12 +150,6 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
       if (it.excluder)
 	exclude_hit = true;
       
-      // if we don't need to check all regions, quit here
-      if (!m_fall_through) {
-	++m_count;
-	return true;
-      }
-
       // in case we do fall through, track that we passed here
       is_valid = true;
 
@@ -340,7 +329,6 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
   std::ostream& operator<<(std::ostream &out, const ReadFilterCollection &mr) {
     
     out << "----------ReadFilterCollection-------------" << std::endl;
-    out << "--- counting all rules (fall through): " << (mr.m_fall_through ? "ON" : "OFF") << std::endl;
 
     for (auto& it : mr.m_regions)
       out << it;

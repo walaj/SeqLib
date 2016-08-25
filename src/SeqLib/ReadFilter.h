@@ -13,7 +13,6 @@
 
 #include "SeqLib/GenomicRegionCollection.h"
 #include "SeqLib/BamRecord.h"
-
 #include "SeqLib/aho_corasick.hpp"
 
 #define MINIRULES_MATE_LINKED 1
@@ -493,13 +492,6 @@ class ReadFilterCollection {
    * filters contained in this collection */
   bool isValid(const BamRecord &r);
   
-  /** Set this collection to check all filters. 
-   * This is useful for tallying what reads pass
-   * what filter sets, rather than just checking if a 
-   * read passes or not.
-   */
-  void CheckAllFilters() { m_fall_through = true; };
-
   /** Print some basic information about this object */
   friend std::ostream& operator<<(std::ostream& out, const ReadFilterCollection &mr);
 
@@ -542,10 +534,6 @@ class ReadFilterCollection {
 
   // store all of the individual filters
   std::vector<ReadFilter> m_regions;
-
-  // should we keep checking rules, even it passed? (useful for counting)
-  // NEW set this to always on, for simplicity
-  bool m_fall_through = true; //false;
 
   bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
 

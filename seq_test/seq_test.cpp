@@ -1308,6 +1308,10 @@ BOOST_AUTO_TEST_CASE (json_parse) {
     rec.QualityTrimmedSequence(4, start, end); // phred trim first
     rfc.isValid(rec);
   }
+
+  // empty
+  ReadFilterCollection rfc2("", r.Header());
+  
 }
 
 
