@@ -456,7 +456,11 @@ class ReadFilterCollection {
    */
   ReadFilterCollection() {}
 
-  /** Create a new filter collection directly from a JSON */
+  /** Create a new filter collection directly from a JSON 
+   * @param script A JSON file or directly as JSON formatted string
+   * @param h BamHeader to convert chr sequence to id
+   * @excption invalid_argument if cannot parse JSON
+   */
   ReadFilterCollection(const std::string& script, const SeqLib::BamHeader& h);
 
   /** Add a new rule to the collection. 

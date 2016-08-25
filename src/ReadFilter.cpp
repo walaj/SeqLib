@@ -74,14 +74,10 @@ bool ReadFilter::isValid(BamRecord &r) {
     Json::Value null(Json::nullValue);
     Json::Value v = value.get(name, null);
     if (v != null) {
-      try {
-	if (v.asBool())
-	  return true;
-	else if (!v.asBool())
-	  return false;
-      } catch (...) {
-	std::cerr << " trouble converting " << name << " to bool on " << value << std::endl;
-      }
+      if (v.asBool())
+	return true;
+      else if (!v.asBool())
+	return false;
     }
 
     return false;
@@ -209,16 +205,11 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     Json::Value root;
     Json::Reader reader;
     if ( !reader.parse(tscript, root)) {
-      
       if (script.empty()) {
 	std::cerr << "JSON script is empty. Setting default to filter all reads" << std::endl;
 	return;
       }
-      
-      // use built-in error reporting mechanism to alert user what was wrong with the script
-      std::cerr  << "ERROR: failed to parse JSON script" << std::endl;
-      std::cerr << script << std::endl;
-      exit(EXIT_FAILURE);
+      throw std::invalid_argument("ERROR: failed to parse JSON script");
     }
 
     // meake sure it at least has a rule
@@ -249,7 +240,7 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
     for (auto& regions : root) {
      
       if (!__validate_json_value(regions, allowed_region_annots))
-	exit(EXIT_FAILURE);
+	throw std::invalid_argument("JSON contains invalid keys, or otherwise failed to validate");
 
       ReadFilter mr;
       

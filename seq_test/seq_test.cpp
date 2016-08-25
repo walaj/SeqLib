@@ -1300,7 +1300,11 @@ BOOST_AUTO_TEST_CASE (json_parse) {
   rfc.AddReadFilter(rf);
 
   std::cout << rfc << std::endl;
-  
+
+  SeqLib::BamRecord rec;
+  size_t count = 0;
+  while(r.GetNextRecord(rec) && ++count < 10)
+    rfc.isValid(rec);
 }
 
 
