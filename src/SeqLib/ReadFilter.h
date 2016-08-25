@@ -224,7 +224,7 @@ class FlagRule {
   void setAllOffFlag(uint32_t f) { m_all_off_flag = f; every = (every && f == 0); } 
 
   // ask whether a read passes the rule
-  bool isValid(BamRecord &r);
+  bool isValid(const BamRecord &r);
 
   /** Print the flag rule */
   friend std::ostream& operator<<(std::ostream &out, const FlagRule &fr);
@@ -264,13 +264,26 @@ class AbstractRule {
   /** Destroy the filter */
   ~AbstractRule() {}
 
+  /** Trim a sequence by removing bases with low phred quality. Stores new
+   * sequence in GV tag of read, but otherwise does not change the read.
+   * @param r Sequence read to be trimmed
+   * @param p Minimum acceptable phred score (eg 4)
+   * @return Returns true if read was trimmed
+   */
+  bool TrimRead(BamRecord& r);
+  
+  /** Add a list of motifs that will be search as sub-strings
+   * of the read sequence
+   * @param f Path to new-line separted file of motifs
+   * @param inverted If true, the reads that have a matching motif will fail isValid
+   */
   void addMotifRule(const std::string& f, bool inverted);
 
   /** Query a read against this rule. If the
    * read passes this rule, return true.
    * @param r An aligned sequencing read to query against filter
    */
-  bool isValid(BamRecord &r);
+  bool isValid(const BamRecord &r);
 
   /** Supply the rule parameters with a JSON
    * @param A JSON object created by parsing a string
@@ -374,7 +387,7 @@ class ReadFilter {
    * @note If this is an excluder rule, then this
    * returns false if the read passes the filter
    */
-  bool isValid(BamRecord &r);
+  bool isValid(const BamRecord &r);
 
   /** Add a rule to this filter. A read must pass all 
    * of the rules contained in this filter to pass 
@@ -397,7 +410,7 @@ class ReadFilter {
    * @note If this is a mate-linked region, then the read will overlap
    * if its mate overlaps as well.
    */
-  bool isReadOverlappingRegion(BamRecord &r);
+  bool isReadOverlappingRegion(const BamRecord &r);
 
   /** Print basic information about this filter */
   friend std::ostream& operator<<(std::ostream& out, const ReadFilter &mr);
@@ -478,7 +491,7 @@ class ReadFilterCollection {
 
   /** Query a read to see if it passes any one of the
    * filters contained in this collection */
-  bool isValid(BamRecord &r);
+  bool isValid(const BamRecord &r);
   
   /** Set this collection to check all filters. 
    * This is useful for tallying what reads pass

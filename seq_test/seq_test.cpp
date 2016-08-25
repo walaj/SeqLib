@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE( json_parse_from_file ) {
   SeqLib::BamReader br;
   br.Open("test_data/small.bam");
   
-  std::string rules = "{\"global\" : {\"!anyflag\" : 1536, \"phred\" : 4}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
+  std::string rules = "{\"global\" : {\"!anyflag\" : 1536}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
 
   ReadFilterCollection rfc(rules, br.Header());
 
@@ -1303,8 +1303,11 @@ BOOST_AUTO_TEST_CASE (json_parse) {
 
   SeqLib::BamRecord rec;
   size_t count = 0;
-  while(r.GetNextRecord(rec) && ++count < 10)
+  int start, end;
+  while(r.GetNextRecord(rec) && ++count < 10) {
+    rec.QualityTrimmedSequence(4, start, end); // phred trim first
     rfc.isValid(rec);
+  }
 }
 
 

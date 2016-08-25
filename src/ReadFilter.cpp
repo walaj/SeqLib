@@ -9,25 +9,33 @@
 
 //#define DEBUG_MINI 1
 
+#ifdef QNAME
+#define DEBUGIV(msg, read)				\
+  if (read.Qname() == QNAME && (read.AlignmentFlag() == QFLAG || QFLAG == -1)) { std::cerr << (msg) << " read " << r << std::endl; }
+#else
+#define DEBUGIV(msg, read)
+#endif
+
 namespace SeqLib {
 
   namespace Filter {
   // return if this rule accepts all reads
   bool AbstractRule::isEvery() const {
-    return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && mapq.isEvery() && len.isEvery() && clip.isEvery() && phred.isEvery() && nm.isEvery() && nbases.isEvery() && fr.isEvery() && 
+    return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && 
+      mapq.isEvery() && len.isEvery() && clip.isEvery() && nm.isEvery() && 
+      nbases.isEvery() && fr.isEvery() && 
       (subsam_frac >= 1) && xp.isEvery();
   }
-
 
 // define what is a valid condition
 static const std::unordered_set<std::string> valid = 
   { 
   "duplicate", "supplementary", "qcfail", "hardclip", "fwd_strand",
   "rev_strand", "mate_fwd_strand", "mate_rev_strand", "mapped",
-  "mate_mapped", "isize","clip", "phred", "length","nm",
+  "mate_mapped", "isize","clip", "length","nm",
   "mapq", "all", "ff", "xp","fr","rr","rf",
   "ic", "discordant","motif","nbases","!motif","allflag", "!allflag", "anyflag", "!anyflag",
-  "ins","del",  "sub",  "subsample", "rg"
+  "ins","del",  "sub", "rg"
 };
 
   static const std::unordered_set<std::string> allowed_region_annots = 
@@ -38,7 +46,7 @@ static const std::unordered_set<std::string> valid =
      "fwd_strand", "rev_strand", "mate_fwd_strand", "mate_rev_strand",
      "mapped", "mate_mapped", "ff", "fr", "rr", "rf", "ic"};
 
-bool ReadFilter::isValid(BamRecord &r) {
+bool ReadFilter::isValid(const BamRecord &r) {
 
   // empty default is pass
   if (!m_abstract_rules.size())
@@ -56,17 +64,13 @@ bool ReadFilter::isValid(BamRecord &r) {
 }
 
   int FlagRule::__parse_json_int(const Json::Value& v) {
-
-      try {
-	if (v.asInt())
-	 return v.asInt();
-	else if (v.isString())
-	  return std::stoi(v.asString());
-      } catch (...) {
-	std::cerr << " trouble converting flag to int on " << v << std::endl;
-      }
-
-      return 0;
+    
+    if (v.asInt())
+      return v.asInt();
+    else if (v.isString())
+      return std::stoi(v.asString());
+    
+    return 0;
   }
 
   bool __convert_to_bool(const Json::Value& value, const std::string& name) {
@@ -100,7 +104,7 @@ bool ReadFilter::isValid(BamRecord &r) {
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
 // contained in these rules
-bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
+bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
 
   // if this is a whole genome rule, it overlaps
   if (!m_grv.size()) 
@@ -119,23 +123,16 @@ bool ReadFilter::isReadOverlappingRegion(BamRecord &r) {
 
 // checks which rule a read applies to (using the hiearchy stored in m_regions).
 // if a read does not satisfy a rule it is excluded.
-  bool ReadFilterCollection::isValid(BamRecord &r) {
+  bool ReadFilterCollection::isValid(const BamRecord &r) {
 
   ++m_count_seen;
 
-#ifdef QNAME 
-  if (r.Qname() == QNAME)
-    std::cerr << "...starting valid checking in RFC. Regions size : "  << m_regions.size() << std::endl;
-#endif
+  DEBUGIV(r, "starting RFC isValid")
 
   if (m_regions.size() == 0)
     return true;
 
-
-#ifdef QNAME 
-  if (r.Qname() == QNAME)
-    std::cerr << "...starting valid checking in array of filters in RFC" << std::endl;
-#endif
+  DEBUGIV(r, "starting RFC isValid with non-empty regions")
   
   // need to run all rules if there is an excluder
   if (!m_fall_through)
@@ -484,7 +481,6 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     mapq.parseJson(value, "mapq");
     len.parseJson(value, "length");
     clip.parseJson(value, "clip");
-    phred.parseJson(value, "phred");
     nbases.parseJson(value, "nbases");
     ins.parseJson(value, "ins");
     del.parseJson(value, "del");
@@ -500,16 +496,10 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
   }
 
 
-// main function for determining if a read is valid
-  bool AbstractRule::isValid(BamRecord &r) {
+    // main function for determining if a read is valid
+    bool AbstractRule::isValid(const BamRecord &r) {
     
-
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1)) {
-      std::cerr << "MINIRULES Read seen " << " ID " << id << " " << r << std::endl;
-      std::cerr << " PAIR ORIENTATION " << r.PairOrientation() << " PAIR MAPPED FLAG " << r.ReverseFlag() << " MR " << r.MateReverseFlag() << " POS < MAT " << (r.Position() < r.MatePosition()) << std::endl;
-    }
-#endif
+      DEBUGIV(r, "starting AR:isValid")
 
     // check if its keep all or none
     if (isEvery())
@@ -521,14 +511,11 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
       if ((double)(k&0xffffff) / 0x1000000 >= subsam_frac) 
 	return false;
     }
-
+    
     // check if is discordant
     bool isize_pass = isize.isValid(r.FullInsertSize());
 
-#ifdef QNAME
-    if (r.Qname() == QNAME  && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES isize_pass " << isize_pass << " " << " ID " << id << " " << r << std::endl;
-#endif
+    DEBUGIV("isize_pass: " + isize_pass, r)
     
     if (!isize_pass) {
       return false;
@@ -546,19 +533,13 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
       if (!mapq.isValid(r.MapQuality())) 
 	return false;
 
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1) )
-      std::cerr << "MINIRULES mapq pass " << " ID " << id << " " << r << std::endl;
-#endif
+    DEBUGIV(r, "mapq pass")
     
     // check for valid flags
     if (!fr.isValid(r)) 
       return false;
 
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES flag pass " << " " << id << " " << r << std::endl;
-#endif
+    DEBUGIV(r, "flag pass")
     
     // check the CIGAR
     if (!ins.isEvery() || !del.isEvery()) {
@@ -568,167 +549,62 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 	return false;
     }
 
-
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES cigar pass " << " ID " << id << " "  << r << std::endl;
-#endif
+    DEBUGIV(r, "cigar pass")
+      
+    // get the sequence as trimmed
+    std::string tseq = r.QualitySequence(); //AddZTag("GV", r.Sequence().substr(startpoint, new_len));
     
-    // if we dont need to because everything is pass, just just pass it
-    bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || 
-      !xp.isEvery();
-
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES is need to continue " << need_to_continue << " ID " << id << " " << r << std::endl;
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1) && !need_to_continue)
-      std::cerr << "****** READ ACCEPTED ****** " << std::endl;
-#endif
-
     // check for aho corasick motif match
     if (aho.count) {
-      if (!aho.QueryText(r.Sequence()))
-	return false;
+      if (!aho.QueryText(tseq))
+      return false;
+      DEBUGIV(r, "aho pass")
     }
-      
-    if (!need_to_continue)
-      return true;
-
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES moving on. ID " << id << " " << r << std::endl;
-#endif
     
-    // now check if we need to build char if all we want is clip
-    unsigned clipnum = 0;
-    if (!clip.isEvery()) {
-      clipnum = r.NumClip();
-
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES CLIPNUM " << clipnum << " " << r << " NM&&LEN&&CLIP " << (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) << " NM " << nm.isEvery() << " CLIPVALID " << clip.isValid(clipnum) << " LEN " << len.isEvery() << "  CLUIP " << clip << std::endl;
-#endif
-
-      if (nm.isEvery() && len.isEvery() && !clip.isValid(clipnum)) // if clip fails, its not going to get better by trimming. kill it now before building teh char data
-	return false;
-    }
-
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES pre-phred filter clip pass. ID " << id  << " " << r << std::endl;
-#endif
-    
-
     // check for valid NM
     if (!nm.isEvery()) {
       int32_t nm_val = r.GetIntTag("NM");
       if (!nm.isValid(nm_val))
 	return false;
+      DEBUGIV(r, "NM pass")
     }
     
-    // trim the read, then check length
-    int32_t new_len, new_clipnum; 
-    if (phred.isEvery()) {
-      new_len = r.Length(); //a.QueryBases.length();
-      new_clipnum = clipnum;
-    }
-    
-    if (!phred.isEvery()) {
-      
-      int32_t startpoint = 0, endpoint = 0;
-      r.QualityTrimmedSequence(phred.lowerBound(), startpoint, endpoint);
-      new_len = endpoint - startpoint;
-      
-      if (endpoint != -1 && new_len < r.Length() && new_len > 0 && new_len - startpoint >= 0 && startpoint + new_len <= r.Length()) { 
-	try { 
-	  r.AddZTag("GV", r.Sequence().substr(startpoint, new_len));
-	  assert(r.GetZTag("GV").length());
-	} catch (...) {
-	  std::cerr << "Subsequence failure with sequence of length "  
-		    << r.Sequence().length() << " and startpoint "
-		    << startpoint << " endpoint " << endpoint 
-		    << " newlen " << new_len << std::endl;
-	}
-	// read is fine
-      } else {
-	r.AddZTag("GV", r.Sequence());
-      }
-
-#ifdef QNAME
-      if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-	std::cerr << "MINIRULES pre-phred filter. ID " << id << " start " << startpoint << " endpoint " << endpoint << " " << r << std::endl;
-#endif
-
-      // all the bases are trimmed away 
-      if (endpoint == -1 || new_len == 0)
-	return false;
-      
-      new_clipnum = std::max(0, static_cast<int>(clipnum - (r.Length() - new_len)));
-      
-      // check the N
-      if (!nbases.isEvery()) {
-	
-	size_t n = 0;
-	//assert((new_len + start - 1) < r.Length()); //debug
-	//r_count_sub_nbases(r, n, start, new_len + start); // TODO factor in trimming
-	n = r.CountNBases();
-	if (!nbases.isValid(n))
-	  return false;
-      }
-      
-    }
-    
-    // check the N if we didn't do phred trimming
-    if (!nbases.isEvery() && phred.isEvery()) {
+    // check the N bases
+    if (!nbases.isEvery()) {
       size_t n = r.CountNBases();
       if (!nbases.isValid(n))
 	return false;
+      DEBUGIV(r, "N bases pass")
     }
 
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES NBASES PASS. id: " << id << r << " new_len " << new_len << " new_clipnum" << new_clipnum << std::endl;
-#endif
-
-    
     // check for valid length
-    if (!len.isValid(new_len))
+    if (!len.isValid(tseq.length())) {
       return false;
+      DEBUGIV(r, "len pass")
+    }
 
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1) )
-      std::cerr << "MINIRULES LENGTH PASS. id: " << id << r << " newlen " << new_len << std::endl;
-#endif
-    
     // check for valid clip
-    if (!clip.isValid(new_clipnum))
+    int new_clipnum = r.NumClip() - (r.Length() - tseq.length()); // get clips, minus amount trimmed off
+    if (!clip.isValid(new_clipnum)) {
       return false;
-
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "MINIRULES CLIP AND LEN PASS. ID " << id << " "  << r << std::endl;
-#endif
+      DEBUGIV(r, "clip pass with clip size " + std::to_string(new_clipnum))
+    }
 
     // check for secondary alignments
-    if (!xp.isEvery()) 
-      if (!xp.isValid(r.CountBWASecondaryAlignments()))
+    if (!xp.isEvery()) {
+      if (!xp.isValid(r.CountBWASecondaryAlignments())) {
 	return false;
-    
-#ifdef QNAME
-    if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
-      std::cerr << "****** READ ACCEPTED ****** " << std::endl;
-#endif
+      }
+      DEBUGIV(r, "XP pass")
+    }
 
-
+    DEBUGIV(r, "**** READ ACCEPTED IN AR:ISVALID")
     return true;
   }
   
-  bool FlagRule::isValid(BamRecord &r) {
+  bool FlagRule::isValid(const BamRecord &r) {
     
-#ifdef QNAME
-    if (r.Qname() == QNAME && r.AlignmentFlag() == QFLAG)
-      std::cerr << " IN FLAG RULE: EVERY? " << isEvery() << " ON NUMBER FLAG " << m_all_on_flag << " OFF NUMEBR FLAG " << m_all_off_flag <<  " ON NUM RESULT "  << std::endl;
-#endif
+    DEBUGIV(r, "flagrule start")
 
     if (isEvery())
       return true;
@@ -748,11 +624,8 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
       return false;
     if (m_any_off_flag && (r.AlignmentFlag() & m_any_off_flag)) // if ANY on, fail
       return false;
-       
-#ifdef QNAME
-    if (r.Qname() == QNAME) // && r.AlignmentFlag() == QFLAG)
-      std::cerr << " CHECKING NAMED FLAGS " << std::endl;
-#endif
+
+    DEBUGIV(r, "FlagRule::isValid checking named flags")
 
     if (!dup.isNA()) 
       if ((dup.isOff() && r.DuplicateFlag()) || (dup.isOn() && !r.DuplicateFlag()))
@@ -841,8 +714,6 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
       out << "length:" << ar.len << " -- ";
     if (!ar.clip.isEvery())
       out << "clip:" << ar.clip << " -- ";
-    if (!ar.phred.isEvery())
-      out << "phred:" << ar.phred << " -- ";
     if (!ar.nm.isEvery())
       out << "nm:" << ar.nm << " -- ";
     if (!ar.xp.isEvery())
@@ -1044,6 +915,6 @@ GRC ReadFilterCollection::getAllRegions() const
       auto matches = aho_trie->parse_text(t);
       return matches.size();
     }
-    
+
   }
 }

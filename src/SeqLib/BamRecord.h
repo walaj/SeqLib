@@ -309,7 +309,12 @@ class BamRecord {
   /** Count the total number of N bases in this sequence */
   int32_t CountNBases() const;
 
-  /** Trim the sequence down by removing bases from ends with low quality scores */
+  /** Trim the sequence down by removing bases from ends with low quality scores. Stores the
+   * trimmed sequence in the GV tag, but does not affect any other part of read.
+   * @param qualTrim Minimal quality score, zero-based (eg # == 2)
+   * @param startpoint Returns the new starting point for the sequence
+   * @param endpoint Return the new ending point for the sequence
+   */
   void QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint, int32_t& endpoint) const;
 
   /** Retrieve the quality trimmed seqeuence from QT tag if made. Otherwise return normal seq */
