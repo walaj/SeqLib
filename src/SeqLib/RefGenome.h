@@ -19,11 +19,6 @@ namespace SeqLib {
 
   public:
 
-    /** Load a reference genome
-     * @param file Path to an indexed reference genome
-     */
-    RefGenome(const std::string& file);
-
     /** Create an empty RefGenome object */
     RefGenome() { index = nullptr; }
     

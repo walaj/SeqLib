@@ -702,7 +702,6 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(2), "ref5");
   BOOST_CHECK_THROW(bwa.ChrIDToName(3), std::out_of_range);
 
-
   // write the index
   BOOST_CHECK(bwa.WriteIndex(OREF));
 
@@ -857,6 +856,9 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   w.Open("tmp_out.bam");
 
+  // check that set CRAM fails
+  BOOST_CHECK(!w.SetCramReference("dummy")); 
+
   //BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
   BOOST_CHECK(!w.WriteHeader());
 
@@ -876,6 +878,12 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   w.Close();
 
   w.BuildIndex();
+
+  // check that write header now fails
+  BOOST_CHECK(!w.WriteHeader());
+
+  // check that set CRAM fails
+  BOOST_CHECK(!w.SetCramReference("badref"));
 
   // print some info
   std::cerr << w << std::endl;
@@ -1279,7 +1287,7 @@ BOOST_AUTO_TEST_CASE( vcf_read ) {
  
   SeqLib::GRC g(VCFFILE, r.Header());
 
-  BOOST_CHECK_EQUAL(g.size(), 30);
+  BOOST_CHECK_EQUAL(g.size(), 31);
   BOOST_CHECK_EQUAL(g[29].chr, 22);
   
 }
@@ -1317,14 +1325,23 @@ BOOST_AUTO_TEST_CASE (json_parse) {
 
 BOOST_AUTO_TEST_CASE ( ref_genome ) {
 
+  //SeqLib::RefGenome r("test_data/test_ref.fa");
   SeqLib::RefGenome r;
-
   r.LoadIndex("test_data/test_ref.fa");
 
   BOOST_CHECK(!r.IsEmpty());
 
   std::string out = r.QueryRegion("ref1", 0, 5);
   BOOST_CHECK_EQUAL(out, "ATCTAT");
+
+  BOOST_CHECK_THROW(r.QueryRegion("ref1", 5,4), std::invalid_argument);
+  BOOST_CHECK_THROW(r.QueryRegion("ref1", -1,4), std::invalid_argument);
+
+  SeqLib::RefGenome r2;
+  BOOST_CHECK_THROW(r2.QueryRegion("ref1",1,2), std::invalid_argument);
+
+  // reload
+  r2.LoadIndex("test_data/test_ref.fa");
 }
 
 

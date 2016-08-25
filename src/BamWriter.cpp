@@ -115,30 +115,23 @@ bool BamWriter::WriteRecord(BamRecord &r)
 
 std::ostream& operator<<(std::ostream& out, const BamWriter& b)
 {
-  
-  out << "Write "; 
-  if (!b.fop)
-    out << "BAM" << std::endl;
-  else if (b.fop->format.format == 4)
-    out << "BAM" << std::endl;
-  else if (b.fop->format.format == 6)
-    out << "CRAM" << std::endl;
-  else if (b.fop->format.format == text_format)
-    out << "SAM" << std::endl;
-
-  out << ":" << b.m_out;
+  if (b.fop)
+    out << "Write format: " << b.fop->format.format;
+  out << " Write file " << b.m_out; 
   return out;
 }
 
+  //does not return false if file not found
 bool BamWriter::SetCramReference(const std::string& ref) {
 
   if (!fop)
     return false;
 
   // need to open reference for CRAM writing 
-  char* fn_list = samfaipath(ref.c_str());
+  char* fn_list = samfaipath(ref.c_str()); // eg ref = my.fa  returns my.fa.fai
   if (fn_list) {
-    if (hts_set_fai_filename(fop.get(), fn_list) != 0) {
+    int status = hts_set_fai_filename(fop.get(), fn_list);
+    if (!status) {
       fprintf(stderr, "Failed to use reference \"%s\".\n", fn_list);
       return false;
     }

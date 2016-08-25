@@ -26,8 +26,8 @@ namespace SeqLib {
    * @param data Number to format
    * @return String with formatted number containing commas
    */
-  template <typename T> 
-    std::string AddCommas(T data) { 
+  template <typename T> inline
+    std::string AddCommas(T data) {
     std::stringstream ss; 
     ss << data; 
     std::string s = ss.str();
@@ -96,13 +96,28 @@ namespace SeqLib {
    * @param toremove Substring to remove from input
    * @return Scrubbed string
    */
-  std::string scrubString(const std::string& toscrub, const std::string& toremove);
-
- /** Generate a weighed random integer 
-  * @param cs Weighting for each integer (values must sum to one) 
-  * @return Random integer bounded on [0,cs.size())
-  */
- int weightedRandom(const std::vector<double>& cs);
+  inline std::string scrubString(const std::string& toscrub, const std::string& toremove) 
+  {
+    if (toscrub.empty() || toremove.empty())
+      return toscrub;
+    
+    std::string::size_type i = toscrub.find(toremove);
+    if (i == std::string::npos)
+      return toscrub;
+    
+    std::string ts = toscrub;
+    while (i != std::string::npos) {
+      ts.erase(i, toremove.length());
+      i = ts.find(toremove);
+    }
+    return ts;
+  }
+  
+  // Generate a weighed random integer 
+  // @param cs Weighting for each integer (values must sum to one) 
+  // @return Random integer bounded on [0,cs.size())
+  //
+  //int weightedRandom(const std::vector<double>& cs);
 
 }
 

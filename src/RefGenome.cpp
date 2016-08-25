@@ -29,12 +29,6 @@ namespace SeqLib {
 
   }
   
-  RefGenome::RefGenome(const std::string& file ) {
-
-    LoadIndex(file);
-    
-  }
-
   std::string RefGenome::QueryRegion(const std::string& chr_name, int32_t p1, int32_t p2) const {
     
     // check that we have a loaded index
@@ -46,8 +40,6 @@ namespace SeqLib {
       throw std::invalid_argument("RefGenome::queryRegion p1 must be <= p2");
     if (p1 < 0)
       throw std::invalid_argument("RefGenome::queryRegion p1 must be >= 0");
-    if (p2 < 0)
-      throw std::invalid_argument("RefGenome::queryRegion p2 must be >= 0");
 
     int len;
     char * f = faidx_fetch_seq(index, const_cast<char*>(chr_name.c_str()), p1, p2, &len);
