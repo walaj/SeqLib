@@ -447,8 +447,7 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 	  m_min = v.asBool() ? 1 : INT_MAX; // if true, [1,MAX], if false [MAX,1] (not 1-MAX)
 	  m_max = v.asBool() ? INT_MAX : 1;
 	} else {
-	  std::cerr << "Unexpected type for range flag: " << name << std::endl;
-	  exit(EXIT_FAILURE);
+	  throw std::invalid_argument("Unexpected type for range flag: " + name);
 	}
 
 	if (m_min > m_max) {
@@ -494,6 +493,9 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     
     // parse the subsample data
     parseSubLine(value);
+
+    // parse the motif line
+    parseSeqLine(value);
     
   }
 
@@ -571,7 +573,6 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1))
       std::cerr << "MINIRULES cigar pass " << " ID " << id << " "  << r << std::endl;
 #endif
-
     
     // if we dont need to because everything is pass, just just pass it
     bool need_to_continue = !nm.isEvery() || !clip.isEvery() || !len.isEvery() || !nbases.isEvery() || 
@@ -582,9 +583,14 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
       std::cerr << "MINIRULES is need to continue " << need_to_continue << " ID " << id << " " << r << std::endl;
     if (r.Qname() == QNAME && (r.AlignmentFlag() == QFLAG || QFLAG == -1) && !need_to_continue)
       std::cerr << "****** READ ACCEPTED ****** " << std::endl;
-      
 #endif
 
+    // check for aho corasick motif match
+    if (aho.count) {
+      if (!aho.QueryText(r.Sequence()))
+	return false;
+    }
+      
     if (!need_to_continue)
       return true;
 
@@ -612,6 +618,7 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
       std::cerr << "MINIRULES pre-phred filter clip pass. ID " << id  << " " << r << std::endl;
 #endif
     
+
     // check for valid NM
     if (!nm.isEvery()) {
       int32_t nm_val = r.GetIntTag("NM");
@@ -958,52 +965,6 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
   return out;
 }
 
-#ifdef HAVE_AHO_CORASICK
-#ifndef __APPLE__
-// check if a string contains a substring using Aho Corasick algorithm
-//bool AbstractRule::ahomatch(const string& seq) {
-bool AbstractRule::ahomatch(BamRecord &r) {
-
-  // make into Ac strcut
-  std::string seq = r.Sequence();
-  AC_TEXT_t tmp_text = {seq.c_str(), static_cast<unsigned>(seq.length())};
-  ac_automata_settext (atm, &tmp_text, 0);
-
-  // do the check
-  AC_MATCH_t * matchp;  
-  matchp = ac_automata_findnext(atm);
-
-  if (matchp) 
-    return true;
-  else 
-    return false;
-  
-}
-#endif
-#endif
-
-#ifdef HAVE_AHO_CORASICK
-#ifndef __APPLE__
-// check if a string contains a substring using Aho Corasick algorithm
-bool AbstractRule::ahomatch(const char * seq, unsigned len) {
-
-  // make into Ac strcut
-  AC_TEXT_t tmp_text = {seq, len}; //, static_cast<unsigned>(seq.length())};
-  ac_automata_settext (atm, &tmp_text, 0);
-
-  // do the check
-  AC_MATCH_t * matchp;  
-  matchp = ac_automata_findnext(atm);
-
-  if (matchp) 
-    return true;
-  else 
-    return false;
-}
-#endif
-#endif
-
-#ifdef HAVE_AHO_CORASICK
   void AbstractRule::parseSeqLine(const Json::Value& value) {
     
     bool i = false; // invert motif?
@@ -1018,26 +979,18 @@ bool AbstractRule::ahomatch(const char * seq, unsigned len) {
     else
       return;
 
-#ifdef __APPLE__
-    std::cerr << "NOT AVAILBLE ON APPLE -- You are attempting to perform motif matching without Aho-Corasick library. Need to link to lahocorasick to do this." << std::endl;
-    exit(EXIT_FAILURE);
-#endif
-
     addMotifRule(motif_file, i);
 
   return;
 
   }
-#endif
 
-#ifdef AHO_CORASICK
   void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
     std::cerr << "...making the AhoCorasick trie from " << f << std::endl;
     aho.TrieFromFile(f);
     std::cerr << "...finished making AhoCorasick trie with " << AddCommas(aho.count) << " motifs" << std::endl;
     aho.inv = inverted;
   }
-#endif  
 
   void AhoCorasick::TrieFromFile(const std::string& f) {
 
@@ -1086,7 +1039,11 @@ GRC ReadFilterCollection::getAllRegions() const
     }*/
 
   ReadFilter::ReadFilter() {}
-
-}
-
+    
+    int AhoCorasick::QueryText(const std::string& t) const {
+      auto matches = aho_trie->parse_text(t);
+      return matches.size();
+    }
+    
+  }
 }

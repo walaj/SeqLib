@@ -53,9 +53,9 @@ namespace SeqLib {
 
     /** Query if a string is in the trie 
      * @param t Text to query
-     * @return Returns true if there is a string in the trie that is a substring of t
+     * @return Returns number of substrings in tree that are in t
      */
-    bool QueryText(const std::string& t) const;
+    int QueryText(const std::string& t) const;
 
     std::shared_ptr<aho_corasick::trie> aho_trie; ///< The trie for the Aho-Corasick search
     
@@ -316,6 +316,8 @@ class AbstractRule {
 
  private:
 
+  void parseSeqLine(const Json::Value& value);
+  
   // read group 
   std::string read_group;
 
@@ -323,9 +325,7 @@ class AbstractRule {
   size_t m_count = 0;
 
   // the aho-corasick trie
-#ifdef AHO_CORASICK
   AhoCorasick aho;
-#endif
 
   // id for this rule
   std::string id;
