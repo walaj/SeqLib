@@ -79,8 +79,7 @@ namespace SeqLib {
 
   };
   
-/** Walk along a collection of BAM/SAM/CRAM stream in reads
- */
+/** Stream in reads from multiple BAM/SAM/CRAM or stdin */
 class BamReader {
 
  public:

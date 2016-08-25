@@ -11,16 +11,19 @@ namespace SeqLib {
 
   public:
     
-    /** Create an empty plot */
+    /** Create an empty plotter object */
     SeqPlot() {}
 
-    /** Plot read by stacking them in an IGV-like view */
+    /** Plot aligned read by stacking them in an IGV-like view */
     std::string PlotAlignmentRecords(const BamRecordVector& brv) const;
 
-    /** Set the view */
+    /** Set the view window 
+     * @param g Window to view reads in. Reads that 
+     * start or end outside of this window are not plotted
+     */
     void SetView(const GenomicRegion& g) { m_view = g; }
 
-    /** Set the padding (default is 5) */
+    /** Set the padding between reads (default is 5) */
     void SetPadding(int p) { m_pad = p; }
 
   private: 

@@ -10,13 +10,17 @@
 #include <cassert>
 #include <algorithm>
 
+extern "C" {
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 #include "htslib/bgzf.h"
 #include "htslib/kstring.h"
 #include "htslib/faidx.h"
 
+}
+
 #include "SeqLib/GenomicRegion.h"
+#include "SeqLib/UnalignedSequence.h"
 
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
@@ -43,20 +47,6 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 namespace SeqLib {
 
 enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
-
-/** Storage container for an unaligned reads
- */
-struct UnalignedRead {
-
-  std::string seq; ///< Genomic sequence (string of ACTG or N)
-
-  std::string name; ///< Read name
-
-  std::string qual; ///< Quality scores
-
-};
-
- typedef std::vector<UnalignedRead> UnalignedReadVector;
 
 /** Basic container for a single cigar operation
  *
@@ -194,7 +184,7 @@ typedef std::unordered_map<std::string, size_t> CigarMap;
 
  Cigar cigarFromString(const std::string& cig);
 
-/** Class to store and interact with an HTSLib bam1_t read.
+/** Class to store and interact with a SAM alignment record
  *
  * HTSLibrary reads are stored in the bam1_t struct. Memory allocation
  * is taken care of by bam1_t init, and deallocation by destroy_bam1. This

@@ -9,7 +9,7 @@
 
 #include "SeqLib/BamRecord.h"
 #include "SeqLib/BamHeader.h"
-#include "htslib/sam.h"
+#include "SeqLib/UnalignedSequence.h"
 
 #define MEM_F_SOFTCLIP  0x200
 
@@ -28,14 +28,6 @@ extern "C" {
 KSEQ_DECLARE(gzFile)
 
 namespace SeqLib {
-
-  /** Structure to hold unaligned sequence (name and bases)
-   */
-  struct USeq {
-    std::string name; ///< Name of the contig
-    std::string seq; ///< Sequence of the contig (upper-case ACTGN)
-  };
-  typedef std::vector<USeq> USeqVector; ///< A collection of contigs that can be indexed
  
 /** Calls BWA-MEM on sequence queries and returns aligned reads, all in memory 
  * @note Calls core functions provided by Heng Li in BWA-MEM. https://github.com/lh3/bwa
@@ -44,7 +36,7 @@ class BWAWrapper {
 
  public:
 
-  /** Create a new BWAWrapper
+  /** Create an empty BWA MEM interface
    * @note Will initalize a BWA-MEM memopt structure
    * with the BWA-MEM defaults found in mem_opt_init.
    * Memory allocation and deallocation is automatically 
@@ -80,33 +72,33 @@ class BWAWrapper {
    * @param keep_sec_with_frac_of_primary_score Set a threshold for whether a secondary alignment should be output
    * @param max_secondary Set a hard-limit on the number of secondary hits that will be reported
    */
-  void alignSingleSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
+  void AlignSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
 			   double keep_sec_with_frac_of_primary_score, int max_secondary);
 
   /** Construct a new bwa index for this object. 
    * @param v vector of references to input (e.g. v = {{"r1", "AT"}};)
    * 
    * Throw an invalid_argument exception if any of the names or sequences
-   * of the input USeqVector is empty
+   * of the input UnalignedSequenceVector is empty
    */
-  void constructIndex(const USeqVector& v);
+  void ConstructIndex(const UnalignedSequenceVector& v);
 
   /** Retrieve a bwa index object from disk
    * @param file path a to an index fasta (index with bwa index)
    * @return True if successful
    * @note Will delete the old index if already stored
    */
-  bool retrieveIndex(const std::string& file);
+  bool LoadIndex(const std::string& file);
 
-  /** Dump the stored index to files 
-   * Note that this does not write the fasta itself
+  /** Dump the stored index to files
+   * @note This does not write the fasta itself
    * @param index_name Write index files (*.sai, *.pac, *.ann, *.bwt, *.amb)
    * @return True if able to write index
    */
-  bool writeIndex(const std::string& index_name);
+  bool WriteIndex(const std::string& index_name);
 
-  /** Return the raw index */
-  bwaidx_t* getIndex() const { return idx; }
+  /** Return the raw index in bwaidx_t form */
+  bwaidx_t* GetIndex() const { return idx; }
 
   /** Return the number of reference sequences in current index
    * @return Number of reference sequences, or 0 if uninitialized
@@ -120,61 +112,61 @@ class BWAWrapper {
    * @param gap_open Gap open penalty. Default 6.
    * @exception Throws invalid_argument if gap_open < 0
    */
-  void setGapOpen(int gap_open);
+  void SetGapOpen(int gap_open);
 
   /** Set the gap open penalty
    * @param gap_open Gap extension penalty. Default 1
    * @exception Throws invalid_argument if gap_ext < 0
    */
-  void setGapExtension(int gap_ext);
+  void SetGapExtension(int gap_ext);
 
   /** Set the mismatch penalty
    * @param m Mismatch penalty (BWA-MEM b). Default 4
    * @exception Throws invalid_argument if m < 0
    */
-  void setMismatchPenalty(int m);
+  void SetMismatchPenalty(int m);
 
   /** Set the reseed trigger
    * @param r See BWA-MEM -r. Default 1.5
    * @exception Throws invalid_argument if r < 0
    */
-  void setReseedTrigger(float r);
+  void SetReseedTrigger(float r);
 
   /** Set the SW alignment bandwidth
    * @param w See BWA-MEM -w. Default 100
    * @exception Throws invalid_argument if w < 0
    */
-  void setBandwidth(int w);
+  void SetBandwidth(int w);
 
   /** Set the SW alignment Z dropoff
    * @param z See BWA-MEM -d. Default 100
    * @exception Throws invalid_argument if z < 0
    */
-  void setZDropoff(int z);
+  void SetZDropoff(int z);
 
   /** Set the 3-prime clipping penalty
    * @param p See BWA-MEM -L. 
    * @exception Throws invalid_argument if p < 0
    */
-  void set3primeClippingPenalty(int p);
+  void Set3primeClippingPenalty(int p);
 
   /** Set the 5-prime clipping penalty
    * @param p See BWA-MEM -L. 
    * @exception Throws invalid_argument if p < 0
    */
-  void set5primeClippingPenalty(int p);
+  void Set5primeClippingPenalty(int p);
 
   /** Set the match score. Scales -TdBOELU
    * @note Since this scales penalty options, it should be 
    * probably be specified first, and then other options 
-   * (eg gap penalty) can be set explicitly afterwards.
+   * (eg gap penalty) can be Set explicitly afterwards.
    * @param a See BWA-MEM -A
    * @exception Throws invalid_argument if a < 0
    */
-  void setAScore(int a);
+  void SetAScore(int a);
 
-  /** Check if no sequences have been included */
-  bool empty() const { return !idx; }
+  /** Check if the index is empty */
+  bool IsEmpty() const { return !idx; }
   
  private:
 
@@ -200,7 +192,7 @@ class BWAWrapper {
   uint8_t* __add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q);
 
   // make the pac structure (2-bit encoded packed sequence)
-  uint8_t* __make_pac(const USeqVector& v, bool for_only);
+  uint8_t* __make_pac(const UnalignedSequenceVector& v, bool for_only);
 
   // write pac part of the index
   void __write_pac_to_file(const std::string& file);

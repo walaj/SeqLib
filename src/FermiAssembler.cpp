@@ -95,15 +95,15 @@ namespace SeqLib {
     cs.ch = bfc_ch_init(cs.k, l_pre);
     }*/
 
-  UnalignedReadVector FermiAssembler::GetSequences() const {
+  UnalignedSequenceVector FermiAssembler::GetSequences() const {
     
-    UnalignedReadVector r;
+    UnalignedSequenceVector r;
     for (size_t i = 0; i < n_seqs; ++i) {
       fseq1_t * s = &m_seqs[i];
-      UnalignedRead read;
+      UnalignedSequence read;
       if (s->seq)
-	read.seq = (std::string(s->seq));
-      read.name = m_names[i];
+	read.Seq = (std::string(s->seq));
+      read.Name = m_names[i];
       r.push_back(read);
     }
     return r;

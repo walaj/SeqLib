@@ -10,6 +10,7 @@
 #include "SeqLib/BamWriter.h"
 #include "SeqLib/ReadFilter.h"
 #include "SeqLib/FermiAssembler.h"
+#include "SeqLib/SeqPlot.h"
 
 #define SBAM "test_data/small.bam"
 #define OBAM "test_data/small_out.bam"
@@ -25,6 +26,7 @@ BOOST_AUTO_TEST_CASE( read_filter_0 ) {
   SeqLib::BamReader br;
   br.Open("test_data/small.bam");
   SeqLib::BamHeader h = br.Header();
+
 
   // a BAM header check
   BOOST_CHECK_EQUAL(h.GetSequenceLength(0), 249250621);
@@ -307,14 +309,14 @@ BOOST_AUTO_TEST_CASE( fermi_assemble ) {
 
   f.CorrectReads();
 
-  SeqLib::UnalignedReadVector reads = f.GetSequences();
+  SeqLib::UnalignedSequenceVector reads = f.GetSequences();
   BOOST_CHECK_EQUAL(reads.size(), brv.size());
 
   for (int i = 0; i < reads.size(); ++i) {
-    if (brv[i].Sequence() != reads[i].seq) {
+    if (brv[i].Sequence() != reads[i].Seq) {
       std::cerr << "************" << std::endl;
       std::cerr << brv[i].Sequence() << std::endl;
-      std::cerr << reads[i].seq << std::endl;
+      std::cerr << reads[i].Seq << std::endl;
     }
   }
     
@@ -619,33 +621,33 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
   SeqLib::BWAWrapper bwa;
 
-  // set some options
-  bwa.setGapOpen(32);
-  bwa.setGapExtension(1);
-  bwa.setMismatchPenalty(18);
-  bwa.setAScore(2);
-  bwa.setZDropoff(100);
-  bwa.set3primeClippingPenalty(5);
-  bwa.set5primeClippingPenalty(5);
-  bwa.setBandwidth(1000);
-  bwa.setReseedTrigger(1.5);
+  // Set some options
+  bwa.SetGapOpen(32);
+  bwa.SetGapExtension(1);
+  bwa.SetMismatchPenalty(18);
+  bwa.SetAScore(2);
+  bwa.SetZDropoff(100);
+  bwa.Set3primeClippingPenalty(5);
+  bwa.Set5primeClippingPenalty(5);
+  bwa.SetBandwidth(1000);
+  bwa.SetReseedTrigger(1.5);
 
-  BOOST_CHECK_THROW(bwa.setGapOpen(-1), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.setGapExtension(-1), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.setMismatchPenalty(-18), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.setAScore(-2), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.setZDropoff(-100), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.set3primeClippingPenalty(-5), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.set5primeClippingPenalty(-5), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.setBandwidth(-1000), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.setReseedTrigger(-1.5), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.SetGapOpen(-1), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.SetGapExtension(-1), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.SetMismatchPenalty(-18), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.SetAScore(-2), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.SetZDropoff(-100), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.Set3primeClippingPenalty(-5), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.Set5primeClippingPenalty(-5), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.SetBandwidth(-1000), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.SetReseedTrigger(-1.5), std::invalid_argument);
 
   // no index loaded yet
   BOOST_CHECK_THROW(bwa.ChrIDToName(1), std::runtime_error);
 
   // load a test index
   BOOST_TEST(SeqLib::read_access_test(TREF));
-  bwa.retrieveIndex(TREF);
+  bwa.LoadIndex(TREF);
 
   BOOST_CHECK_EQUAL(bwa.NumSequences(), 2);
 
@@ -653,31 +655,31 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref2");
   BOOST_CHECK_THROW(bwa.ChrIDToName(2), std::out_of_range);
 
-  BOOST_CHECK(!bwa.retrieveIndex("test_data/small.bam"));
+  BOOST_CHECK(!bwa.LoadIndex("test_data/small.bam"));
 
   SeqLib::BamHeader hh = bwa.HeaderFromIndex();
   BOOST_CHECK_EQUAL(hh.NumSequences(), 2);
 
   // error check the index construction
-  SeqLib::USeqVector usv_bad1 = {
+  SeqLib::UnalignedSequenceVector usv_bad1 = {
     {"ref1", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
     {"ref4", ""},
     {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
-  SeqLib::USeqVector usv_bad2 = {
+  SeqLib::UnalignedSequenceVector usv_bad2 = {
     {"", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
     {"ref4", "ACCATCGCAGCAGCTATCTATTATATCGGCAGCATCTAGC"},
     {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
-  BOOST_CHECK_THROW(bwa.constructIndex(usv_bad1), std::invalid_argument);
-  BOOST_CHECK_THROW(bwa.constructIndex(usv_bad2), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.ConstructIndex(usv_bad1), std::invalid_argument);
+  BOOST_CHECK_THROW(bwa.ConstructIndex(usv_bad2), std::invalid_argument);
 
   // construct a normal index
-  SeqLib::USeqVector usv = {
+  SeqLib::UnalignedSequenceVector usv = {
     {"ref3", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
     {"ref4", "CTACTTTATCATCTACACACTGCCTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"},
     {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
 
 
-  bwa.constructIndex(usv);
+  bwa.ConstructIndex(usv);
 
   BOOST_CHECK_EQUAL(bwa.NumSequences(), 3);
   bwa.ChrIDToName(1);
@@ -694,18 +696,19 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 
 
   // write the index
-  BOOST_CHECK(bwa.writeIndex(OREF));
+  BOOST_CHECK(bwa.WriteIndex(OREF));
 
   // write the fasta
   std::ofstream os;
   os.open(OREF);
-  os << "<" << usv[0].name << std::endl << usv[0].seq <<
-    std::endl << usv[1].name << std::endl << usv[1].seq << 
-    std::endl << usv[2].name << std::endl << usv[2].seq << 
+  os          << ">" << usv[0].Name << std::endl << usv[0].Seq <<
+    std::endl << ">" << usv[1].Name << std::endl << usv[1].Seq << 
+    std::endl << ">" << usv[2].Name << std::endl << usv[2].Seq << 
     std::endl;
+  os.close();
 
   // read it back
-  BOOST_CHECK(bwa.retrieveIndex(OREF));
+  BOOST_CHECK(bwa.LoadIndex(OREF));
 
   // check that its good
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(0), "ref3");
@@ -715,9 +718,9 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   std::cerr << "...aligning sequences" << std::endl;
   SeqLib::BamRecordVector brv, brv2;
   bool hardclip = false;
-  bwa.alignSingleSequence("ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCG", "name", brv, 0.9, hardclip, 1);
+  bwa.AlignSequence("ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCG", "name", brv, 0.9, hardclip, 1);
   // reverse complement
-  bwa.alignSingleSequence("CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGC", "name", brv2, 0.9, hardclip, 2);
+  bwa.AlignSequence("CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGC", "name", brv2, 0.9, hardclip, 2);
 
   BOOST_CHECK_EQUAL(brv[0].Qname(), "name");
   BOOST_CHECK_EQUAL(brv[0].ChrID(), 2);
@@ -977,3 +980,229 @@ BOOST_AUTO_TEST_CASE( change_bam_record ) {
   std::cerr << r << std::endl;
 
 }
+
+BOOST_AUTO_TEST_CASE( stdinput ) {
+
+#ifdef RUN_STDIN
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("-"); 
+
+  // write it back out
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    std::cerr << " STDIN " << r << std::endl;
+  }
+#endif
+}
+
+BOOST_AUTO_TEST_CASE( cramin ) {
+
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.cram"); 
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    std::cerr << "CRAM " << r << std::endl;
+  }
+}
+
+BOOST_AUTO_TEST_CASE( cramin_new_ref ) {
+
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.cram");
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 10) {
+    std::cerr << "CRAM " << r << std::endl;
+  }
+}
+
+
+BOOST_AUTO_TEST_CASE( bamin ) {
+
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.bam"); 
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    std::cerr << "BAM " << r << std::endl;
+  }
+}
+
+BOOST_AUTO_TEST_CASE( samin ) {
+
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    std::cerr << "SAM " << r << std::endl;
+  }
+}
+
+BOOST_AUTO_TEST_CASE( bamout ) {
+
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
+
+  SeqLib::BamWriter w(SeqLib::BAM);
+  //SeqLib::BamWriter w;
+  w.Open("tmp_out.bam");
+  w.SetHeader(b.Header());
+  w.WriteHeader();
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
+  }
+  w.Close();
+  
+}
+
+BOOST_AUTO_TEST_CASE( samout ) {
+
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
+
+  SeqLib::BamWriter w(SeqLib::SAM);
+  w.Open("tmp_out.sam");
+  w.SetHeader(b.Header());
+  w.WriteHeader();
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
+  }
+  w.Close();
+  
+}
+
+
+BOOST_AUTO_TEST_CASE( cramout ) {
+
+  SeqLib::BamReader b;
+  b.Open("test_data/small.cram"); 
+
+  SeqLib::BamWriter w(SeqLib::CRAM);
+  w.Open("tmp_out.cram");
+  w.SetHeader(b.Header());
+  w.WriteHeader();
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
+  }
+  w.Close();
+  
+}
+
+BOOST_AUTO_TEST_CASE( samout_to_stdout ) {
+
+#ifdef RUN_SAM_STDOUT
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
+
+  SeqLib::BamWriter w(SeqLib::SAM);
+  w.Open("-");
+  w.SetHeader(b.Header());
+  w.WriteHeader();
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
+  }
+  w.Close();
+#endif
+}
+
+BOOST_AUTO_TEST_CASE( bamout_to_stdout ) {
+
+  //
+  // dont actually run every time
+  // too much stdout-ing
+  //
+
+#ifdef RUN_BAM_STDOUT
+  // read a BAM from stdin
+  SeqLib::BamReader b;
+  b.Open("test_data/small.sam"); 
+
+  SeqLib::BamWriter w(SeqLib::BAM);
+  w.Open("-");
+  w.SetHeader(b.Header());
+  w.WriteHeader();
+
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while(b.GetNextRecord(r) && count++ < 1) {
+    w.WriteRecord(r);
+  }
+  w.Close();
+#endif
+  
+}
+
+BOOST_AUTO_TEST_CASE( bam_poly ) {
+
+  SeqLib::BamReader r;
+  
+  r.Open("test_data/small.bam");
+  r.Open("test_data/small.cram");
+
+  r.SetRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100));
+
+  SeqLib::BamWriter w(SeqLib::BAM);
+  w.Open("tmp_out_poly.bam");
+  w.SetHeader(r.Header());
+  w.WriteHeader();
+
+  SeqLib::BamRecord rec;
+  while(r.GetNextRecord(rec)) {
+    w.WriteRecord(rec);
+  }
+
+}
+
+
+BOOST_AUTO_TEST_CASE( plot_test ) {
+
+  SeqLib::BamReader r;
+  r.Open("test_data/small.bam");
+
+  SeqLib::GenomicRegion gr("X:1,002,942-1,003,294", r.Header());
+  r.SetRegion(gr);
+
+  SeqLib::SeqPlot s;
+
+  s.SetView(gr);
+
+  SeqLib::BamRecord rec;
+  SeqLib::BamRecordVector brv;
+  while(r.GetNextRecord(rec))
+    if (!rec.CountNBases() && rec.MappedFlag())
+      brv.push_back(rec);
+
+  s.SetPadding(20);
+
+  std::cout << s.PlotAlignmentRecords(brv);
+
+}
+
+

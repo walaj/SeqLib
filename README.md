@@ -89,21 +89,21 @@ Example usages
 #include "SeqLib/RefGenome.h"
 #include "SeqLib/BWAWrapper.h"
 using SeqLib;
-RefGgenome ref("hg19.fasta");
+RefGenome ref("hg19.fasta");
 
 ## get sequence at given locus
 std::string seq = ref.queryRegion("1", 1000000,1001000);
 
 ## Make an in-memory BWA-MEM index of region
 BWAWrapper bwa;
-USeqVector usv = {{"chr_reg1", seq}};
-bwa.constructIndex(usv);
+UnalignedSequenceVector usv = {{"chr_reg1", seq}};
+bwa.ConstructIndex(usv);
 
 ## align an example string with BWA-MEM
 std::string querySeq = "CAGCCTCACCCAGGAAAGCAGCTGGGGGTCCACTGGGCTCAGGGAAG";
 BamRecordVector results;
 // hardclip=false, secondary score cutoff=0.9, max secondary alignments=10
-bwa.alignSingleSequence("my_seq", querySeq, results, false, 0.9, 10); 
+bwa.AlignSequence("my_seq", querySeq, results, false, 0.9, 10); 
 
 // print results to stdout
 for (auto& i : results)
@@ -118,16 +118,18 @@ for (auto& i : results)
 using SeqLib;
 
 // open the reader BAM/SAM/CRAM
-BamReader bw("test.bam");
+BamReader bw;
+bw.Open("test.bam");
 
 // open a new interface to BWA-MEM
 BWAWrapper bwa;
-bwa.retrieveIndex("hg19.fasta");
+bwa.LoadIndex("hg19.fasta");
 
 // open the output BAM
 BamWriter writer; // or writer(SeqLib::SAM) or writer(SeqLib::CRAM) 
 writer.SetWriteHeader(bwa.HeaderFromIndex());
 writer.Open("out.bam");
+writer.WriteHeader();
 
 BamRecord r;
 bool hardclip = false;
@@ -135,7 +137,7 @@ float secondary_cutoff = 0.90; // secondary alignments must have score >= 0.9*to
 int secondary_cap = 10; // max number of secondary alignments to return
 while (GetNextRecord(r)) {
       BamRecordVector results; // alignment results (can have multiple alignments)
-      bwa.alignSingleSequence(r.Sequence(), r.Qname(), results, hardclip, secondary_cutoff, secondary_cap);
+      bwa.AlignSequence(r.Sequence(), r.Qname(), results, hardclip, secondary_cutoff, secondary_cap);
 
       for (auto& i : results)
         writer.WriteRecord(i);
@@ -152,7 +154,8 @@ using SeqLib;
 FermiAssembler f;
 
 // read in data from a BAM
-BamReader br("test_data/small.bam");
+BamReader br;
+br.Open("test_data/small.bam");
 
 // retreive sequencing reads (up to 20,000)
 BamRecord r;

@@ -16,10 +16,7 @@ extern "C"
 
 namespace SeqLib {
 
-  /** Stores an indexed reference genome
-   *
-   * RefGenome is currently used as an interface to obtain
-   * sequences from the reference given an interval.
+  /** Sequence assembly using FermiKit from Heng Li
    */
   class FermiAssembler {
 
@@ -64,7 +61,7 @@ namespace SeqLib {
     /** Return the sequences in this object, which may have 
      * been error-corrected
      */
-    UnalignedReadVector GetSequences() const;
+    UnalignedSequenceVector GetSequences() const;
 
     /** Perform the string graph assembly.
      * This will product the string graph,

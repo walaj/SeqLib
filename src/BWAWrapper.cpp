@@ -87,14 +87,14 @@ namespace SeqLib {
   
   
   
-  void BWAWrapper::constructIndex(const USeqVector& v) {
+  void BWAWrapper::ConstructIndex(const UnalignedSequenceVector& v) {
 
     if (!v.size())
       return;
 
     // check the integrity of the input data
     for (auto& i : v)
-      if (i.name.empty() || i.seq.empty())
+      if (i.Name.empty() || i.Seq.empty())
 	throw std::invalid_argument("BWAWrapper::constructIndex - Reference sequences must have non-empty name and seq");
     
     if (idx) {
@@ -114,7 +114,7 @@ namespace SeqLib {
 
     size_t tlen = 0;
     for (auto& i : v)
-      tlen += i.seq.length();
+      tlen += i.Seq.length();
 
 #ifdef DEBUG_BWATOOLS
     std::cerr << "ref seq length: " << tlen << std::endl;
@@ -141,8 +141,8 @@ namespace SeqLib {
     bns->anns = (bntann1_t*)calloc(v.size(), sizeof(bntann1_t));
     size_t offset = 0;
     for (size_t k = 0; k < v.size(); ++k) {
-      __add_to_anns(v[k].name, v[k].seq, &bns->anns[k], offset);
-      offset += v[k].seq.length();
+      __add_to_anns(v[k].Name, v[k].Seq, &bns->anns[k], offset);
+      offset += v[k].Seq.length();
     }
 
     //ambs is "holes", like N bases
@@ -157,35 +157,35 @@ namespace SeqLib {
     
   }
 
-  void BWAWrapper::setGapOpen(int gap_open) {
+  void BWAWrapper::SetGapOpen(int gap_open) {
     if (gap_open < 0) 
-      throw std::invalid_argument("BWAWrapper::setGapOpen - gap_open must be >= zero");
+      throw std::invalid_argument("BWAWrapper::SetGapOpen - gap_open must be >= zero");
     memopt->o_del = memopt->o_ins = gap_open;
   }
 
-  void BWAWrapper::setGapExtension(int gap_ext) {
+  void BWAWrapper::SetGapExtension(int gap_ext) {
     if (gap_ext < 0) 
-      throw std::invalid_argument("BWAWrapper::setGapExtension - gap extension must be >= zero");
+      throw std::invalid_argument("BWAWrapper::SetGapExtension - gap extension must be >= zero");
     memopt->e_del = memopt->e_ins = gap_ext;
   }
 
-  void BWAWrapper::setMismatchPenalty(int m) {
+  void BWAWrapper::SetMismatchPenalty(int m) {
     if (m < 0) 
-      throw std::invalid_argument("BWAWrapper::setMismatchPenalty - mismatch must be >= zero");
+      throw std::invalid_argument("BWAWrapper::SetMismatchPenalty - mismatch must be >= zero");
     memopt->b = m;
 
     bwa_fill_scmat(memopt->a, memopt->b, memopt->mat);
   }
 
-  void BWAWrapper::setZDropoff(int z) {
+  void BWAWrapper::SetZDropoff(int z) {
     if (z < 0) 
-      throw std::invalid_argument("BWAWrapper::setZDropoff - dropoff must be >= zero");
+      throw std::invalid_argument("BWAWrapper::SetZDropoff - dropoff must be >= zero");
     memopt->zdrop = z;
   }
 
-  void BWAWrapper::setAScore(int a) {
+  void BWAWrapper::SetAScore(int a) {
     if (a < 0) 
-      throw std::invalid_argument("BWAWrapper::setAScore - dropoff must be >= zero");
+      throw std::invalid_argument("BWAWrapper::SetAScore - dropoff must be >= zero");
     memopt->b *= a;
     memopt->T *= a;
     memopt->o_del *= a;
@@ -200,31 +200,31 @@ namespace SeqLib {
   }
 
 
-  void BWAWrapper::set3primeClippingPenalty(int p) {
+  void BWAWrapper::Set3primeClippingPenalty(int p) {
     if (p < 0) 
-      throw std::invalid_argument("BWAWrapper::set3primeClippingPenalty - penalty must be >= zero");
+      throw std::invalid_argument("BWAWrapper::Set3primeClippingPenalty - penalty must be >= zero");
     memopt->pen_clip3 = p;
   }
 
-  void BWAWrapper::set5primeClippingPenalty(int p) {
+  void BWAWrapper::Set5primeClippingPenalty(int p) {
     if (p < 0) 
-      throw std::invalid_argument("BWAWrapper::set5primeClippingPenalty - penalty must be >= zero");
+      throw std::invalid_argument("BWAWrapper::Set5primeClippingPenalty - penalty must be >= zero");
     memopt->pen_clip5 = p;
   }
 
-  void BWAWrapper::setBandwidth(int w) {
+  void BWAWrapper::SetBandwidth(int w) {
     if (w < 0) 
-      throw std::invalid_argument("BWAWrapper::setBandwidth - bandwidth must be >= zero");
+      throw std::invalid_argument("BWAWrapper::SetBandwidth - bandwidth must be >= zero");
     memopt->w = w;
   }
 
-  void BWAWrapper::setReseedTrigger(float r) {
+  void BWAWrapper::SetReseedTrigger(float r) {
     if (r < 0) 
-      throw std::invalid_argument("BWAWrapper::setReseedTrigger - reseed trigger must be >= zero");
+      throw std::invalid_argument("BWAWrapper::SetReseedTrigger - reseed trigger must be >= zero");
     memopt->split_factor = r;
   }
 
-  void BWAWrapper::alignSingleSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
+  void BWAWrapper::AlignSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
 				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
     
     // we haven't made an index, just return
@@ -337,7 +337,7 @@ namespace SeqLib {
       // TODO move this out of bigger loop
       int slen = new_seq.length();
       int j = 0;
-      if (a.is_rev/* && false*/) {
+      if (a.is_rev) {
 	for (int i = slen-1; i >= 0; --i) {
 	  
 	  // bad idea but works for now
@@ -401,7 +401,7 @@ namespace SeqLib {
 
 #ifdef DEBUG_BWATOOLS
       // print alignment
-      printf("\t%c\t%s\t%ld\t%d\t", /*ks->name.s,*/ "+-"[a.is_rev], idx->bns->anns[a.rid].name, (long)a.pos, a.mapq);
+      printf("\t%c\t%s\t%ld\t%d\t", "+-"[a.is_rev], idx->bns->anns[a.rid].name, (long)a.pos, a.mapq);
       for (int k = 0; k < a.n_cigar; ++k) // print CIGAR
       	printf("%d%c", a.cigar[k]>>4, "MIDSH"[a.cigar[k]&0xf]);
       printf("\t%d\n", a.NM); // print edit distance
@@ -469,7 +469,7 @@ uint8_t* BWAWrapper::__add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int6
   return pac;
 }
 
-uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only)
+uint8_t* BWAWrapper::__make_pac(const UnalignedSequenceVector& v, bool for_only)
 {
 
   bntseq_t * bns = (bntseq_t*)calloc(1, sizeof(bntseq_t));
@@ -490,18 +490,18 @@ uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only)
 
     // make the ref name kstring
     kstring_t * name = (kstring_t*)malloc(1 * sizeof(kstring_t));
-    name->l = v[k].name.length() + 1;
-    name->m = v[k].name.length() + 3;
+    name->l = v[k].Name.length() + 1;
+    name->m = v[k].Name.length() + 3;
     name->s = (char*)calloc(name->m, sizeof(char));
-    memcpy(name->s, v[k].name.c_str(), v[k].name.length()+1);
+    memcpy(name->s, v[k].Name.c_str(), v[k].Name.length()+1);
     
     // make the sequence kstring
     kstring_t * t = (kstring_t*)malloc(sizeof(kstring_t));
-    t->l = v[k].seq.length();
-    t->m = v[k].seq.length() + 2;
-    //t->s = (char*)calloc(v[k].seq.length(), sizeof(char));
+    t->l = v[k].Seq.length();
+    t->m = v[k].Seq.length() + 2;
+    //t->s = (char*)calloc(v[k].Seq.length(), sizeof(char));
     t->s = (char*)malloc(t->m);
-    memcpy(t->s, v[k].seq.c_str(), v[k].seq.length());
+    memcpy(t->s, v[k].Seq.c_str(), v[k].Seq.length());
     
     // put into a kstring
     kseq_t *ks = (kseq_t*)calloc(1, sizeof(kseq_t));  
@@ -534,25 +534,6 @@ uint8_t* BWAWrapper::__make_pac(const USeqVector& v, bool for_only)
       for (l = bns->l_pac - 1; l >= 0; --l, ++bns->l_pac)
 	_set_pac(pac, bns->l_pac, 3-_get_pac(pac, l));
     }
-
-  /*
-  if (write_file) { // finalize .pac file
-    FILE *fp;
-    fp = xopen("mem_test.pac", "wb");
-    ubyte_t ct;
-    err_fwrite(pac, 1, (bns->l_pac>>2) + ((bns->l_pac&3) == 0? 0 : 1), fp);
-    // the following codes make the pac file size always (l_pac/4+1+1)
-    if (bns->l_pac % 4 == 0) {
-      ct = 0;
-      err_fwrite(&ct, 1, 1, fp);
-    }
-    ct = bns->l_pac % 4;
-    err_fwrite(&ct, 1, 1, fp);
-    // close .pac file
-    err_fflush(fp);
-    err_fclose(fp);
-  }
-  */
 
   bns_destroy(bns);
   
@@ -614,7 +595,7 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   }
 
   
-  bool BWAWrapper::retrieveIndex(const std::string& file)
+  bool BWAWrapper::LoadIndex(const std::string& file)
   {
 
     // read in the bwa index
@@ -634,7 +615,7 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   }
 
 
-  bool BWAWrapper::writeIndex(const std::string& index_name)
+  bool BWAWrapper::WriteIndex(const std::string& index_name)
   {
     
     if (!idx) 
@@ -646,6 +627,8 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
     bwt_dump_sa(sa_name.c_str(), idx->bwt);
     bns_dump(idx->bns, index_name.c_str());
     __write_pac_to_file(index_name);
+
+    return true;
   }
 
 
