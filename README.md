@@ -89,7 +89,8 @@ Example usages
 #include "SeqLib/RefGenome.h"
 #include "SeqLib/BWAWrapper.h"
 using SeqLib;
-RefGenome ref("hg19.fasta");
+RefGenome ref;
+ref.LoadIndex("hg19.fasta");
 
 ## get sequence at given locus
 std::string seq = ref.queryRegion("1", 1000000,1001000);

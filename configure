@@ -600,7 +600,7 @@ PACKAGE_VERSION='1.0'
 PACKAGE_STRING='seqkit 1.0'
 PACKAGE_BUGREPORT='jwala@broadinstitute.org'
 
-ac_unique_file="src/SeqLibUtils.cpp"
+ac_unique_file="src/BamReader.cpp"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
