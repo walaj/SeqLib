@@ -90,18 +90,18 @@ int main()
 
 #ifdef RUN_SEQLIB
   std::cerr << " **** RUNNING SEQLIB **** " << std::endl;
-  SeqLib::BamReader r(bam);
+  SeqLib::BamReader r;
+  r.Open(bam);
   //SeqLib::BamWriter w(SeqLib::BAM);
   //w.SetHeader(r.Header());
   //w.Open(obam);
 
 
   SeqLib::BamRecord rec;
-  bool rule = false;
   SeqLib::BamRecordVector bav;
 #ifdef READ_TEST
   std::vector<std::string> sq;
-  while(r.GetNextRead(rec, rule) && count++ < limit) {
+  while(r.GetNextRecord(rec) && count++ < limit) {
     if (count % print_limit == 0)
       std::cerr << "...at read " << SeqLib::AddCommas(count) << std::endl;
     bav.push_back(rec);
@@ -114,8 +114,8 @@ int main()
   for (int i = 0; i < jump_limit; ++i) {
     int chr = rand() % 22;
     int pos = rand() % 1000000 + 1000000;
-    r.setBamReaderRegion(SeqLib::GenomicRegion(chr,pos, pos + 10000));
-    r.GetNextRead(rec, rule);
+    r.SetRegion(SeqLib::GenomicRegion(chr,pos, pos + 10000));
+    r.GetNextRecord(rec);
     bav.push_back(rec);
   }
 #endif
