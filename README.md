@@ -5,8 +5,6 @@ C++ interface to HTSlib, BWA-MEM and Fermi
 
 **License:** [Apache2][license]
 
-#NOTE: SeqLib is currently undergoing rapid development changes and some functionality may not be fully implemented.
-
 API Documentation
 -----------------
 [API Documentation][htmldoc]
@@ -92,15 +90,15 @@ using SeqLib;
 RefGenome ref;
 ref.LoadIndex("hg19.fasta");
 
-## get sequence at given locus
+// get sequence at given locus
 std::string seq = ref.queryRegion("1", 1000000,1001000);
 
-## Make an in-memory BWA-MEM index of region
+// Make an in-memory BWA-MEM index of region
 BWAWrapper bwa;
 UnalignedSequenceVector usv = {{"chr_reg1", seq}};
 bwa.ConstructIndex(usv);
 
-## align an example string with BWA-MEM
+// align an example string with BWA-MEM
 std::string querySeq = "CAGCCTCACCCAGGAAAGCAGCTGGGGGTCCACTGGGCTCAGGGAAG";
 BamRecordVector results;
 // hardclip=false, secondary score cutoff=0.9, max secondary alignments=10
@@ -109,7 +107,6 @@ bwa.AlignSequence("my_seq", querySeq, results, false, 0.9, 10);
 // print results to stdout
 for (auto& i : results)
     std::cout << i << std::endl;
-## 
 ```
 
 ##### Read a BAM line by line, realign reads with BWA-MEM, write to new BAM

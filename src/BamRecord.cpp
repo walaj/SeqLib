@@ -11,6 +11,22 @@
 
 namespace SeqLib {
 
+  std::vector<int> CigarCharToInt = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //0-9
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //10-19
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //20
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //30
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //40
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //50
+                                     -1,BAM_CEQUAL,-1,-1,-1,-1,BAM_CBACK,-1,BAM_CDEL,-1, //60-69
+                                     -1,-1,BAM_CHARD_CLIP,BAM_CINS,-1,-1,-1,BAM_CMATCH,BAM_CREF_SKIP,-1,
+                                     BAM_CPAD,-1,-1,BAM_CSOFT_CLIP,-1,-1,-1,-1,BAM_CDIFF,-1,
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+                                     -1,-1,-1,-1,-1,-1,-1,-1};
+
+
+
   struct free_delete {
     void operator()(void* x) { bam_destroy1((bam1_t*)x); }
   };
@@ -573,30 +589,17 @@ namespace SeqLib {
 	m_bases[i >> 1] |= base << ((~i & 1) << 2);  ///< insert new 4-bit base encoding
 	
       }
-      
-      
   }
   
 
   CigarField::CigarField(char  t, uint32_t len) {
-    
-    int op = 0;
-
-    // should use a table for this
-    if (t == 'M')
-      op = BAM_CMATCH;
-    else if (t == 'D')
-      op = BAM_CDEL;
-    else if (t == 'I')
-      op = BAM_CINS;
-    else if (t == 'S')
-      op = BAM_CSOFT_CLIP;
-    else if (t == 'N')
-      op = BAM_CREF_SKIP;
-    else
-      assert(false);
-    data = len << BAM_CIGAR_SHIFT | op;
-
+    int op = CigarCharToInt[(int)t];
+    if (op < 0)
+      throw std::invalid_argument("Cigar type must be one of MIDSHPN=X");      
+    if (len <= 0)
+      throw std::invalid_argument("Cigar length must be > 0");
+    data = len << BAM_CIGAR_SHIFT;
+    data = data | static_cast<uint32_t>(op);
   }
 
   std::ostream& operator<<(std::ostream& out, const CigarField& c) { 
@@ -615,7 +618,6 @@ namespace SeqLib {
   Cigar cigarFromString(const std::string& cig) {
 
     Cigar tc;
-
 
     // get the ops (MIDSHPN)
     std::vector<char> ops;

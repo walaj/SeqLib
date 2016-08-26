@@ -67,9 +67,8 @@ bool ReadFilter::isValid(const BamRecord &r) {
     
     if (v.asInt())
       return v.asInt();
-    else if (v.isString())
-      return std::stoi(v.asString());
-    
+    else
+      throw std::invalid_argument("Failed to parse int tag in JSON");
     return 0;
   }
 
@@ -134,8 +133,8 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
 
   DEBUGIV(r, "starting RFC isValid with non-empty regions")
   
-  bool is_valid = false;
-  bool exclude_hit = false; // did we hit excluder rule
+    bool is_valid = false;
+    bool exclude_hit = false;
 
   for (auto& it : m_regions) {
 
@@ -157,7 +156,7 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
   }
 
     // found a hit in a rule
-    if (!exclude_hit && is_valid) {
+    if (is_valid && !exclude_hit) {
       ++m_count;
       return true;
     }
@@ -278,7 +277,7 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
       for (auto& vv : v) {
 	if (vv != null) {
 	  if (!__validate_json_value(vv, valid))
-	    exit(EXIT_FAILURE);
+	    throw std::invalid_argument("Invalid argument in filter JSON");
 	  AbstractRule ar = rule_all; // always start with the global rule
 	  ar.parseJson(vv);
 	  // add the rule to the region

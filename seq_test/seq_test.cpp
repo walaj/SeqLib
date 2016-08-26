@@ -118,7 +118,6 @@ BOOST_AUTO_TEST_CASE( json_parse_from_file ) {
   br.Open("test_data/small.bam");
   
   std::string rules = "{\"global\" : {\"!anyflag\" : 1536}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
-
   ReadFilterCollection rfc(rules, br.Header());
 
   std::cerr << rfc << std::endl;
@@ -148,6 +147,19 @@ BOOST_AUTO_TEST_CASE( json_parse_from_file ) {
       assert(false);
     }
   }
+
+  // check that a bad key throws error
+  //rules = "{\"global\" : {\"!anyflagf\" : 1536}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
+  //BOOST_CHECK_THROW(ReadFilterCollection rfc2(rules, br.Header()), std::invalid_argument);
+  // bad value, expected int
+  //rules = "{\"global\" : {\"!anyflag\" : \"BAD\"}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
+  //BOOST_CHECK_THROW(ReadFilterCollection rfc3(rules, br.Header()), std::invalid_argument);
+  // bad JSON itself
+  rules = "{\"global\" : \"!anyflag\" : 1536}, \"\" : { \"rules\" : [{\"ic\" : true}, {\"clip\" : 5}, {\"ins\" : true}, {\"del\" : true}, {\"mapped\": true , \"mate_mapped\" : false}, {\"mate_mapped\" : true, \"mapped\" : false}]}}";  
+  BOOST_CHECK_THROW(ReadFilterCollection rfc4(rules, br.Header()), std::invalid_argument);
+  // bad value, expected range
+  rules = "{\"global\" : {\"!anyflag\" : 1536}, \"\" : { \"rules\" : [{\"isize\" : \"BAD\"}]}}";  
+  BOOST_CHECK_THROW(ReadFilterCollection rfc4(rules, br.Header()), std::invalid_argument);
 
     
 }
@@ -290,6 +302,7 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
   r.SmartAddTag("ST", "1");
   r.SmartAddTag("ST", "3");
   r.SmartAddTag("ST", "5");
+  r.SmartAddTag("S2", "5");
     
   BOOST_CHECK_EQUAL(r.GetSmartIntTag("ST").size(), 3);
   BOOST_CHECK_EQUAL(r.GetSmartIntTag("ST").at(2), 5);
@@ -298,6 +311,9 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
     
   BOOST_CHECK_EQUAL(r.GetSmartStringTag("ST").size(), 3);
   BOOST_CHECK_EQUAL(r.GetSmartStringTag("ST")[1], "3");
+
+  BOOST_CHECK_EQUAL(r.GetSmartDoubleTag("S2").at(0), 5.0);
+  BOOST_CHECK_EQUAL(r.GetSmartIntTag("S2").at(0), 5);
 }
 
 BOOST_AUTO_TEST_CASE( fermi_assemble ) {
@@ -684,12 +700,12 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   SeqLib::UnalignedSequenceVector usv = {
     {"ref3", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
     {"ref4", "CTACTTTATCATCTACACACTGCCTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"},
-    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
-
+    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"},
+    {"ref6", "TATCTACTGCGCGCGATCATCTAGCGCAGGACGAGCATC" + std::string(100,'N') + "CGATCGTTATTATCGAGCGACGATCTACTACGT"}};
 
   bwa.ConstructIndex(usv);
 
-  BOOST_CHECK_EQUAL(bwa.NumSequences(), 3);
+  BOOST_CHECK_EQUAL(bwa.NumSequences(), 4);
   bwa.ChrIDToName(1);
 
   BOOST_CHECK_THROW(bwa.ChrIDToName(-1), std::out_of_range);
@@ -700,7 +716,8 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(0), "ref3");
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(1), "ref4");
   BOOST_CHECK_EQUAL(bwa.ChrIDToName(2), "ref5");
-  BOOST_CHECK_THROW(bwa.ChrIDToName(3), std::out_of_range);
+  BOOST_CHECK_EQUAL(bwa.ChrIDToName(3), "ref6");
+  BOOST_CHECK_THROW(bwa.ChrIDToName(4), std::out_of_range);
 
   // write the index
   BOOST_CHECK(bwa.WriteIndex(OREF));
@@ -711,6 +728,7 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   os          << ">" << usv[0].Name << std::endl << usv[0].Seq <<
     std::endl << ">" << usv[1].Name << std::endl << usv[1].Seq << 
     std::endl << ">" << usv[2].Name << std::endl << usv[2].Seq << 
+    std::endl << ">" << usv[3].Name << std::endl << usv[3].Seq << 
     std::endl;
   os.close();
 
@@ -750,6 +768,9 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
 }
 
 BOOST_AUTO_TEST_CASE( bam_reader ) {
+
+  // print empty read
+  std::cerr << SeqLib::BamRecord() << std::endl;
 
   SeqLib::BamReader bw;
   bw.Open(SBAM);
@@ -925,7 +946,33 @@ BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
   cig.add(SeqLib::CigarField('D', 1));
   cig.add(SeqLib::CigarField('M', 10));
   cig.add(SeqLib::CigarField('S', 10));
-  
+
+  // check that coversion to cigar data strutur (uint32_t) worked
+  SeqLib::CigarField cm('M', 1);
+  SeqLib::CigarField ci('I', 1);
+  SeqLib::CigarField cd('D', 1);
+  SeqLib::CigarField cn('N', 1);
+  SeqLib::CigarField cs('S', 1);
+  SeqLib::CigarField ch('H', 1);
+  SeqLib::CigarField cp('P', 1);
+  SeqLib::CigarField ce('=', 1);
+  SeqLib::CigarField cx('X', 1);
+  SeqLib::CigarField cb('B', 1);
+
+  BOOST_CHECK_EQUAL(cm.Type(), 'M');
+  BOOST_CHECK_EQUAL(ci.Type(), 'I');
+  BOOST_CHECK_EQUAL(cd.Type(), 'D');
+  BOOST_CHECK_EQUAL(cn.Type(), 'N');
+  BOOST_CHECK_EQUAL(cs.Type(), 'S');
+  BOOST_CHECK_EQUAL(ch.Type(), 'H');
+  BOOST_CHECK_EQUAL(cp.Type(), 'P');
+  BOOST_CHECK_EQUAL(ce.Type(), '=');
+  BOOST_CHECK_EQUAL(cx.Type(), 'X');
+
+  // check invalid constructions
+  BOOST_CHECK_THROW(SeqLib::CigarField('X', 0), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::CigarField('L', 1), std::invalid_argument);
+
   // make a sequence
   const std::string seq = std::string(10, 'A') + std::string(1, 'T') + std::string(10, 'C') + std::string(10, 'G') + std::string(10, 'A');
 
@@ -1252,20 +1299,20 @@ BOOST_AUTO_TEST_CASE( plot_test ) {
 
 // CURRENTLY DOES NOT WORK
 // need to find how to do reset
-/***BOOST_AUTO_TEST_CASE ( reset_works ) {
+// BOOST_AUTO_TEST_CASE ( reset_works ) {
 
-  SeqLib::BamReader r;
-  r.Open("test_data/small.bam");
-  //r.Open("test_data/small.cram");
+//   SeqLib::BamReader r;
+//   r.Open("test_data/small.bam");
+//   //r.Open("test_data/small.cram");
 
-  SeqLib::BamRecord rec1, rec2;
-  r.GetNextRecord(rec1);
-  r.Reset();
-  std::cerr << " AFTER RESET " << std::endl;
-  std::cerr << r.GetNextRecord(rec2) << std::endl;
+//   SeqLib::BamRecord rec1, rec2;
+//   r.GetNextRecord(rec1);
+//   r.Reset();
+//   std::cerr << " AFTER RESET " << std::endl;
+//   std::cerr << r.GetNextRecord(rec2) << std::endl;
 
-  BOOST_CHECK_EQUAL(rec1.Qname(), rec2.Qname());
-  }***/
+//   BOOST_CHECK_EQUAL(rec1.Qname(), rec2.Qname());
+//   }
 
 
 BOOST_AUTO_TEST_CASE( bed_read ) {
@@ -1343,5 +1390,3 @@ BOOST_AUTO_TEST_CASE ( ref_genome ) {
   // reload
   r2.LoadIndex("test_data/test_ref.fa");
 }
-
-

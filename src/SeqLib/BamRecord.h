@@ -56,7 +56,11 @@ class CigarField {
 
  public:
 
-  /** Construct the cigar op by type (MIDNSHPX) and length */
+  /** Construct the cigar op by type (MIDNSHP=X) and length 
+   * @param t Cigar op (MIDNSHP=X)
+   * @param l Cigar length
+   * @exception Throws an invalid_argument if l <= 0 or invalid cigar op
+   */
   CigarField(char t, uint32_t l); 
 
   /** Construct the cigar op from the raw sam.h uint32_t (first 4 bits op, last 28 len) */
