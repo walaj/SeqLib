@@ -54,6 +54,7 @@ am_libseqlib_a_OBJECTS = libseqlib_a-ReadFilter.$(OBJEXT) \
 	libseqlib_a-RefGenome.$(OBJEXT) \
 	libseqlib_a-BamWriter.$(OBJEXT) \
 	libseqlib_a-BamReader.$(OBJEXT) \
+	libseqlib_a-BLATWrapper.$(OBJEXT) \
 	libseqlib_a-BWAWrapper.$(OBJEXT) \
 	libseqlib_a-BamRecord.$(OBJEXT) \
 	libseqlib_a-FermiAssembler.$(OBJEXT) \
@@ -171,11 +172,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libseqlib.a
 libseqlib_a_CPPFLAGS = \
-        -I.. -I../htslib -I../bwa -I../fermi-lite
+        -I.. -I../htslib -I../bwa -I../fermi-lite -I../blat/inc -I../blat/jkOwnLib -Wno-write-strings
 
 libseqlib_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp \
-			BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
+			BLATWrapper.cpp BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
 
 all: all-am
 
@@ -225,6 +226,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BLATWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamHeader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamReader.Po@am__quote@
@@ -392,6 +394,20 @@ libseqlib_a-BamReader.obj: BamReader.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BamReader.cpp' object='libseqlib_a-BamReader.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamReader.obj `if test -f 'BamReader.cpp'; then $(CYGPATH_W) 'BamReader.cpp'; else $(CYGPATH_W) '$(srcdir)/BamReader.cpp'; fi`
+
+libseqlib_a-BLATWrapper.o: BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BLATWrapper.o -MD -MP -MF $(DEPDIR)/libseqlib_a-BLATWrapper.Tpo -c -o libseqlib_a-BLATWrapper.o `test -f 'BLATWrapper.cpp' || echo '$(srcdir)/'`BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BLATWrapper.Tpo $(DEPDIR)/libseqlib_a-BLATWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BLATWrapper.cpp' object='libseqlib_a-BLATWrapper.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BLATWrapper.o `test -f 'BLATWrapper.cpp' || echo '$(srcdir)/'`BLATWrapper.cpp
+
+libseqlib_a-BLATWrapper.obj: BLATWrapper.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BLATWrapper.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-BLATWrapper.Tpo -c -o libseqlib_a-BLATWrapper.obj `if test -f 'BLATWrapper.cpp'; then $(CYGPATH_W) 'BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BLATWrapper.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BLATWrapper.Tpo $(DEPDIR)/libseqlib_a-BLATWrapper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BLATWrapper.cpp' object='libseqlib_a-BLATWrapper.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BLATWrapper.obj `if test -f 'BLATWrapper.cpp'; then $(CYGPATH_W) 'BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/BLATWrapper.cpp'; fi`
 
 libseqlib_a-BWAWrapper.o: BWAWrapper.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BWAWrapper.o -MD -MP -MF $(DEPDIR)/libseqlib_a-BWAWrapper.Tpo -c -o libseqlib_a-BWAWrapper.o `test -f 'BWAWrapper.cpp' || echo '$(srcdir)/'`BWAWrapper.cpp

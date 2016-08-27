@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "SeqLib/BamRecord.h"
+#include "SeqLib/SeqLibUtils.h"
 
 extern "C" {
 #include "cram/cram.h"

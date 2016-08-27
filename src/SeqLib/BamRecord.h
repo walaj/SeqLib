@@ -22,6 +22,11 @@ extern "C" {
 #include "SeqLib/GenomicRegion.h"
 #include "SeqLib/UnalignedSequence.h"
 
+// deleter
+struct free_delete {
+  void operator()(void* x) { bam_destroy1((bam1_t*)x); }
+};
+
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
                                'T', ' ', ' ', ' ', 
@@ -214,6 +219,11 @@ class BamRecord {
    * with number of reference-bases consumed in cigar. 
    */
   BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
+
+  /** Construct a BamRecord by copying the contents of a bam1_t.
+   * @param bt bam1_t that will get duplicated into this object
+   */
+  BamRecord(const bam1_t* bt) { b = std::shared_ptr<bam1_t>(bam_dup1(bt), free_delete()); }
   
   /** Construct an empty BamRecord by calling bam_init1() 
    */

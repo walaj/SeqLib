@@ -1,11 +1,27 @@
 #ifndef SEQLIB_BLAT_WRAPPER_H__
 #define SEQLIB_BLAT_WRAPPER_H__
 
+/****************************************************************
+ ******************* LICENSE AND COPYRIGHT **********************
+A large portion of this file and BLATWrapper.cpp are copied
+from the BLAT source code, which is copyright of Jim Kent. See 
+the BLAT license below:
+
+CONTENTS AND COPYRIGHT
+
+This archive contains the entire source tree for BLAT and
+associated utilities.  All files are copyrighted, but license 
+is hereby granted for personal, academic, and non-profit use.  
+A license is also granted for the contents of the top level 
+lib and inc directories for commercial users.  Commercial 
+users should contact jim_kent@pacbell.net for access to other modules.
+**/
+
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include "SeqLib/BamRead.h"
-#include "SeqLib/BamWalker.h"
+#include "SeqLib/BamRecord.h"
+#include "SeqLib/BamHeader.h"
 
 extern "C" {
 
@@ -38,7 +54,7 @@ extern "C" {
 
 namespace SeqLib {
 
-  /** Call BLAT on a single sequence
+  /** Call Blat on a single sequence
    * 
    * BLATWrapper is an interface to the BLAT program (Jim Kent, UCSC, 2002). 
    * The purpose of this class is to allow rapid querying of a sequence
@@ -51,19 +67,38 @@ class BLATWrapper {
 
   BLATWrapper() {}
 
-  void addHeader(bam_hdr_t * t);
+  /** Provide BLAT with information about the reference genome 
+   * @param h Header object containing referene genome information
+   * @note This is required before running QuerySequence();
+   */
+  void SetHeaderInfo(const BamHeader& h);
 
-  void loadIndex(const std::string& file, const std::string& oocfile);
+  /** Load the BLAT indexed reference genome and over-represented k-mer file 
+   * @param file Path to reference genome
+   * @param oocfile Path to the BLAT ooc file (over-represented k-kmer file)
+   */
+  void LoadIndex(const std::string& file, const std::string& oocfile);
   
-  void queryFile(const std::string& file);
+  /** Read and query a FASTA file, and write output to disk
+   * @param file Path to a FASTA file to BLAT
+   * @param ofile Output file to write. Writes in the BLAT "psl" format
+   */
+  void QueryFile(const std::string& file, const std::string& ofile);
 
-  void querySequence(const std::string& name, const std::string& sequence, BamReadVector& brv);
+  /** Query a single sequence and return the BLAT alignments 
+   * @param name Name of the sequence
+   * @param sequence Sequence to query (composed of ACTGN)
+   * @param brv Vector of aligned reads that will hold all of the output alignments
+   * @note Mapping quality is automatically set to 0, but the alignment score provided
+   * by BLAT is provided in the AS tag.
+   */
+  void AlignSequence(const std::string& name, const std::string& sequence, BamRecordVector& brv);
   
-  template<class Archive>
-    void serialize(Archive & ar, const unsigned int version) {
-    for (int i = 0; i < slCount(dbSeqList); ++i)
-      ar & gf->lists[i];
-  }
+  //template<class Archive>
+  // void serialize(Archive & ar, const unsigned int version) {
+  //  for (int i = 0; i < slCount(dbSeqList); ++i)
+  //    ar & gf->lists[i];
+  //}
 
  private:
 
@@ -100,12 +135,12 @@ class BLATWrapper {
   char *outputFormat = "psl";
   
   void searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, 
-		       boolean isRc, Bits *qMaskBits, BamReadVector& brv);
+		       boolean isRc, Bits *qMaskBits, BamRecordVector& brv);
 
   Bits* maskQuerySeq(struct dnaSeq *seq, boolean isProt, 
 				  boolean maskQuery, boolean lcMask);
 
-  void searchOne(bioSeq *seq, struct genoFind *gf, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv);
+  void searchOne(bioSeq *seq, struct genoFind *gf, struct hash *maskHash, Bits *qMaskBits, BamRecordVector& brv);
 
   void trimSeq(struct dnaSeq *seq, struct dnaSeq *trimmed);
 
@@ -116,11 +151,11 @@ class BLATWrapper {
   void searchOneMaskTrim(struct dnaSeq *seq, boolean isProt,
 		       struct genoFind *gf,
 		       struct hash *maskHash,
-			 long long *retTotalSize, int *retCount, BamReadVector& brv);
+			 long long *retTotalSize, int *retCount, BamRecordVector& brv);
 
   void __gfLongDnaInMem(struct dnaSeq *query, struct genoFind *gf, 
 			boolean isRc, int minScore, Bits *qMaskBits, 
-			boolean fastMap, boolean band, BamReadVector& brv);
+			boolean fastMap, boolean band, BamRecordVector& brv);
 
   struct ssBundle* __fastMapClumpsToBundles(struct genoFind *gf, struct gfClump *clumpList, bioSeq *qSeq);
 

@@ -26,10 +26,6 @@ namespace SeqLib {
                                      -1,-1,-1,-1,-1,-1,-1,-1};
 
 
-
-  struct free_delete {
-    void operator()(void* x) { bam_destroy1((bam1_t*)x); }
-  };
   
   void BamRecord::init() {
     bam1_t* f = bam_init1();

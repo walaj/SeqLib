@@ -1,4 +1,22 @@
+/****************************************************************
+ ******************* LICENSE AND COPYRIGHT **********************
+A large portion of this file and BLATWrapper.cpp are copied
+from the BLAT source code, which is copyright of Jim Kent. See 
+the BLAT license below:
+
+CONTENTS AND COPYRIGHT
+
+This archive contains the entire source tree for BLAT and
+associated utilities.  All files are copyrighted, but license 
+is hereby granted for personal, academic, and non-profit use.  
+A license is also granted for the contents of the top level 
+lib and inc directories for commercial users.  Commercial 
+users should contact jim_kent@pacbell.net for access to other modules.
+**/
+
 #include "SeqLib/BLATWrapper.h"
+
+#include <set>
 
 #define QWARN_SIZE 5000000
 
@@ -6,8 +24,9 @@ static int ssAliCount = 16;	/* Number of alignments returned by ssStitch. */
 
 namespace SeqLib {
 
-  void BLATWrapper::addHeader(bam_hdr_t * t) {
+  void BLATWrapper::SetHeaderInfo(const BamHeader& h) {
     
+    const bam_hdr_t * t = h.get_();
     for (int i = 0; i < t->n_targets; ++i) 
       m_name2id.insert(std::pair<std::string, int>(std::string(t->target_name[i]),i));
 
@@ -70,7 +89,7 @@ namespace SeqLib {
 
   void BLATWrapper::__gfLongDnaInMem(struct dnaSeq *query, struct genoFind *gf, 
 				     boolean isRc, int minScore, Bits *qMaskBits, 
-				     boolean fastMap, boolean band, BamReadVector& brv)
+				     boolean fastMap, boolean band, BamRecordVector& brv)
   /* Chop up query into pieces, align each, and stitch back
    * together again. */
   {
@@ -283,7 +302,7 @@ namespace SeqLib {
 
 	    // 5' clipping
 	    if (nStart > 0)
-	      cigv.push_back(CigarField('S', nStart));
+	      cigv.add(CigarField('S', nStart));
 
 	    int gap_open = 0;
 	    int gap_ext = 0;
@@ -299,8 +318,8 @@ namespace SeqLib {
 		  {
 		    ++gap_open;
 		    gap_ext += lz - ly;
-		    cigv.push_back(CigarField('M', y[i] - y0));
-		    cigv.push_back(CigarField('D', lz - ly));
+		    cigv.add(CigarField('M', y[i] - y0));
+		    cigv.add(CigarField('D', lz - ly));
 		    //cig += std::to_string(y[i] - y0) + "M";
 		    //cig += std::to_string(lz - ly) + "D";
 		    y0 = y[i];
@@ -310,55 +329,54 @@ namespace SeqLib {
 		  {
 		    ++gap_open;
 		    gap_ext += ly - lz;
-		    cigv.push_back(CigarField('M', z[i] - z0));
-		    cigv.push_back(CigarField('I', ly - lz));
+		    cigv.add(CigarField('M', z[i] - z0));
+		    cigv.add(CigarField('I', ly - lz));
 		    //cig += std::to_string(z[i] - z0) + "M";
 		    //cig += std::to_string(ly - lz) + "I";
 		    y0 = y[i];
 		    z0 = z[i];
 		  }
 	      }
-	    cigv.push_back(CigarField('M', nEnd - y0));
+	    cigv.add(CigarField('M', nEnd - y0));
 	    //cig += std::to_string(nEnd - y0) + "M";
 	    if (query->size != nEnd) { // 3'-end clipping
-	      cigv.push_back(CigarField('S', query->size - nEnd));
+	      cigv.add(CigarField('S', query->size - nEnd));
 	      //cig += std::to_string(query->size - nEnd) + "S";
 	    }
-
-	    // make the read (jeremiah)
-	    BamRead b;
-	    b.init();
 
 	    std::unordered_map<std::string, int>::const_iterator fff = m_name2id.find(std::string(bun->genoSeq->name));
 	    if (fff == m_name2id.end())
 	      throw std::out_of_range("No header entry for " + std::string(bun->genoSeq->name));
 	    
-	    b.b->core.tid = fff->second; 
-	    b.b->core.pos = hStart;
-	    b.b->core.qual = 0; //a.mapq; // TODO
-	    b.b->core.flag = 0; //a.flag;
-	    b.b->core.n_cigar = cigv.size(); //a.n_cigar;
+	    //std::shared_ptr<bam1_t> raw_b;
+	    bam1_t * raw_b = bam_init1();
+
+	    raw_b->core.tid = fff->second; 
+	    raw_b->core.pos = hStart;
+	    raw_b->core.qual = 0; //a.mapq; // TODO
+	    raw_b->core.flag = 0; //a.flag;
+	    raw_b->core.n_cigar = cigv.size(); //a.n_cigar;
 	    
 	    // set dumy mate
-	    b.b->core.mtid = -1;
-	    b.b->core.mpos = -1;
-	    b.b->core.isize = 0;
+	    raw_b->core.mtid = -1;
+	    raw_b->core.mpos = -1;
+	    raw_b->core.isize = 0;
 
 	    // if alignment is reverse, set it
 	    if (qIsRc) 
-	      b.b->core.flag |= BAM_FREVERSE;
+	      raw_b->core.flag |= BAM_FREVERSE;
 
 	    // allocate all the data
-	    b.b->core.l_qname = strlen(query->name) + 1; //name.length() + 1;
-	    b.b->core.l_qseq = query->size; //seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
-	    b.b->l_data = b.b->core.l_qname + (b.b->core.n_cigar<<2) + ((b.b->core.l_qseq+1)>>1) + (b.b->core.l_qseq);
-	    b.b.get()->data = (uint8_t*)malloc(b.b.get()->l_data);
+	    raw_b->core.l_qname = strlen(query->name) + 1; //name.length() + 1;
+	    raw_b->core.l_qseq = query->size; //seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
+	    raw_b->l_data = raw_b->core.l_qname + (raw_b->core.n_cigar<<2) + ((raw_b->core.l_qseq+1)>>1) + (raw_b->core.l_qseq);
+	    raw_b->data = (uint8_t*)malloc(raw_b->l_data);
 
 	    // allocate the qname
-	    memcpy(b.b->data, query->name, b.b->core.l_qname);
+	    memcpy(raw_b->data, query->name, raw_b->core.l_qname);
 
 	    // allocate the sequence
-	    uint8_t* m_bases = b.b->data + b.b->core.l_qname + (b.b->core.n_cigar<<2);
+	    uint8_t* m_bases = raw_b->data + raw_b->core.l_qname + (raw_b->core.n_cigar<<2);
 	    
 	    // TODO move this out of bigger loop
 	    int slen = query->size; //seq.length();
@@ -402,13 +420,18 @@ namespace SeqLib {
 	    }
 	    
 	    // allocate the quality to NULL
-	    uint8_t* s = bam_get_qual(b.b);
+	    uint8_t* s = bam_get_qual(raw_b);
 	    s[0] = 0xff;
 	    
 	    // allocate the cigar. 32 bits per elem (4 type, 28 length)
-	    uint32_t * cigr = bam_get_cigar(b.b);
+
+	    uint32_t * cigr = bam_get_cigar(raw_b);
 	    for (size_t i = 0; i < cigv.size(); ++i)
 	      cigr[i] = cigv[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
+
+	    // assign the read by making a copy of this bam1_t
+	    BamRecord b(raw_b);
+	    free(raw_b);
 
 	    // add the alignment score, as calculate by psl2sam
 	    int a_param = 1;
@@ -441,7 +464,7 @@ namespace SeqLib {
   
   
   void BLATWrapper::searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, 
-				    boolean isRc, Bits *qMaskBits, BamReadVector& brv)
+				    boolean isRc, Bits *qMaskBits, BamRecordVector& brv)
   /* Search for seq in index, align it, and write results to psl. */
   {
     if (fastMap && (seq->size > MAXSINGLEPIECESIZE))
@@ -481,7 +504,7 @@ namespace SeqLib {
   }
   
   
-  void BLATWrapper::searchOne(bioSeq *seq, struct genoFind *gf, struct hash *maskHash, Bits *qMaskBits, BamReadVector& brv)
+  void BLATWrapper::searchOne(bioSeq *seq, struct genoFind *gf, struct hash *maskHash, Bits *qMaskBits, BamRecordVector& brv)
   /* Search for seq on either strand in index. */
   {
     //if (isProt)
@@ -526,7 +549,7 @@ namespace SeqLib {
   void BLATWrapper::searchOneMaskTrim(struct dnaSeq *seq, boolean isProt,
 				      struct genoFind *gf,
 		       struct hash *maskHash,
-				      long long *retTotalSize, int *retCount, BamReadVector& brv)
+				      long long *retTotalSize, int *retCount, BamRecordVector& brv)
 
   /* Search a single sequence against a single genoFind index. */
   {
@@ -628,7 +651,7 @@ namespace SeqLib {
   }
   
   
-  void BLATWrapper::loadIndex(const std::string& file, const std::string& oocfile) {
+  void BLATWrapper::LoadIndex(const std::string& file, const std::string& oocfile) {
     
     int dbCount;
     bool tIsProt = false;
@@ -666,7 +689,7 @@ namespace SeqLib {
 
   }
   
-  void BLATWrapper::querySequence(const std::string& name, const std::string& sequence, BamReadVector& brv) {
+  void BLATWrapper::AlignSequence(const std::string& name, const std::string& sequence, BamRecordVector& brv) {
     
     long long totalSize = 0;
     int count = 0;
@@ -692,7 +715,7 @@ namespace SeqLib {
     // search the sequence
     bool isProt = false;
     FILE * outFile = nullptr;
-    BamReadVector bavr;
+    BamRecordVector bavr;
     searchOneMaskTrim(&seq, isProt, gf,maskHash, &totalSize, &count, bavr);
 
     free(seq.name);
@@ -701,10 +724,11 @@ namespace SeqLib {
     if (!bavr.size())
       return;
 
-    std::vector<BamRead> best_hit;  // which contig is best at loc
-    std::vector<int> best_score;    // score of that contig
+    std::vector<BamRecord> best_hit;  // which contig is best at loc
+    std::vector<int> best_score;      // score of that contig
+
     // get covered positions
-    for (int i = 0; i < sequence.length(); ++i) {
+    /*    for (int i = 0; i < sequence.length(); ++i) {
       best_hit.push_back(bavr[0]);
       int bs = bavr[0].GetIntTag("BS");
       for (auto& r : bavr) {
@@ -723,10 +747,11 @@ namespace SeqLib {
 	  brv.push_back(i);
 	  sset.insert(sr);
 	}
-    }
+	}*/
+    brv = bavr;
   }
 
-  void BLATWrapper::queryFile(const std::string& file) {
+  void BLATWrapper::QueryFile(const std::string& file, const std::string& ofile) {
     
     int queryCount;
     bool showStatus = true;
@@ -734,14 +759,12 @@ namespace SeqLib {
     
     char** queryFiles;
     
-    std::string oname = "test.psl";
-    
     // copy over from const char to char
     char *queryFile = (char*)malloc(file.length() + 1);
     strcpy(queryFile, file.c_str());
 
-    char *outName = (char*)malloc(oname.length() + 1);
-    strcpy(outName, oname.c_str());
+    char *outName = (char*)malloc(ofile.length() + 1);
+    strcpy(outName, ofile.c_str());
 
     FILE *f = mustOpen(outName, "w");
     

@@ -3,7 +3,10 @@
 
 C++ interface to HTSlib, BWA-MEM and Fermi
 
-**License:** [Apache2][license]
+**License:** 
+-- This branch incorporates source code from Blat, which is copyrighted by Jim Kent and with a [license][blatlicense] for academic, personal and non-profit use. To
+use this branch for commercial use, see the Blat license in SeqLib/blat/README.
+-- For an Apache2 version without Blat integration, see the master branch.
 
 API Documentation
 -----------------
@@ -45,9 +48,10 @@ BWA-MEM operations in memory, and performing sequence assembly. Core operations
 in SeqLib are peformed by:
 * [HTSlib][htslib]
 * [BWA-MEM][BWA] (Apache2 branch)
+* [Blat][blatlink] 
 * [FermiKit][fermi]
 
-The primary developer for these three projects is Heng Li.
+The primary developer for the HTSlib, BWA-MEM and FermiKit projects is Heng Li. Blat is developed by Jim Kent.
 
 SeqLib also has support for storing and manipulating genomic intervals via ``GenomicRegion`` and ``GenomicRegionCollection``. 
 It uses an [interval tree][int] (provided by Erik Garrison @ekg) to provide for rapid interval queries.
@@ -280,3 +284,7 @@ Development, support, guidance, testing:
 [int]: https://github.com/ekg/intervaltree.git
 
 [fermi]: https://github.com/lh3/fermi-lite
+
+[blatlicense]: https://github.com/jwalabroad/SeqLib/blob/old_license/blat/README
+
+[blatlink]: http://genome.cshlp.org/content/12/4/656.full
