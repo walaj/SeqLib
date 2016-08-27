@@ -35,7 +35,7 @@ static const std::unordered_set<std::string> valid =
   "mate_mapped", "isize","clip", "length","nm",
   "mapq", "all", "ff", "xp","fr","rr","rf",
   "ic", "discordant","motif","nbases","!motif","allflag", "!allflag", "anyflag", "!anyflag",
-  "ins","del",  "sub", "rg"
+  "ins","del",  "subsample", "rg"
 };
 
   static const std::unordered_set<std::string> allowed_region_annots = 
@@ -871,8 +871,8 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
   
   void AbstractRule::parseSubLine(const Json::Value& value) {
     Json::Value null(Json::nullValue);
-    if (value.get("sub", null) != null) 
-      subsam_frac = value.get("sub", null).asDouble();
+    if (value.get("subsample", null) != null) 
+      subsam_frac = value.get("subample", null).asDouble();
   }
   
 GRC ReadFilterCollection::getAllRegions() const
