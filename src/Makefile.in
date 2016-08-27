@@ -47,10 +47,10 @@ AR = ar
 ARFLAGS = cru
 libseqlib_a_AR = $(AR) $(ARFLAGS)
 libseqlib_a_LIBADD =
-am_libseqlib_a_OBJECTS = libseqlib_a-ReadFilter.$(OBJEXT) \
-	libseqlib_a-SeqPlot.$(OBJEXT) libseqlib_a-jsoncpp.$(OBJEXT) \
-	libseqlib_a-ssw_cpp.$(OBJEXT) libseqlib_a-ssw.$(OBJEXT) \
-	libseqlib_a-GenomicRegion.$(OBJEXT) \
+am_libseqlib_a_OBJECTS = libseqlib_a-BFC.$(OBJEXT) \
+	libseqlib_a-ReadFilter.$(OBJEXT) libseqlib_a-SeqPlot.$(OBJEXT) \
+	libseqlib_a-jsoncpp.$(OBJEXT) libseqlib_a-ssw_cpp.$(OBJEXT) \
+	libseqlib_a-ssw.$(OBJEXT) libseqlib_a-GenomicRegion.$(OBJEXT) \
 	libseqlib_a-RefGenome.$(OBJEXT) \
 	libseqlib_a-BamWriter.$(OBJEXT) \
 	libseqlib_a-BamReader.$(OBJEXT) \
@@ -173,7 +173,7 @@ noinst_LIBRARIES = libseqlib.a
 libseqlib_a_CPPFLAGS = \
         -I.. -I../htslib -I../bwa -I../fermi-lite
 
-libseqlib_a_SOURCES = ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
+libseqlib_a_SOURCES = BFC.cpp ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp \
 			BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
 
@@ -225,6 +225,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BFC.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamHeader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-BamReader.Po@am__quote@
@@ -280,6 +281,20 @@ libseqlib_a-ssw.obj: ssw.c
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+libseqlib_a-BFC.o: BFC.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BFC.o -MD -MP -MF $(DEPDIR)/libseqlib_a-BFC.Tpo -c -o libseqlib_a-BFC.o `test -f 'BFC.cpp' || echo '$(srcdir)/'`BFC.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BFC.Tpo $(DEPDIR)/libseqlib_a-BFC.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BFC.cpp' object='libseqlib_a-BFC.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BFC.o `test -f 'BFC.cpp' || echo '$(srcdir)/'`BFC.cpp
+
+libseqlib_a-BFC.obj: BFC.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-BFC.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-BFC.Tpo -c -o libseqlib_a-BFC.obj `if test -f 'BFC.cpp'; then $(CYGPATH_W) 'BFC.cpp'; else $(CYGPATH_W) '$(srcdir)/BFC.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libseqlib_a-BFC.Tpo $(DEPDIR)/libseqlib_a-BFC.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='BFC.cpp' object='libseqlib_a-BFC.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BFC.obj `if test -f 'BFC.cpp'; then $(CYGPATH_W) 'BFC.cpp'; else $(CYGPATH_W) '$(srcdir)/BFC.cpp'; fi`
 
 libseqlib_a-ReadFilter.o: ReadFilter.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-ReadFilter.o -MD -MP -MF $(DEPDIR)/libseqlib_a-ReadFilter.Tpo -c -o libseqlib_a-ReadFilter.o `test -f 'ReadFilter.cpp' || echo '$(srcdir)/'`ReadFilter.cpp

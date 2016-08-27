@@ -24,7 +24,7 @@ namespace SeqLib {
     return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && 
       mapq.isEvery() && len.isEvery() && clip.isEvery() && nm.isEvery() && 
       nbases.isEvery() && fr.isEvery() && 
-      (subsam_frac >= 1) && xp.isEvery();
+      (subsam_frac >= 1) && xp.isEvery() && !aho.count;
   }
 
 // define what is a valid condition
@@ -713,6 +713,8 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
       out << "del:" << ar.del << " -- ";
     if (ar.subsam_frac < 1)
       out << "sub:" << ar.subsam_frac << " -- ";
+    if (ar.aho.count)
+      out << "motif: " << ar.aho.file << " -- ";
     out << ar.fr;
   }
   return out;

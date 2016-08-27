@@ -24,6 +24,39 @@
 #define JSON1 "test_data/example4.json"
 
 using namespace SeqLib::Filter;
+using namespace SeqLib;
+
+#include <fstream>
+
+/*
+#include "SeqLib/BFC.h"
+BOOST_AUTO_TEST_CASE ( bfc ) {
+
+  BFC b;
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+
+  SeqLib::BamRecord rec;
+  BamRecordVector brv;
+  size_t count = 0;
+  while(br.GetNextRecord(rec) && count++ < 1000) 
+    brv.push_back(rec);
+
+  std::ofstream orig("orig.fa");
+  std::ofstream corr("corr.fa");
+    
+  for (auto& i : brv)
+    orig << ">" << i.Qname() << std::endl << i.Sequence() << std::endl;
+
+  for (auto& i : b.ErrorCorrect(brv)) {
+    corr << ">" << i.first << std::endl << i.second << std::endl;
+  }
+  orig.close();
+  corr.close();
+
+}
+*/
 
 BOOST_AUTO_TEST_CASE( header_check ) {
 

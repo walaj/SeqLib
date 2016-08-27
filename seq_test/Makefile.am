@@ -15,7 +15,7 @@ seq_test_LDADD = \
 seq_test_LDFLAGS = --coverage
 
 seq_test_SOURCES = seq_test.cpp \
-	../src/GenomicRegion.cpp \
+	../src/BFC.cpp ../src/GenomicRegion.cpp \
 	../src/BamWriter.cpp ../src/BamReader.cpp \
 	../src/ReadFilter.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp \
