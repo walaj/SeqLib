@@ -1,7 +1,6 @@
 noinst_LIBRARIES = libseqlib.a
 
-libseqlib_a_CPPFLAGS = \
-        -I.. -I../htslib -I../bwa -I../fermi-lite
+libseqlib_a_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/htslib
 
 libseqlib_a_SOURCES =   BFC.cpp ReadFilter.cpp SeqPlot.cpp jsoncpp.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp \

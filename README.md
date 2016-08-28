@@ -18,6 +18,7 @@ git clone --recursive https://github.com/jwalabroad/SeqLib.git
 cd SeqLib
 ./configure
 make
+make install
 ```
  
 I have successfully compiled with GCC-4.8+ on Linux and with Clang on Mac
@@ -27,14 +28,14 @@ Integrating into build system
 
 After building, you will need to add the relevant header directories:
 ```bash
-SEQ=<path_to_seqlib>
-C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib:$SEQ/src:$SEQ/fermi-lite
+SEQ=<path_to_seqlib_git_repos>
+C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
 ```
 
-And need to link the following libraries
+And need to link the SeqLib static library, which contains libfml.a, libbwa.a and libhts.a
 ```bash
 SEQ=<path_to_seqlib>
-LDADD="$LDADD -L$SEQ/src/libseqlib.a -L$SEQ/fermi-lite/libfml.a -L$SEQ/libbwa.a -L$SEQ/htslib/libhts.a"
+LDADD="$LDADD -L$SEQ/bin/libseq.a"
 ```
 
 Description
@@ -304,4 +305,4 @@ Development, support, guidance, testing:
 
 [fermi]: https://github.com/lh3/fermi-lite
 
-[bfc]: https://github.com/lh3/bfc
+[bfc]: https://github.

@@ -5,8 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "htslib/faidx.h"
-
+#include "htslib/htslib/faidx.h"
 
 namespace SeqLib {
   

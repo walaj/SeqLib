@@ -1,4 +1,5 @@
 #include "SeqLib/FermiAssembler.h"
+#define MAG_MIN_NSR_COEF .1
 
 namespace SeqLib {
 
@@ -12,7 +13,47 @@ namespace SeqLib {
     //if (opt.mag_opt)
     //  free(opt.mag_opt);
   }
-  
+
+  // code copied and slightly modified from 
+  // fermi-lite/misc.c by Heng Li
+  void FermiAssembler::DirectAssemble(float kcov) {
+
+    std::cerr << " MIN OVLP " << opt.min_asm_ovlp << std::endl;
+    opt.min_asm_ovlp = 75;
+    
+    rld_t *e = fml_seq2fmi(&opt, n_seqs, m_seqs);
+    mag_t *g = fml_fmi2mag(&opt, e);
+
+    opt.mag_opt.min_ensr = opt.mag_opt.min_ensr > kcov * MAG_MIN_NSR_COEF? opt.mag_opt.min_ensr : (int)(kcov * MAG_MIN_NSR_COEF + .499);
+    //opt.mag_opt.min_ensr = opt.mag_opt.min_ensr < opt0->max_cnt? opt.mag_opt.min_ensr : opt0->max_cnt;
+    //opt.mag_opt.min_ensr = opt.mag_opt.min_ensr > opt0->min_cnt? opt.mag_opt.min_ensr : opt0->min_cnt;
+    opt.mag_opt.min_insr = opt.mag_opt.min_ensr - 1;
+    fml_mag_clean(&opt, g);
+    m_utgs = fml_mag2utg(g, &n_utg);
+  }
+
+  void FermiAssembler::AddReads(const UnalignedSequenceVector& v) {
+
+    // alloc the memory
+    m_seqs = (fseq1_t*)realloc(m_seqs, (n_seqs + v.size()) * sizeof(fseq1_t));
+
+    int m = 0;
+    uint64_t size = 0;
+    for (auto& r : v) {
+      m_names.push_back(r.Name);
+      fseq1_t *s;
+
+      s = &m_seqs[n_seqs];
+
+      s->seq   = strdup(r.Seq.c_str());
+      s->qual  = strdup(r.Qual.c_str());
+
+      s->l_seq = r.Seq.length();
+      size += m_seqs[n_seqs++].l_seq;
+    }
+
+
+  }
   void FermiAssembler::AddReads(const BamRecordVector& brv) {
 
     // alloc the memory
@@ -36,9 +77,9 @@ namespace SeqLib {
   }
 
   void FermiAssembler::ClearContigs() {
-    fml_utg_destroy(n_utgs, m_utgs);  
+    fml_utg_destroy(n_utg, m_utgs);  
     m_utgs = 0;
-    n_utgs = 0;
+    n_utg = 0;
   }
 
   void FermiAssembler::ClearReads() {  
@@ -68,12 +109,12 @@ namespace SeqLib {
   }
 
   void FermiAssembler::PerformAssembly() {
-    m_utgs = fml_assemble(&opt, n_seqs, m_seqs, &n_utgs); // assemble!
+    m_utgs = fml_assemble(&opt, n_seqs, m_seqs, &n_utg); // assemble!
   }
   
   std::vector<std::string> FermiAssembler::GetContigs() const {
     std::vector<std::string> c;
-    for (size_t i = 0; i < n_utgs; ++i)
+    for (size_t i = 0; i < n_utg; ++i)
       c.push_back(std::string(m_utgs[i].seq));
     return c;
   }

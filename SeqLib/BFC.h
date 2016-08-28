@@ -56,6 +56,12 @@ namespace SeqLib {
     /** Filter reads with unique k-mers. Do after error correction */
     void FilterUnique();
 
+    /** Return the calculated kcov */
+    float GetKCov() const { return kcov; }
+
+    /** Return the calculated kcov */
+    int GetKMer() const { return kmer; }
+
   private:
 
     void learn_correct();

@@ -81,7 +81,58 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   // do everything in place
   b.TrainCorrection(brv2);
   b.ErrorCorrectInPlace(brv2);
+}
 
+BOOST_AUTO_TEST_CASE( correct_and_assemble ) {
+
+  BFC b;
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+
+  SeqLib::BamRecord rec;
+  BamRecordVector brv, brv2;
+  size_t count = 0;
+  while(br.GetNextRecord(rec) && count++ < 10000) 
+    brv.push_back(rec);
+
+  b.TrainAndCorrect(brv);
+
+  float kcov = b.GetKCov();
+  int   kmer = b.GetKMer();
+
+  UnalignedSequenceVector v;
+  b.GetSequences(v);
+
+  std::ofstream corr("corr.fa");
+  for (auto& i : v)
+    corr << ">" << i.Name << std::endl << i.Seq << std::endl;
+  corr.close();
+
+  v.clear();
+  b.FilterUnique();
+  b.GetSequences(v);
+
+  std::ofstream filt("filt.fa");
+  for (auto& i : v) {
+    filt << ">" << i.Name << std::endl << i.Seq << std::endl;
+  }
+  filt.close();
+
+  FermiAssembler f;
+  f.AddReads(v);
+  f.DirectAssemble(kcov);
+
+  // retrieve the contigs
+  std::vector<std::string> contigs = f.GetContigs();
+
+  std::ofstream cont("contigs.fa");
+  size_t cc = 0;
+  for (auto& i : f.GetContigs()) {
+    ++cc;
+    cont << ">" << cc << std::endl << i << std::endl;
+  }
+  cont.close();
   
 }
 

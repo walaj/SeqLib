@@ -73,6 +73,11 @@ namespace SeqLib {
      */
     std::vector<std::string> GetContigs() const;
 
+    /** Perform assembly, without error correction */
+    void DirectAssemble(float kcov);
+
+    void AddReads(const UnalignedSequenceVector& v);
+
   private:
 
     // reads to assemble
@@ -84,13 +89,14 @@ namespace SeqLib {
     size_t n_seqs = 0;
 
     // number of contigs
-    int n_utgs = 0;
+    int n_utg = 0;
   
     // options
     fml_opt_t opt;
 
     // the unitigs
     fml_utg_t *m_utgs = 0;
+
   };
   
 
