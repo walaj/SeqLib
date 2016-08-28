@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
     orig << ">" << i.Qname() << std::endl << i.Sequence() << std::endl;
 
   b.TrainCorrection(brv);
-  b.ErrorCorrect(brv2);
+  b.ErrorCorrect(brv2);  
 
   UnalignedSequenceVector v;
   b.GetSequences(v);
@@ -68,14 +68,21 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   }
   orig.close();
   corr.close();
+  
+  //
+  v.clear();
+  b.FilterUnique();
+  b.GetSequences(v);
+  std::cerr << " FILTERED NOW SIZE " << v.size() << std::endl;
 
   // do everything at once
   b.TrainAndCorrect(brv2);
-  
+
   // do everything in place
   b.TrainCorrection(brv2);
   b.ErrorCorrectInPlace(brv2);
 
+  
 }
 
 BOOST_AUTO_TEST_CASE( header_check ) {

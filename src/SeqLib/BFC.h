@@ -27,7 +27,10 @@ namespace SeqLib {
       bfc_opt_init(&bfc_opt);
     }
 
-    ~BFC() {}
+    ~BFC() {
+      if (ch)
+	bfc_ch_destroy(ch);
+    }
 
     /** Set the k-mer size */
     void SetKmer(int k) { kmer = k; }
@@ -49,6 +52,9 @@ namespace SeqLib {
 
     /** Clear the stored reads */
     void clear();
+
+    /** Filter reads with unique k-mers. Do after error correction */
+    void FilterUnique();
 
   private:
 
@@ -102,7 +108,7 @@ namespace SeqLib {
     int kmer = 0;
 
     // holds data after learning how to correct
-    bfc_ch_t *ch;
+    bfc_ch_t *ch = 0;
 
     // holds data for actual error correction
     ec_step_t es;

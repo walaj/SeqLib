@@ -64,6 +64,8 @@ namespace SeqLib {
 
   void BFC::ErrorCorrect(const BamRecordVector& brv) {
 
+    flt_uniq = 0;
+
     // if already allocated, clear the old ones
     clear();
 
@@ -76,6 +78,7 @@ namespace SeqLib {
 
   void BFC::ErrorCorrectInPlace(BamRecordVector& brv) {
 
+    flt_uniq = 0;
     clear();
 
     allocate_sequences_from_reads(brv, false);
@@ -93,7 +96,8 @@ namespace SeqLib {
   void BFC::GetSequences(UnalignedSequenceVector& v) const {
 
     for (int i = 0; i < n_seqs; ++i)
-      v.push_back({m_names[i], std::string(m_seqs[i].seq), m_qualities[i]});
+      if (m_seqs[i].seq) // wont be here if filter unique was called
+	v.push_back({m_names[i], std::string(m_seqs[i].seq), m_qualities[i]});
     
   }
 
@@ -219,11 +223,20 @@ namespace SeqLib {
     // do the actual error correction
     kmer_correct(&es, mode, ch);
 
-    bfc_ch_destroy(ch);
-
     return;
 
 
   }
+
+    void BFC::FilterUnique() {
+      flt_uniq = 1;
+      correct_reads();
+
+      size_t count = 0;
+      for (size_t i = 0; i < n_seqs; ++i)
+	if (m_seqs[i].seq)
+	  ++count;
+      std::cerr << " IN " << n_seqs << " OUT " << count << std::endl;
+    }
   
 }
