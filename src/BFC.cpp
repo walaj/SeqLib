@@ -2,89 +2,196 @@
 
 namespace SeqLib {
 
-  std::vector<std::pair<std::string,std::string>> BFC::ErrorCorrect(BamRecordVector& brv) {
+  void BFC::TrainAndCorrect(const BamRecordVector& brv) {
 
-    // reads to assemble
-    fseq1_t *m_seqs = 0;
+    // if already allocated, clear the old ones
+    clear();
+
+    // send reads to string
+    allocate_sequences_from_reads(brv, true);
+
+    // learn how to correct
+    learn_correct();
+
+    // do the correction
+    correct_reads();
+
+  }
+  
+  void BFC::TrainCorrection(const BamRecordVector& brv) {
+
+    // if already allocated, clear the old ones
+    clear();
+
+    // set m_seqs and n_seqs
+    allocate_sequences_from_reads(brv, false);
+
+    // learn correct, set ch
+    learn_correct();
+  }
+
+  void BFC::ErrorCorrect(const BamRecordVector& brv) {
+
+    // if already allocated, clear the old ones
+    clear();
+
+    // send reads to string
+    allocate_sequences_from_reads(brv, true);
+
+    // do the correction
+    correct_reads();
+  }
+
+  void BFC::ErrorCorrectInPlace(BamRecordVector& brv) {
+
+    clear();
+
+    allocate_sequences_from_reads(brv, false);
+
+    correct_reads();
     
-    // number of reads
-    size_t n_seqs = 0;
+    assert(n_seqs == brv.size());
+    for (int i = 0; i < n_seqs; ++i) {
+      brv[i].SetSequence(std::string(m_seqs[i].seq));
+    }
 
+    clear();
+  }
+    
+  void BFC::GetSequences(UnalignedSequenceVector& v) const {
+
+    for (int i = 0; i < n_seqs; ++i)
+      v.push_back({m_names[i], std::string(m_seqs[i].seq), m_qualities[i]});
+    
+  }
+
+  void BFC::allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too) {
+      
     // alloc the memory
-    m_seqs = (fseq1_t*)realloc(m_seqs, (n_seqs + brv.size()) * sizeof(fseq1_t));
-
-    // options
-    fml_opt_t opt;
-    fml_opt_init(&opt);
-
-    std::vector<std::string> m_names;
-
+    //m_seqs = (fseq1_t*)realloc(m_seqs, brv.size() * sizeof(fseq1_t));
+    m_seqs = (fseq1_t*)malloc(brv.size() * sizeof(fseq1_t));
+    
     int m = 0;
     uint64_t size = 0;
     for (auto& r : brv) {
-      m_names.push_back(r.Qname());
+      if (name_and_qual_too) {
+	m_names.push_back(r.Qname());
+	m_qualities.push_back(r.Qualities());
+      }
       fseq1_t *s;
-
+      
       s = &m_seqs[n_seqs];
-
+      
       s->seq   = strdup(r.Sequence().c_str());
       s->qual  = strdup(r.Qualities().c_str());
-
+      
       s->l_seq = r.Sequence().length();
       size += m_seqs[n_seqs++].l_seq;
     }
-  
-  
-    // 
-    int flt_uniq = 0; // from fml_correct call
-
-  // initialize BFC options
-  for (int i = 0; i < n_seqs; ++i) 
-    tot_len += m_seqs[i].l_seq; // compute total length
-  int l_pre = tot_len - 8 < 20? tot_len - 8 : 20;
-  
-  //  setup the counting of kmers
-  ec_step_t es;
-  memset(&es, 0, sizeof(ec_step_t));
-  fprintf(stderr, "N: %d  K: %d  q: %d  L: %d NT: %d\n", n_seqs, m_opt.k, m_opt.q, l_pre, m_opt.n_threads);
-  es.opt = &m_opt, es.n_seqs = n_seqs, es.seqs = m_seqs, es.flt_uniq = flt_uniq;
-
-  bfc_ch_t *ch;
-
-  // do the counting
-  es.ch = ch = fml_count(n_seqs, m_seqs, 33, m_opt.q, /*m_opt.*/l_pre, m_opt.n_threads);
-
-  // make the histogram?
-  int mode = bfc_ch_hist(es.ch, hist, hist_high);
-
-  for (int i = opt.min_cnt; i < 256; ++i) {
-    sum_k += hist[i], tot_k += i * hist[i];
-    //std::cerr << "hist[" << i << "]: " << hist[i] << std::endl;
+    return;
   }
-  //for (int i = opt.min_cnt; i < 64; ++i) {
-  //  std::cerr << "hist_high[" << i << "]: " << hist_high[i] << std::endl;
-  // }
-
-  //std::cerr << " N_SEQS " << n_seqs << " sum_k " << sum_k << " MIN CNT " << opt.min_cnt << std::endl;
-
-  kcov = (float)tot_k / sum_k;
-  m_opt.min_cov = (int)(BFC_EC_MIN_COV_COEF * kcov + .499);
-  m_opt.min_cov = m_opt.min_cov < opt.max_cnt? m_opt.min_cov : opt.max_cnt;
-  m_opt.min_cov = m_opt.min_cov > opt.min_cnt? m_opt.min_cov : opt.min_cnt;
   
-  std::cerr << " M OPT MIN COV " << m_opt.min_cov << " KCOV " << kcov << std::endl;
+  void BFC::clear() {
+    
+    if (m_seqs)
+      free(m_seqs);
+    m_seqs = 0;
+    n_seqs = 0;
 
-  // do the actual error correction
-  kmer_correct(&es, mode,ch);
+    m_names.clear();
+    m_qualities.clear();
 
-  bfc_ch_destroy(ch);
-
-  std::vector<std::pair<std::string, std::string>> corrected;
-  for (int i = 0; i < n_seqs; ++i) {
-    corrected.push_back(std::pair<std::string, std::string>(brv[i].Qname(), std::string(m_seqs[i].seq)));
   }
 
-  return corrected;
-}
+  void BFC::learn_correct() {
+    
+    // options
+    fml_opt_init(&fml_opt);
+    
+    // if kmer is 0, fix 
+    if (kmer <= 0) {
+      fml_opt_adjust(&fml_opt, n_seqs, m_seqs);
+      kmer = fml_opt.ec_k;
+    }
 
+    // initialize BFC options
+    for (int i = 0; i < n_seqs; ++i) 
+      tot_len += m_seqs[i].l_seq; // compute total length
+    bfc_opt.l_pre = tot_len - 8 < 20? tot_len - 8 : 20;
+    
+    //  setup the counting of kmers
+    memset(&es, 0, sizeof(ec_step_t));
+    //kmer is learned before this
+    
+    bfc_opt.k = kmer;
+    
+    //es.opt = &bfc_opt, es.n_seqs = n_seqs, es.seqs = m_seqs, es.flt_uniq = flt_uniq;
+    
+    // hold count info. also called bfc_ch_s. Composed of
+    //    int k
+    //    int l_pre
+    //    cnthash_t **h
+    //        h is of size 1<<l_pre (2^l_pre). It is array of hash tables
+    //        h[i] is initialized with kh_init(cnt) which makes a cnthash_t
+    // bfc_ch_t *ch; // set in BFC.h
+    
+    // do the counting
+    ch = fml_count(n_seqs, m_seqs, bfc_opt.k, bfc_opt.q, bfc_opt.l_pre, bfc_opt.n_threads);
+
+#ifdef DEBUG_BFC
+    // size of random hash value
+    khint_t k;
+    int* ksize = (int*)calloc(1<<ch->l_pre, sizeof(int));
+    for (int i = 0; i < (1<<ch->l_pre); ++i) {
+      for (k = kh_begin(ch->h[i]); k != kh_end(ch->h[i]); ++k)
+        ++ksize[i];
+      fprintf(stderr, "K: %d S: %d\n", i, ksize[i]);
+    }
+#endif
+  }
+
+  void BFC::correct_reads() {
+    
+    assert(kmer > 0);
+
+    es.ch = ch;
+    es.opt = &bfc_opt;
+    es.n_seqs = n_seqs;
+    es.seqs = m_seqs;
+    es.flt_uniq = flt_uniq;
+
+    // make the histogram?
+    // es.ch is unchanged (const)
+    int mode = bfc_ch_hist(es.ch, hist, hist_high);
+    
+#ifdef DEBUG_BFC
+    fprintf(stderr, "MODE: %d\n", mode);
+    for (int i = opt.min_cnt; i < 256; ++i) {
+      sum_k += hist[i], tot_k += i * hist[i];
+      fprintf(stderr, "hist[%d]: %d\n",i,hist[i]);
+    }
+    for (int i = opt.min_cnt; i < 64; ++i) {
+      fprintf(stderr, "hist_high[%d]: %d\n",i,hist_high[i]);
+    }
+#endif
+    
+    kcov = (float)tot_k / sum_k;
+    bfc_opt.min_cov = (int)(BFC_EC_MIN_COV_COEF * kcov + .499);
+    bfc_opt.min_cov = bfc_opt.min_cov < fml_opt.max_cnt? bfc_opt.min_cov : fml_opt.max_cnt;
+    bfc_opt.min_cov = bfc_opt.min_cov > fml_opt.min_cnt? bfc_opt.min_cov : fml_opt.min_cnt;
+
+#ifdef DEBUG_BFC
+    fprintf(stderr, "kcov: %f mincov: %d  mode %d \n", kcov, bfc_opt.min_cov, mode);  
+#endif
+  
+    // do the actual error correction
+    kmer_correct(&es, mode, ch);
+
+    bfc_ch_destroy(ch);
+
+    return;
+
+
+  }
+  
 }

@@ -7,6 +7,7 @@ extern "C" {
 }
 
 #include "SeqLib/BamRecord.h"
+#include "SeqLib/UnalignedSequence.h"
 
 namespace SeqLib {
 
@@ -23,20 +24,37 @@ namespace SeqLib {
   public:
     /** Construct a new BFC engine */
     BFC() {
-      bfc_opt_init(&m_opt);
+      bfc_opt_init(&bfc_opt);
     }
 
-    ~BFC() {
-      //if (m_opt)
-      //free(m_opt);
-    }
+    ~BFC() {}
 
-    /** NOT IMPLEMENTED YET */
-    std::vector<std::pair<std::string,std::string>> ErrorCorrect(BamRecordVector& brv);
+    /** Set the k-mer size */
+    void SetKmer(int k) { kmer = k; }
+
+    /** Train error correction */
+    void TrainCorrection(const BamRecordVector& brv);
+
+    /** Train and error correction on same reads */
+    void TrainAndCorrect(const BamRecordVector& brv);
+
+    /** Error correct a collection of reads */
+    void ErrorCorrect(const BamRecordVector& brv);
+
+    /** Error correct in place, modify sequence, and the clear memory from this object */
+    void ErrorCorrectInPlace(BamRecordVector& brv);
+    
+    /** Return the reads (error corrected if ran ErrorCorrect) */
+    void GetSequences(UnalignedSequenceVector& v) const;
+
+    /** Clear the stored reads */
+    void clear();
 
   private:
 
-    bfc_opt_t m_opt;
+    void learn_correct();
+
+    bfc_opt_t bfc_opt;
 
     // histogram of kmer occurences
     uint64_t hist[256];
@@ -51,8 +69,43 @@ namespace SeqLib {
     // total number of kmers?
     uint64_t tot_k = 0;
 
+    //
     float kcov = 0;
 
+    // reads to correct in place
+    fseq1_t * m_seqs = 0;
+
+    // number of sequeces
+    int n_seqs = 0;
+
+    // fermi lite options
+    fml_opt_t fml_opt;
+
+    // vector of names
+    std::vector<std::string> m_names;
+
+    // vector of qualities
+    std::vector<std::string> m_qualities;
+
+    // assign names, qualities and seq to m_seqs
+    void allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too);
+    
+    // do the actual read correction
+    void correct_reads();
+
+    // 0 turns off filter uniq
+    int flt_uniq = 0; // from fml_correct call
+    
+    int l_pre;
+
+    // 0 is auto learn
+    int kmer = 0;
+
+    // holds data after learning how to correct
+    bfc_ch_t *ch;
+
+    // holds data for actual error correction
+    ec_step_t es;
   };
 
    }

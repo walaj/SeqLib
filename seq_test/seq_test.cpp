@@ -28,7 +28,7 @@ using namespace SeqLib;
 
 #include <fstream>
 
-/*
+
 #include "SeqLib/BFC.h"
 BOOST_AUTO_TEST_CASE ( bfc ) {
 
@@ -38,10 +38,17 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   br.Open("test_data/small.bam");
 
   SeqLib::BamRecord rec;
-  BamRecordVector brv;
+  BamRecordVector brv, brv2;
   size_t count = 0;
-  while(br.GetNextRecord(rec) && count++ < 1000) 
+  while(br.GetNextRecord(rec) && count++ < 10000) 
     brv.push_back(rec);
+
+  for (int i = 5000; i < brv.size(); ++i)
+    brv2.push_back(brv[i]);
+
+  count = 0;
+  while(br.GetNextRecord(rec) && count++ < 10000) 
+    brv2.push_back(rec);
 
   std::ofstream orig("orig.fa");
   std::ofstream corr("corr.fa");
@@ -49,15 +56,29 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   for (auto& i : brv)
     orig << ">" << i.Qname() << std::endl << i.Sequence() << std::endl;
 
-  for (auto& i : b.ErrorCorrect(brv)) {
-    corr << ">" << i.first << std::endl << i.second << std::endl;
+  b.TrainCorrection(brv);
+  b.ErrorCorrect(brv2);
+
+  UnalignedSequenceVector v;
+  b.GetSequences(v);
+
+  // write to corrected
+  for (auto& i : v) {
+    corr << ">" << i.Name << std::endl << i.Seq << std::endl;
   }
   orig.close();
   corr.close();
 
-}
-*/
+  // do everything at once
+  b.TrainAndCorrect(brv2);
+  
+  // do everything in place
+  b.TrainCorrection(brv2);
+  b.ErrorCorrectInPlace(brv2);
 
+}
+
+/*
 BOOST_AUTO_TEST_CASE( header_check ) {
 
   SeqLib::BamReader br;
@@ -1423,3 +1444,4 @@ BOOST_AUTO_TEST_CASE ( ref_genome ) {
   // reload
   r2.LoadIndex("test_data/test_ref.fa");
 }
+*/
