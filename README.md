@@ -237,6 +237,29 @@ while(r.GetNextRecord(rec))
 w.Close();               // Optional. Will close on destruction
 ```
 
+##### Perform error correction on reads, using [BFC][bfc]
+```
+#include "SeqLib/BFC.h"
+using SeqLib;
+
+// brv is some set of reads to train the error corrector
+b.TrainCorrection(brv);
+// brv2 is some set to correct
+b.ErrorCorrect(brv2);
+
+// retrieve the sequences
+UnalignedSequenceVector v;
+b.GetSequences(v);
+
+// alternatively, to train and correct the same set of reads
+b.TrainAndCorrect(brv);
+b.GetSequences(v);
+
+// alternatively, train and correct, and modify the sequence in-place
+b.TrainCorrection(brv);
+b.ErrorCorrectInPlace(brv);
+```
+
 Support
 -------
 This project is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org). 
@@ -280,3 +303,5 @@ Development, support, guidance, testing:
 [int]: https://github.com/ekg/intervaltree.git
 
 [fermi]: https://github.com/lh3/fermi-lite
+
+[bfc]: https://github.com/lh3/bfc

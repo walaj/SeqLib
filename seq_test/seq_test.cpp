@@ -78,7 +78,6 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
 
 }
 
-/*
 BOOST_AUTO_TEST_CASE( header_check ) {
 
   SeqLib::BamReader br;
@@ -1444,4 +1443,4 @@ BOOST_AUTO_TEST_CASE ( ref_genome ) {
   // reload
   r2.LoadIndex("test_data/test_ref.fa");
 }
-*/
+

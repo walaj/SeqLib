@@ -1,3 +1,12 @@
+/*
+A significant portion of this code is derived from Heng Li's BWA
+repository: https://github.com/lh3/bwa
+
+BWA is copyrighted by Heng Li with the Apache2 License
+
+*/
+
+
 #include "SeqLib/BWAWrapper.h"
 
 #include <sstream>
