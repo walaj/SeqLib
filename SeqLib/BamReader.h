@@ -29,6 +29,12 @@ namespace SeqLib {
 
     std::string GetFileName() const { return m_in; }
 
+    // point index to this region of bam
+    bool SetRegion(const GenomicRegion& gp);
+
+    // which region are we on
+    size_t m_region_idx = 0;
+
   private:
 
     // do the read loading
@@ -96,14 +102,6 @@ namespace SeqLib {
 
     // hold the reference for CRAM reading
     std::string m_cram_reference;
-
-    // which region are we on
-    size_t m_region_idx = 0;
-
-    // point index to this region of bam
-    bool __set_region(const GenomicRegion& gp);
-
-    
 
   };
   

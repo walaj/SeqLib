@@ -6,7 +6,7 @@
 namespace SeqLib {
 
 // set the bam region
-bool _Bam::__set_region(const GenomicRegion& gp) {
+bool _Bam::SetRegion(const GenomicRegion& gp) {
 
   // mark it "open" again, may be new reads here
   mark_for_closure = false;
@@ -83,7 +83,7 @@ bool BamReader::SetRegion(const GenomicRegion& g) {
     for (auto& b : m_bams) {
       b.second.m_region = &m_region;
       b.second.m_region_idx = 0; // set to the begining
-      success = success && b.second.__set_region(m_region[0]);
+      success = success && b.second.SetRegion(m_region[0]);
     }
     return success;
   }
@@ -107,7 +107,7 @@ bool BamReader::SetRegion(const GenomicRegion& g) {
     for (auto& b : m_bams) {
       b.second.m_region = &m_region;
       b.second.m_region_idx = 0; // set to the begining
-      success = success && b.second.__set_region(m_region[0]);
+      success = success && b.second.SetRegion(m_region[0]);
     }
     return success;
   }
@@ -301,7 +301,7 @@ std::string BamReader::PrintRegions() const {
 	//goto endloop;
       
       // next region exists, try it
-      __set_region(m_region->at(m_region_idx));
+      SetRegion(m_region->at(m_region_idx));
       valid = sam_itr_next(fp.get(), hts_itr.get(), b);
     } while (valid <= 0); // keep trying regions until works
   }
