@@ -36,6 +36,13 @@ bool _Bam::__set_region(const GenomicRegion& gp) {
   return true;
 }
 
+  bool BamReader::SetPreloadedIndex(const std::string& f, hts_idx_t * i) {
+    if (!m_bams.count(f))
+      return false;
+    m_bams[f].set_index(i);
+    return true;
+  }
+
 void BamReader::Reset() {
   for (auto& b : m_bams)
     b.second.reset();

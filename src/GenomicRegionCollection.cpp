@@ -330,7 +330,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T
 
   // undefined otherwise
   assert(width > ovlp);
-  if (width >= gr.width()) {
+  if (width >= gr.Width()) {
     m_grv->push_back(gr);
     return;
   }

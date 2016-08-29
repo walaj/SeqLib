@@ -68,6 +68,12 @@ namespace SeqLib {
       return true;
     }
 
+    // set a pre-loaded index (save on loading each time)
+    void set_index(hts_idx_t *  i) { idx = std::shared_ptr<hts_idx_t>(i, idx_delete()); }
+    
+    // set a pre-loaded index and make a deep copy
+    void deep_set_index();
+
     GRC* m_region; // local copy of region
 
     std::shared_ptr<htsFile> fp;     // BAM file pointer
@@ -149,6 +155,19 @@ class BamReader {
 
   /** Return if the reader has opened the first file */
   bool IsOpen() const { if (m_bams.size()) return m_bams.begin()->second.fp != 0; return false; }
+
+  /** Set pre-loaded raw index 
+   * 
+   * Provide the reader with an index structure that is already loaded.
+   * This is useful if there are multiple newly created BamReader objects
+   * that use the same index (e.g. make a BAM index in a loop)
+   * @note This does not make a copy, so ops on this index are shared with
+   * every other object that controls it.
+   * @param i Pointer to an HTSlib index
+   * @param f Name of the file to set index for
+   * @return True if the file f is controlled by this object
+   */
+  bool SetPreloadedIndex(const std::string& f, hts_idx_t * i);
 
   /** Return if the reader has opened the file
    * @param f Name of file to check

@@ -305,4 +305,4 @@ Development, support, guidance, testing:
 
 [fermi]: https://github.com/lh3/fermi-lite
 
-[bfc]: https://github.
+[bfc]: https://github.com/lh3/bfc
