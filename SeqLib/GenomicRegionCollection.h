@@ -262,6 +262,6 @@ typedef GenomicRegionCollection<GenomicRegion> GRC;
 
 }
 
-#include "GenomicRegionCollection.cpp"
+#include "SeqLib/GenomicRegionCollection.cpp"
 
 #endif
