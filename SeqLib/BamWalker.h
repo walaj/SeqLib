@@ -82,5 +82,29 @@ struct ReadCount {
 };
 
 
+/** @brief Sort methods for reads
+ */
+ namespace BamReadSort {
+
+   /** @brief Sort by read position 
+    */
+   struct ByReadPosition
+   {
+     bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
+       return (lx.ChrID() < rx.ChrID()) || (lx.ChrID() == rx.ChrID() && lx.Position() < rx.Position());
+     }
+   };
+
+   /** @brief Sort by read-mate position 
+    */
+   struct ByMatePosition
+   {
+     bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
+       return (lx.MateChrID() < rx.MateChrID()) || (lx.MateChrID() == rx.MateChrID() && lx.MatePosition() < rx.MatePosition());
+     }
+   };
+
+ }
+
 }
 #endif
