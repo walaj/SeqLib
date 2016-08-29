@@ -356,8 +356,23 @@ class BamRecord {
   inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
 
   /** Set the mapping quality */
-  inline void SetMapQuality(int32_t m) { b->core.qual = m; }
+  inline void SetMapQuality(int32_t m) { if (b) b->core.qual = m; }
+
+  /** Set the chr id */
+  inline void SetChrID(int32_t i) { b->core.tid = i; }
+
+  /** Set the chr id of mate */
+  inline void SetChrIDMate(int32_t i) { b->core.mtid = i; }
   
+  /** Set the position of the mate read */
+  inline void SetPositionMate(int32_t i) { b->core.mpos = i; }
+
+  /** Set the pair mapped flag on */
+  inline void SetPairMappedFlag() { b->core.flag |= BAM_FPAIRED; }
+
+  /** Set the mate reverse flag on */
+  inline void SetMateReverseFlag() { b->core.flag |= BAM_FMREVERSE; }
+
   /** Get the number of cigar fields */
   inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
   
@@ -751,6 +766,9 @@ class BamRecord {
   /** Return the raw pointer */
   inline bam1_t* raw() const { return b.get(); }
 
+  /** Return the number of bases on the reference that are covered by a match (M) on both reads */
+  int OverlappingCoverage(const BamRecord& r) const;
+  
   private:
   
   std::shared_ptr<bam1_t> b; // need to move this to private  

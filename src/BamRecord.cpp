@@ -672,5 +672,36 @@ namespace SeqLib {
      return true;
   }
 
+
+  int BamRecord::OverlappingCoverage(const BamRecord& r) const {
+    
+    uint32_t* c  = bam_get_cigar(b);
+    uint32_t* c2 = bam_get_cigar(r.b);
+    uint8_t * cov1 = (uint8_t*)calloc(b->core.l_qseq, sizeof(uint8_t));
+    size_t pos = 0;
+    for (int k = 0; k < b->core.n_cigar; ++k) {
+      if (bam_cigar_opchr(c[k]) == 'M')  // is match, so track locale
+	for (size_t j = 0; j < bam_cigar_oplen(c[k]); ++j)
+	  cov1[pos + j] = 1;
+      if (bam_cigar_type(bam_cigar_op(c[k]))&1)  // consumes query, so move position
+	pos = pos + bam_cigar_oplen(c[k]);
+    }
+    
+    pos = 0;
+    size_t ocov = 0; // overlapping coverage
+    for (int k = 0; k < r.b->core.n_cigar; ++k) {
+      if (bam_cigar_opchr(c2[k]) == 'M')  // is match, so track local
+	for (size_t j = 0; j < bam_cigar_oplen(c2[k]); ++j)
+	  if (cov1[pos+j]) // r is covered. Check again this too
+	    ++ocov;
+      if (bam_cigar_type(bam_cigar_op(c2[k]))&1)  // consumes query, so move position
+	pos = pos + bam_cigar_oplen(c2[k]);
+    }
+    
+    free(cov1);
+    
+    return ocov;
+  }
+
   
 }
