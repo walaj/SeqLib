@@ -133,6 +133,12 @@ class GenomicRegionCollection {
 		 idx = 0;
   }
 
+ /** Get the number of trees (eg number of chromosomes, each with own tree */
+ int NumTree() const { return m_tree->size(); }
+
+ /** Get a const pointer to the genomic interval tree map */
+ const GenomicIntervalTreeMap* GetTree() const { return m_tree.get(); }
+
   /** Retrieve a GenomicRegion at given index. 
    * 
    * Note that this does not move the idx iterator, which is 
@@ -182,7 +188,7 @@ class GenomicRegionCollection {
   * the pad value.
   * @param v Amount to pad each end by. Result is increase in width by 2*pad.
   * @note See GenomicRegion::Pad
-  */
+s  */
  void Pad(int v);
 
  /** Set the i'th GenomicRegion */

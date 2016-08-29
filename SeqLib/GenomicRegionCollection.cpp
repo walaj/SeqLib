@@ -541,7 +541,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::FindOverlaps(
 {  
 
   GenomicRegionCollection<GenomicRegion> output;
-  if (subject.m_tree->size() == 0 && subject.m_grv->size() != 0) {
+  if (subject.NumTree() == 0 && subject.size() != 0) {
     std::cerr << "!!!!!! findOverlaps: WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
     return output;
   }
@@ -560,7 +560,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::FindOverlaps(
   for (size_t i = 0; i < m_grv->size(); ++i) 
     {
       // which chr (if any) are common between query and subject
-      GenomicIntervalTreeMap::const_iterator ff = subject.m_tree->find(m_grv->at(i).chr);
+      GenomicIntervalTreeMap::const_iterator ff = subject.GetTree()->find(m_grv->at(i).chr);
 
       GenomicIntervalVector giv;
 
@@ -581,7 +581,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::FindOverlaps(
 #endif
 	  // loop through the hits and define the GenomicRegion
 	  for (auto& j : giv) { // giv points to positions on subject
-	    if (ignore_strand || (subject.m_grv->at(j.value).strand == m_grv->at(i).strand) )
+	    if (ignore_strand || (subject.at(j.value).strand == m_grv->at(i).strand) )
 	      {
 		query_id.push_back(i);
 		subject_id.push_back(j.value);
