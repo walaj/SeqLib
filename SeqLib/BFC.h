@@ -45,9 +45,6 @@ namespace SeqLib {
     /** Add a sequence for either training or correction */
     bool AddSequence(const char* seq, const char* qual, const char* name);
 
-    /** Add a sequence for either training or correction */
-    bool AddSequence(const char* seq, const char* qual);
-    
     /** Set the k-mer size */
     void SetKmer(int k) { kmer = k; }
 
@@ -87,6 +84,9 @@ namespace SeqLib {
 
     /** Return the calculated kcov */
     int GetKMer() const { return kmer; }
+
+    /** Return the number of sequences controlled by this */
+    int NumSequences() const { return n_seqs; } 
 
   private:
 
