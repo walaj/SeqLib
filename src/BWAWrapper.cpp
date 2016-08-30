@@ -234,7 +234,7 @@ namespace SeqLib {
   }
 
   void BWAWrapper::AlignSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
-				       double keep_sec_with_frac_of_primary_score, int max_secondary) {
+				       double keep_sec_with_frac_of_primary_score, int max_secondary) const {
     
     // we haven't made an index, just return
     if (!idx)
@@ -624,7 +624,7 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   }
 
 
-  bool BWAWrapper::WriteIndex(const std::string& index_name)
+  bool BWAWrapper::WriteIndex(const std::string& index_name) const
   {
     
     if (!idx) 
@@ -641,7 +641,7 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   }
 
 
-  void BWAWrapper::__write_pac_to_file(const std::string& file)
+  void BWAWrapper::__write_pac_to_file(const std::string& file) const
   {
     // finalize .pac file
     FILE *fp;

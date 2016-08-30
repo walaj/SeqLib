@@ -73,7 +73,7 @@ class BWAWrapper {
    * @param max_secondary Set a hard-limit on the number of secondary hits that will be reported
    */
   void AlignSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
-			   double keep_sec_with_frac_of_primary_score, int max_secondary);
+			   double keep_sec_with_frac_of_primary_score, int max_secondary) const;
 
   /** Construct a new bwa index for this object. 
    * @param v vector of references to input (e.g. v = {{"r1", "AT"}};)
@@ -95,7 +95,7 @@ class BWAWrapper {
    * @param index_name Write index files (*.sai, *.pac, *.ann, *.bwt, *.amb)
    * @return True if able to write index
    */
-  bool WriteIndex(const std::string& index_name);
+  bool WriteIndex(const std::string& index_name) const;
 
   /** Return the raw index in bwaidx_t form */
   bwaidx_t* GetIndex() const { return idx; }
@@ -195,7 +195,7 @@ class BWAWrapper {
   uint8_t* __make_pac(const UnalignedSequenceVector& v, bool for_only);
 
   // write pac part of the index
-  void __write_pac_to_file(const std::string& file);
+  void __write_pac_to_file(const std::string& file) const;
 
   // write the bns file of the index
   std::string print_bns();
