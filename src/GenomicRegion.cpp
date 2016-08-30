@@ -110,6 +110,11 @@ bool GenomicRegion::operator>=(const GenomicRegion &b) const {
   return (*this > b || *this == b);
 }
 
+  std::string GenomicRegion::ToString() const {
+    return chrToString(chr) + ":" + SeqLib::AddCommas<int>(pos1) + "-" + AddCommas<int>(pos2) + "(" +
+      strand + ")"; 
+  }
+
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   out << gr.chrToString(gr.chr) << ":" << SeqLib::AddCommas<int>(gr.pos1) << "-" << AddCommas<int>(gr.pos2) << "(" << 
     gr.strand << ")"; 

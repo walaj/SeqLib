@@ -92,6 +92,9 @@ class GenomicRegion {
    */
   int32_t DistanceBetweenEnds(const GenomicRegion &gr) const;
 
+  /** Returns identical string as would be obtained from << */
+  std::string ToString() const;
+
   /** Returns true if a.chr < b.chr or a.pos1 < a.pos1 if on same chrome, or if a.pos2 < b.pos2 if same chrom and same pos1 */
   bool operator < (const GenomicRegion& b) const;
 
