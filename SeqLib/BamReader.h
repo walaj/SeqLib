@@ -16,6 +16,8 @@ int hts_useek(htsFile *file, long uoffset, int where);
 class BamReader;
 
 namespace SeqLib {
+
+  typedef std::shared_ptr<hts_idx_t> SharedIndex;
  
   // store file accessors for single BAM
   class _Bam {
@@ -75,7 +77,7 @@ namespace SeqLib {
     }
 
     // set a pre-loaded index (save on loading each time)
-    void set_index(hts_idx_t *  i) { idx = std::shared_ptr<hts_idx_t>(i, idx_delete()); }
+    void set_index(SharedIndex& i) { idx = i; }
     
     // set a pre-loaded index and make a deep copy
     void deep_set_index();
@@ -165,7 +167,7 @@ class BamReader {
    * @param f Name of the file to set index for
    * @return True if the file f is controlled by this object
    */
-  bool SetPreloadedIndex(const std::string& f, hts_idx_t * i);
+  bool SetPreloadedIndex(const std::string& f, SharedIndex& i);
 
   /** Return if the reader has opened the file
    * @param f Name of file to check
