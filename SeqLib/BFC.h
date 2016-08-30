@@ -98,7 +98,7 @@ namespace SeqLib {
     fseq1_t * m_seqs = 0;
 
     // number of sequeces
-    int n_seqs = 0;
+    size_t n_seqs = 0;
 
     // fermi lite options
     fml_opt_t fml_opt;

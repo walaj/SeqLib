@@ -32,6 +32,8 @@ SOFTWARE.
 
 #include "SeqLib/BFC.h"
 
+#include <algorithm>
+
 namespace SeqLib {
 
   void BFC::TrainAndCorrect(const BamRecordVector& brv) {
@@ -94,7 +96,9 @@ namespace SeqLib {
 
     assert(n_seqs == brv.size());
     for (int i = 0; i < n_seqs; ++i) {
-      brv[i].AddZTag("KC", std::string(m_seqs[i].seq));
+      std::string str = std::string(m_seqs[i].seq);
+      std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+      brv[i].AddZTag("KC", str);
     }
     
     clear();
@@ -126,7 +130,9 @@ namespace SeqLib {
     
     assert(n_seqs == brv.size());
     for (int i = 0; i < n_seqs; ++i) {
-      brv[i].SetSequence(std::string(m_seqs[i].seq));
+      std::string str = std::string(m_seqs[i].seq);
+      std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+      brv[i].SetSequence(str);
     }
 
     clear();
@@ -135,8 +141,11 @@ namespace SeqLib {
   void BFC::GetSequences(UnalignedSequenceVector& v) const {
 
     for (int i = 0; i < n_seqs; ++i)
-      if (m_seqs[i].seq) // wont be here if filter unique was called
-	v.push_back({m_names[i], std::string(m_seqs[i].seq), m_qualities[i]});
+      if (m_seqs[i].seq) { // wont be here if filter unique was called
+	std::string str = std::string(m_seqs[i].seq);
+	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+	v.push_back({m_names[i], str, m_qualities[i]});
+      }
     
   }
 
@@ -144,7 +153,6 @@ namespace SeqLib {
 
     m_seqs = (fseq1_t*)malloc(v.size() * sizeof(fseq1_t));
     
-    int m = 0;
     uint64_t size = 0;
     for (auto& r : v) {
       fseq1_t *s;
@@ -167,7 +175,6 @@ namespace SeqLib {
     //m_seqs = (fseq1_t*)realloc(m_seqs, brv.size() * sizeof(fseq1_t));
     m_seqs = (fseq1_t*)malloc(brv.size() * sizeof(fseq1_t));
     
-    int m = 0;
     uint64_t size = 0;
     for (auto& r : brv) {
       if (name_and_qual_too) {
