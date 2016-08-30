@@ -49,6 +49,20 @@ namespace SeqLib {
     correct_reads();
 
   }
+
+  void BFC::TrainCorrection(const std::vector<char*>& v) {
+
+    // if already allocated, clear the old ones
+    clear();
+
+    // set m_seqs and n_seqs
+    allocate_sequences_from_char(v);
+
+    // learn correct, set ch
+    learn_correct();
+
+
+  }
   
   void BFC::TrainCorrection(const BamRecordVector& brv) {
 
@@ -60,6 +74,31 @@ namespace SeqLib {
 
     // learn correct, set ch
     learn_correct();
+  }
+
+  void BFC::ErrorCorrectToTag(BamRecordVector& brv, const std::string& tag) {
+    
+    if (tag.length() != 2)
+      throw std::invalid_argument("Tag length should be 2");
+
+    flt_uniq = 0;
+
+    // if already allocated, clear the old ones
+    clear();
+
+    // send reads to string
+    allocate_sequences_from_reads(brv, true);
+
+    // do the correction
+    correct_reads();
+
+    assert(n_seqs == brv.size());
+    for (int i = 0; i < n_seqs; ++i) {
+      brv[i].AddZTag("KC", std::string(m_seqs[i].seq));
+    }
+    
+    clear();
+
   }
 
   void BFC::ErrorCorrect(const BamRecordVector& brv) {
@@ -99,6 +138,27 @@ namespace SeqLib {
       if (m_seqs[i].seq) // wont be here if filter unique was called
 	v.push_back({m_names[i], std::string(m_seqs[i].seq), m_qualities[i]});
     
+  }
+
+  void BFC::allocate_sequences_from_char(const std::vector<char*>& v) {
+
+    m_seqs = (fseq1_t*)malloc(v.size() * sizeof(fseq1_t));
+    
+    int m = 0;
+    uint64_t size = 0;
+    for (auto& r : v) {
+      fseq1_t *s;
+      
+      s = &m_seqs[n_seqs];
+      
+      s->seq   = strdup(r);
+      s->qual  = nullptr; 
+      
+      s->l_seq = strlen(r);
+      size += m_seqs[n_seqs++].l_seq;
+    }
+    return;
+
   }
 
   void BFC::allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too) {

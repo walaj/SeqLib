@@ -35,8 +35,11 @@ namespace SeqLib {
     /** Set the k-mer size */
     void SetKmer(int k) { kmer = k; }
 
-    /** Train error correction */
+    /** Train error correction using sequences from aligned reads */
     void TrainCorrection(const BamRecordVector& brv);
+
+    /** Train error correction from raw character strings */
+    void TrainCorrection(const std::vector<char*>& v);
 
     /** Train and error correction on same reads */
     void TrainAndCorrect(const BamRecordVector& brv);
@@ -46,6 +49,13 @@ namespace SeqLib {
 
     /** Error correct in place, modify sequence, and the clear memory from this object */
     void ErrorCorrectInPlace(BamRecordVector& brv);
+    
+    /** Error correct and add tag with the corrected sequence data, and the clear memory from this object 
+     * @param brv Aligned reads to error correct
+     * @param tag Tag to assign error corrected sequence to (eg KC)
+     * @exception Throws an invalid_argument if tag is not length 2
+     */
+    void ErrorCorrectToTag(BamRecordVector& brv, const std::string& tag);
     
     /** Return the reads (error corrected if ran ErrorCorrect) */
     void GetSequences(UnalignedSequenceVector& v) const;
@@ -101,6 +111,9 @@ namespace SeqLib {
 
     // assign names, qualities and seq to m_seqs
     void allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too);
+
+    // assign names, qualities and seq to m_seqs
+    void allocate_sequences_from_char(const std::vector<char*>& v);
     
     // do the actual read correction
     void correct_reads();
