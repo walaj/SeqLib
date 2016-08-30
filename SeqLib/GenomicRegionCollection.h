@@ -202,10 +202,10 @@ s  */
 
   /** Output the GenomicRegionCollection to a BED format
    *
-   * Currently just outputs chr   pos   pos2 with no header.
+   * @param h Header to convert id to chromosome name
    * @return BED formated string reprsentation 
    */
-  std::string AsBEDString() const;
+  std::string AsBEDString(const BamHeader& h) const;
 
   /** Fill the next GenomicRegion object. 
    * @return false if add end of vector

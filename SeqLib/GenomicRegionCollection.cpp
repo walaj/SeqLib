@@ -424,14 +424,14 @@ size_t GenomicRegionCollection<T>::CountOverlaps(const T &gr) const {
   }
 
 template<class T>
-std::string GenomicRegionCollection<T>::AsBEDString() const {
+std::string GenomicRegionCollection<T>::AsBEDString(const BamHeader& h) const {
   
   if (m_grv->size() ==  0)
     return ""; 
 
   std::stringstream ss;
   for (auto& i : *m_grv)
-    ss << i.chr << "\t" << i.pos1 << "\t" << i.pos2 << std::endl;
+    ss << i.ChrName(h) << "\t" << i.pos1 << "\t" << i.pos2 << "\t" << i.strand << std::endl;
 
   return ss.str();
 

@@ -95,7 +95,7 @@ namespace SeqLib {
     correct_reads();
 
     assert(n_seqs == brv.size());
-    for (int i = 0; i < n_seqs; ++i) {
+    for (size_t i = 0; i < n_seqs; ++i) {
       std::string str = std::string(m_seqs[i].seq);
       std::transform(str.begin(), str.end(),str.begin(), ::toupper);
       brv[i].AddZTag("KC", str);
@@ -129,7 +129,7 @@ namespace SeqLib {
     correct_reads();
     
     assert(n_seqs == brv.size());
-    for (int i = 0; i < n_seqs; ++i) {
+    for (size_t i = 0; i < n_seqs; ++i) {
       std::string str = std::string(m_seqs[i].seq);
       std::transform(str.begin(), str.end(),str.begin(), ::toupper);
       brv[i].SetSequence(str);
@@ -140,7 +140,7 @@ namespace SeqLib {
     
   void BFC::GetSequences(UnalignedSequenceVector& v) const {
 
-    for (int i = 0; i < n_seqs; ++i)
+    for (size_t i = 0; i < n_seqs; ++i)
       if (m_seqs[i].seq) { // wont be here if filter unique was called
 	std::string str = std::string(m_seqs[i].seq);
 	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
@@ -218,7 +218,7 @@ namespace SeqLib {
     }
 
     // initialize BFC options
-    for (int i = 0; i < n_seqs; ++i) 
+    for (size_t i = 0; i < n_seqs; ++i) 
       tot_len += m_seqs[i].l_seq; // compute total length
     bfc_opt.l_pre = tot_len - 8 < 20? tot_len - 8 : 20;
     
