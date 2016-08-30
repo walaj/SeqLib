@@ -36,6 +36,68 @@ SOFTWARE.
 
 namespace SeqLib {
 
+  bool BFC::AllocateMemory(size_t n) {
+
+    if (n <= 0)
+      return false;
+    
+    m_seqs_size = n;
+    m_seqs = (fseq1_t*)realloc(m_seqs, n * sizeof(fseq1_t));
+
+    if (!m_seqs)
+      return false;
+
+    return true;
+  }
+
+  bool BFC::AddSequence(const char* seq, const char* qual, const char* name) {
+
+    // do the intial allocation
+    if (n_seqs == 0 && !m_seqs) {
+      m_seqs_size = 32;
+      m_seqs = (fseq1_t*)malloc(m_seqs_size * sizeof(fseq1_t));
+    }
+    // realloc if not enough space
+    else if (n_seqs >= m_seqs_size) {
+      m_seqs_size = 2 * m_seqs_size;
+      m_seqs = (fseq1_t*)realloc(m_seqs, m_seqs_size * sizeof(fseq1_t));
+    }
+
+    if (!m_seqs)
+      return false;
+    
+    // make sure seq and qual are even valid
+    if (seq && qual) 
+      if (strlen(seq) != strlen(qual))
+	return false;
+    
+    fseq1_t *s;
+    
+    s = &m_seqs[n_seqs];
+    
+    s->seq   = strdup(seq);
+    s->qual  = strdup(qual); 
+    s->l_seq = strlen(seq);
+    n_seqs++;
+    
+    m_names.push_back(strdup(name));
+
+    assert(m_names.size() == n_seqs);
+
+    return true;
+  }
+
+
+  bool BFC::ErrorCorrect() {
+    correct_reads();
+    return true;
+  }
+
+  bool BFC::Train() {
+    learn_correct();
+    return true;
+  }
+
   void BFC::TrainAndCorrect(const BamRecordVector& brv) {
 
     // if already allocated, clear the old ones
@@ -144,13 +206,16 @@ namespace SeqLib {
       if (m_seqs[i].seq) { // wont be here if filter unique was called
 	std::string str = std::string(m_seqs[i].seq);
 	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-	v.push_back({m_names[i], str, m_qualities[i]});
+	std::string name = m_names[i] ? std::string(m_names[i]) : std::string();
+	std::string qual = m_seqs[i].qual ? std::string(m_seqs[i].qual) : std::string();
+	v.push_back({name, str, qual});	  
       }
     
   }
 
   void BFC::allocate_sequences_from_char(const std::vector<char*>& v) {
 
+    m_seqs_size = v.size();
     m_seqs = (fseq1_t*)malloc(v.size() * sizeof(fseq1_t));
     
     uint64_t size = 0;
@@ -172,14 +237,13 @@ namespace SeqLib {
   void BFC::allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too) {
       
     // alloc the memory
-    //m_seqs = (fseq1_t*)realloc(m_seqs, brv.size() * sizeof(fseq1_t));
+    m_seqs_size = brv.size();
     m_seqs = (fseq1_t*)malloc(brv.size() * sizeof(fseq1_t));
     
     uint64_t size = 0;
     for (auto& r : brv) {
       if (name_and_qual_too) {
-	m_names.push_back(r.Qname());
-	m_qualities.push_back(r.Qualities());
+	//m_names.push_back(r.Qname());
       }
       fseq1_t *s;
       
@@ -196,13 +260,23 @@ namespace SeqLib {
   
   void BFC::clear() {
     
+    assert(m_names.size() == n_seqs);
+    for (size_t i = 0; i < n_seqs; ++i) {
+      if (m_names[i])
+	free(m_names[i]);
+      if (m_seqs[i].seq)
+	free (m_seqs[i].seq);
+      if (m_seqs[i].qual)
+	free (m_seqs[i].qual);
+    }
+
     if (m_seqs)
       free(m_seqs);
     m_seqs = 0;
     n_seqs = 0;
 
     m_names.clear();
-    m_qualities.clear();
+    m_seqs_size = 0;
 
   }
 

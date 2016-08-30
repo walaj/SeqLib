@@ -28,10 +28,26 @@ namespace SeqLib {
     }
 
     ~BFC() {
+      clear();
       if (ch)
 	bfc_ch_destroy(ch);
     }
 
+    /** Allocate a block of memory for the reads if the amount to enter is known 
+     * @note This is not necessary, as reads will dynamically reallocate 
+     */
+    bool AllocateMemory(size_t n);
+
+    bool ErrorCorrect();
+
+    bool Train();
+
+    /** Add a sequence for either training or correction */
+    bool AddSequence(const char* seq, const char* qual, const char* name);
+
+    /** Add a sequence for either training or correction */
+    bool AddSequence(const char* seq, const char* qual);
+    
     /** Set the k-mer size */
     void SetKmer(int k) { kmer = k; }
 
@@ -74,6 +90,9 @@ namespace SeqLib {
 
   private:
 
+    // the amount of memory allocated
+    size_t m_seqs_size = 0;
+
     void learn_correct();
 
     bfc_opt_t bfc_opt;
@@ -104,10 +123,7 @@ namespace SeqLib {
     fml_opt_t fml_opt;
 
     // vector of names
-    std::vector<std::string> m_names;
-
-    // vector of qualities
-    std::vector<std::string> m_qualities;
+    std::vector<char*> m_names;
 
     // assign names, qualities and seq to m_seqs
     void allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too);
