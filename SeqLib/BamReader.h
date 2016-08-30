@@ -169,6 +169,11 @@ class BamReader {
    */
   bool SetPreloadedIndex(const std::string& f, SharedIndex& i);
 
+  /** Set a pre-loaded raw index, to the first BAM
+   * @note see SetPreloadedIndex(const std::string& f, SharedIndex& i)
+   */
+  bool SetPreloadedIndex(SharedIndex& i);
+
   /** Return if the reader has opened the file
    * @param f Name of file to check
    */

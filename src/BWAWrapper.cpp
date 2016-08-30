@@ -608,7 +608,6 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   {
 
     // read in the bwa index
-    std::cerr << "...loading in the index for BWA from location: " << file << std::endl;
     bwaidx_t* idx_new = bwa_idx_load(file.c_str(), BWA_IDX_ALL);
 
     if (!idx_new) 

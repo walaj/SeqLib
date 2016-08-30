@@ -75,12 +75,19 @@ void BamReader::Reset() {
     return m_bams[f].close();
   }
 
-bool BamReader::SetRegion(const GenomicRegion& g) {
-  m_region.clear();
-  m_region.add(g);
-
-  bool success = true;
-  if (m_region.size()) {
+  bool BamReader::SetPreloadedIndex(SharedIndex& i) {
+    if (!m_bams.size())
+      return false;
+    m_bams.begin()->second.set_index(i);
+    return true;
+  }
+  
+  bool BamReader::SetRegion(const GenomicRegion& g) {
+    m_region.clear();
+    m_region.add(g);
+    
+    bool success = true;
+    if (m_region.size()) {
     for (auto& b : m_bams) {
       b.second.m_region = &m_region;
       b.second.m_region_idx = 0; // set to the begining
