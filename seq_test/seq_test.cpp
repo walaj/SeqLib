@@ -56,8 +56,14 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   for (auto& i : brv)
     orig << ">" << i.Qname() << std::endl << i.Sequence() << std::endl;
 
-  b.TrainCorrection(brv);
-  b.ErrorCorrect(brv2);  
+  // add the seqs
+  for (auto& r : brv)
+    b.AddSequence(r.Sequence().c_str(), r.Qualities().c_str(), r.Qname().c_str());
+
+  b.Train();
+  b.clear();
+
+  b.ErrorCorrectToTag(brv2, "KC");  
 
   UnalignedSequenceVector v;
   b.GetSequences(v);

@@ -266,7 +266,6 @@ namespace SeqLib {
 
   void BFC::clear() {
     
-    std::cerr << " MN " << m_names.size() << " N SES " << n_seqs << std::endl;
     assert(m_names.size() == n_seqs);
     for (size_t i = 0; i < n_seqs; ++i) {
       __free_char(m_names[i]);
