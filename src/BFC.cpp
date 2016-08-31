@@ -242,9 +242,8 @@ namespace SeqLib {
     
     uint64_t size = 0;
     for (auto& r : brv) {
-      if (name_and_qual_too) {
-	//m_names.push_back(r.Qname());
-      }
+      m_names.push_back(strdup(r.Qname().c_str()));
+
       fseq1_t *s;
       
       s = &m_seqs[n_seqs];
@@ -257,17 +256,22 @@ namespace SeqLib {
     }
     return;
   }
-  
+
+  void __free_char(char*& c) {
+    if (c) {
+      free (c);
+      c = nullptr;
+    }
+  }
+
   void BFC::clear() {
     
+    std::cerr << " MN " << m_names.size() << " N SES " << n_seqs << std::endl;
     assert(m_names.size() == n_seqs);
     for (size_t i = 0; i < n_seqs; ++i) {
-      if (m_names[i])
-	free(m_names[i]);
-      if (m_seqs[i].seq)
-	free (m_seqs[i].seq);
-      if (m_seqs[i].qual)
-	free (m_seqs[i].qual);
+      __free_char(m_names[i]);
+      __free_char(m_seqs[i].seq);
+      __free_char(m_seqs[i].qual);
     }
 
     if (m_seqs)
