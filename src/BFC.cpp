@@ -50,6 +50,28 @@ namespace SeqLib {
     return true;
   }
 
+  bool BFC::AddSequence(const BamRecord& r) {
+
+    //char* s = strdup(r.Sequence().c_str());
+    const char* q = bam_get_qname(r.raw());
+    //uint8_t* l = bam_get_qual(r.raw());
+    //char* qual = (char*)malloc(r.Length() + 1);
+    //if (l)
+    //  for (size_t i = 0; i < r.Length(); ++i)
+    //	qual[i] = l[i] + 33;
+    //qual[r.Length()] = '\0';
+    
+    bool ret = AddSequence(r.Sequence().c_str(), r.Qualities().c_str(), q);
+
+    //if (s)
+    //  free(s);
+    //if (qual)
+    //  free(qual);
+
+    return ret;
+
+  }
+
   bool BFC::AddSequence(const char* seq, const char* qual, const char* name) {
 
     // do the intial allocation
@@ -79,8 +101,9 @@ namespace SeqLib {
     
     s->seq   = strdup(seq);
     s->qual = 0;
-    if (strlen(qual))
-      s->qual  = strdup(qual); 
+    if (strlen(qual)) {
+      s->qual  = strdup(qual);
+    }
     
     s->l_seq = strlen(seq);
     n_seqs++;

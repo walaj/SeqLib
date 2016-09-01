@@ -53,6 +53,9 @@ namespace SeqLib {
     bool Train();
 
     /** Add a sequence for either training or correction */
+    bool AddSequence(const BamRecord& r);
+
+    /** Add a sequence for either training or correction */
     bool AddSequence(const char* seq, const char* qual, const char* name);
 
     /** Set the k-mer size */

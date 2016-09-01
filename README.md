@@ -12,11 +12,13 @@ API Documentation
 Table of contents
 =================
 
-  * [Installation](#gh-md-toc)
+  * [Installation](#installation)
   * [Integrating into build system](#integrating-into-build-system)
   * [Description](#description)
-  * [Examples](#examples)
+    * [Memory management](#memory-management)
+    * [Other C++ APIs](#other-c++-apis)
   * [Command line usage](#command-line-usage)
+  * [Examples](#examples)
   * [Attributions](#attributions)
 
 Installation
@@ -76,7 +78,7 @@ main motivations behind SeqLib is that all access to sequencing reads, BWA, etc 
 completely avoid ``malloc`` and ``free``. In SeqLib all the mallocs/frees are handled automatically in the constructors and
 destructors.
 
-Note about BamTools, Gamgee and SeqAn
+Other C++ APIs
 ------------------------------
 There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, the [Gamgee][gam] 
 project from the Broad Institute, and the [SeqAn][seqan] library from Freie Universitat Berlin. These projects 
@@ -97,7 +99,16 @@ Command Line Usage
 ------------------
 ```bash
 ## BFC correction (input mode -m is b (BAM/SAM/CRAM), output mode -w is SAM stream
-samtools view $na1 -h 1:1,000,000-1,002,000 | bin/seqtools bfc -m b -w s | samtools sort - -m 4g -o corrected.bam
+samtools view $na1 -h 1:1,000,000-1,002,000 | seqtools bfc - -G $REF | samtools sort - -m 4g -o corrected.bam
+
+## Without a pipe, write to BAM
+seqtools bfc in.bam -G $REF -b > corrected.bam
+
+## Skip realignment, send to fasta
+seqtools bfc in.bam -f > corrected.fasta
+
+## Input as fasta, send to aligned BAM
+seqtools bfc -F in.fasta -G $REG -b > corrected.bam
 ```
 
 Examples

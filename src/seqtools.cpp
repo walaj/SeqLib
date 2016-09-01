@@ -25,12 +25,12 @@ static const char *BFC_USAGE_MESSAGE =
 "Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
 "Usage: seqtools bfc [options]\n\n"
 "Commands:\n"
-  //"  --input,     -i        Input FASTA, BAM, CRAM, SAM. If not specified, reads from stdin\n"
-  //"  --imode,     -m        Input mode. f: FASTA  b: BAM/CRAM/SAM  <none>: stdin (sam/bam stream)\n"
-  //"  --omode,     -w        Output stream mode. f: FASTA  b: BAM  s: SAM   <none>: stdin (sam/bam stream)\n"
-"  --fasta,     -f        Output stream is a fasta (no realignment)"
-"  --bam,       -b,       Output stream is BAM (not SAM)"
-"  --reference, -G        Reference genome if using BWA-MEM realignment\n"
+"  --verbose,   -v        Set verbose output\n"
+"  --fasta,     -f        Output stream should be a FASTA (no realignment)\n"
+"  --bam,       -b        Output stream should be a BAM (not SAM)\n"
+"  --cram,      -C        Output stream should be a CRAM (not SAM)\n"
+"  --infasta,   -F <file> Input a FASTA insted of BAM/SAM/CRAM stream\n"
+"  --reference, -G <file> Reference genome if using BWA-MEM realignment\n"
 "\nReport bugs to jwala@broadinstitute.org \n\n";
 
 void runbfc(int argc, char** argv);
@@ -38,18 +38,21 @@ void parseBfcOptions(int argc, char** argv);
 
 namespace opt {
 
+  static bool verbose = false;
+  static char mode = 's';
   static std::string input;
   static std::string reference = "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta";
-  static char inputmode = 'f';
-  static char outputmode = 's';
+  static std::string fasta; // input is a fasta
 }
 
-static const char* shortopts = "hi:m:w:G:";
+static const char* shortopts = "hbfvCG:F:";
 static const struct option longopts[] = {
   { "help",                    no_argument, NULL, 'h' },
-  { "input",                   required_argument, NULL, 'i' },
-  { "imode",                   required_argument, NULL, 'm' },
-  { "omode",                   required_argument, NULL, 'w' },
+  { "verbose",                 no_argument, NULL, 'v' },
+  { "bam",                     no_argument, NULL, 'b' },
+  { "cram",                    no_argument, NULL, 'C' },
+  { "fasta",                   no_argument, NULL, 'f' },
+  { "infasta",                 required_argument, NULL, 'F' },
   { "reference",               required_argument, NULL, 'G' },
   { NULL, 0, NULL, 0 }
 };
@@ -82,38 +85,44 @@ void runbfc(int argc, char** argv) {
 
   SeqLib::BFC b;
 
-  if (opt::inputmode == 'f') {
+  // is this a fasta file
+  
+  if (!opt::fasta.empty()) {
     // read in a fasta file
-    SeqLib::FastqReader f(opt::input);
+    SeqLib::FastqReader f(opt::fasta);
     
     std::string qn, seq;
     while (f.GetNextSequence(qn, seq)) {
       std::string e;
       assert(b.AddSequence(seq.c_str(), e.c_str(), qn.c_str()));
     }
-  } else if (opt::inputmode == '-' || opt::inputmode == 'b') {
+  } else { //if (opt::mode == 'b' || opt::mode == 's' || opt::mode == 'C') {
     SeqLib::BamReader br;
-    br.Open(opt::input.empty() ? "-" : opt::input);
+    br.Open(opt::input == "-" ? "-" : opt::input);
     SeqLib::BamRecord rec;
     while(br.GetNextRecord(rec)) {
-      b.AddSequence(rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
+      b.AddSequence(rec); //rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
     }
-  } else {
-    std::cerr << "Input mode: " << opt::inputmode << " not recognized " << std::endl;
+  } 
+
+  if (!b.Train()) {
+    std::cerr << "Training failed on " << b.NumSequences() << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  if (!b.ErrorCorrect()) {
+    std::cerr << "Correction failed on " << b.NumSequences() << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  assert(b.Train());
-  assert(b.ErrorCorrect());
-
   SeqLib::UnalignedSequenceVector u;
   b.GetSequences(u);
-  std::cerr << "nseqs: " << u.size() 
-	    << " kcov: " << b.GetKCov() 
-	    << " kmer " << b.GetKMer() << std::endl;
-
+  if (opt::verbose)
+    std::cerr << "nseqs: " << u.size() 
+	      << " kcov: " << b.GetKCov() 
+	      << " kmer: " << b.GetKMer() << std::endl;
   
-  if (opt::outputmode == 'f') {
+  
+  if (opt::mode == 'f') {
     for (SeqLib::UnalignedSequenceVector::const_iterator i = u.begin();
 	 i != u.end(); ++i) {
       std::cout << ">" << i->Name << std::endl << i->Seq << std::endl;
@@ -122,12 +131,16 @@ void runbfc(int argc, char** argv) {
   } 
 
   SeqLib::BamWriter bw;
-  if (opt::outputmode == 'b')
+  if (opt::mode == 'b')
     bw = SeqLib::BamWriter(SeqLib::BAM);
-  else if (opt::outputmode == 's')
+  else if (opt::mode == 's')
     bw = SeqLib::BamWriter(SeqLib::SAM);
+  else if (opt::mode == 'C') {
+    bw = SeqLib::BamWriter(SeqLib::CRAM);
+    bw.SetCramReference(opt::reference);
+  }
   else {
-    std::cerr << "Unrecognized output stream mode " << opt::outputmode << std::endl;
+    std::cerr << "Unrecognized output stream mode " << opt::mode << std::endl;
     exit(EXIT_FAILURE);
   }
   
@@ -151,7 +164,8 @@ void runbfc(int argc, char** argv) {
     bwa.AlignSequence(i->Seq, i->Name, brv, false, frac, 10);
     for (SeqLib::BamRecordVector::iterator r = brv.begin();
 	 r != brv.end(); ++r) {
-      r->SetQualities(i->Qual);
+      if (!i->Qual.empty())
+	r->SetQualities(i->Qual, 33);
       bw.WriteRecord(*r);
     }
   }
@@ -164,18 +178,23 @@ void parseBfcOptions(int argc, char** argv) {
   bool die = false;
   bool help = false;
 
+  // get the first argument as input
+  if (argc > 1)
+    opt::input = std::string(argv[1]);
+  
   for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
     std::istringstream arg(optarg != NULL ? optarg : "");
     switch (c) {
-    case 'i': arg >> opt::input; break;
-    case 'm': arg >> opt::inputmode; break;
-    case 'w': arg >> opt::outputmode; break;
+    case 'f': opt::mode = 'f'; break;
+    case 'F': arg >> opt::fasta; break;
+    case 'b': opt::mode = 'b'; break;
+    case 'C': opt::mode = 'C'; break;
     case 'G': arg >> opt::reference; break;
     default: die= true; 
     }
   }
 
-  if (die || help) {
+  if (die || help || (opt::input.empty() && opt::fasta.empty())) {
       std::cerr << "\n" << BFC_USAGE_MESSAGE;
       if (die)
 	exit(EXIT_FAILURE);

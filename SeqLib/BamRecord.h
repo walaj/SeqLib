@@ -282,7 +282,6 @@ class BamRecord {
     assert(false);
   }
   
-
   /** BamRecord is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
@@ -433,7 +432,7 @@ class BamRecord {
   void SetQname(const std::string& n);
 
   //Set the quality scores 
-  void SetQualities(const std::string& n);
+  void SetQualities(const std::string& n, int offset);
 
   /** Set the sequence name */
   void SetSequence(const std::string& seq);

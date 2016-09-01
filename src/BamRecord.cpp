@@ -295,14 +295,14 @@ namespace SeqLib {
     b->m_data = b->l_data;
   }
 
-  void BamRecord::SetQualities(const std::string& n) {
+  void BamRecord::SetQualities(const std::string& n, int offset) {
 
     if (n.length() != b->core.l_qseq)
       throw std::invalid_argument("New quality score should be same as seq length");
 
     char * q = strdup(n.data());
     for (size_t i = 0; i < n.length(); ++i)
-      q[i] -= 33;
+      q[i] -= offset;
     memcpy(bam_get_qual(b), q, n.length()); // dont copy /0 terminator
     free(q);
 
