@@ -9,6 +9,7 @@
 #include "SeqLib/BamReader.h"
 #include "SeqLib/BamWriter.h"
 #include "SeqLib/BWAWrapper.h"
+#include "SeqLib/FermiAssembler.h"
 
 #define AUTHOR "Jeremiah Wala <jwala@broadinstitute.org>"
 
@@ -17,7 +18,8 @@ static const char *SEQTOOLS_USAGE_MESSAGE =
 "Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
 "Usage: seqtools <command> [options]\n\n"
 "Commands:\n"
-"           bfc       \n"
+"           bfc       Error correction from a BAM or fasta, direct to re-aligned BAM\n"
+"           fml       FermiKit assembly (with error correction), direct to re-aligned BAM\n" 
 "\nReport bugs to jwala@broadinstitute.org \n\n";
 
 static const char *BFC_USAGE_MESSAGE =
@@ -33,8 +35,24 @@ static const char *BFC_USAGE_MESSAGE =
 "  --reference, -G <file> Reference genome if using BWA-MEM realignment\n"
 "\nReport bugs to jwala@broadinstitute.org \n\n";
 
+static const char *FML_USAGE_MESSAGE =
+"Program: seqtools fml \n"
+"Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
+"Usage: seqtools fml [options]\n\n"
+"Description: Extract sequences and assemble and realign contigs\n"
+"Commands:\n"
+"  --verbose,   -v        Set verbose output\n"
+"  --fasta,     -f        Output stream should be a FASTA (no realignment)\n"
+"  --bam,       -b        Output stream should be a BAM (not SAM)\n"
+"  --cram,      -C        Output stream should be a CRAM (not SAM)\n"
+"  --infasta,   -F <file> Input a FASTA insted of BAM/SAM/CRAM stream\n"
+"  --reference, -G <file> Reference genome if using BWA-MEM realignment\n"
+"\nReport bugs to jwala@broadinstitute.org \n\n";
+
 void runbfc(int argc, char** argv);
+void runfml(int argc, char** argv);
 void parseBfcOptions(int argc, char** argv);
+void parseFmlOptions(int argc, char** argv);
 
 namespace opt {
 
@@ -69,6 +87,8 @@ int main(int argc, char** argv) {
       return 0;
     } else if (command == "bfc") {
       runbfc(argc -1, argv + 1);
+    } else if (command == "fml") {
+      runfml(argc -1, argv + 1);
     } else {
       std::cerr << SEQTOOLS_USAGE_MESSAGE;
       return 0;
@@ -79,14 +99,96 @@ int main(int argc, char** argv) {
 
 }
 
+void runfml(int argc, char** argv) {
+
+  parseFmlOptions(argc, argv);
+  
+  SeqLib::FermiAssembler fml;
+
+  if (!opt::fasta.empty()) {
+    SeqLib::FastqReader f(opt::fasta);
+
+    SeqLib::UnalignedSequenceVector usv;
+    std::string qn, seq;
+    while (f.GetNextSequence(qn, seq)) {
+      std::string e;
+      usv.push_back({qn, seq, std::string()});
+    }
+
+    fml.AddReads(usv);
+    
+  } else {
+
+    SeqLib::BamReader br;
+    br.Open(opt::input == "-" ? "-" : opt::input);
+    SeqLib::BamRecord rec;
+    SeqLib::BamRecordVector brv;
+    while(br.GetNextRecord(rec)) {
+      brv.push_back(rec); //rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
+    }
+    fml.AddReads(brv);
+
+  }
+
+  fml.CorrectReads();
+  fml.PerformAssembly();
+
+  // retrieve the reads
+  std::vector<std::string> contigs = fml.GetContigs();
+
+  size_t count = 0;
+  if (opt::mode == 'f') {
+    for (const auto& i : contigs)
+      std::cout << ">contig" << std::to_string(++count) << std::endl << i << std::endl;
+    return;
+  }
+
+  SeqLib::BamWriter bw;
+  if (opt::mode == 'b')
+    bw = SeqLib::BamWriter(SeqLib::BAM);
+  else if (opt::mode == 's')
+    bw = SeqLib::BamWriter(SeqLib::SAM);
+  else if (opt::mode == 'C') {
+    bw = SeqLib::BamWriter(SeqLib::CRAM);
+    bw.SetCramReference(opt::reference);
+  }
+  else {
+    std::cerr << "Unrecognized output stream mode " << opt::mode << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  
+  bw.Open("-");
+  
+  SeqLib::BWAWrapper bwa;
+  if (!bwa.LoadIndex(opt::reference)) {
+    std::cerr << "Failed to load index for BWA-MEM from: " << opt::reference << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  
+  bw.SetHeader(bwa.HeaderFromIndex());
+  bw.WriteHeader();
+  
+  // run through and read
+  for (std::vector<std::string>::const_iterator i = contigs.begin(); i != contigs.end(); ++i) {
+    SeqLib::BamRecordVector brv;
+    bool hardclip = false;
+    double frac = 0.9;
+    int max_secondary = 10;
+    bwa.AlignSequence(*i, "contig" + std::to_string(++count), brv, false, frac, 10);
+    for (SeqLib::BamRecordVector::iterator r = brv.begin();
+	 r != brv.end(); ++r) {
+      bw.WriteRecord(*r);
+    }
+  }
+  
+}
+
 void runbfc(int argc, char** argv) {
 
   parseBfcOptions(argc, argv);
 
   SeqLib::BFC b;
 
-  // is this a fasta file
-  
   if (!opt::fasta.empty()) {
     // read in a fasta file
     SeqLib::FastqReader f(opt::fasta);
@@ -94,7 +196,10 @@ void runbfc(int argc, char** argv) {
     std::string qn, seq;
     while (f.GetNextSequence(qn, seq)) {
       std::string e;
-      assert(b.AddSequence(seq.c_str(), e.c_str(), qn.c_str()));
+      if (!b.AddSequence(seq.c_str(), e.c_str(), qn.c_str())) {
+	std::cerr << "Error adding sequence from fasta: " << seq << std::endl;
+	exit(EXIT_FAILURE);
+      }
     }
   } else { //if (opt::mode == 'b' || opt::mode == 's' || opt::mode == 'C') {
     SeqLib::BamReader br;
@@ -196,6 +301,37 @@ void parseBfcOptions(int argc, char** argv) {
 
   if (die || help || (opt::input.empty() && opt::fasta.empty())) {
       std::cerr << "\n" << BFC_USAGE_MESSAGE;
+      if (die)
+	exit(EXIT_FAILURE);
+      else 
+	exit(EXIT_SUCCESS);	
+    }
+}
+
+// parse the command line options
+void parseFmlOptions(int argc, char** argv) {
+
+  bool die = false;
+  bool help = false;
+
+  // get the first argument as input
+  if (argc > 1)
+    opt::input = std::string(argv[1]);
+  
+  for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
+    std::istringstream arg(optarg != NULL ? optarg : "");
+    switch (c) {
+    case 'f': opt::mode = 'f'; break;
+    case 'F': arg >> opt::fasta; break;
+    case 'b': opt::mode = 'b'; break;
+    case 'C': opt::mode = 'C'; break;
+    case 'G': arg >> opt::reference; break;
+    default: die= true; 
+    }
+  }
+
+  if (die || help || (opt::input.empty() && opt::fasta.empty())) {
+      std::cerr << "\n" << FML_USAGE_MESSAGE;
       if (die)
 	exit(EXIT_FAILURE);
       else 

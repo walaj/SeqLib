@@ -99,7 +99,7 @@ Command Line Usage
 ------------------
 ```bash
 ## BFC correction (input mode -m is b (BAM/SAM/CRAM), output mode -w is SAM stream
-samtools view $na1 -h 1:1,000,000-1,002,000 | seqtools bfc - -G $REF | samtools sort - -m 4g -o corrected.bam
+samtools view in.bam -h 1:1,000,000-1,002,000 | seqtools bfc - -G $REF | samtools sort - -m 4g -o corrected.bam
 
 ## Without a pipe, write to BAM
 seqtools bfc in.bam -G $REF -b > corrected.bam
@@ -109,6 +109,11 @@ seqtools bfc in.bam -f > corrected.fasta
 
 ## Input as fasta, send to aligned BAM
 seqtools bfc -F in.fasta -G $REG -b > corrected.bam
+
+
+##### ASSEMBLY (same patterns as above)
+samtools view in.bam -h 1:1,000,000-1,002,000 | seqtools fml - -G $REF | samtools sort - -m 4g -o assembled.bam
+
 ```
 
 Examples
