@@ -5,8 +5,8 @@
 #include <string>
 #include <cstdlib>
 #include <list>
-#include <unordered_map>
-#include <memory>
+#include <tr1/unordered_map>
+#include <tr1/memory>
 
 //#ifdef BOOST_VERSION
 //#include "boost/icl/interval_set.hpp"
@@ -24,10 +24,12 @@ namespace SeqLib {
 
 /** Class to store vector of intervals on the genome */
 typedef TInterval<int32_t> GenomicInterval;
-typedef std::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
+typedef std::tr1::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
 typedef TIntervalTree<int32_t> GenomicIntervalTree;
-typedef std::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
+typedef std::tr1::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
 typedef std::vector<GenomicInterval> GenomicIntervalVector;
+
+typedef std::tr1::shared_ptr<GenomicIntervalTreeMap> SPGITM;
 
   /** @brief Template class to store / query a collection of genomic intervals
    *
@@ -39,6 +41,8 @@ template<typename T=GenomicRegion>
 class GenomicRegionCollection {
 
  public:
+
+ typedef std::tr1::shared_ptr<std::vector<T> > SPVT;
 
   /** Construct an empty GenomicRegionCollection 
    */
@@ -251,13 +255,13 @@ s  */
  private:
  
  // always construct this object any time m_grv is modifed
- std::shared_ptr<GenomicIntervalTreeMap> m_tree;
+ std::tr1::shared_ptr<GenomicIntervalTreeMap> m_tree;
  
  // hold the genomic regions
- std::shared_ptr<std::vector<T>> m_grv; 
+ SPVT m_grv; 
  
  // index for current GenomicRegion
- size_t idx = 0;
+ size_t idx;
 
  // open the memory
  void __allocate_grc();

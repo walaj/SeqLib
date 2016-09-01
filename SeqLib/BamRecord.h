@@ -1,12 +1,15 @@
 #ifndef SEQLIB_BAM_RECORD_H__
 #define SEQLIB_BAM_RECORD_H__
 
-#include <cstdint>
+#include <stdint.h>
+//#include <cstdint> //+11
 #include <vector>
 #include <iostream>
-#include <memory>
+//#include <memory>
+#include <tr1/memory>
 #include <sstream>
-#include <unordered_map>
+//#include <unordered_map> +11
+#include <tr1/unordered_map>
 #include <cassert>
 #include <algorithm>
 
@@ -46,7 +49,7 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
 namespace SeqLib {
 
-enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
+typedef std::tr1::shared_ptr<bam1_t> SPB1T;
 
 /** Basic container for a single cigar operation
  *
@@ -139,26 +142,29 @@ class CigarField {
    /** Return the sum of all of the lengths for all kinds */
    inline int TotalLength() const {
      int t = 0;
-     for (auto& c : m_data)
-       t += c.Length();
+     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
+       //for (auto& c : m_data)
+       t += c->Length();
      return t;
    }
 
    /** Return the number of query-consumed bases */
    inline int NumQueryConsumed() const {
      int out = 0;
-     for (auto& c : m_data)
-       if (c.ConsumesQuery())
-	 out += c.Length();
+     //     for (auto& c : m_data)
+     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
+       if (c->ConsumesQuery())
+	 out += c->Length();
      return out;
    }
 
    /** Return the number of reference-consumed bases */
    inline int NumReferenceConsumed() const {
      int out = 0;
-     for (auto& c : m_data)
-       if (c.ConsumesReference())
-	 out += c.Length();
+     //    for (auto& c : m_data)
+     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
+       if (c->ConsumesReference())
+	 out += c->Length();
      return out;
    }
 
@@ -184,7 +190,7 @@ class CigarField {
  };
 
  //typedef std::vector<CigarField> Cigar;
-typedef std::unordered_map<std::string, size_t> CigarMap;
+ typedef std::tr1::unordered_map<std::string, size_t> CigarMap;
 
  Cigar cigarFromString(const std::string& cig);
 
@@ -684,32 +690,15 @@ class BamRecord {
     return cig.str();
   }
   
-  /** Retrieve the human readable chromosome name. 
-   * 
-   * Note that this requires that the header not be empty. If
-   * it is empty, assumes this ia chr1 based reference
-   * @note This will be deprecated
-   */
-  inline std::string ChrName(bam_hdr_t * h) const {
-
-    // if we have the header, convert
-    if (h) {
-      if (b->core.tid < h->n_targets)
-	return std::string(h->target_name[b->core.tid]);
-      else
-	return "CHR_ERROR";
-    }
-
-    // no header, assume zero based
-    return std::to_string(b->core.tid + 1);
-    
-  }
-
   /** Return a human readable chromosome name assuming chr is indexed
    * from 0 (eg id 0 return "1")
    */
   inline std::string ChrName() const {
-    return std::to_string(b->core.tid + 1);
+    std::stringstream ss;
+    ss << (b->core.tid + 1);
+
+    return ss.str();
+    //return std::to_string(b->core.tid + 1); //c++11
   }
 
   /** Retrieve the human readable chromosome name. 
@@ -720,30 +709,43 @@ class BamRecord {
    * @return Empty string if chr id < 0, otherwise chromosome name from dictionary.
    */
   inline std::string ChrName(const SeqLib::BamHeader& h) const {
-
     if (b->core.tid < 0)
       return std::string();
+
+    if (h.isEmpty())
+      return h.IDtoName(b->core.tid);
+
+    // c++98    
+    std::stringstream ss;
+    ss << b->core.tid;
     
-    return h.IDtoName(b->core.tid);
     // no header, assume zero based
-    return std::to_string(b->core.tid + 1);
+    return ss.str(); //std::to_string(b->core.tid + 1);
     
   }
 
   /** Return a short description (chr:pos) of this read */
-  inline std::string Brief(bam_hdr_t * h = nullptr) const {
-    if (!h)
-      return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");
-    else
-      return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");      
+  inline std::string Brief() const {
+    //if (!h)
+    // c++11
+    //  return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");
+    // c++98
+    std::stringstream ss;
+    ss << (b->core.tid + 1) << ":" << AddCommas(b->core.pos) << "(" << ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") << ")";
+    return ss.str();
+    //else
+    // return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");      
   }
 
   /** Return a short description (chr:pos) of this read's mate */
-  inline std::string BriefMate(bam_hdr_t * h = nullptr) const {
-    if (!h)
-      return(std::to_string(b->core.mtid + 1) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");
-    else
-      return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
+  inline std::string BriefMate() const {
+    //if (!h)
+    // c++11
+    // return(std::to_string(b->core.mtid + 1) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");
+    std::stringstream ss;
+    ss << (b->core.mtid + 1) << ":" << AddCommas(b->core.mpos) << "(" << ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") << ")";
+    //else
+    //  return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
   }
 
   /** Strip a particular alignment tag 
@@ -771,7 +773,7 @@ class BamRecord {
   
   private:
   
-  std::shared_ptr<bam1_t> b; // need to move this to private  
+  SPB1T b; // bam1_t shared pointer
 
 };
 

@@ -5,9 +5,9 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <climits>
-#include <memory>
+#include <tr1/memory>
+#include <tr1/unordered_set>
 
 #include "json/json.h"
 
@@ -22,6 +22,8 @@
 
 namespace SeqLib {
 
+  typedef std::tr1::unordered_set<std::string> StringSet;
+
   namespace Filter {
   /** Tool for using the Aho-Corasick method for substring queries of 
    * using large dictionaries 
@@ -30,7 +32,11 @@ namespace SeqLib {
   struct AhoCorasick {
     
     /** Allocate a new empty trie */
-    AhoCorasick() { aho_trie = std::shared_ptr<aho_corasick::trie>(new aho_corasick::trie()); } 
+    AhoCorasick() { 
+      aho_trie = std::tr1::shared_ptr<aho_corasick::trie>(new aho_corasick::trie()); 
+      inv = false;
+      count = 0;
+    } 
 
     /** Deallocate the trie */
     ~AhoCorasick() { } //std::cerr << " DESTORY " << aho_trie.get() << std::endl;} 
@@ -56,13 +62,13 @@ namespace SeqLib {
      */
     int QueryText(const std::string& t) const;
 
-    std::shared_ptr<aho_corasick::trie> aho_trie; ///< The trie for the Aho-Corasick search
+    std::tr1::shared_ptr<aho_corasick::trie> aho_trie; ///< The trie for the Aho-Corasick search
     
     std::string file; ///< Name of the file holding the motifs
 
-    bool inv = false; ///< Is this an inverted dictinary (ie exclude hits)
+    bool inv; ///< Is this an inverted dictinary (ie exclude hits)
     
-    int count = 0; ///< Number of motifs in dictionary
+    int count; ///< Number of motifs in dictionary
     
   };
 
@@ -203,6 +209,7 @@ class FlagRule {
     m_all_off_flag = 0;
     m_any_on_flag = 0;
     m_any_off_flag = 0;
+    every = false;
   }
   
   Flag dup; ///< Filter for duplicated flag 
@@ -233,7 +240,7 @@ class FlagRule {
 
 private:
 
-  bool every = true; // does this pass all flags? 
+  bool every; // does this pass all flags? 
   
   uint32_t m_all_on_flag;  // if read has all of these, keep
   uint32_t m_all_off_flag; // if read has all of these, fail
@@ -258,7 +265,7 @@ class AbstractRule {
  public:
 
   /** Create empty rule with default to accept all */
-  AbstractRule() { }
+ AbstractRule() : m_count(0), subsam_frac(1), subsam_seed(999) { }
 
   /** Destroy the filter */
   ~AbstractRule() {}
@@ -334,7 +341,7 @@ class AbstractRule {
   std::string read_group;
 
   // how many reads pass this rule?
-  size_t m_count = 0;
+  size_t m_count;
 
   // the aho-corasick trie
   AhoCorasick aho;
@@ -343,10 +350,10 @@ class AbstractRule {
   std::string id;
 
   // fraction reads to subsample
-  double subsam_frac = 1;
+  double subsam_frac;
 
   // data
-  uint32_t subsam_seed = 999; // random seed for subsampling
+  uint32_t subsam_seed; // random seed for subsampling
 
   void parseSubLine(const Json::Value& value);
 
@@ -367,7 +374,7 @@ class ReadFilter {
   public:
 
   /** Construct an empty filter that passes all reads */
-  ReadFilter();
+  ReadFilter() : excluder(false), m_applies_to_mate(false), m_count(0) {}
 
   /** Destroy the filter */
   ~ReadFilter();
@@ -409,7 +416,7 @@ class ReadFilter {
    * @note If this is a mate-linked region, then the read will overlap
    * if its mate overlaps as well.
    */
-  bool isReadOverlappingRegion(const BamRecord &r);
+  bool isReadOverlappingRegion(const BamRecord &r) const;
 
   /** Print basic information about this filter */
   friend std::ostream& operator<<(std::ostream& out, const ReadFilter &mr);
@@ -434,21 +441,17 @@ class ReadFilter {
 
   std::string id; // set a unique id for this filter
  
-  bool excluder = false; // this filter is such that if read passes, it gets excluded
+  bool excluder; // this filter is such that if read passes, it gets excluded
  
   std::string m_region_file;
-
-  int m_level = -1;
-
-  int pad = 0; // how much should we pad the region?
 
   std::vector<AbstractRule> m_abstract_rules; // hold all of the rules
 
   // rule applies to mate too
-  bool m_applies_to_mate = false;
+  bool m_applies_to_mate;
 
   // how many reads pass this MiniRule
-  size_t m_count = 0;
+  size_t m_count;
 
 };
 
@@ -466,7 +469,7 @@ class ReadFilterCollection {
   /** Construct an empty ReadFilterCollection 
    * that will pass all reads.
    */
-  ReadFilterCollection() {}
+ ReadFilterCollection() : m_count(0), m_count_seen(0) {}
 
   /** Create a new filter collection directly from a JSON 
    * @param script A JSON file or directly as JSON formatted string
@@ -529,15 +532,15 @@ class ReadFilterCollection {
   // the global rule that all other rules are inherited from
   AbstractRule rule_all;
 
-  size_t m_count = 0; // passed
-  size_t m_count_seen = 0; // tested
+  size_t m_count; // passed
+  size_t m_count_seen; // tested
 
   // store all of the individual filters
   std::vector<ReadFilter> m_regions;
 
   bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
 
-  bool __validate_json_value(const Json::Value value, const std::unordered_set<std::string>& valid_vals);
+  bool __validate_json_value(const Json::Value value);
 };
 
 }

@@ -5052,6 +5052,9 @@ _ACEOF
 fi
 
 
+# check for c++11
+AX_CXX_COMPILE_STDCXX_11(,optional)
+
 # Only fail on warnings when the --enable-development flag is passed into configure
 # Check whether --enable-development was given.
 if test "${enable_development+set}" = set; then
@@ -5063,7 +5066,7 @@ if test "$enable_development"; then
 fi
 
 # Set compiler flags.
-AM_CXXFLAGS="-g $fail_on_warning -Wno-unknown-pragmas -std=c++11"
+AM_CXXFLAGS="-g $fail_on_warning -Wno-unknown-pragmas"
 
 CXXFLAGS="$CXXFLAGS -O3"
 

@@ -20,6 +20,9 @@ AC_CHECK_HEADER([zlib.h])
 AC_SEARCH_LIBS([gzopen],[z],,[AC_MSG_ERROR([libz not found, please install zlib (http://www.zlib.net/)])])
 AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [clock_getttime found])], )
 
+# check for c++11
+#AX_CXX_COMPILE_STDCXX_11(,[optional])
+
 # Only fail on warnings when the --enable-development flag is passed into configure
 AC_ARG_ENABLE(development, AS_HELP_STRING([--enable-development],
 	[Turn on development options, like failing compilation on warnings]))
@@ -28,7 +31,7 @@ if test "$enable_development"; then
 fi
 
 # Set compiler flags.
-AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas -std=c++11")
+AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas")
 AC_SUBST(CXXFLAGS, "$CXXFLAGS -O3")
 AC_SUBST(CFLAGS, "$CFLAGS -O3")
 AC_SUBST(LDFLAGS, "$LDFLAGS")

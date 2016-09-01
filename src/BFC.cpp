@@ -219,15 +219,16 @@ namespace SeqLib {
     m_seqs = (fseq1_t*)malloc(v.size() * sizeof(fseq1_t));
     
     uint64_t size = 0;
-    for (auto& r : v) {
+    for (std::vector<char*>::const_iterator r = v.begin(); r != v.end(); ++r) {
+    //    for (auto& r : v) {
       fseq1_t *s;
       
       s = &m_seqs[n_seqs];
       
-      s->seq   = strdup(r);
-      s->qual  = nullptr; 
+      s->seq   = strdup(*r);
+      s->qual  = NULL; 
       
-      s->l_seq = strlen(r);
+      s->l_seq = strlen(*r);
       size += m_seqs[n_seqs++].l_seq;
     }
     return;
@@ -241,17 +242,18 @@ namespace SeqLib {
     m_seqs = (fseq1_t*)malloc(brv.size() * sizeof(fseq1_t));
     
     uint64_t size = 0;
-    for (auto& r : brv) {
-      m_names.push_back(strdup(r.Qname().c_str()));
+    for (BamRecordVector::const_iterator r = brv.begin(); r != brv.end(); ++r) {
+      //    for (auto& r : brv) {
+      m_names.push_back(strdup(r->Qname().c_str()));
 
       fseq1_t *s;
       
       s = &m_seqs[n_seqs];
       
-      s->seq   = strdup(r.Sequence().c_str());
-      s->qual  = strdup(r.Qualities().c_str());
+      s->seq   = strdup(r->Sequence().c_str());
+      s->qual  = strdup(r->Qualities().c_str());
       
-      s->l_seq = r.Sequence().length();
+      s->l_seq = r->Sequence().length();
       size += m_seqs[n_seqs++].l_seq;
     }
     return;
@@ -260,7 +262,7 @@ namespace SeqLib {
   void __free_char(char*& c) {
     if (c) {
       free (c);
-      c = nullptr;
+      c = NULL;
     }
   }
 

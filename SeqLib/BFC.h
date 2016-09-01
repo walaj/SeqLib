@@ -25,6 +25,16 @@ namespace SeqLib {
     /** Construct a new BFC engine */
     BFC() {
       bfc_opt_init(&bfc_opt);
+      ch = NULL;
+      kmer = 0;
+      flt_uniq = 0;
+      n_seqs = 0;
+      m_seqs = NULL;
+      kcov = 0;
+      tot_k = 0;
+      sum_k = 0;
+      tot_len = 0;
+      m_seqs_size = 0;
     }
 
     ~BFC() {
@@ -91,7 +101,7 @@ namespace SeqLib {
   private:
 
     // the amount of memory allocated
-    size_t m_seqs_size = 0;
+    size_t m_seqs_size;
 
     void learn_correct();
 
@@ -103,21 +113,21 @@ namespace SeqLib {
     // diff histogram of kmers??
     uint64_t hist_high[64];
 
-    uint64_t tot_len = 0;
+    uint64_t tot_len;
 
-    uint64_t sum_k = 0; // total valid kmer count (kmers above min_count) ? 
+    uint64_t sum_k; // total valid kmer count (kmers above min_count) ? 
 
     // total number of kmers?
-    uint64_t tot_k = 0;
+    uint64_t tot_k;
 
     //
-    float kcov = 0;
+    float kcov;
 
     // reads to correct in place
-    fseq1_t * m_seqs = 0;
+    fseq1_t * m_seqs;
 
     // number of sequeces
-    size_t n_seqs = 0;
+    size_t n_seqs;
 
     // fermi lite options
     fml_opt_t fml_opt;
@@ -135,15 +145,15 @@ namespace SeqLib {
     void correct_reads();
 
     // 0 turns off filter uniq
-    int flt_uniq = 0; // from fml_correct call
+    int flt_uniq; // from fml_correct call
     
     int l_pre;
 
     // 0 is auto learn
-    int kmer = 0;
+    int kmer;
 
     // holds data after learning how to correct
-    bfc_ch_t *ch = 0;
+    bfc_ch_t *ch;
 
     // holds data for actual error correction
     ec_step_t es;

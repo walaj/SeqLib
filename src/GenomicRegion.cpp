@@ -216,7 +216,7 @@ int32_t GenomicRegion::DistanceBetweenEnds(const GenomicRegion &gr) const {
 }
 
 
-void GenomicRegion::Random() {
+  /*void GenomicRegion::Random() {
   
   uint32_t big = rand() % SeqLib::genome_size_XY;
   //SeqLib::genRandomValue(big, SeqLib::genome_size_XY, seed);
@@ -234,7 +234,7 @@ void GenomicRegion::Random() {
   std::cerr << "Value of " << big << " outside of expected range."  << std::endl;
   assert(false);
   
-}
+  }*/
 
   GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, const SeqLib::BamHeader& hdr)
   {

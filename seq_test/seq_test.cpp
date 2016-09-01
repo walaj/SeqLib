@@ -959,13 +959,13 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
 
 }
 
-BOOST_AUTO_TEST_CASE( gr_random ) {
+//BOOST_AUTO_TEST_CASE( gr_random ) {
 
-  SeqLib::GenomicRegion gr;
-  gr.Random();
-  std::cerr << " RANDOM " << gr << std::endl;
+//  SeqLib::GenomicRegion gr;
+//  gr.Random();
+//  std::cerr << " RANDOM " << gr << std::endl;
 
-}
+//}
 
 BOOST_AUTO_TEST_CASE( bam_write ) {
 

@@ -7,6 +7,9 @@
 
 #include "htslib/khash.h"
 
+using std::tr1::unordered_map;
+using std::tr1::shared_ptr;
+
 namespace SeqLib {
 
   int BamHeader::GetSequenceLength(int id) const {
@@ -30,7 +33,7 @@ namespace SeqLib {
 
 BamHeader::BamHeader(const std::string& hdr)  {
 
-  h = std::shared_ptr<bam_hdr_t>(sam_hdr_read2(hdr), bam_hdr_delete()); 
+  h = shared_ptr<bam_hdr_t>(sam_hdr_read2(hdr), bam_hdr_delete()); 
 
   ConstructName2IDTable();
 
@@ -47,7 +50,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   BamHeader::BamHeader(const bam_hdr_t * hdr) {
 
-    h = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete());
+    h = shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete());
 
     ConstructName2IDTable();
 
@@ -57,7 +60,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
     // create the lookup table if not already made
     if (!n2i) {
-      n2i = std::shared_ptr<std::unordered_map<std::string, int>>(new std::unordered_map<std::string, int>());
+      n2i = shared_ptr<unordered_map<std::string, int> >(new unordered_map<std::string, int>());
       for (int i = 0; i < h->n_targets; ++i)
 	n2i->insert(std::pair<std::string, int>(std::string(h->target_name[i]), i));
     }
@@ -66,7 +69,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   int BamHeader::Name2ID(const std::string& name) const {
 
-    std::unordered_map<std::string, int>::const_iterator ff = n2i->find(name);
+    unordered_map<std::string, int>::const_iterator ff = n2i->find(name);
     if (ff != n2i->end())
       return ff->second;
     else

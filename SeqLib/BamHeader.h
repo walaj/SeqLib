@@ -7,9 +7,14 @@
 #include "htslib/htslib/kstring.h"
 
 #include <string>
-#include <memory>
+//#include <memory>
+#include <tr1/memory>
 #include <vector>
-#include <unordered_map>
+//#include <unordered_map>
+#include <tr1/unordered_map>
+
+using std::tr1::shared_ptr;
+using std::tr1::unordered_map;
 
 namespace SeqLib {
 
@@ -106,14 +111,14 @@ namespace SeqLib {
     // adapted from sam.c - bam_nam2id
     int bam_name2id_2(const bam_hdr_t *h, const char *ref) const;
 
-    std::shared_ptr<bam_hdr_t> h;
+    shared_ptr<bam_hdr_t> h;
 
     // make the name 2 id map (to be used by Name2ID)
     // replaces part of bam_name2id that makes the hash table
     void ConstructName2IDTable();
 
     // hash table for name to id
-    std::shared_ptr<std::unordered_map<std::string, int>> n2i;
+    shared_ptr<unordered_map<std::string, int> > n2i;
 
     // adapted from sam_hdr_read
     bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;

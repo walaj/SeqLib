@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include "htslib/htslib/khash.h"
-#include <unordered_set>
 
 //#define QNAME "D0EN0ACXX111207:7:2306:6903:136511"
 //#define QFLAG -1
@@ -28,7 +27,7 @@ namespace SeqLib {
   }
 
 // define what is a valid condition
-static const std::unordered_set<std::string> valid = 
+/*    static const StringSet valid = 
   { 
   "duplicate", "supplementary", "qcfail", "hardclip", "fwd_strand",
   "rev_strand", "mate_fwd_strand", "mate_rev_strand", "mapped",
@@ -38,23 +37,24 @@ static const std::unordered_set<std::string> valid =
   "ins","del",  "subsample", "rg"
 };
 
-  static const std::unordered_set<std::string> allowed_region_annots = 
+    static const StringSet allowed_region_annots = 
     { "region","pad", "matelink", "exclude", "rules"};
 
-  static const std::unordered_set<std::string> allowed_flag_annots = 
+    static const StringSet allowed_flag_annots = 
     {"duplicate", "supplementary", "qcfail", "hardclip", 
      "fwd_strand", "rev_strand", "mate_fwd_strand", "mate_rev_strand",
      "mapped", "mate_mapped", "ff", "fr", "rr", "rf", "ic"};
-
+*/
 bool ReadFilter::isValid(const BamRecord &r) {
 
   // empty default is pass
   if (!m_abstract_rules.size())
     return true;
 
-  for (auto& it : m_abstract_rules)
-    if (it.isValid(r)) {
-      ++it.m_count; //update this rule counter
+  for (std::vector<AbstractRule>::iterator it = m_abstract_rules.begin(); 
+       it != m_abstract_rules.end(); ++it) 
+    if (it->isValid(r)) {
+      ++it->m_count; //update this rule counter
       ++m_count;
        return true; // it is includable in at least one. 
     }
@@ -87,23 +87,34 @@ bool ReadFilter::isValid(const BamRecord &r) {
     
   }
 
+    bool ReadFilterCollection::__validate_json_value(const Json::Value value) {
 
-  bool ReadFilterCollection::__validate_json_value(const Json::Value value, const std::unordered_set<std::string>& valid_vals) {
+      /*static const StringSet valid_vals;
+      if (valid_vals.empty())
+	{ 
+	  "duplicate", "supplementary", "qcfail", "hardclip", "fwd_strand",
+	  "rev_strand", "mate_fwd_strand", "mate_rev_strand", "mapped",
+	  "mate_mapped", "isize","clip", "length","nm",
+	  "mapq", "all", "ff", "xp","fr","rr","rf",
+	  "ic", "discordant","motif","nbases","!motif","allflag", "!allflag", "anyflag", "!anyflag",
+	  "ins","del",  "subsample", "rg", "region","pad", "matelink", "exclude", "rules"
+	};
+      */
 
-    // verify that it has appropriate values
-    for (auto& i : value.getMemberNames()) {
-      if (!valid_vals.count(i)) {
-	std::cerr << "Invalid key value in JSON: " << i << std::endl;
-	return false;
-      }
+      // verify that it has appropriate values
+      /*for (auto& i : value.getMemberNames()) {
+	if (!valid_vals.count(i)) {
+	  std::cerr << "Invalid key value in JSON: " << i << std::endl;
+	  return false;
+	}
+	}*/
+
+      return true;
     }
-
-    return true;
-  }
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
 // contained in these rules
-bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
+bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
 
   // if this is a whole genome rule, it overlaps
   if (!m_grv.size()) 
@@ -136,17 +147,17 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
     bool is_valid = false;
     bool exclude_hit = false;
 
-  for (auto& it : m_regions) {
-
-    // only check read validity if it overlaps region
-    if (!it.isReadOverlappingRegion(r)) 
-      continue;
+    for (std::vector<ReadFilter>::iterator it = m_regions.begin(); it != m_regions.end(); ++it) {
+      
+      // only check read validity if it overlaps region
+      if (!it->isReadOverlappingRegion(r)) 
+	continue;
     
     // check the region with all its rules
-    if (it.isValid(r)) {
+      if (it->isValid(r)) {
      
       // if this is excluder region, exclude read
-      if (it.excluder)
+      if (it->excluder)
 	exclude_hit = true;
       
       // in case we do fall through, track that we passed here
@@ -171,7 +182,7 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
   // constructor to make a ReadFilterCollection from a rules file.
   // This will reduce each individual BED file and make the 
   // GenomicIntervalTreeMap
-  ReadFilterCollection::ReadFilterCollection(const std::string& script, const BamHeader& hdr) {
+  ReadFilterCollection::ReadFilterCollection(const std::string& script, const BamHeader& hdr) : m_count(0), m_count_seen(0) {
 
     // if is a file, read into a string
     std::ifstream iscript(script);
@@ -197,20 +208,6 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
       throw std::invalid_argument("ERROR: failed to parse JSON script");
     }
 
-    // meake sure it at least has a rule
-    /*std::stringstream buffer;
-    if (read_access_test(script)) {
-      std::ifstream t(script);
-      buffer << t.rdbuf();
-    } else {
-      buffer << script;
-    }
-    if (buffer.str().find("\"rules\"") == std::string::npos) {
-      std::cerr << " !!! JSON must be formated as {\"region\" : \{\"rules\" : [{...}]}}" << std::endl 
-		<< " where \"rules\" is a keyword " << std::endl;
-      exit(EXIT_FAILURE);
-      }*/
-    
     Json::Value null(Json::nullValue);
     
     int level = 1;
@@ -222,26 +219,22 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
       rule_all.parseJson(glob);
     
     // iterator over regions
-    for (auto& regions : root) {
+    for (Json::ValueConstIterator regions = root.begin(); regions != root.end(); ++regions) {
      
-      if (!__validate_json_value(regions, allowed_region_annots))
+      if (!__validate_json_value(*regions))
 	throw std::invalid_argument("JSON contains invalid keys, or otherwise failed to validate");
 
       ReadFilter mr;
       
-      // add global rules (if there are any)
-      //for (auto& a : all_rules)
-      // mr.m_abstract_rules.push_back(a);
-      
       // check if mate applies
-      mr.m_applies_to_mate = __convert_to_bool(regions, "matelink");
+      mr.m_applies_to_mate = __convert_to_bool(*regions, "matelink");
 
       // check for region padding
-      mr.pad = regions.get("pad", 0).asInt();
+      int pad = regions->get("pad", 0).asInt();
       
       // set the region
       std::string reg;
-      Json::Value v  = regions.get("region", null);
+      Json::Value v  = regions->get("region", null);
       if (v != null) {
 	reg = v.asString();
 	mr.id = mr.id + reg;
@@ -252,14 +245,14 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
 	mr.m_grv.clear(); // ensure it is whole-genome
       else {
 	GRC regr(reg, hdr);
-	regr.Pad(mr.pad);
+	regr.Pad(pad);
 	mr.setRegions(regr);
       }
 	// debug mr.setRegionFromFile(reg, hdr);
       
       // check if its excluder region
       mr.excluder = false; // default is no exclude
-      v = regions.get("exclude", null);
+      v = regions->get("exclude", null);
       if (v != null) {
 	mr.excluder = v.asBool();
 	if (mr.excluder)
@@ -267,19 +260,19 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
       }
       
       // set the rules
-      v = regions.get("rules", null);
+      v = regions->get("rules", null);
       if (!v.size()) {
 	//std::cerr << " !!!! RULES size is zero. !!!! " << std::endl;
 	//exit(EXIT_FAILURE);
       }
 
       // loop through the rules
-      for (auto& vv : v) {
-	if (vv != null) {
-	  if (!__validate_json_value(vv, valid))
+      for (Json::ValueIterator vv = v.begin(); vv != v.end(); ++vv) {
+	if (*vv != null) {
+	  if (!__validate_json_value(*vv))
 	    throw std::invalid_argument("Invalid argument in filter JSON");
 	  AbstractRule ar = rule_all; // always start with the global rule
-	  ar.parseJson(vv);
+	  ar.parseJson(*vv);
 	  // add the rule to the region
 	  mr.m_abstract_rules.push_back(ar);
 	}
@@ -290,7 +283,6 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
       if (!mr.m_abstract_rules.size())
 	mr.m_abstract_rules.push_back(rule_all);
       
-      mr.m_level = level++;
       mr.id = std::to_string(level);
 
       m_regions.push_back(mr);
@@ -300,8 +292,8 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
     // check that there is at least one non-excluder region. 
     // if not, give global includer
     bool has_includer = false;
-    for (auto& kk : m_regions)
-      if (!kk.excluder)
+    for (std::vector<ReadFilter>::const_iterator kk = m_regions.begin(); kk != m_regions.end(); ++kk) 
+      if (!kk->excluder)
 	has_includer = true;
     if (!has_includer) {
       ReadFilter mr;
@@ -329,14 +321,9 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) {
     
     out << "----------ReadFilterCollection-------------" << std::endl;
 
-    for (auto& it : mr.m_regions)
-      out << it;
+    for (std::vector<ReadFilter>::const_iterator it = mr.m_regions.begin(); it != mr.m_regions.end(); ++it) 
+      out << *it << std::endl;
     out << "------------------------------------------";
-    /*  std::cerr << "--- Rule counts " << std::endl;
-	for (auto& g : mr.m_regions)
-	for (auto& r : g.m_abstract_rules)
-	std::cerr << g.id << "\t" << g.m_count << "\t" << r.id << "\t" << r.m_count << std::endl;
-    */
     return out;
     
   }
@@ -348,7 +335,6 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
   out << (mr.excluder ? "--Exclude Region: " : "--Include Region: ") << file_print;
   if (mr.m_grv.size()) {
     //out << " --Size: " << AddCommas<int>(mr.m_width); 
-    out << " Pad: " << mr.pad;
     out << " Matelink: " << (mr.m_applies_to_mate ? "ON" : "OFF");
     if (mr.m_grv.size() == 1)
       out << " Region : " << mr.m_grv[0] << std::endl;
@@ -358,8 +344,8 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     out << std::endl;
   }
 
-  for (auto& it : mr.m_abstract_rules) 
-    out << it << std::endl;
+  for (std::vector<AbstractRule>::const_iterator it = mr.m_abstract_rules.begin(); it != mr.m_abstract_rules.end(); ++it) 
+    out << *it << std::endl;
   return out;
 }
 
@@ -455,9 +441,10 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     }
       
     // set the ID
-    for (auto& i : value.getMemberNames()) {
-      id += i + ";";
-    }
+    std::vector<std::string> mn = value.getMemberNames();
+    for (std::vector<std::string>::const_iterator i = mn.begin(); i != mn.end(); ++i)
+      id += *i + ";";
+
     if (id.length())
       id.pop_back();
 
@@ -879,26 +866,11 @@ GRC ReadFilterCollection::getAllRegions() const
 {
   GRC out;
 
-  for (auto& i : m_regions)
-    out.Concat(i.m_grv);
+  for (std::vector<ReadFilter>::const_iterator i = m_regions.begin(); i != m_regions.end(); ++i)
+    out.Concat(i->m_grv);
 
   return out;
 }
-
-    /*  std::string ReadFilterCollection::EmitCounts() const
-  {
-    std::stringstream of;
-    char sep = '\t';
-    of << "total_seen_count" << sep << "total_passed_count" << sep << "region" << sep << "region_passed_count" << sep << "rule" << sep << "rule_passed_count" << std::endl;
-    for (auto& g : m_regions)
-      for (auto& r : g.m_abstract_rules)
-	of << m_count_seen << sep << m_count << sep << g.id << sep << g.m_count << sep << r.id << sep << r.m_count << std::endl;
-
-    return of.str();
-    
-    }*/
-
-  ReadFilter::ReadFilter() {}
     
     int AhoCorasick::QueryText(const std::string& t) const {
       auto matches = aho_trie->parse_text(t);
