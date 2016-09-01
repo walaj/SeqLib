@@ -25,9 +25,11 @@ static const char *BFC_USAGE_MESSAGE =
 "Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
 "Usage: seqtools bfc [options]\n\n"
 "Commands:\n"
-"  --input,     -i        Input FASTA, BAM, CRAM, SAM. If not specified, reads from stdin\n"
-"  --imode,     -m        Input mode. f: FASTA  b: BAM/CRAM/SAM  <none>: stdin (sam/bam stream)\n"
-"  --omode,     -w        Output stream mode. f: FASTA  b: BAM  s: SAM   <none>: stdin (sam/bam stream)\n"
+  //"  --input,     -i        Input FASTA, BAM, CRAM, SAM. If not specified, reads from stdin\n"
+  //"  --imode,     -m        Input mode. f: FASTA  b: BAM/CRAM/SAM  <none>: stdin (sam/bam stream)\n"
+  //"  --omode,     -w        Output stream mode. f: FASTA  b: BAM  s: SAM   <none>: stdin (sam/bam stream)\n"
+"  --fasta,     -f        Output stream is a fasta (no realignment)"
+"  --bam,       -b,       Output stream is BAM (not SAM)"
 "  --reference, -G        Reference genome if using BWA-MEM realignment\n"
 "\nReport bugs to jwala@broadinstitute.org \n\n";
 

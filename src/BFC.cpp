@@ -254,11 +254,12 @@ namespace SeqLib {
       fseq1_t *s;
       
       s = &m_seqs[n_seqs];
-      
-      s->seq   = strdup(r->Sequence().c_str());
+
+      std::string qs = r->QualitySequence();
+      s->seq   = strdup(qs.c_str());
       s->qual  = strdup(r->Qualities().c_str());
       
-      s->l_seq = r->Sequence().length();
+      s->l_seq = qs.length();
       size += m_seqs[n_seqs++].l_seq;
     }
     return;
