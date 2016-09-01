@@ -65,18 +65,23 @@ namespace SeqLib {
 
     if (!m_seqs)
       return false;
-    
-    // make sure seq and qual are even valid
-    if (seq && qual) 
+
+    // make sure seq and qual are even valid (if qual provided)
+    if (strlen(qual) && seq && qual) 
       if (strlen(seq) != strlen(qual))
 	return false;
-    
+    if (!strlen(seq))
+      return false;
+
     fseq1_t *s;
     
     s = &m_seqs[n_seqs];
     
     s->seq   = strdup(seq);
-    s->qual  = strdup(qual); 
+    s->qual = 0;
+    if (strlen(qual))
+      s->qual  = strdup(qual); 
+    
     s->l_seq = strlen(seq);
     n_seqs++;
     
@@ -345,14 +350,17 @@ namespace SeqLib {
     // make the histogram?
     // es.ch is unchanged (const)
     int mode = bfc_ch_hist(es.ch, hist, hist_high);
-    
+
+    for (int i = fml_opt.min_cnt; i < 256; ++i) 
+      sum_k += hist[i], tot_k += i * hist[i];    
+
 #ifdef DEBUG_BFC
+    std::cerr << " sum_k " << sum_k << " tot_k " << tot_k << std::endl;
     fprintf(stderr, "MODE: %d\n", mode);
-    for (int i = opt.min_cnt; i < 256; ++i) {
-      sum_k += hist[i], tot_k += i * hist[i];
+    for (int i = fml_opt.min_cnt; i < 256; ++i) {
       fprintf(stderr, "hist[%d]: %d\n",i,hist[i]);
     }
-    for (int i = opt.min_cnt; i < 64; ++i) {
+    for (int i = fml_opt.min_cnt; i < 64; ++i) {
       fprintf(stderr, "hist_high[%d]: %d\n",i,hist_high[i]);
     }
 #endif
