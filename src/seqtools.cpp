@@ -106,9 +106,9 @@ void runbfc(int argc, char** argv) {
 
   SeqLib::UnalignedSequenceVector u;
   b.GetSequences(u);
-  std::cerr << " U " << u.size() << std::endl;
-  std::cerr << " KCOV " << b.GetKCov() << std::endl;
-  std::cerr << " KMER " << b.GetKMer() << std::endl;
+  std::cerr << "nseqs: " << u.size() 
+	    << " kcov: " << b.GetKCov() 
+	    << " kmer " << b.GetKMer() << std::endl;
 
   
   if (opt::outputmode == 'f') {
@@ -149,6 +149,7 @@ void runbfc(int argc, char** argv) {
     bwa.AlignSequence(i->Seq, i->Name, brv, false, frac, 10);
     for (SeqLib::BamRecordVector::iterator r = brv.begin();
 	 r != brv.end(); ++r) {
+      r->SetQualities(i->Qual);
       bw.WriteRecord(*r);
     }
   }

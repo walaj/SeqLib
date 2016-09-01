@@ -433,7 +433,7 @@ class BamRecord {
   void SetQname(const std::string& n);
 
   //Set the quality scores 
-  //void SetQualities(const std::string& n);
+  void SetQualities(const std::string& n);
 
   /** Set the sequence name */
   void SetSequence(const std::string& seq);
