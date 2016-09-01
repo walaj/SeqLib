@@ -9,6 +9,16 @@ API Documentation
 -----------------
 [API Documentation][htmldoc]
 
+Table of contents
+=================
+
+  * [Installation](#gh-md-toc)
+  * [Integrating into build system](#integrating-into-build-system)
+  * [Description](#description)
+  * [Examples](#examples)
+  * [Command line usage](#command-line-usage)
+  * [Attributions](#attributions)
+
 Installation
 ------------
 
@@ -83,8 +93,15 @@ SeqLib is under active development, while Gamgee has been abandoned.
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools. Feature requests and comments are welcomed.
 
-Example usages
---------------
+Command Line Usage
+------------------
+```bash
+## BFC correction (input mode -m is b (BAM/SAM/CRAM), output mode -w is SAM stream
+samtools view $na1 -h 1:1,000,000-1,002,000 | bin/seqtools bfc -m b -w s | samtools sort - -m 4g -o corrected.bam
+```
+
+Examples
+--------
 ##### Targeted re-alignment of reads to a given region with BWA-MEM
 ```
 #include "SeqLib/RefGenome.h"

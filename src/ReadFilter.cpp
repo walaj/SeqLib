@@ -87,7 +87,7 @@ bool ReadFilter::isValid(const BamRecord &r) {
     
   }
 
-    bool ReadFilterCollection::__validate_json_value(const Json::Value value) {
+    //bool ReadFilterCollection::__validate_json_value(const Json::Value value) {
 
       /*static const StringSet valid_vals;
       if (valid_vals.empty())
@@ -109,8 +109,8 @@ bool ReadFilter::isValid(const BamRecord &r) {
 	}
 	}*/
 
-      return true;
-    }
+      //return true;
+    //}
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
 // contained in these rules
@@ -221,8 +221,8 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
     // iterator over regions
     for (Json::ValueConstIterator regions = root.begin(); regions != root.end(); ++regions) {
      
-      if (!__validate_json_value(*regions))
-	throw std::invalid_argument("JSON contains invalid keys, or otherwise failed to validate");
+      //if (!__validate_json_value(*regions))
+      //	throw std::invalid_argument("JSON contains invalid keys, or otherwise failed to validate");
 
       ReadFilter mr;
       
@@ -269,8 +269,8 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
       // loop through the rules
       for (Json::ValueIterator vv = v.begin(); vv != v.end(); ++vv) {
 	if (*vv != null) {
-	  if (!__validate_json_value(*vv))
-	    throw std::invalid_argument("Invalid argument in filter JSON");
+	  //if (!__validate_json_value(*vv))
+	  //throw std::invalid_argument("Invalid argument in filter JSON");
 	  AbstractRule ar = rule_all; // always start with the global rule
 	  ar.parseJson(*vv);
 	  // add the rule to the region

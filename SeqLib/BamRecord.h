@@ -432,6 +432,9 @@ class BamRecord {
   /** Set the query name */
   void SetQname(const std::string& n);
 
+  //Set the quality scores 
+  //void SetQualities(const std::string& n);
+
   /** Set the sequence name */
   void SetSequence(const std::string& seq);
 
@@ -744,6 +747,7 @@ class BamRecord {
     // return(std::to_string(b->core.mtid + 1) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");
     std::stringstream ss;
     ss << (b->core.mtid + 1) << ":" << AddCommas(b->core.mpos) << "(" << ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") << ")";
+    return ss.str();
     //else
     //  return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
   }

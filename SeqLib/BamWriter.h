@@ -72,7 +72,7 @@ class BamWriter  {
    * @return False if cannot write alignment
    * @exception Throws a runtime_error if cannot write alignment
    */
-  bool WriteRecord(BamRecord &r);
+  bool WriteRecord(const BamRecord &r);
 
   /** Explicitly set a reference genome to be used to decode CRAM file.
    * If no reference is specified, will automatically load from

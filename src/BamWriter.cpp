@@ -99,7 +99,7 @@ bool BamWriter::BuildIndex() const {
   }
   
 
-bool BamWriter::WriteRecord(BamRecord &r)
+bool BamWriter::WriteRecord(const BamRecord &r)
 {
   if (!fop) {
     //throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. Did you forget to open the Bam for writing (OpenWriteBam)?");

@@ -295,6 +295,36 @@ namespace SeqLib {
     b->m_data = b->l_data;
   }
 
+  /*  void BamRecord::SetQualities(const std::string& n) {
+
+    if (n.length() != b->l_qname)
+      throw std::invalid_argument("New quality score should be same as seq length");
+
+    // copy out the non-qualities data
+    size_t nonq_len = b->l_data - b->core.l_qname;
+    uint8_t* nonq = (uint8_t*)malloc(nonq_len);
+    memcpy(nonq, b->data + b->core.l_qname, nonq_len);
+
+    // clear the old data and alloc the new amount 
+    free(b->data);
+    b->data = (uint8_t*)calloc(nonq_len + n.length() + 1, 1);
+    
+    // add in the new qname
+    memcpy(b->data, (uint8_t*)n.c_str(), n.length() + 1); // +1 for \0
+
+    // update the sizes
+    b->l_data = b->l_data - b->core.l_qname + n.length() + 1;
+    b->core.l_qname = n.length() + 1;    
+    
+    // copy over the old data
+    memcpy(b->data + b->core.l_qname, nonq, nonq_len);
+    free(nonq);
+
+    // reset the max size
+    b->m_data = b->l_data;
+  }
+  */
+
   double BamRecord::MeanPhred() const {
 
     if (b->core.l_qseq <= 0)

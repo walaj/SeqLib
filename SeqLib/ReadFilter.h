@@ -540,7 +540,7 @@ class ReadFilterCollection {
 
   bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
 
-  bool __validate_json_value(const Json::Value value);
+  //bool __validate_json_value(const Json::Value value);
 };
 
 }
