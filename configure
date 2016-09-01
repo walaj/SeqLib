@@ -5053,7 +5053,7 @@ fi
 
 
 # check for c++11
-AX_CXX_COMPILE_STDCXX_11(,optional)
+#AX_CXX_COMPILE_STDCXX_11(,[optional])
 
 # Only fail on warnings when the --enable-development flag is passed into configure
 # Check whether --enable-development was given.
