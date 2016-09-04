@@ -29,7 +29,7 @@ Installation
 git clone --recursive https://github.com/jwalabroad/SeqLib.git
 cd SeqLib
 ./configure
-make ## for c++11 (req. for AhoCorasick), add: CXXFLAGS='-DHAVE_C11=1 -std=c++11'
+make ## for c++11 (req. for AhoCorasick), add: CXXFLAGS='-std=c++11'
 make install
 ```
  
@@ -46,10 +46,10 @@ SEQ=<path_to_seqlib_git_repos>
 C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
 ```
 
-And need to link the SeqLib static library, which contains libfml.a, libbwa.a and libhts.a
+And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 ```bash
 SEQ=<path_to_seqlib>
-LDADD="$LDADD -L$SEQ/bin/libseq.a"
+LDADD="$LDADD -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
 ```
 
 Description

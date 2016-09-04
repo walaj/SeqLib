@@ -13,6 +13,11 @@
 
 #include "SeqLib/SeqLibCommon.h"
 
+    
+#if __cplusplus > 199711L
+#define HAVE_C11 1
+#endif
+
 #ifdef HAVE_C11
   #include <memory>
   #include <unordered_set>

@@ -32,7 +32,7 @@ fi
 
 # Set compiler flags.
 AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas")
-AC_SUBST(CXXFLAGS, "$CXXFLAGS -O3")
+AC_SUBST(CXXFLAGS, "$CXXFLAGS")
 AC_SUBST(CFLAGS, "$CFLAGS -O3")
 AC_SUBST(LDFLAGS, "$LDFLAGS")
 

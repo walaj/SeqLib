@@ -5068,7 +5068,7 @@ fi
 # Set compiler flags.
 AM_CXXFLAGS="-g $fail_on_warning -Wno-unknown-pragmas"
 
-CXXFLAGS="$CXXFLAGS -O3"
+CXXFLAGS="$CXXFLAGS"
 
 CFLAGS="$CFLAGS -O3"
 
