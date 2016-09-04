@@ -29,11 +29,12 @@ Installation
 git clone --recursive https://github.com/jwalabroad/SeqLib.git
 cd SeqLib
 ./configure
-make ## for c++11 (req. for AhoCorasick), add: CXXFLAGS='-std=c++11'
+make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
 make install
 ```
  
-I have successfully compiled with GCC-4.5+ and Clang (with C++11 standard)
+I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.
+(OSX may require C++11 libs if ``tr1`` not present) 
 
 SeqLib is compatible with c++98 and later.
 
