@@ -4,8 +4,6 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-//#include <memory>
-#include <tr1/memory>
 
 namespace SeqLib {
 
@@ -55,20 +53,17 @@ public:
     typedef TIntervalTree<T,K> intervalTree;
 
     intervalVector intervals;
-intervalTree * left;
-intervalTree * right;
-//std::tr1::shared_ptr<intervalTree> left;
-//std::tr1::shared_ptr<intervalTree> right;
+    intervalTree * left;
+    intervalTree * right;
     K center;
 
-// jwala added destructor
-~TIntervalTree<T,K>() {
-  if (left)
-    delete left;
-  if (right)
-    delete right;
-    
- }
+    // jwala added destructor
+    ~TIntervalTree<T,K>() {
+      if (left)
+        delete left;
+      if (right)
+        delete right;
+     }
 
     TIntervalTree<T,K>(void)
         : left(NULL)
@@ -79,7 +74,6 @@ intervalTree * right;
 private:
   intervalTree* copyTree(const intervalTree& orig){
     return (new intervalTree(orig));
-    //return std::tr1::shared_ptr<intervalTree>(new intervalTree(orig));
 }
 public:
 

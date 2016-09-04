@@ -5,11 +5,7 @@
 //#include <cstdint> //+11
 #include <vector>
 #include <iostream>
-//#include <memory>
-#include <tr1/memory>
 #include <sstream>
-//#include <unordered_map> +11
-#include <tr1/unordered_map>
 #include <cassert>
 #include <algorithm>
 
@@ -22,6 +18,7 @@ extern "C" {
 
 }
 
+#include "SeqLib/SeqLibUtils.h"
 #include "SeqLib/GenomicRegion.h"
 #include "SeqLib/UnalignedSequence.h"
 
@@ -48,8 +45,6 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 #define UDORIENTATION 4
 
 namespace SeqLib {
-
-typedef std::tr1::shared_ptr<bam1_t> SPB1T;
 
 /** Basic container for a single cigar operation
  *
@@ -190,7 +185,7 @@ class CigarField {
  };
 
  //typedef std::vector<CigarField> Cigar;
- typedef std::tr1::unordered_map<std::string, size_t> CigarMap;
+ typedef SeqHashMap<std::string, size_t> CigarMap;
 
  Cigar cigarFromString(const std::string& cig);
 
@@ -776,7 +771,7 @@ class BamRecord {
   
   private:
   
-  SPB1T b; // bam1_t shared pointer
+  SeqPointer<bam1_t> b; // bam1_t shared pointer
 
 };
 

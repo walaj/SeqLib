@@ -98,7 +98,7 @@ namespace SeqLib {
 
   };
 
-  typedef std::tr1::unordered_map<std::string, _Bam> _BamMap;
+  typedef SeqHashMap<std::string, _Bam> _BamMap;
   
 /** Stream in reads from multiple BAM/SAM/CRAM or stdin */
 class BamReader {
@@ -171,7 +171,7 @@ class BamReader {
    * @param f Name of file to check
    */
   bool IsOpen(const std::string& f) const { 
-    std::tr1::unordered_map<std::string, _Bam>::const_iterator ff = m_bams.find(f);
+    SeqHashMap<std::string, _Bam>::const_iterator ff = m_bams.find(f);
     if (ff == m_bams.end())
       return false;
     return ff->second.fp != 0; 

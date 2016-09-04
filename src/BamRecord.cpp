@@ -34,11 +34,11 @@ namespace SeqLib {
   
   void BamRecord::init() {
     bam1_t* f = bam_init1();
-    b = SPB1T(f, free_delete());
+    b = SeqPointer<bam1_t>(f, free_delete());
   }
 
   void BamRecord::assign(bam1_t* a) { 
-    b = SPB1T(a, free_delete()); 
+    b = SeqPointer<bam1_t>(a, free_delete()); 
   }
 
   GenomicRegion BamRecord::asGenomicRegion() const {
