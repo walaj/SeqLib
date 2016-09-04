@@ -30,7 +30,7 @@ before_install:
 
 script: 
 - .travis.scripts/travis-install.sh
-- ./configure && make CXXFLAGS='-std=c++11'
+- ./configure && make 
 
 after_success: 
 - .travis.scripts/coveralls.sh

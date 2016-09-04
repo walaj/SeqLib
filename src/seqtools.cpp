@@ -51,8 +51,7 @@ static const char *FML_USAGE_MESSAGE =
 
 void runbfc(int argc, char** argv);
 void runfml(int argc, char** argv);
-void parseBfcOptions(int argc, char** argv);
-void parseFmlOptions(int argc, char** argv);
+void parseOptions(int argc, char** argv, const char* msg);
 
 namespace opt {
 
@@ -101,7 +100,7 @@ int main(int argc, char** argv) {
 
 void runfml(int argc, char** argv) {
 
-  parseFmlOptions(argc, argv);
+  parseOptions(argc, argv, FML_USAGE_MESSAGE);
   
   SeqLib::FermiAssembler fml;
 
@@ -112,7 +111,7 @@ void runfml(int argc, char** argv) {
     std::string qn, seq;
     while (f.GetNextSequence(qn, seq)) {
       std::string e;
-      usv.push_back({qn, seq, std::string()});
+      usv.push_back(SeqLib::UnalignedSequence(qn, seq, std::string()));
     }
 
     fml.AddReads(usv);
@@ -138,8 +137,8 @@ void runfml(int argc, char** argv) {
 
   size_t count = 0;
   if (opt::mode == 'f') {
-    for (const auto& i : contigs)
-      std::cout << ">contig" << std::to_string(++count) << std::endl << i << std::endl;
+    for (std::vector<std::string>::const_iterator i = contigs.begin(); i != contigs.end(); ++i)
+      std::cout << ">contig" << ++count << std::endl << *i << std::endl;
     return;
   }
 
@@ -169,12 +168,15 @@ void runfml(int argc, char** argv) {
   bw.WriteHeader();
   
   // run through and read
+  std::stringstream ss;
   for (std::vector<std::string>::const_iterator i = contigs.begin(); i != contigs.end(); ++i) {
     SeqLib::BamRecordVector brv;
     bool hardclip = false;
     double frac = 0.9;
     int max_secondary = 10;
-    bwa.AlignSequence(*i, "contig" + std::to_string(++count), brv, false, frac, 10);
+    ss << "contig" << ++count;
+    bwa.AlignSequence(*i, ss.str(), brv, false, frac, 10);
+    ss.str(std::string());
     for (SeqLib::BamRecordVector::iterator r = brv.begin();
 	 r != brv.end(); ++r) {
       bw.WriteRecord(*r);
@@ -185,7 +187,7 @@ void runfml(int argc, char** argv) {
 
 void runbfc(int argc, char** argv) {
 
-  parseBfcOptions(argc, argv);
+  parseOptions(argc, argv, BFC_USAGE_MESSAGE);
 
   SeqLib::BFC b;
 
@@ -278,7 +280,7 @@ void runbfc(int argc, char** argv) {
 }
 
 // parse the command line options
-void parseBfcOptions(int argc, char** argv) {
+void parseOptions(int argc, char** argv, const char* msg) {
 
   bool die = false;
   bool help = false;
@@ -300,42 +302,10 @@ void parseBfcOptions(int argc, char** argv) {
   }
 
   if (die || help || (opt::input.empty() && opt::fasta.empty())) {
-      std::cerr << "\n" << BFC_USAGE_MESSAGE;
+      std::cerr << "\n" << msg;
       if (die)
 	exit(EXIT_FAILURE);
       else 
 	exit(EXIT_SUCCESS);	
     }
 }
-
-// parse the command line options
-void parseFmlOptions(int argc, char** argv) {
-
-  bool die = false;
-  bool help = false;
-
-  // get the first argument as input
-  if (argc > 1)
-    opt::input = std::string(argv[1]);
-  
-  for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
-    std::istringstream arg(optarg != NULL ? optarg : "");
-    switch (c) {
-    case 'f': opt::mode = 'f'; break;
-    case 'F': arg >> opt::fasta; break;
-    case 'b': opt::mode = 'b'; break;
-    case 'C': opt::mode = 'C'; break;
-    case 'G': arg >> opt::reference; break;
-    default: die= true; 
-    }
-  }
-
-  if (die || help || (opt::input.empty() && opt::fasta.empty())) {
-      std::cerr << "\n" << FML_USAGE_MESSAGE;
-      if (die)
-	exit(EXIT_FAILURE);
-      else 
-	exit(EXIT_SUCCESS);	
-    }
-}
-

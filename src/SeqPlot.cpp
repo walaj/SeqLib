@@ -6,41 +6,42 @@ std::string SeqPlot::PlotAlignmentRecords(const BamRecordVector& brv) const {
 
   PlottedReadVector plot_vec;
 
-  for (auto& i : brv) {
+  for (BamRecordVector::const_iterator i = brv.begin(); i != brv.end(); ++i) {
     
     // get the position in the view window
-    if (i.ChrID() != m_view.chr)
+    if (i->ChrID() != m_view.chr)
       continue;
 
-    int pos = i.Position() - m_view.pos1;
+    int pos = i->Position() - m_view.pos1;
     if (pos < 0)
       continue;
 
-    if (i.PositionEnd() > m_view.pos2)
+    if (i->PositionEnd() > m_view.pos2)
       continue;
 
     // plot with gaps
-    std::string tseq = i.Sequence();
+    std::string tseq = i->Sequence();
     std::string gapped_seq;
 
-    size_t p = i.AlignmentPosition(); // move along on sequence, starting at first non-clipped base
-    for (auto& c : i.GetCigar()) {
-      if (c.Type() == 'M') { // 
-	assert(p + c.Length() <= tseq.length());
-	gapped_seq += tseq.substr(p, c.Length());
-      } else if (c.Type() == 'D') {
-	gapped_seq += std::string(c.Length(), '-');
+    size_t p = i->AlignmentPosition(); // move along on sequence, starting at first non-clipped base
+    Cigar cc = i->GetCigar();
+    for (Cigar::const_iterator c = cc.begin(); c != cc.end(); ++c) {
+      if (c->Type() == 'M') { // 
+	assert(p + c->Length() <= tseq.length());
+	gapped_seq += tseq.substr(p, c->Length());
+      } else if (c->Type() == 'D') {
+	gapped_seq += std::string(c->Length(), '-');
       }
 
-      if (c.Type() == 'I' || c.Type() == 'M')
-	p += c.Length();
+      if (c->Type() == 'I' || c->Type() == 'M')
+	p += c->Length();
     }
 
     std::stringstream msg;
-    msg << i.Qname() << ">>>" << (i.ChrID() + 1) << ":" << i.Position();
+    msg << i->Qname() << ">>>" << (i->ChrID() + 1) << ":" << i->Position();
       
     // add to the read plot
-    plot_vec.push_back({pos, gapped_seq, msg.str()});
+    plot_vec.push_back(PlottedRead(pos, gapped_seq, msg.str()));
     
   }
 
@@ -51,11 +52,11 @@ std::string SeqPlot::PlotAlignmentRecords(const BamRecordVector& brv) const {
   PlottedReadLineVector line_vec;
 
   // plot the reads from the ReadPlot vector
-  for (auto& i : plot_vec) {
+  for (PlottedReadVector::iterator i = plot_vec.begin(); i != plot_vec.end(); ++i) {
     bool found = false;
-    for (auto& j : line_vec) {
-      if (j.readFits(i)) { // it fits here
-	j.addRead(&i);
+    for (PlottedReadLineVector::iterator j = line_vec.begin(); j != line_vec.end(); ++j) {
+      if (j->readFits(*i)) { // it fits here
+	j->addRead(&(*i));
 	found = true;
 	break;
       }
@@ -64,16 +65,16 @@ std::string SeqPlot::PlotAlignmentRecords(const BamRecordVector& brv) const {
       PlottedReadLine prl;
       prl.pad = m_pad;
       prl.contig_len = m_view.Width(); //ac.getSequence().length();
-      prl.addRead(&i);
+      prl.addRead(&(*i));
       line_vec.push_back(prl);
     }
   }
-
+  
   std::stringstream ss;
   
   // plot the lines. Add contig identifier to each
-  for (auto& i : line_vec) 
-    ss << i << std::endl;
+  for (PlottedReadLineVector::const_iterator i = line_vec.begin(); i != line_vec.end(); ++i) 
+    ss << (*i) << std::endl;
 
   return ss.str();
 

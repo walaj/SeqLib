@@ -2,7 +2,7 @@
 
 namespace SeqLib {
 
-FastqReader::FastqReader(const std::string& file) {
+  FastqReader::FastqReader(const std::string& file) : m_iss(NULL) {
 
   m_file = file;
 

@@ -23,7 +23,7 @@ class FastqReader {
  private:
   
   std::string m_file;
-  std::ifstream * m_iss = nullptr;
+  std::ifstream * m_iss;
 
 };
 

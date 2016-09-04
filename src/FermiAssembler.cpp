@@ -3,24 +3,19 @@
 
 namespace SeqLib {
 
-  FermiAssembler::FermiAssembler() {
+  FermiAssembler::FermiAssembler()  : m_seqs(0), n_seqs(0), n_utg(0), m_utgs(0) {
     fml_opt_init(&opt);
   }
   
   FermiAssembler::~FermiAssembler() {
     ClearReads();
     ClearContigs();
-    //if (opt.mag_opt)
-    //  free(opt.mag_opt);
   }
 
   // code copied and slightly modified from 
   // fermi-lite/misc.c by Heng Li
   void FermiAssembler::DirectAssemble(float kcov) {
 
-    std::cerr << " MIN OVLP " << opt.min_asm_ovlp << std::endl;
-    opt.min_asm_ovlp = 75;
-    
     rld_t *e = fml_seq2fmi(&opt, n_seqs, m_seqs);
     mag_t *g = fml_fmi2mag(&opt, e);
 
@@ -39,16 +34,16 @@ namespace SeqLib {
 
     int m = 0;
     uint64_t size = 0;
-    for (auto& r : v) {
-      m_names.push_back(r.Name);
+    for (UnalignedSequenceVector::const_iterator r = v.begin(); r != v.end(); ++r) {
+      m_names.push_back(r->Name);
       fseq1_t *s;
 
       s = &m_seqs[n_seqs];
 
-      s->seq   = strdup(r.Seq.c_str());
-      s->qual  = strdup(r.Qual.c_str());
+      s->seq   = strdup(r->Seq.c_str());
+      s->qual  = strdup(r->Qual.c_str());
 
-      s->l_seq = r.Seq.length();
+      s->l_seq = r->Seq.length();
       size += m_seqs[n_seqs++].l_seq;
     }
 
@@ -61,16 +56,16 @@ namespace SeqLib {
 
     int m = 0;
     uint64_t size = 0;
-    for (auto& r : brv) {
-      m_names.push_back(r.Qname());
+    for (BamRecordVector::const_iterator r = brv.begin(); r != brv.end(); ++r) {
+      m_names.push_back(r->Qname());
       fseq1_t *s;
-
+      
       s = &m_seqs[n_seqs];
+      
+      s->seq   = strdup(r->Sequence().c_str());
+      s->qual  = strdup(r->Qualities().c_str());
 
-      s->seq   = strdup(r.Sequence().c_str());
-      s->qual  = strdup(r.Qualities().c_str());
-
-      s->l_seq = r.Sequence().length();
+      s->l_seq = r->Sequence().length();
       size += m_seqs[n_seqs++].l_seq;
     }
     
@@ -90,13 +85,13 @@ namespace SeqLib {
       fseq1_t * s = &m_seqs[i];
       if (s->qual)
        free(s->qual); 
-      s->qual = nullptr;
+      s->qual = NULL;
       if (s->seq)
 	free(s->seq);
-      s->seq = nullptr;
+      s->seq = NULL;
     }
     free(m_seqs);
-    m_seqs = nullptr;
+    m_seqs = NULL;
       
   }
 

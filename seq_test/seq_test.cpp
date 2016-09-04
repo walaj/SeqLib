@@ -28,7 +28,6 @@ using namespace SeqLib;
 
 #include <fstream>
 
-
 #include "SeqLib/BFC.h"
 BOOST_AUTO_TEST_CASE ( bfc ) {
 
@@ -216,6 +215,7 @@ BOOST_AUTO_TEST_CASE ( interval_queries ) {
   BOOST_CHECK_EQUAL(results[1].pos2, 100);
 
   grc.MergeOverlappingIntervals();
+  grc.CreateTreeMap();
 
   for(auto& r : grc)
     std::cerr << r << std::endl;
@@ -802,23 +802,21 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   BOOST_CHECK_EQUAL(hh.NumSequences(), 2);
 
   // error check the index construction
-  SeqLib::UnalignedSequenceVector usv_bad1 = {
-    {"ref1", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
-    {"ref4", ""},
-    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
-  SeqLib::UnalignedSequenceVector usv_bad2 = {
-    {"", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
-    {"ref4", "ACCATCGCAGCAGCTATCTATTATATCGGCAGCATCTAGC"},
-    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"}};
+  SeqLib::UnalignedSequenceVector usv_bad1, usv_bad2, usv;;
+  usv_bad1.push_back(SeqLib::UnalignedSequence("ref1","ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC", std::string()));
+  usv_bad1.push_back(SeqLib::UnalignedSequence("ref4", std::string(), std::string()));
+  usv_bad1.push_back(SeqLib::UnalignedSequence("ref5","CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT", std::string()));
+  usv_bad2.push_back(SeqLib::UnalignedSequence(std::string(), "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC", std::string()));
+  usv_bad2.push_back(SeqLib::UnalignedSequence("ref4","ACCATCGCAGCAGCTATCTATTATATCGGCAGCATCTAGC", std::string()));
+  usv_bad2.push_back(SeqLib::UnalignedSequence("ref5","CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT", std::string()));
   BOOST_CHECK_THROW(bwa.ConstructIndex(usv_bad1), std::invalid_argument);
   BOOST_CHECK_THROW(bwa.ConstructIndex(usv_bad2), std::invalid_argument);
-
+  
   // construct a normal index
-  SeqLib::UnalignedSequenceVector usv = {
-    {"ref3", "ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC"}, 
-    {"ref4", "CTACTTTATCATCTACACACTGCCTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT"},
-    {"ref5", "CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT"},
-    {"ref6", "TATCTACTGCGCGCGATCATCTAGCGCAGGACGAGCATC" + std::string(100,'N') + "CGATCGTTATTATCGAGCGACGATCTACTACGT"}};
+  usv.push_back(SeqLib::UnalignedSequence("ref3","ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCGATCGATCGATCGTAGC", std::string()));
+  usv.push_back(SeqLib::UnalignedSequence("ref4","CTACTTTATCATCTACACACTGCCTGACTGCGGCGACGAGCGAGCAGCTACTATCGACT", std::string()));
+  usv.push_back(SeqLib::UnalignedSequence("ref5","CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGCCATGT", std::string()));
+  usv.push_back(SeqLib::UnalignedSequence("ref6","TATCTACTGCGCGCGATCATCTAGCGCAGGACGAGCATC" + std::string(100,'N') + "CGATCGTTATTATCGAGCGACGATCTACTACGT", std::string()));
 
   bwa.ConstructIndex(usv);
 

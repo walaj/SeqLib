@@ -1,6 +1,7 @@
 #include "SeqLib/GenomicRegion.h"
 
 #include <cassert>
+#include <stdexcept>
 
 // 4 billion
 #define END_MAX 4000000000
@@ -70,8 +71,8 @@ void GenomicRegion::Pad(int32_t pad) {
   if (-pad*2 > Width())
     throw std::out_of_range(
          "GenomicRegion::pad - negative pad values can't obliterate GenomicRegion with val " + 
-	 std::to_string(chr) + ":" + std::to_string(pos1) + "-" + std::to_string(pos2) + 
-	 " and pad " + std::to_string(pad));
+	 tostring(chr) + ":" + tostring(pos1) + "-" + tostring(pos2) + 
+	 " and pad " + tostring(pad));
 
   pos1 -= pad;
   pos2 += pad;
@@ -177,7 +178,7 @@ std::string GenomicRegion::chrToString(int32_t ref) const {
 
   std::string ref_id;
   if (ref < 0)
-    ref_id = std::to_string(ref);
+    ref_id = tostring(ref);
 
   if (ref == 22)
     ref_id = "X";
@@ -186,7 +187,7 @@ std::string GenomicRegion::chrToString(int32_t ref) const {
   else if (ref == 24)
     ref_id = "M";
   else if (ref >= 0)
-    ref_id = std::to_string(ref+1);
+    ref_id = tostring(ref+1);
   assert(ref_id != "23");
   return ref_id;
 }
@@ -241,8 +242,13 @@ int32_t GenomicRegion::DistanceBetweenEnds(const GenomicRegion &gr) const {
     // convert the pos strings
     // throws invalid_argument if conversion can't be performed
     // or throws an out_of_range if it is too big for result
+#ifdef HAVE_C11
     pos1 = std::stoi(tpos1);
     pos2 = std::stoi(tpos2);
+#else
+    pos1 = std::atoi(tpos1.c_str());
+    pos2 = std::atoi(tpos2.c_str());
+#endif
     
     // if no header, assume that it is "standard"
     if (hdr.isEmpty()) {
@@ -251,7 +257,11 @@ int32_t GenomicRegion::DistanceBetweenEnds(const GenomicRegion &gr) const {
       else if (tchr == "Y" || tchr == "chrY")
 	chr = 23;
       else 
+#ifdef HAVE_C11
 	chr = std::stoi(SeqLib::scrubString(tchr, "chr")) - 1;
+#else
+	chr = std::atoi(SeqLib::scrubString(tchr, "chr").c_str());
+#endif
       return;
     } else {
       chr = hdr.Name2ID(tchr); //bam_name2id(hdr.get(), tchr.c_str());

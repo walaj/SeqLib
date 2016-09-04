@@ -2,9 +2,14 @@
 #define SEQLIB_BAM_WALKER_H__
 
 #include <cassert>
-#include <memory>
 
+#include <stdint.h> 
 #include "SeqLib/BamRecord.h"
+
+// dont understand this
+#ifndef INT32_MAX
+#define INT32_MAX 0x7fffffffL
+#endif
 
 extern "C" {
 #include "htslib/cram/cram.h"
@@ -59,8 +64,9 @@ namespace SeqLib {
    */
 struct ReadCount {
 
-  uint64_t keep = 0;
-  uint64_t total = 0;
+  uint32_t keep, total;
+
+  ReadCount() : keep(0), total(0) {}
   
   /** Return the percent of total reads kept
    */

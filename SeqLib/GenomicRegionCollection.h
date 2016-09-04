@@ -5,12 +5,6 @@
 #include <string>
 #include <cstdlib>
 #include <list>
-#include <tr1/unordered_map>
-#include <tr1/memory>
-
-//#ifdef BOOST_VERSION
-//#include "boost/icl/interval_set.hpp"
-//#endif
 
 #include "SeqLib/IntervalTree.h"
 #include "SeqLib/GenomicRegionCollection.h"
@@ -24,12 +18,10 @@ namespace SeqLib {
 
 /** Class to store vector of intervals on the genome */
 typedef TInterval<int32_t> GenomicInterval;
-typedef std::tr1::unordered_map<int, std::vector<GenomicInterval> > GenomicIntervalMap;
+typedef SeqHashMap<int, std::vector<GenomicInterval> > GenomicIntervalMap;
 typedef TIntervalTree<int32_t> GenomicIntervalTree;
-typedef std::tr1::unordered_map<int, GenomicIntervalTree> GenomicIntervalTreeMap;
+typedef SeqHashMap<int, GenomicIntervalTree> GenomicIntervalTreeMap;
 typedef std::vector<GenomicInterval> GenomicIntervalVector;
-
-typedef std::tr1::shared_ptr<GenomicIntervalTreeMap> SPGITM;
 
   /** @brief Template class to store / query a collection of genomic intervals
    *
@@ -41,8 +33,6 @@ template<typename T=GenomicRegion>
 class GenomicRegionCollection {
 
  public:
-
- typedef std::tr1::shared_ptr<std::vector<T> > SPVT;
 
   /** Construct an empty GenomicRegionCollection 
    */
@@ -171,6 +161,8 @@ class GenomicRegionCollection {
   * @param gr Query collection of intervals
   * @param ignore_strand If true, won't exclude overlap if on different strand
   * @return A collection of overlapping intervals from this collection, trimmed to be contained
+  * @exception Throws a logic_error if this tree is non-empty, but the interval tree has not been made with 
+  * CreateTreeMap
   * inside the query collection
   */
  template<class K>
@@ -192,7 +184,7 @@ class GenomicRegionCollection {
   * the pad value.
   * @param v Amount to pad each end by. Result is increase in width by 2*pad.
   * @note See GenomicRegion::Pad
-s  */
+  */
  void Pad(int v);
 
  /** Set the i'th GenomicRegion */
@@ -210,11 +202,6 @@ s  */
    * @return BED formated string reprsentation 
    */
   std::string AsBEDString(const BamHeader& h) const;
-
-  /** Fill the next GenomicRegion object. 
-   * @return false if add end of vector
-   */
-  bool GetNextGenomicRegion(T& gr);
 
  /** Coordinate sort the interval collection */
   void CoordinateSort();
@@ -237,28 +224,41 @@ s  */
   void Rewind() { idx = 0; }
 
  /** Return elements as an STL vector of GenomicRegion objects */
-  GenomicRegionVector AsGenomicRegionVector() const;
+ GenomicRegionVector AsGenomicRegionVector() const;
  
-  typename std::vector<T>::iterator begin() { return m_grv->begin(); } 
-
-  typename std::vector<T>::iterator end() { return m_grv->end(); } 
+ typename std::vector<T>::iterator begin() { return m_grv->begin(); } 
  
-  typename std::vector<T>::const_iterator begin() const { return m_grv->begin(); } 
+ typename std::vector<T>::iterator end() { return m_grv->end(); } 
+ 
+ typename std::vector<T>::const_iterator begin() const { return m_grv->begin(); } 
+ 
+ typename std::vector<T>::const_iterator end() const { return m_grv->end(); } 
 
-  typename std::vector<T>::const_iterator end() const { return m_grv->end(); } 
+ /*
+   typedef typename std::vector<T>::const_iterator end;
+   const_iterator end() const { return m_grv->end(); }  
+   typedef std::vector<T>::const_iterator begin;
+   const_iterator begin() const { return m_grv->begin(); }  
+   typedef std::vector<T>::iterator end;
+   iterator end()  { return m_grv->end(); }  
+   typedef std::vector<T>::iterator begin;
+   iterator begin()  { return m_grv->begin(); }  
+ */
 
   /** Shortcut to FindOverlaps that just returns the intersecting regions
    * without keeping track of the query / subject ids
    */
-  GenomicRegionCollection<GenomicRegion> intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand = false);
+  GenomicRegionCollection<GenomicRegion> Intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand) const;
  
  private:
+
+ bool m_sorted;
  
  // always construct this object any time m_grv is modifed
- std::tr1::shared_ptr<GenomicIntervalTreeMap> m_tree;
+ SeqPointer<GenomicIntervalTreeMap> m_tree;
  
  // hold the genomic regions
- SPVT m_grv; 
+ SeqPointer<std::vector<T> > m_grv; 
  
  // index for current GenomicRegion
  size_t idx;

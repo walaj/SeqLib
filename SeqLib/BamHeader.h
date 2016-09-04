@@ -6,15 +6,9 @@
 #include "htslib/htslib/bgzf.h"
 #include "htslib/htslib/kstring.h"
 
+#include "SeqLib/SeqLibUtils.h"
 #include <string>
-//#include <memory>
-#include <tr1/memory>
 #include <vector>
-//#include <unordered_map>
-#include <tr1/unordered_map>
-
-using std::tr1::shared_ptr;
-using std::tr1::unordered_map;
 
 namespace SeqLib {
 
@@ -50,6 +44,11 @@ namespace SeqLib {
      */
     BamHeader() {};
     
+    /** Construct a new header from ref sequences and lengths 
+     *
+     */
+    BamHeader(const HeaderSequenceVector& hsv);
+
     /** Initialize a BamHeader from a string containing
      * a BAM header in human-readable form (e.g. @PG ... )
      * @param Text of a BAM header, with newlines separating lines
@@ -111,14 +110,14 @@ namespace SeqLib {
     // adapted from sam.c - bam_nam2id
     int bam_name2id_2(const bam_hdr_t *h, const char *ref) const;
 
-    shared_ptr<bam_hdr_t> h;
+    SeqPointer<bam_hdr_t> h;
 
     // make the name 2 id map (to be used by Name2ID)
     // replaces part of bam_name2id that makes the hash table
     void ConstructName2IDTable();
 
     // hash table for name to id
-    shared_ptr<unordered_map<std::string, int> > n2i;
+    SeqPointer<SeqHashMap<std::string, int> > n2i;
 
     // adapted from sam_hdr_read
     bam_hdr_t* sam_hdr_read2(const std::string& hdr) const;

@@ -9,6 +9,7 @@ BWA is copyrighted by Heng Li with the Apache2 License
 
 #include "SeqLib/BWAWrapper.h"
 
+#include <stdexcept>
 #include <sstream>
 #include <iostream>
 
@@ -37,7 +38,7 @@ namespace SeqLib {
     if (!idx)
       throw std::runtime_error("Index has not be loaded / constructed");
     if (id < 0 || id >= idx->bns->n_seqs) 
-      throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index for id of " + std::to_string(id) + " on IDX of size " + std::to_string(idx->bns->n_seqs));
+      throw std::out_of_range("BWAWrapper::ChrIDToName - id out of bounds of refs in index for id of " + tostring(id) + " on IDX of size " + tostring(idx->bns->n_seqs));
 
     return std::string(idx->bns->anns[id].name);
   }
@@ -102,8 +103,8 @@ namespace SeqLib {
       return;
 
     // check the integrity of the input data
-    for (auto& i : v)
-      if (i.Name.empty() || i.Seq.empty())
+    for (UnalignedSequenceVector::const_iterator i = v.begin(); i != v.end(); ++i)
+      if (i->Name.empty() || i->Seq.empty())
 	throw std::invalid_argument("BWAWrapper::constructIndex - Reference sequences must have non-empty name and seq");
     
     if (idx) {
@@ -122,9 +123,9 @@ namespace SeqLib {
     uint8_t* pac = __make_pac(v, false); // don't write, becasue only used to make BWT
 
     size_t tlen = 0;
-    for (auto& i : v)
-      tlen += i.Seq.length();
-
+    for (UnalignedSequenceVector::const_iterator i = v.begin(); i != v.end(); ++i)
+      tlen += i->Seq.length();
+    
 #ifdef DEBUG_BWATOOLS
     std::cerr << "ref seq length: " << tlen << std::endl;
 #endif
@@ -422,12 +423,10 @@ namespace SeqLib {
     free (ar.a); // dealloc the hit list
 
     // add the secondary counts
-    for (auto& i : vec)
-      i.AddIntTag("SQ", secondary_count);
+    for (BamRecordVector::iterator i = vec.begin(); i != vec.end(); ++i)
+      i->AddIntTag("SQ", secondary_count);
     
 }
-
-  //void BWAWrapper::alignReads(const std::vector<BamRecord>& reads){}
 
 uint8_t* BWAWrapper::__add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q)
 {

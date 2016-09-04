@@ -11,7 +11,7 @@ namespace SeqLib {
     if (index)  
       fai_destroy(index);
     
-    index = nullptr;
+    index = NULL;
     
     // check that its readable
     if (!read_access_test(file)) {
@@ -52,7 +52,7 @@ namespace SeqLib {
     free(f);
 
     if (out.empty())
-      throw std::invalid_argument("RefGenome::queryRegion - Returning empty query on " + chr_name + ":" + std::to_string(p1) + "-" + std::to_string(p2));
+      throw std::invalid_argument("RefGenome::queryRegion - Returning empty query on " + chr_name + ":" + tostring(p1) + "-" + tostring(p2));
 
     return (out);
 

@@ -32,6 +32,7 @@ SOFTWARE.
 
 #include "SeqLib/BFC.h"
 
+#include <stdexcept>
 #include <algorithm>
 
 namespace SeqLib {
@@ -236,7 +237,7 @@ namespace SeqLib {
 	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
 	std::string name = m_names[i] ? std::string(m_names[i]) : std::string();
 	std::string qual = m_seqs[i].qual ? std::string(m_seqs[i].qual) : std::string();
-	v.push_back({name, str, qual});	  
+	v.push_back(UnalignedSequence(name, str, qual));
       }
     
   }

@@ -9,11 +9,35 @@
 #include <sstream>
 #include <cmath>
 #include <algorithm>
+#include <stdio.h>
 
 #include "SeqLib/SeqLibCommon.h"
 
+#ifdef HAVE_C11
+  #include <memory>
+  #include <unordered_set>
+  #include <unordered_map>
+  #define SeqHashMap std::unordered_map
+  #define SeqHashSet std::unordered_set
+  #define SeqPointer std::shared_ptr
+#else
+  #include <tr1/memory>
+  #include <tr1/unordered_set>
+  #include <tr1/unordered_map>
+  #define SeqHashMap std::tr1::unordered_map
+  #define SeqHashSet std::tr1::unordered_set
+  #define SeqPointer std::tr1::shared_ptr
+#endif
+
 namespace SeqLib {
 
+  template<typename T> 
+    inline std::string tostring(T d) { 
+      std::stringstream ss;
+      ss << d;
+    return ss.str();
+  }
+  
   /** Check if a file is readable and exists
    * @param name Name of a file to test
    * @return File is readable and exists

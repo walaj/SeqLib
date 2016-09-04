@@ -29,13 +29,13 @@ Installation
 git clone --recursive https://github.com/jwalabroad/SeqLib.git
 cd SeqLib
 ./configure
-make CXXFLAGS='-std=c++11'
+make
 make install
 ```
  
 I have successfully compiled with GCC-4.8+ on Linux and with Clang on Mac
 
-SeqLib currently requires compiling with c++11. Support for c++03 is in development.
+SeqLib is compatible with c++98 and later.
 
 Integrating into build system
 -----------------------------

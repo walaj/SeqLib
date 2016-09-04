@@ -43,6 +43,7 @@ class BWAWrapper {
    * handled in constructor / destructor.
    */
   BWAWrapper() { 
+    idx = 0;
     memopt = mem_opt_init();
     memopt->flag |= MEM_F_SOFTCLIP;
   }
@@ -177,7 +178,7 @@ class BWAWrapper {
   mem_opt_t * memopt;
 
   // hold the full index structure
-  bwaidx_t* idx = 0;
+  bwaidx_t* idx;
 
   // Convert a bns to a header string 
   std::string bwa_print_sam_hdr2(const bntseq_t *bns, const char *hdr_line) const;

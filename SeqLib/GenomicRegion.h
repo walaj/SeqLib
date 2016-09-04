@@ -7,7 +7,6 @@
 #include <utility>
 #include <list>
 #include <cstring>
-#include <memory>
 
 #include "SeqLib/SeqLibCommon.h"
 #include "SeqLib/SeqLibUtils.h"

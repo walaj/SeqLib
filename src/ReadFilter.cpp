@@ -185,7 +185,7 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
   ReadFilterCollection::ReadFilterCollection(const std::string& script, const BamHeader& hdr) : m_count(0), m_count_seen(0) {
 
     // if is a file, read into a string
-    std::ifstream iscript(script);
+    std::ifstream iscript(script.c_str());
     std::stringstream ss;
     std::string tscript = script;
     if (iscript.is_open()) {
@@ -283,7 +283,7 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
       if (!mr.m_abstract_rules.size())
 	mr.m_abstract_rules.push_back(rule_all);
       
-      mr.id = std::to_string(level);
+      mr.id = tostring(level);
 
       m_regions.push_back(mr);
       
@@ -445,8 +445,9 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     for (std::vector<std::string>::const_iterator i = mn.begin(); i != mn.end(); ++i)
       id += *i + ";";
 
-    if (id.length())
-      id.pop_back();
+    // not necessary, not c++98 compatible
+    //if (id.length())
+    //  id.pop_back();
 
     // parse the flags
     fr.parseJson(value);
@@ -561,7 +562,7 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     int new_clipnum = r.NumClip() - (r.Length() - tseq.length()); // get clips, minus amount trimmed off
     if (!clip.isValid(new_clipnum)) {
       return false;
-      DEBUGIV(r, "clip pass with clip size " + std::to_string(new_clipnum))
+      DEBUGIV(r, "clip pass with clip size " + tostring(new_clipnum))
     }
 
     // check for secondary alignments
@@ -719,14 +720,14 @@ std::ostream& operator<<(std::ostream &out, const FlagRule &fr) {
   std::string remo = "Flag OFF: ";
 
   if (fr.m_all_on_flag)
-    keep += "[(all)" + std::to_string(fr.m_all_on_flag) + "],";
+    keep += "[(all)" + tostring(fr.m_all_on_flag) + "],";
   if (fr.m_all_off_flag)
-    remo += "[(all)" + std::to_string(fr.m_all_off_flag) + "],";
+    remo += "[(all)" + tostring(fr.m_all_off_flag) + "],";
 
   if (fr.m_any_on_flag)
-    keep += "[(any)" + std::to_string(fr.m_any_on_flag) + "],";
+    keep += "[(any)" + tostring(fr.m_any_on_flag) + "],";
   if (fr.m_any_off_flag)
-    remo += "[(any)" + std::to_string(fr.m_any_off_flag) + "],";
+    remo += "[(any)" + tostring(fr.m_any_off_flag) + "],";
 
   if (fr.dup.isOff())
     remo += "duplicate,";
@@ -808,7 +809,7 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
   if (r.isEvery())
     out << "ALL";
   else
-    out << (r.m_inverted ? "NOT " : "") << "[" << r.m_min << "," << (r.m_max == INT_MAX ? "MAX" : std::to_string(r.m_max))  << "]";
+    out << (r.m_inverted ? "NOT " : "") << "[" << r.m_min << "," << (r.m_max == INT_MAX ? "MAX" : tostring(r.m_max))  << "]";
   return out;
 }
 
@@ -833,10 +834,12 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
   }
 
   void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
+#ifdef HAVE_C11
     std::cerr << "...making the AhoCorasick trie from " << f << std::endl;
     aho.TrieFromFile(f);
     std::cerr << "...finished making AhoCorasick trie with " << AddCommas(aho.count) << " motifs" << std::endl;
     aho.inv = inverted;
+#endif
   }
 
   void AhoCorasick::TrieFromFile(const std::string& f) {
@@ -873,8 +876,12 @@ GRC ReadFilterCollection::getAllRegions() const
 }
     
     int AhoCorasick::QueryText(const std::string& t) const {
+#ifdef HAVE_C11
       auto matches = aho_trie->parse_text(t);
       return matches.size();
+#else
+      return 0;
+#endif
     }
 
   }

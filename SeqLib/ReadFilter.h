@@ -6,14 +6,16 @@
 #include <string>
 #include <vector>
 #include <climits>
-#include <tr1/memory>
-#include <tr1/unordered_set>
 
 #include "json/json.h"
 
 #include "SeqLib/GenomicRegionCollection.h"
 #include "SeqLib/BamRecord.h"
+
+#ifdef HAVE_C11
 #include "SeqLib/aho_corasick.hpp"
+#endif
+
 
 #define MINIRULES_MATE_LINKED 1
 #define MINIRULES_MATE_LINKED_EXCLUDE 2
@@ -22,7 +24,7 @@
 
 namespace SeqLib {
 
-  typedef std::tr1::unordered_set<std::string> StringSet;
+  typedef SeqHashSet<std::string> StringSet;
 
   namespace Filter {
   /** Tool for using the Aho-Corasick method for substring queries of 
@@ -33,13 +35,15 @@ namespace SeqLib {
     
     /** Allocate a new empty trie */
     AhoCorasick() { 
-      aho_trie = std::tr1::shared_ptr<aho_corasick::trie>(new aho_corasick::trie()); 
+#ifdef HAVE_C11
+      aho_trie = SeqPointer<aho_corasick::trie>(new aho_corasick::trie()); 
+#endif
       inv = false;
       count = 0;
     } 
 
     /** Deallocate the trie */
-    ~AhoCorasick() { } //std::cerr << " DESTORY " << aho_trie.get() << std::endl;} 
+    ~AhoCorasick() { }
 
     /** Add a motif to the trie 
      * @note Trie construction is lazy. Won't build trie until 
@@ -47,7 +51,9 @@ namespace SeqLib {
      * O(n) where (n) is length of query string.
      */
     void AddMotif(const std::string& m) { 
+#ifdef HAVE_C11
       aho_trie->insert(m);
+#endif
     } 
     
     /** Add a set of motifs to the trie from a file 
@@ -62,7 +68,9 @@ namespace SeqLib {
      */
     int QueryText(const std::string& t) const;
 
-    std::tr1::shared_ptr<aho_corasick::trie> aho_trie; ///< The trie for the Aho-Corasick search
+#ifdef HAVE_C11
+    SeqPointer<aho_corasick::trie> aho_trie; ///< The trie for the Aho-Corasick search
+#endif
     
     std::string file; ///< Name of the file holding the motifs
 
@@ -516,8 +524,8 @@ class ReadFilterCollection {
    */
   size_t numRules() const {
     size_t num = 0;
-    for (auto& it : m_regions)
-      num += it.size();
+    for (std::vector<ReadFilter>::const_iterator it = m_regions.begin(); it != m_regions.end(); ++it)
+      num += it->size();
     return num;
   }
 

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <bitset>
 #include <cctype>
+#include <stdexcept>
 
 #include "SeqLib/ssw_cpp.h"
 
@@ -11,7 +12,7 @@
 
 namespace SeqLib {
 
-  std::vector<int> CigarCharToInt = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //0-9
+  const int CigarCharToInt[128] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //0-9
                                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //10-19
                                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //20
                                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //30
@@ -508,9 +509,9 @@ namespace SeqLib {
       std::istringstream iss(tmp);
       std::string line;
       while (std::getline(iss, line, CTAG_DELIMITER))
-	out.push_back(stoi(line)); 
+	out.push_back(atoi(line.c_str())); 
     } else {
-	out.push_back(stoi(tmp)); 
+      out.push_back(atoi(tmp.c_str())); 
     }
     
     assert(out.size());
@@ -531,9 +532,9 @@ namespace SeqLib {
       std::istringstream iss(tmp);
       std::string line;
       while (std::getline(iss, line, CTAG_DELIMITER))
-	out.push_back(stod(line)); 
+	out.push_back(std::atof(line.c_str())); 
     } else { // single entry
-	out.push_back(stod(tmp)); 
+      out.push_back(std::atof(tmp.c_str())); 
     }
     
     assert(out.size());
@@ -622,8 +623,8 @@ namespace SeqLib {
 
 
   std::ostream& operator<<(std::ostream& out, const Cigar& c) { 
-    for (auto& i : c)
-      out << i;
+    for (Cigar::const_iterator i = c.begin(); i != c.end(); ++i)
+      out << *i;
     return out; 
   }
 
@@ -634,11 +635,11 @@ namespace SeqLib {
 
     // get the ops (MIDSHPN)
     std::vector<char> ops;
-    for (auto& c : cig)
-      if (!isdigit(c)) {
-	ops.push_back(c);
+    for (size_t i = 0; i < cig.length(); ++i)
+      if (!isdigit(cig.at(i))) {
+	ops.push_back(cig.at(i));
       }
-
+    
     std::size_t prev = 0, pos;
     std::vector<std::string> lens;
     while ((pos = cig.find_first_of("MIDSHPNX", prev)) != std::string::npos) {
@@ -651,8 +652,7 @@ namespace SeqLib {
 
     assert(ops.size() == lens.size());
     for (size_t i = 0; i < lens.size(); ++i) {
-      //tc.push_back(CigarField(ops[i], std::stoi(lens[i])));
-      tc.add(CigarField(ops[i], std::stoi(lens[i])));
+      tc.add(CigarField(ops[i], std::atoi(lens[i].c_str())));
     }
     
     return tc;
