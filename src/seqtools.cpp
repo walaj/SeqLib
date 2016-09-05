@@ -76,7 +76,7 @@ static const struct option longopts[] = {
 
 int main(int argc, char** argv) {
 
-  if (argc <= 1) {
+   if (argc <= 1) {
     std::cerr << SEQTOOLS_USAGE_MESSAGE;
     return 0;
   } else {
