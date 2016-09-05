@@ -46,14 +46,11 @@ namespace SeqLib {
      */
     void ClearContigs();
 
-    /** Peform k-mer based error correction of the reads
-     * in place.
-     */
+    /** Peform Bloom filter error correction of the reads
+     * in place. */
     void CorrectReads();
 
-    void count();
-
-    /** Peform k-mer based error correction of the reads
+    /** Peform Bloom filter error correction of the reads
      * in place. Also remove unique reads.
      */
     void CorrectAndFilterReads();
@@ -73,24 +70,37 @@ namespace SeqLib {
      */
     std::vector<std::string> GetContigs() const;
 
+    /** Perform assembly, without error correction */
+    void DirectAssemble(float kcov);
+
+    /** Set the minimum overlap between reads during string graph construction */
+    void SetMinOverlap(uint32_t m) { opt.min_asm_ovlp = m; }
+
+    /** Return the minimum overlap parameter for this assembler */
+    uint32_t GetMinOverlap() const { return opt.min_asm_ovlp; }
+
+    /** Add a set of unaligned sequences to stage for assembly */
+    void AddReads(const UnalignedSequenceVector& v);
+
   private:
 
     // reads to assemble
-    fseq1_t *m_seqs = 0;
+    fseq1_t *m_seqs;
     
     std::vector<std::string> m_names;
 
     // number of reads
-    size_t n_seqs = 0;
+    size_t n_seqs;
 
     // number of contigs
-    int n_utgs = 0;
+    int n_utg;
   
     // options
     fml_opt_t opt;
 
     // the unitigs
-    fml_utg_t *m_utgs = 0;
+    fml_utg_t *m_utgs;
+
   };
   
 

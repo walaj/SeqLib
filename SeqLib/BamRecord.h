@@ -1,24 +1,24 @@
 #ifndef SEQLIB_BAM_RECORD_H__
 #define SEQLIB_BAM_RECORD_H__
 
-#include <cstdint>
+#include <stdint.h>
+//#include <cstdint> //+11
 #include <vector>
 #include <iostream>
-#include <memory>
 #include <sstream>
-#include <unordered_map>
 #include <cassert>
 #include <algorithm>
 
 extern "C" {
-#include "htslib/hts.h"
-#include "htslib/sam.h"
-#include "htslib/bgzf.h"
-#include "htslib/kstring.h"
-#include "htslib/faidx.h"
+#include "htslib/htslib/hts.h"
+#include "htslib/htslib/sam.h"
+#include "htslib/htslib/bgzf.h"
+#include "htslib/htslib/kstring.h"
+#include "htslib/htslib/faidx.h"
 
 }
 
+#include "SeqLib/SeqLibUtils.h"
 #include "SeqLib/GenomicRegion.h"
 #include "SeqLib/UnalignedSequence.h"
 
@@ -51,13 +51,13 @@ static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
 namespace SeqLib {
 
-enum class Base { A = 1, C = 2, G = 4, T = 8, N = 15 };
-
 /** Basic container for a single cigar operation
  *
  * Stores a single cigar element in a compact 32bit form (same as HTSlib).
  */
 class CigarField {
+
+  friend class Cigar;
 
  public:
 
@@ -144,26 +144,28 @@ class CigarField {
    /** Return the sum of all of the lengths for all kinds */
    inline int TotalLength() const {
      int t = 0;
-     for (auto& c : m_data)
-       t += c.Length();
+     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
+       //for (auto& c : m_data)
+       t += c->Length();
      return t;
    }
 
    /** Return the number of query-consumed bases */
    inline int NumQueryConsumed() const {
      int out = 0;
-     for (auto& c : m_data)
-       if (c.ConsumesQuery())
-	 out += c.Length();
+     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
+       if (c->ConsumesQuery())
+	 out += c->Length();
      return out;
    }
 
    /** Return the number of reference-consumed bases */
    inline int NumReferenceConsumed() const {
      int out = 0;
-     for (auto& c : m_data)
-       if (c.ConsumesReference())
-	 out += c.Length();
+     //    for (auto& c : m_data)
+     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
+       if (c->ConsumesReference())
+	 out += c->Length();
      return out;
    }
 
@@ -189,7 +191,7 @@ class CigarField {
  };
 
  //typedef std::vector<CigarField> Cigar;
-typedef std::unordered_map<std::string, size_t> CigarMap;
+ typedef SeqHashMap<std::string, size_t> CigarMap;
 
  Cigar cigarFromString(const std::string& cig);
 
@@ -286,7 +288,6 @@ class BamRecord {
     assert(false);
   }
   
-
   /** BamRecord is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
@@ -366,8 +367,23 @@ class BamRecord {
   inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
 
   /** Set the mapping quality */
-  inline void SetMapQuality(int32_t m) { b->core.qual = m; }
+  inline void SetMapQuality(int32_t m) { if (b) b->core.qual = m; }
+
+  /** Set the chr id */
+  inline void SetChrID(int32_t i) { b->core.tid = i; }
+
+  /** Set the chr id of mate */
+  inline void SetChrIDMate(int32_t i) { b->core.mtid = i; }
   
+  /** Set the position of the mate read */
+  inline void SetPositionMate(int32_t i) { b->core.mpos = i; }
+
+  /** Set the pair mapped flag on */
+  inline void SetPairMappedFlag() { b->core.flag |= BAM_FPAIRED; }
+
+  /** Set the mate reverse flag on */
+  inline void SetMateReverseFlag() { b->core.flag |= BAM_FMREVERSE; }
+
   /** Get the number of cigar fields */
   inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
   
@@ -421,6 +437,9 @@ class BamRecord {
   /** Set the query name */
   void SetQname(const std::string& n);
 
+  //Set the quality scores 
+  void SetQualities(const std::string& n, int offset);
+
   /** Set the sequence name */
   void SetSequence(const std::string& seq);
 
@@ -435,6 +454,28 @@ class BamRecord {
 
   /** Return mate read as a GenomicRegion */
   GenomicRegion asGenomicRegionMate() const;
+
+   /** Return the number of "aligned bases" in the same style as BamTools
+    *
+    * BamTools reports AlignedBases, which for example returns the literal strings (for diff CIGARs):
+    * 3S5M - CTG
+    * 5M - CTAGC
+    * 3M1D3M - ATG-TGA 
+    * 3M1I3M - ATGCTGA
+    *
+    * @return The number of M, D, and I bases
+    */
+  inline int NumAlignedBases() const {
+    int out = 0;
+    uint32_t* c = bam_get_cigar(b);
+    for (size_t i = 0; i < b->core.n_cigar; i++) 
+      if (bam_cigar_opchr(c[i]) == 'M' || 
+	  bam_cigar_opchr(c[i]) == 'I' || 
+	  bam_cigar_opchr(c[i]) == 'D')
+	out += bam_cigar_oplen(c[i]);
+    return out;
+  }
+  
 
   /** Return the max single insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {
@@ -471,8 +512,9 @@ class BamRecord {
   Cigar GetCigar() const {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
-    for (int k = 0; k < b->core.n_cigar; ++k) 
+    for (int k = 0; k < b->core.n_cigar; ++k) {
       cig.add(CigarField(c[k]));
+    }
     return cig;
   }
 
@@ -679,32 +721,15 @@ class BamRecord {
     return cig.str();
   }
   
-  /** Retrieve the human readable chromosome name. 
-   * 
-   * Note that this requires that the header not be empty. If
-   * it is empty, assumes this ia chr1 based reference
-   * @note This will be deprecated
-   */
-  inline std::string ChrName(bam_hdr_t * h) const {
-
-    // if we have the header, convert
-    if (h) {
-      if (b->core.tid < h->n_targets)
-	return std::string(h->target_name[b->core.tid]);
-      else
-	return "CHR_ERROR";
-    }
-
-    // no header, assume zero based
-    return std::to_string(b->core.tid + 1);
-    
-  }
-
   /** Return a human readable chromosome name assuming chr is indexed
    * from 0 (eg id 0 return "1")
    */
   inline std::string ChrName() const {
-    return std::to_string(b->core.tid + 1);
+    std::stringstream ss;
+    ss << (b->core.tid + 1);
+
+    return ss.str();
+    //return std::to_string(b->core.tid + 1); //c++11
   }
 
   /** Retrieve the human readable chromosome name. 
@@ -715,30 +740,44 @@ class BamRecord {
    * @return Empty string if chr id < 0, otherwise chromosome name from dictionary.
    */
   inline std::string ChrName(const SeqLib::BamHeader& h) const {
-
     if (b->core.tid < 0)
       return std::string();
+
+    if (h.isEmpty())
+      return h.IDtoName(b->core.tid);
+
+    // c++98    
+    std::stringstream ss;
+    ss << b->core.tid;
     
-    return h.IDtoName(b->core.tid);
     // no header, assume zero based
-    return std::to_string(b->core.tid + 1);
+    return ss.str(); //std::to_string(b->core.tid + 1);
     
   }
 
   /** Return a short description (chr:pos) of this read */
-  inline std::string Brief(bam_hdr_t * h = nullptr) const {
-    if (!h)
-      return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");
-    else
-      return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");      
+  inline std::string Brief() const {
+    //if (!h)
+    // c++11
+    //  return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");
+    // c++98
+    std::stringstream ss;
+    ss << (b->core.tid + 1) << ":" << AddCommas(b->core.pos) << "(" << ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") << ")";
+    return ss.str();
+    //else
+    // return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");      
   }
 
   /** Return a short description (chr:pos) of this read's mate */
-  inline std::string BriefMate(bam_hdr_t * h = nullptr) const {
-    if (!h)
-      return(std::to_string(b->core.mtid + 1) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");
-    else
-      return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
+  inline std::string BriefMate() const {
+    //if (!h)
+    // c++11
+    // return(std::to_string(b->core.mtid + 1) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");
+    std::stringstream ss;
+    ss << (b->core.mtid + 1) << ":" << AddCommas(b->core.mpos) << "(" << ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") << ")";
+    return ss.str();
+    //else
+    //  return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
   }
 
   /** Strip a particular alignment tag 
@@ -761,9 +800,12 @@ class BamRecord {
   /** Return the raw pointer */
   inline bam1_t* raw() const { return b.get(); }
 
+  /** Return the number of bases on the reference that are covered by a match (M) on both reads */
+  int OverlappingCoverage(const BamRecord& r) const;
+  
   private:
   
-  std::shared_ptr<bam1_t> b; // need to move this to private  
+  SeqPointer<bam1_t> b; // bam1_t shared pointer
 
 };
 

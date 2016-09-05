@@ -1,6 +1,8 @@
 #include "SeqLib/BamWalker.h"
 #include "SeqLib/BamWriter.h"
 
+#include <stdexcept>
+
 //#define DEBUG_WALKER 1
 
 namespace SeqLib {
@@ -37,9 +39,9 @@ namespace SeqLib {
 
     if (!fop)
       return false;
-      //throw std::runtime_error("Trying to close BAM that is already closed or never opened");
 
-    fop = nullptr; // this clears shared_ptr, calls sam_close
+    fop.reset(); //tr1
+    //fop = NULL; // this clears shared_ptr, calls sam_close (c++11)
 
     return true;
   }
@@ -78,7 +80,7 @@ bool BamWriter::BuildIndex() const {
     m_out = f;
 
     // hts open the writer
-    fop = std::shared_ptr<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), htsFile_delete());
+    fop = SeqPointer<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), htsFile_delete());
 
     if (!fop) {
       return false;
@@ -94,12 +96,13 @@ bool BamWriter::BuildIndex() const {
     case BAM :  output_format = "wb"; break;
     case CRAM : output_format = "wc"; break;
     case SAM :  output_format = "w"; break;
+    default : throw std::invalid_argument("Invalid writer type");
     }
 
   }
   
 
-bool BamWriter::WriteRecord(BamRecord &r)
+bool BamWriter::WriteRecord(const BamRecord &r)
 {
   if (!fop) {
     //throw std::runtime_error("BamWriter::writeAlignment - Cannot write BamRecord. Did you forget to open the Bam for writing (OpenWriteBam)?");

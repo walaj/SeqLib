@@ -12,6 +12,18 @@ API Documentation
 -----------------
 [API Documentation][htmldoc]
 
+Table of contents
+=================
+
+  * [Installation](#installation)
+  * [Integrating into build system](#integrating-into-build-system)
+  * [Description](#description)
+    * [Memory management](#memory-management)
+    * [Other C++ APIs](#other-c++-apis)
+  * [Command line usage](#command-line-usage)
+  * [Examples](#examples)
+  * [Attributions](#attributions)
+
 Installation
 ------------
 
@@ -20,24 +32,28 @@ Installation
 git clone --recursive https://github.com/jwalabroad/SeqLib.git
 cd SeqLib
 ./configure
-make
+make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
+make install
 ```
  
-I have successfully compiled with GCC-4.8+ on Linux and with Clang on Mac
+I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.
+(OSX may require C++11 libs if ``tr1`` not present) 
+
+SeqLib is compatible with c++98 and later.
 
 Integrating into build system
 -----------------------------
 
 After building, you will need to add the relevant header directories:
 ```bash
-SEQ=<path_to_seqlib>
-C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib:$SEQ/src:$SEQ/fermi-lite
+SEQ=<path_to_seqlib_git_repos>
+C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
 ```
 
-And need to link the following libraries
+And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 ```bash
 SEQ=<path_to_seqlib>
-LDADD="$LDADD -L$SEQ/src/libseqlib.a -L$SEQ/fermi-lite/libfml.a -L$SEQ/libbwa.a -L$SEQ/htslib/libhts.a"
+LDADD="$LDADD -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
 ```
 
 Description
@@ -67,7 +83,7 @@ main motivations behind SeqLib is that all access to sequencing reads, BWA, etc 
 completely avoid ``malloc`` and ``free``. In SeqLib all the mallocs/frees are handled automatically in the constructors and
 destructors.
 
-Note about BamTools, Gamgee and SeqAn
+Other C++ APIs
 ------------------------------
 There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, the [Gamgee][gam] 
 project from the Broad Institute, and the [SeqAn][seqan] library from Freie Universitat Berlin. These projects 
@@ -84,8 +100,29 @@ SeqLib is under active development, while Gamgee has been abandoned.
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools. Feature requests and comments are welcomed.
 
-Example usages
---------------
+Command Line Usage
+------------------
+```bash
+## BFC correction (input mode -m is b (BAM/SAM/CRAM), output mode -w is SAM stream
+samtools view in.bam -h 1:1,000,000-1,002,000 | seqtools bfc - -G $REF | samtools sort - -m 4g -o corrected.bam
+
+## Without a pipe, write to BAM
+seqtools bfc in.bam -G $REF -b > corrected.bam
+
+## Skip realignment, send to fasta
+seqtools bfc in.bam -f > corrected.fasta
+
+## Input as fasta, send to aligned BAM
+seqtools bfc -F in.fasta -G $REG -b > corrected.bam
+
+
+##### ASSEMBLY (same patterns as above)
+samtools view in.bam -h 1:1,000,000-1,002,000 | seqtools fml - -G $REF | samtools sort - -m 4g -o assembled.bam
+
+```
+
+Examples
+--------
 ##### Targeted re-alignment of reads to a given region with BWA-MEM
 ```
 #include "SeqLib/RefGenome.h"
@@ -241,6 +278,29 @@ while(r.GetNextRecord(rec))
 w.Close();               // Optional. Will close on destruction
 ```
 
+##### Perform error correction on reads, using [BFC][bfc]
+```
+#include "SeqLib/BFC.h"
+using SeqLib;
+
+// brv is some set of reads to train the error corrector
+b.TrainCorrection(brv);
+// brv2 is some set to correct
+b.ErrorCorrect(brv2);
+
+// retrieve the sequences
+UnalignedSequenceVector v;
+b.GetSequences(v);
+
+// alternatively, to train and correct the same set of reads
+b.TrainAndCorrect(brv);
+b.GetSequences(v);
+
+// alternatively, train and correct, and modify the sequence in-place
+b.TrainCorrection(brv);
+b.ErrorCorrectInPlace(brv);
+```
+
 Support
 -------
 This project is being actively developed and maintained by Jeremiah Wala (jwala@broadinstitute.org). 
@@ -288,3 +348,5 @@ Development, support, guidance, testing:
 [blatlicense]: https://github.com/jwalabroad/SeqLib/blob/old_license/blat/README
 
 [blatlink]: http://genome.cshlp.org/content/12/4/656.full
+
+[bfc]: https://github.com/lh3/bfc

@@ -3,18 +3,15 @@
 
 #include <vector>
 #include <iostream>
-#include <cstdint>
+#include <stdint.h>
 #include <utility>
 #include <list>
 #include <cstring>
-#include <memory>
 
 #include "SeqLib/SeqLibCommon.h"
 #include "SeqLib/SeqLibUtils.h"
 #include "SeqLib/BamHeader.h"
 
-/** 
- */
 namespace SeqLib {
 
   /** @brief Container for an interval on the genome 
@@ -67,13 +64,13 @@ class GenomicRegion {
    */
   std::string PointString() const;
 
-  /** Randomize the position of this GenomicRegion on the genome
-   * 
-   * Creates a GenomicRegion with pos1 = pos2. Simulates a random value
-   * with val <= genome_size_XY and then converts to GenomicRegion
-   * @note Seed is set before-hand at any time with srand
-   */
-  void Random();
+  // Randomize the position of this GenomicRegion on the genome
+  // 
+  // Creates a GenomicRegion with pos1 = pos2. Simulates a random value
+  // with val <= genome_size_XY and then converts to GenomicRegion
+  // @note Seed is set before-hand at any time with srand
+  //
+  //void Random();
 
   /** Check if the GenomicRegion is empty (aka chr -1 and pos1=pos2=0)   */
   bool IsEmpty() const;
@@ -91,6 +88,9 @@ class GenomicRegion {
    * @param gr GenomicRegion object to compare with
    */
   int32_t DistanceBetweenEnds(const GenomicRegion &gr) const;
+
+  /** Returns identical string as would be obtained from << */
+  std::string ToString() const;
 
   /** Returns true if a.chr < b.chr or a.pos1 < a.pos1 if on same chrome, or if a.pos2 < b.pos2 if same chrom and same pos1 */
   bool operator < (const GenomicRegion& b) const;
@@ -141,13 +141,13 @@ class GenomicRegion {
    */
   int Width() const;
 
-  int32_t chr = 0; ///< Chromosome ID
+  int32_t chr; ///< Chromosome ID
 
-  int32_t pos1 = 0; ///< Start position
+  int32_t pos1; ///< Start position
 
-  int32_t pos2 = 0; ///< End Position
+  int32_t pos2; ///< End Position
 
-  char strand = '*'; ///< Strand. Should be one of *, -, +
+  char strand; ///< Strand. Should be one of *, -, +
 
  private:
 

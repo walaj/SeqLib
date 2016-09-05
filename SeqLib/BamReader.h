@@ -2,9 +2,6 @@
 #define SEQLIB_BAM_POLYREADER_H__
 
 #include <cassert>
-#include <memory>
-#include <unordered_map>
-
 #include "SeqLib/ReadFilter.h"
 #include "SeqLib/BamWalker.h"
 
@@ -16,6 +13,8 @@ int hts_useek(htsFile *file, long uoffset, int where);
 class BamReader;
 
 namespace SeqLib {
+
+  typedef SeqPointer<hts_idx_t> SharedIndex;
  
   // store file accessors for single BAM
   class _Bam {
@@ -23,11 +22,20 @@ namespace SeqLib {
     friend class BamReader;
 
   public:
-    _Bam(const std::string& m) : m_in(m) {}
-    _Bam() {}
+
+  _Bam(const std::string& m) : m_region_idx(0), m_in(m), empty(true), mark_for_closure(false)  {}
+
+  _Bam() : m_region_idx(0), empty(true), mark_for_closure(false) {}
+
     ~_Bam() {}
 
     std::string GetFileName() const { return m_in; }
+
+    // point index to this region of bam
+    bool SetRegion(const GenomicRegion& gp);
+
+    // which region are we on
+    size_t m_region_idx;
 
   private:
 
@@ -38,28 +46,19 @@ namespace SeqLib {
       empty = true;
       mark_for_closure = false;
       m_region_idx = 0;
-      
-      // close and reopen, only way I know how to do right now
-      //fp = nullptr; // calls destructor on htsFile
-      //hts_itr = nullptr;
-      
-      // re-read it in
-      //fp = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
-      
-      // other attempts at a true rewind
-      //hts_useek(fp.get(), 0, 0);
-      //ks_rewind((kstream_t*)fp->fp.voidp);
-      //hts_itr = nullptr; // reset to beginning
-
     }
 
     // close this bam
     bool close() {
       if (!fp)
 	return false;
-      fp = nullptr; // calls destructor actually
-      idx = nullptr;
-      hts_itr = nullptr;
+      fp.reset();
+      idx.reset();
+      hts_itr.reset();
+
+      //fp = nullptr; // calls destructor actually
+      //idx = nullptr;
+      //hts_itr = nullptr;
 
       empty = true;
       mark_for_closure = false;
@@ -68,11 +67,17 @@ namespace SeqLib {
       return true;
     }
 
+    // set a pre-loaded index (save on loading each time)
+    void set_index(SharedIndex& i) { idx = i; }
+    
+    // set a pre-loaded index and make a deep copy
+    void deep_set_index();
+
     GRC* m_region; // local copy of region
 
-    std::shared_ptr<htsFile> fp;     // BAM file pointer
-    std::shared_ptr<hts_idx_t> idx;  // bam index
-    std::shared_ptr<hts_itr_t> hts_itr; // iterator to index location
+    SeqPointer<htsFile> fp;     // BAM file pointer
+    SeqPointer<hts_idx_t> idx;  // bam index
+    SeqPointer<hts_itr_t> hts_itr; // iterator to index location
     std::string m_in;                   // file name
     BamHeader m_hdr;                    // the BAM header
 
@@ -80,10 +85,10 @@ namespace SeqLib {
     BamRecord next_read;
 
     // the next read "slot" is empty
-    bool empty = true;
+    bool empty;
     
     // if set to true, then won't even attempt to lookup read
-    bool mark_for_closure = false;
+    bool mark_for_closure;
     
     // open the file pointer
     bool open_BAM_for_reading();
@@ -91,15 +96,9 @@ namespace SeqLib {
     // hold the reference for CRAM reading
     std::string m_cram_reference;
 
-    // which region are we on
-    size_t m_region_idx = 0;
-
-    // point index to this region of bam
-    bool __set_region(const GenomicRegion& gp);
-
-    
-
   };
+
+  typedef SeqHashMap<std::string, _Bam> _BamMap;
   
 /** Stream in reads from multiple BAM/SAM/CRAM or stdin */
 class BamReader {
@@ -150,11 +149,29 @@ class BamReader {
   /** Return if the reader has opened the first file */
   bool IsOpen() const { if (m_bams.size()) return m_bams.begin()->second.fp != 0; return false; }
 
+  /** Set pre-loaded raw index 
+   * 
+   * Provide the reader with an index structure that is already loaded.
+   * This is useful if there are multiple newly created BamReader objects
+   * that use the same index (e.g. make a BAM index in a loop)
+   * @note This does not make a copy, so ops on this index are shared with
+   * every other object that controls it.
+   * @param i Pointer to an HTSlib index
+   * @param f Name of the file to set index for
+   * @return True if the file f is controlled by this object
+   */
+  bool SetPreloadedIndex(const std::string& f, SharedIndex& i);
+
+  /** Set a pre-loaded raw index, to the first BAM
+   * @note see SetPreloadedIndex(const std::string& f, SharedIndex& i)
+   */
+  bool SetPreloadedIndex(SharedIndex& i);
+
   /** Return if the reader has opened the file
    * @param f Name of file to check
    */
   bool IsOpen(const std::string& f) const { 
-    std::unordered_map<std::string, _Bam>::const_iterator ff = m_bams.find(f);
+    SeqHashMap<std::string, _Bam>::const_iterator ff = m_bams.find(f);
     if (ff == m_bams.end())
       return false;
     return ff->second.fp != 0; 
@@ -180,8 +197,8 @@ class BamReader {
   /** Return a vector of all of the BAM/SAM/CRAMs in this reader */
   std::vector<std::string> ListFiles() const {
     std::vector<std::string> out;
-    for (auto& i : m_bams)
-      out.push_back(i.first);
+    for (_BamMap::const_iterator i = m_bams.begin(); i != m_bams.end(); ++i)
+      out.push_back(i->first);
     return out;
   }
 
@@ -225,7 +242,7 @@ class BamReader {
   GRC m_region;
 
   // store the file pointers etc to BAM files
-  std::unordered_map<std::string, _Bam> m_bams;
+  _BamMap m_bams;
 
   // hold the reference for CRAM reading
   std::string m_cram_reference;

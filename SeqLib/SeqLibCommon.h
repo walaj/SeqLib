@@ -17,7 +17,6 @@
 
 #include <string>
 #include <vector>
-#include <cstdint>
 
 namespace SeqLib {
 
@@ -29,7 +28,8 @@ namespace SeqLib {
 					      ' ',' ',' ','c',' ',' ',' ',' ',' ',' ','n',' ',' ',' ',' ',' ','a',' ',' ',' ',
 					      ' ',' ',' ',' ',' ',' ',' ',' '};
   
-  static const std::vector<std::string> CHR_NAME {"1", "2", "3", "4", "5", "6", "7", "8", "9",
+  /*  
+static const std::vector<std::string> CHR_NAME {"1", "2", "3", "4", "5", "6", "7", "8", "9",
       "10", "11", "12", "13", "14", "15", "16", "17", 
       "18", "19", "20", "21", "22", "X", "Y", "M"};
   static const std::vector<std::string> CHR_NAME_NUM {"1", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -73,7 +73,7 @@ namespace SeqLib {
   static const int NONCENT_CHR [44] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,
 				       11,11,12,12,13,14,15,16,16,17,17,18,18,19,19,20,20,21,21,22,23,23,24,24};
   
- 
+  */
 }
 
 #endif

@@ -17,7 +17,7 @@ echo "...running unit tests and code coverage"
   export LD_LIBRARY_PATH=${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}
   echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
   ./configure --with-boost=${BOOST_ROOT}
-  make
+  make CXXFLAGS='-DHAVE_C11=1 -std=c++11'
   ./seq_test
 
   EXCL="-e src/non_api -e seq_test/seq_test.cpp -e htslib -e bwa -e fermi-lite -e config.h -e seq_test/config.h -e seq_test/config.h -e src/jsoncpp.cpp -e src/json -e src/SeqLib/ssw.h -e src/SeqLib/ssw_cpp.h -e src/ssw.c -e src/ssw_cpp.cpp"

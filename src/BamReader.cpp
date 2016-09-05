@@ -6,14 +6,14 @@
 namespace SeqLib {
 
 // set the bam region
-bool _Bam::__set_region(const GenomicRegion& gp) {
+bool _Bam::SetRegion(const GenomicRegion& gp) {
 
   // mark it "open" again, may be new reads here
   mark_for_closure = false;
     
   //HTS set region 
   if ( (fp->format.format == 4 || fp->format.format == 6) && !idx)  // BAM (4) or CRAM (6)
-    idx = std::shared_ptr<hts_idx_t>(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
+    idx = SeqPointer<hts_idx_t>(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
   
   if (!idx) {
     std::cerr << "Failed to load index for " << m_in << ". Rebuild samtools index" << std::endl;
@@ -26,7 +26,7 @@ bool _Bam::__set_region(const GenomicRegion& gp) {
   }
   
   // should work for BAM or CRAM
-  hts_itr = std::shared_ptr<hts_itr_t>(sam_itr_queryi(idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
+  hts_itr = SeqPointer<hts_itr_t>(sam_itr_queryi(idx.get(), gp.chr, gp.pos1, gp.pos2), hts_itr_delete());
   
   if (!hts_itr) {
     std::cerr << "Error: Failed to set region: " << gp << std::endl; 
@@ -36,9 +36,16 @@ bool _Bam::__set_region(const GenomicRegion& gp) {
   return true;
 }
 
+  bool BamReader::SetPreloadedIndex(const std::string& f, SeqPointer<hts_idx_t>& i) {
+    if (!m_bams.count(f))
+      return false;
+    m_bams[f].set_index(i);
+    return true;
+  }
+
 void BamReader::Reset() {
-  for (auto& b : m_bams)
-    b.second.reset();
+  for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b) 
+     b->second.reset();
   m_region = GRC();
 }
 
@@ -48,13 +55,14 @@ void BamReader::Reset() {
     if (!m_bams.count(f))
       return false;
     m_bams[f].reset();
+    return true;
 }
 
   bool BamReader::Close() {
     
     bool success = true;
-    for (auto& b : m_bams)
-      success = success && b.second.close();
+  for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b) 
+      success = success && b->second.close();
     return success;
   }
 
@@ -67,16 +75,23 @@ void BamReader::Reset() {
     return m_bams[f].close();
   }
 
-bool BamReader::SetRegion(const GenomicRegion& g) {
-  m_region.clear();
-  m_region.add(g);
-
-  bool success = true;
-  if (m_region.size()) {
-    for (auto& b : m_bams) {
-      b.second.m_region = &m_region;
-      b.second.m_region_idx = 0; // set to the begining
-      success = success && b.second.__set_region(m_region[0]);
+  bool BamReader::SetPreloadedIndex(SharedIndex& i) {
+    if (!m_bams.size())
+      return false;
+    m_bams.begin()->second.set_index(i);
+    return true;
+  }
+  
+  bool BamReader::SetRegion(const GenomicRegion& g) {
+    m_region.clear();
+    m_region.add(g);
+    
+    bool success = true;
+    if (m_region.size()) {
+      for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b) {
+	b->second.m_region = &m_region;
+	b->second.m_region_idx = 0; // set to the begining
+	success = success && b->second.SetRegion(m_region[0]);
     }
     return success;
   }
@@ -97,10 +112,10 @@ bool BamReader::SetRegion(const GenomicRegion& g) {
   // go through and start all the BAMs at the first region
   bool success = true;
   if (m_region.size()) {
-    for (auto& b : m_bams) {
-      b.second.m_region = &m_region;
-      b.second.m_region_idx = 0; // set to the begining
-      success = success && b.second.__set_region(m_region[0]);
+    for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b) {
+      b->second.m_region = &m_region;
+      b->second.m_region_idx = 0; // set to the begining
+      success = success && b->second.SetRegion(m_region[0]);
     }
     return success;
   }
@@ -124,8 +139,8 @@ bool BamReader::SetRegion(const GenomicRegion& g) {
   bool BamReader::Open(const std::vector<std::string>& bams) {
     
     bool pass = true;
-    for (auto& i : bams) // loop and open all of them
-      pass = pass && Open(i);
+    for (std::vector<std::string>::const_iterator i = bams.begin(); i != bams.end(); ++i)
+      pass = pass && Open(*i);
     return pass;
   }
   
@@ -134,7 +149,7 @@ BamReader::BamReader() {}
   bool _Bam::open_BAM_for_reading() {
     
     // HTS open the reader
-    fp = std::shared_ptr<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+    fp = SeqPointer<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
     
     // open cram reference
     if (!m_cram_reference.empty()) {
@@ -168,9 +183,8 @@ BamReader::BamReader() {}
 
   void BamReader::SetCramReference(const std::string& ref) {
     m_cram_reference = ref;
-    for (auto& b : m_bams)
-      b.second.m_cram_reference = ref;
-    
+    for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b)
+      b->second.m_cram_reference = ref;
   }
 
 bool BamReader::GetNextRecord(BamRecord& r) {
@@ -189,9 +203,9 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 
   // loop the files and load the next read
   // for the one that was emptied last
-  for (auto& bam : m_bams) {
+  for (_BamMap::iterator bam = m_bams.begin(); bam != m_bams.end(); ++bam) {
 
-    _Bam *tb = &bam.second;
+    _Bam *tb = &(bam->second);
 
     // if marked, then don't even try on this BAM
     if (tb->mark_for_closure)
@@ -218,10 +232,10 @@ bool BamReader::GetNextRecord(BamRecord& r) {
   // sort based on chr and left-most alignment pos. Same as samtools
   int min_chr = INT_MAX;
   int min_pos = INT_MAX;
-  std::unordered_map<std::string, _Bam>::iterator hit; 
+  _BamMap::iterator hit; 
   bool found = false; // did we find a valid read
 
-  for (std::unordered_map<std::string, _Bam>::iterator bam = m_bams.begin(); 
+  for (_BamMap::iterator bam = m_bams.begin(); 
        bam != m_bams.end(); ++bam) {
     
     // dont check if already marked for removal
@@ -249,8 +263,8 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 std::string BamReader::PrintRegions() const {
 
   std::stringstream ss;
-  for (auto& r : m_region)
-    ss << r << std::endl;
+  //for (GRC::const_iterator r = m_region.begin(); r != m_region.end(); ++r)
+  //  ss << *r << std::endl;
   return(ss.str());
 
 }
@@ -294,7 +308,7 @@ std::string BamReader::PrintRegions() const {
 	//goto endloop;
       
       // next region exists, try it
-      __set_region(m_region->at(m_region_idx));
+      SetRegion(m_region->at(m_region_idx));
       valid = sam_itr_next(fp.get(), hts_itr.get(), b);
     } while (valid <= 0); // keep trying regions until works
   }
@@ -309,18 +323,18 @@ std::string BamReader::PrintRegions() const {
 
 std::ostream& operator<<(std::ostream& out, const BamReader& b)
 {
-  for (auto& bam : b.m_bams) 
-    out << ":" << bam.second.GetFileName() << std::endl; 
+  for(_BamMap::const_iterator bam = b.m_bams.begin(); bam != b.m_bams.end(); ++bam)
+    out << ":" << bam->second.GetFileName() << std::endl; 
 
   if (b.m_region.size() && b.m_region.size() < 20) {
     out << " ------- BamReader Regions ----------" << std::endl;;
-    for (auto& i : b.m_region)
-      out << i << std::endl;
+    //for (GRC::const_iterator r = b.m_region.begin(); r != b.m_region.end(); ++r)
+    //  out << *i << std::endl;
   } 
   else if (b.m_region.size() >= 20) {
     int wid = 0;
-    for (auto& i : b.m_region)
-      wid += i.Width();
+    //for (GRC::const_iterator r = b.m_region.begin(); r != b.m_region.end(); ++r)
+    //  wid += r->Width();
     out << " ------- BamReader Regions ----------" << std::endl;;
     out << " -- " << b.m_region.size() << " regions covering " << AddCommas(wid) << " bp of sequence"  << std::endl;
   }

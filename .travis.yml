@@ -30,7 +30,7 @@ before_install:
 
 script: 
 - .travis.scripts/travis-install.sh
-- ./configure && make
+- ./configure && make 
 
 after_success: 
 - .travis.scripts/coveralls.sh

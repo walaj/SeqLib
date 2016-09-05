@@ -3,6 +3,7 @@
 #include <cassert>
 #include <bitset>
 #include <cctype>
+#include <stdexcept>
 
 #include "SeqLib/ssw_cpp.h"
 
@@ -11,7 +12,7 @@
 
 namespace SeqLib {
 
-  std::vector<int> CigarCharToInt = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //0-9
+  const int CigarCharToInt[128] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //0-9
                                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //10-19
                                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //20
                                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //30
@@ -29,11 +30,11 @@ namespace SeqLib {
   
   void BamRecord::init() {
     bam1_t* f = bam_init1();
-    b = std::shared_ptr<bam1_t>(f, free_delete());
+    b = SeqPointer<bam1_t>(f, free_delete());
   }
 
   void BamRecord::assign(bam1_t* a) { 
-    b = std::shared_ptr<bam1_t>(a, free_delete()); 
+    b = SeqPointer<bam1_t>(a, free_delete()); 
   }
 
   GenomicRegion BamRecord::asGenomicRegion() const {
@@ -71,7 +72,7 @@ namespace SeqLib {
     }
 
     // make the new cigar structure
-    uint8_t* new_cig = (uint8_t*)malloc(4 * c.size());
+    uint32_t* new_cig = (uint32_t*)malloc(4 * c.size());
     for (size_t i = 0; i < c.size(); ++i)
       new_cig[i] = c[i].raw();
     
@@ -291,6 +292,19 @@ namespace SeqLib {
     b->m_data = b->l_data;
   }
 
+  void BamRecord::SetQualities(const std::string& n, int offset) {
+
+    if (n.length() != b->core.l_qseq)
+      throw std::invalid_argument("New quality score should be same as seq length");
+
+    char * q = strdup(n.data());
+    for (size_t i = 0; i < n.length(); ++i)
+      q[i] -= offset;
+    memcpy(bam_get_qual(b), q, n.length()); // dont copy /0 terminator
+    free(q);
+
+  }
+
   double BamRecord::MeanPhred() const {
 
     if (b->core.l_qseq <= 0)
@@ -409,29 +423,6 @@ namespace SeqLib {
       }
       --i;
     }
-
-    /*
-    // check that they aren't all bad
-    if (startpoint == 0 && endpoint == -1) 
-      return;
-
-    // if they're all good, mark and return
-    if (startpoint == 0 && endpoint == b->core.l_qseq) {
-      return; 
-    }
-    has_trim = true;
-    
-    std::string output = std::string(endpoint-startpoint, 'N');
-    try { 
-      uint8_t * p = bam_get_seq(b);
-      for (int32_t i = startpoint; i < (endpoint - startpoint); ++i) 
-	output[i] = BASES[bam_seqi(p,i)];
-    } catch (...) {
-      std::cerr << "Trying to subset string in BamRecord::QualityTrimRead out of bounds. String: " << Sequence() << " start " << startpoint << " length " << (endpoint - startpoint) << std::endl;
-    }
-
-    return output;
-    */
   }
 
   void BamRecord::AddZTag(std::string tag, std::string val) {
@@ -491,9 +482,9 @@ namespace SeqLib {
       std::istringstream iss(tmp);
       std::string line;
       while (std::getline(iss, line, CTAG_DELIMITER))
-	out.push_back(stoi(line)); 
+	out.push_back(atoi(line.c_str())); 
     } else {
-	out.push_back(stoi(tmp)); 
+      out.push_back(atoi(tmp.c_str())); 
     }
     
     assert(out.size());
@@ -514,9 +505,9 @@ namespace SeqLib {
       std::istringstream iss(tmp);
       std::string line;
       while (std::getline(iss, line, CTAG_DELIMITER))
-	out.push_back(stod(line)); 
+	out.push_back(std::atof(line.c_str())); 
     } else { // single entry
-	out.push_back(stod(tmp)); 
+      out.push_back(std::atof(tmp.c_str())); 
     }
     
     assert(out.size());
@@ -592,8 +583,8 @@ namespace SeqLib {
     int op = CigarCharToInt[(int)t];
     if (op < 0)
       throw std::invalid_argument("Cigar type must be one of MIDSHPN=X");      
-    if (len <= 0)
-      throw std::invalid_argument("Cigar length must be > 0");
+    if (len < 0)
+      throw std::invalid_argument("Cigar length must be >= 0");
     data = len << BAM_CIGAR_SHIFT;
     data = data | static_cast<uint32_t>(op);
   }
@@ -605,8 +596,8 @@ namespace SeqLib {
 
 
   std::ostream& operator<<(std::ostream& out, const Cigar& c) { 
-    for (auto& i : c)
-      out << i;
+    for (Cigar::const_iterator i = c.begin(); i != c.end(); ++i)
+      out << *i;
     return out; 
   }
 
@@ -617,11 +608,11 @@ namespace SeqLib {
 
     // get the ops (MIDSHPN)
     std::vector<char> ops;
-    for (auto& c : cig)
-      if (!isdigit(c)) {
-	ops.push_back(c);
+    for (size_t i = 0; i < cig.length(); ++i)
+      if (!isdigit(cig.at(i))) {
+	ops.push_back(cig.at(i));
       }
-
+    
     std::size_t prev = 0, pos;
     std::vector<std::string> lens;
     while ((pos = cig.find_first_of("MIDSHPNX", prev)) != std::string::npos) {
@@ -634,26 +625,10 @@ namespace SeqLib {
 
     assert(ops.size() == lens.size());
     for (size_t i = 0; i < lens.size(); ++i) {
-      //tc.push_back(CigarField(ops[i], std::stoi(lens[i])));
-      tc.add(CigarField(ops[i], std::stoi(lens[i])));
+      tc.add(CigarField(ops[i], std::atoi(lens[i].c_str())));
     }
     
     return tc;
-
-
-/*
-#ifdef HAVE_BOOST
-    std::vector<std::string> lens;
-    boost::split(lens, cig, boost::is_any_of(cigar_delimiters));
-    lens.pop_back(); // fills in empty at end for some reason
-
-#else
-
-    std::cerr << "!!!!!! BOOST REQUIRED FOR THIS FUNCTION !!!!!!" << std::endl << 
-      "!!!!!! Returning EMPTY CIGAR !!!!!!!!!" << std::endl;
-    return tc;
-#endif
-*/
 
   }
 
@@ -666,6 +641,37 @@ namespace SeqLib {
        if (m_data[i].Type() != c[i].Type() || m_data[i].Length() != c[i].Length())
 	 return false;
      return true;
+  }
+
+
+  int BamRecord::OverlappingCoverage(const BamRecord& r) const {
+    
+    uint32_t* c  = bam_get_cigar(b);
+    uint32_t* c2 = bam_get_cigar(r.b);
+    uint8_t * cov1 = (uint8_t*)calloc(b->core.l_qseq, sizeof(uint8_t));
+    size_t pos = 0;
+    for (int k = 0; k < b->core.n_cigar; ++k) {
+      if (bam_cigar_opchr(c[k]) == 'M')  // is match, so track locale
+	for (size_t j = 0; j < bam_cigar_oplen(c[k]); ++j)
+	  cov1[pos + j] = 1;
+      if (bam_cigar_type(bam_cigar_op(c[k]))&1)  // consumes query, so move position
+	pos = pos + bam_cigar_oplen(c[k]);
+    }
+    
+    pos = 0;
+    size_t ocov = 0; // overlapping coverage
+    for (int k = 0; k < r.b->core.n_cigar; ++k) {
+      if (bam_cigar_opchr(c2[k]) == 'M')  // is match, so track local
+	for (size_t j = 0; j < bam_cigar_oplen(c2[k]); ++j)
+	  if (cov1[pos+j]) // r is covered. Check again this too
+	    ++ocov;
+      if (bam_cigar_type(bam_cigar_op(c2[k]))&1)  // consumes query, so move position
+	pos = pos + bam_cigar_oplen(c2[k]);
+    }
+    
+    free(cov1);
+    
+    return ocov;
   }
 
   

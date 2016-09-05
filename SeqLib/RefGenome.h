@@ -5,8 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "htslib/faidx.h"
-
+#include "htslib/htslib/faidx.h"
 
 namespace SeqLib {
   
@@ -20,7 +19,7 @@ namespace SeqLib {
   public:
 
     /** Create an empty RefGenome object */
-    RefGenome() { index = nullptr; }
+    RefGenome() { index = NULL; }
     
     /** Destroy the malloc'ed faidx_t index inside object */
     ~RefGenome() { if (index) fai_destroy(index); }
@@ -43,7 +42,7 @@ namespace SeqLib {
     
     /** Check if reference has been loaded */
     bool IsEmpty() const { 
-      return (index == nullptr); 
+      return (index == NULL); 
     }
     
   private:

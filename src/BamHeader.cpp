@@ -9,6 +9,28 @@
 
 namespace SeqLib {
 
+  BamHeader::BamHeader(const HeaderSequenceVector& hsv) {
+
+    bam_hdr_t * hdr = bam_hdr_init();
+    hdr->n_targets = hsv.size();
+    hdr->target_len = (uint32_t*)malloc(hdr->n_targets * sizeof(uint32_t));
+    hdr->target_name = (char**)malloc(hdr->n_targets * sizeof(char*));
+    
+    // fill the names and make the text
+    std::stringstream text;
+    text << "@HD\tVN:1.4" << std::endl;
+    for (size_t i = 0; i < hsv.size(); ++i) {
+      hdr->target_len[i] = hsv[i].Length;
+      hdr->target_name[i] = strdup(hsv[i].Name.c_str());
+      text << "@SQ\tSN:" << hsv[i].Name << "\tLN:" << hsv[i].Length << std::endl;
+    }
+    hdr->text = strdup(text.str().c_str());
+
+    // give to object
+    h = SeqPointer<bam_hdr_t>(hdr, bam_hdr_delete()); 
+    ConstructName2IDTable();
+  }
+
   int BamHeader::GetSequenceLength(int id) const {
     if (h && id < NumSequences())
       return h->target_len[id];
@@ -30,7 +52,7 @@ namespace SeqLib {
 
 BamHeader::BamHeader(const std::string& hdr)  {
 
-  h = std::shared_ptr<bam_hdr_t>(sam_hdr_read2(hdr), bam_hdr_delete()); 
+  h = SeqPointer<bam_hdr_t>(sam_hdr_read2(hdr), bam_hdr_delete()); 
 
   ConstructName2IDTable();
 
@@ -47,7 +69,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   BamHeader::BamHeader(const bam_hdr_t * hdr) {
 
-    h = std::shared_ptr<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete());
+    h = SeqPointer<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete());
 
     ConstructName2IDTable();
 
@@ -57,7 +79,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
     // create the lookup table if not already made
     if (!n2i) {
-      n2i = std::shared_ptr<std::unordered_map<std::string, int>>(new std::unordered_map<std::string, int>());
+      n2i = SeqPointer<SeqHashMap<std::string, int> >(new SeqHashMap<std::string, int>());
       for (int i = 0; i < h->n_targets; ++i)
 	n2i->insert(std::pair<std::string, int>(std::string(h->target_name[i]), i));
     }
@@ -66,7 +88,7 @@ BamHeader::BamHeader(const std::string& hdr)  {
 
   int BamHeader::Name2ID(const std::string& name) const {
 
-    std::unordered_map<std::string, int>::const_iterator ff = n2i->find(name);
+    SeqHashMap<std::string, int>::const_iterator ff = n2i->find(name);
     if (ff != n2i->end())
       return ff->second;
     else

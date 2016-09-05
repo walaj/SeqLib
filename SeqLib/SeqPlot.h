@@ -12,7 +12,7 @@ namespace SeqLib {
   public:
     
     /** Create an empty plotter object */
-    SeqPlot() {}
+  SeqPlot() : m_pad(5) {}
 
     /** Plot aligned read by stacking them in an IGV-like view */
     std::string PlotAlignmentRecords(const BamRecordVector& brv) const;
@@ -35,7 +35,7 @@ namespace SeqLib {
     GenomicRegion m_view;
 
     // padding when placing reads
-    int m_pad = 5;
+    int m_pad;
 
   };
 
@@ -46,6 +46,8 @@ struct PlottedRead {
   std::string seq;
   std::string info;
   
+  PlottedRead(int p, const std::string& s, const std::string& i) : pos(p), seq(s), info(i) {}
+
   bool operator<(const PlottedRead& pr) const {
     return (pos < pr.pos);
   }
@@ -57,33 +59,37 @@ typedef std::vector<PlottedRead> PlottedReadVector;
 /** A plotted line */
 struct PlottedReadLine {
 
+PlottedReadLine() : available(0), contig_len(0), pad(5) {}
+
   std::vector<PlottedRead*> read_vec;
-  int available = 0;
-  int contig_len = 0;
+  int available;
+  int contig_len;
   
-  int pad = 5;
+  int pad;
 
   void addRead(PlottedRead *r) {
     read_vec.push_back(r);
     available = r->pos + r->seq.length() + pad;
   }
 
-  bool readFits(PlottedRead &r) {
+  bool readFits(const PlottedRead &r) {
     return (r.pos >= available);
   }
 
   friend std::ostream& operator<<(std::ostream& out, const PlottedReadLine &r) {
     int last_loc = 0;
-    for (auto& i : r.read_vec) {
-      assert(i->pos - last_loc >= 0);
-      out << std::string(i->pos - last_loc, ' ') << i->seq;
-      last_loc = i->pos + i->seq.length();
+    for (std::vector<PlottedRead*>::const_iterator i = r.read_vec.begin(); i != r.read_vec.end(); ++i) {
+      //    for (auto& i : r.read_vec) {
+      assert((*i)->pos - last_loc >= 0);
+      out << std::string((*i)->pos - last_loc, ' ') << (*i)->seq;
+      last_loc = (*i)->pos + (*i)->seq.length();
     }
     int name_buff = r.contig_len - last_loc;
     assert(name_buff < 1e6);
     out << std::string(std::max(name_buff, 5), ' ');
-    for (auto& i : r.read_vec) { // add the data
-      out << i->info << ",";
+    for (std::vector<PlottedRead*>::const_iterator i = r.read_vec.begin(); i != r.read_vec.end(); ++i) {
+      //for (auto& i : r.read_vec) { // add the data
+      out << (*i)->info << ",";
     }
     return out;
   }

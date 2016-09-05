@@ -1,18 +1,54 @@
 #include "SeqLib/FermiAssembler.h"
+#define MAG_MIN_NSR_COEF .1
 
 namespace SeqLib {
 
-  FermiAssembler::FermiAssembler() {
+  FermiAssembler::FermiAssembler()  : m_seqs(0), n_seqs(0), n_utg(0), m_utgs(0) {
     fml_opt_init(&opt);
   }
   
   FermiAssembler::~FermiAssembler() {
     ClearReads();
     ClearContigs();
-    //if (opt.mag_opt)
-    //  free(opt.mag_opt);
   }
-  
+
+  // code copied and slightly modified from 
+  // fermi-lite/misc.c by Heng Li
+  void FermiAssembler::DirectAssemble(float kcov) {
+
+    rld_t *e = fml_seq2fmi(&opt, n_seqs, m_seqs);
+    mag_t *g = fml_fmi2mag(&opt, e);
+
+    opt.mag_opt.min_ensr = opt.mag_opt.min_ensr > kcov * MAG_MIN_NSR_COEF? opt.mag_opt.min_ensr : (int)(kcov * MAG_MIN_NSR_COEF + .499);
+    //opt.mag_opt.min_ensr = opt.mag_opt.min_ensr < opt0->max_cnt? opt.mag_opt.min_ensr : opt0->max_cnt;
+    //opt.mag_opt.min_ensr = opt.mag_opt.min_ensr > opt0->min_cnt? opt.mag_opt.min_ensr : opt0->min_cnt;
+    opt.mag_opt.min_insr = opt.mag_opt.min_ensr - 1;
+    fml_mag_clean(&opt, g);
+    m_utgs = fml_mag2utg(g, &n_utg);
+  }
+
+  void FermiAssembler::AddReads(const UnalignedSequenceVector& v) {
+
+    // alloc the memory
+    m_seqs = (fseq1_t*)realloc(m_seqs, (n_seqs + v.size()) * sizeof(fseq1_t));
+
+    int m = 0;
+    uint64_t size = 0;
+    for (UnalignedSequenceVector::const_iterator r = v.begin(); r != v.end(); ++r) {
+      m_names.push_back(r->Name);
+      fseq1_t *s;
+
+      s = &m_seqs[n_seqs];
+
+      s->seq   = strdup(r->Seq.c_str());
+      s->qual  = strdup(r->Qual.c_str());
+
+      s->l_seq = r->Seq.length();
+      size += m_seqs[n_seqs++].l_seq;
+    }
+
+
+  }
   void FermiAssembler::AddReads(const BamRecordVector& brv) {
 
     // alloc the memory
@@ -20,25 +56,25 @@ namespace SeqLib {
 
     int m = 0;
     uint64_t size = 0;
-    for (auto& r : brv) {
-      m_names.push_back(r.Qname());
+    for (BamRecordVector::const_iterator r = brv.begin(); r != brv.end(); ++r) {
+      m_names.push_back(r->Qname());
       fseq1_t *s;
-
+      
       s = &m_seqs[n_seqs];
+      
+      s->seq   = strdup(r->Sequence().c_str());
+      s->qual  = strdup(r->Qualities().c_str());
 
-      s->seq   = strdup(r.Sequence().c_str());
-      s->qual  = strdup(r.Qualities().c_str());
-
-      s->l_seq = r.Sequence().length();
+      s->l_seq = r->Sequence().length();
       size += m_seqs[n_seqs++].l_seq;
     }
     
   }
 
   void FermiAssembler::ClearContigs() {
-    fml_utg_destroy(n_utgs, m_utgs);  
+    fml_utg_destroy(n_utg, m_utgs);  
     m_utgs = 0;
-    n_utgs = 0;
+    n_utg = 0;
   }
 
   void FermiAssembler::ClearReads() {  
@@ -49,13 +85,13 @@ namespace SeqLib {
       fseq1_t * s = &m_seqs[i];
       if (s->qual)
        free(s->qual); 
-      s->qual = nullptr;
+      s->qual = NULL;
       if (s->seq)
 	free(s->seq);
-      s->seq = nullptr;
+      s->seq = NULL;
     }
     free(m_seqs);
-    m_seqs = nullptr;
+    m_seqs = NULL;
       
   }
 
@@ -68,12 +104,12 @@ namespace SeqLib {
   }
 
   void FermiAssembler::PerformAssembly() {
-    m_utgs = fml_assemble(&opt, n_seqs, m_seqs, &n_utgs); // assemble!
+    m_utgs = fml_assemble(&opt, n_seqs, m_seqs, &n_utg); // assemble!
   }
   
   std::vector<std::string> FermiAssembler::GetContigs() const {
     std::vector<std::string> c;
-    for (size_t i = 0; i < n_utgs; ++i)
+    for (size_t i = 0; i < n_utg; ++i)
       c.push_back(std::string(m_utgs[i].seq));
     return c;
   }

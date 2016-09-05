@@ -2,7 +2,6 @@
 #define SEQLIB_BAM_WRITER_H__
 
 #include <cassert>
-#include <memory>
 #include "SeqLib/BamRecord.h"
 
 namespace SeqLib {
@@ -18,10 +17,11 @@ class BamWriter  {
  public:
 
   /** Construct an empty BamWriter to write BAM */
-  BamWriter() {}
+ BamWriter() : output_format("wb") {}
 
   /** Construct an empty BamWriter and specify output format 
-   * @param o One of SeqLib::BAM, SeqLib::CRAM, SeqLib::SAM, SeqLib::STDOUT
+   * @param o One of SeqLib::BAM, SeqLib::CRAM, SeqLib::SAM
+   * @exception Throws an invalid_argument if not one of accepted values
    */
   BamWriter(int o);
 
@@ -72,7 +72,7 @@ class BamWriter  {
    * @return False if cannot write alignment
    * @exception Throws a runtime_error if cannot write alignment
    */
-  bool WriteRecord(BamRecord &r);
+  bool WriteRecord(const BamRecord &r);
 
   /** Explicitly set a reference genome to be used to decode CRAM file.
    * If no reference is specified, will automatically load from
@@ -97,10 +97,10 @@ class BamWriter  {
   void __open_BAM_for_writing();
   
   // output format
-  std::string output_format = "wb";
+  std::string output_format; 
   
   // hts
-  std::shared_ptr<htsFile> fop;
+  SeqPointer<htsFile> fop;
 
   // header
   SeqLib::BamHeader hdr;
