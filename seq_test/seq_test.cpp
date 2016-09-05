@@ -1506,3 +1506,20 @@ BOOST_AUTO_TEST_CASE ( ref_genome ) {
   r2.LoadIndex("test_data/test_ref.fa");
 }
 
+BOOST_AUTO_TEST_CASE ( ) {
+
+  SeqLib::BamReader rr;
+  rr.Open(SBAM); 
+  SeqLib::BamRecord rec;
+  size_t count = 0;
+  while (rr.GetNextRecord(rec) && ++count < 10) {
+      SeqLib::Cigar c;
+      c.add(SeqLib::CigarField('M', 70));
+      c.add(SeqLib::CigarField('I', 80));
+      c.add(SeqLib::CigarField('M',));
+      rec.SetCigar(c);
+      std::cerr << rec << std::endl;
+  }
+
+
+}
