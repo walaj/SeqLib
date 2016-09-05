@@ -146,6 +146,14 @@ void BamReader::Reset() {
   
 BamReader::BamReader() {}
 
+  std::string BamReader::HeaderConcat() const {
+    std::stringstream ss;
+    for (_BamMap::const_iterator i = m_bams.begin(); i != m_bams.end(); ++i) 
+      ss << i->second.m_hdr.AsString();
+    return ss.str();
+
+  }
+
   bool _Bam::open_BAM_for_reading() {
     
     // HTS open the reader
@@ -220,7 +228,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       continue; 
     
     // load the next read
-    if (tb->__load_read(r)) {
+    if (!tb->__load_read(r)) { // if cant load, mark for closing
       tb->empty = true;
       tb->mark_for_closure = true; // no more reads in this BAM
       continue; 
@@ -237,11 +245,11 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 
   for (_BamMap::iterator bam = m_bams.begin(); 
        bam != m_bams.end(); ++bam) {
-    
-    // dont check if already marked for removal
+
+    // dont check if already marked for removal or doesnt need new read
     if (bam->second.empty || bam->second.mark_for_closure) 
       continue;
-    
+
     found = true;
     if (bam->second.next_read.ChrID() < min_chr || // check if read in this BAM is lowest
 	(bam->second.next_read.Position() <  min_pos && bam->second.next_read.ChrID() == min_chr)) {
@@ -250,7 +258,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       hit = bam; // read is lowest, so mark this BAM as having the hit
     }
   }
-  
+
   // mark the one we just found as empty
   if (found) {
     r = hit->second.next_read; // read is lowest, so assign

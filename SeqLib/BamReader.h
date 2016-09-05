@@ -236,6 +236,9 @@ class BamReader {
   /** Return a header to the first file */
   BamHeader Header() const { if (m_bams.size()) return m_bams.begin()->second.m_hdr; return BamHeader(); }
 
+  /** Return a concatenation of all the headers */
+  std::string HeaderConcat() const;
+
  protected:
 
   // regions to walk
