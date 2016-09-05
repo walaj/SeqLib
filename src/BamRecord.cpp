@@ -76,7 +76,7 @@ namespace SeqLib {
     }
 
     // make the new cigar structure
-    uint8_t* new_cig = (uint8_t*)malloc(4 * c.size());
+    uint32_t* new_cig = (uint32_t*)malloc(4 * c.size());
     for (size_t i = 0; i < c.size(); ++i)
       new_cig[i] = c[i].raw();
     
@@ -427,29 +427,6 @@ namespace SeqLib {
       }
       --i;
     }
-
-    /*
-    // check that they aren't all bad
-    if (startpoint == 0 && endpoint == -1) 
-      return;
-
-    // if they're all good, mark and return
-    if (startpoint == 0 && endpoint == b->core.l_qseq) {
-      return; 
-    }
-    has_trim = true;
-    
-    std::string output = std::string(endpoint-startpoint, 'N');
-    try { 
-      uint8_t * p = bam_get_seq(b);
-      for (int32_t i = startpoint; i < (endpoint - startpoint); ++i) 
-	output[i] = BASES[bam_seqi(p,i)];
-    } catch (...) {
-      std::cerr << "Trying to subset string in BamRecord::QualityTrimRead out of bounds. String: " << Sequence() << " start " << startpoint << " length " << (endpoint - startpoint) << std::endl;
-    }
-
-    return output;
-    */
   }
 
   void BamRecord::AddZTag(std::string tag, std::string val) {
@@ -610,8 +587,8 @@ namespace SeqLib {
     int op = CigarCharToInt[(int)t];
     if (op < 0)
       throw std::invalid_argument("Cigar type must be one of MIDSHPN=X");      
-    if (len <= 0)
-      throw std::invalid_argument("Cigar length must be > 0");
+    if (len < 0)
+      throw std::invalid_argument("Cigar length must be >= 0");
     data = len << BAM_CIGAR_SHIFT;
     data = data | static_cast<uint32_t>(op);
   }
@@ -656,21 +633,6 @@ namespace SeqLib {
     }
     
     return tc;
-
-
-/*
-#ifdef HAVE_BOOST
-    std::vector<std::string> lens;
-    boost::split(lens, cig, boost::is_any_of(cigar_delimiters));
-    lens.pop_back(); // fills in empty at end for some reason
-
-#else
-
-    std::cerr << "!!!!!! BOOST REQUIRED FOR THIS FUNCTION !!!!!!" << std::endl << 
-      "!!!!!! Returning EMPTY CIGAR !!!!!!!!!" << std::endl;
-    return tc;
-#endif
-*/
 
   }
 

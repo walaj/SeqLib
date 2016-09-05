@@ -52,6 +52,8 @@ namespace SeqLib {
  */
 class CigarField {
 
+  friend class Cigar;
+
  public:
 
   /** Construct the cigar op by type (MIDNSHP=X) and length 
@@ -146,7 +148,6 @@ class CigarField {
    /** Return the number of query-consumed bases */
    inline int NumQueryConsumed() const {
      int out = 0;
-     //     for (auto& c : m_data)
      for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
        if (c->ConsumesQuery())
 	 out += c->Length();
@@ -444,6 +445,28 @@ class BamRecord {
   /** Return mate read as a GenomicRegion */
   GenomicRegion asGenomicRegionMate() const;
 
+   /** Return the number of "aligned bases" in the same style as BamTools
+    *
+    * BamTools reports AlignedBases, which for example returns the literal strings (for diff CIGARs):
+    * 3S5M - CTG
+    * 5M - CTAGC
+    * 3M1D3M - ATG-TGA 
+    * 3M1I3M - ATGCTGA
+    *
+    * @return The number of M, D, and I bases
+    */
+  inline int NumAlignedBases() const {
+    int out = 0;
+    uint32_t* c = bam_get_cigar(b);
+    for (size_t i = 0; i < b->core.n_cigar; i++) 
+      if (bam_cigar_opchr(c[i]) == 'M' || 
+	  bam_cigar_opchr(c[i]) == 'I' || 
+	  bam_cigar_opchr(c[i]) == 'D')
+	out += bam_cigar_oplen(c[i]);
+    return out;
+  }
+  
+
   /** Return the max single insertion size on this cigar */
   inline uint32_t MaxInsertionBases() const {
     uint32_t* c = bam_get_cigar(b);
@@ -479,8 +502,9 @@ class BamRecord {
   Cigar GetCigar() const {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
-    for (int k = 0; k < b->core.n_cigar; ++k) 
+    for (int k = 0; k < b->core.n_cigar; ++k) {
       cig.add(CigarField(c[k]));
+    }
     return cig;
   }
 
