@@ -81,17 +81,18 @@ destructors.
 
 Other C++ APIs
 ------------------------------
-There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, the [Gamgee][gam] 
-project from the Broad Institute, and the [SeqAn][seqan] library from Freie Universitat Berlin. These projects 
-provide excellent and high quality APIs. SeqLib provides further performance and capabilites for certain classes of 
-bioinformatics problems, without attempting to replace these projects.
+There are overlaps between this project and [BamTools][BT] from Derek Barnett, [Gamgee][gam] 
+from the Broad Institute, and [SeqAn][seqan] from Freie Universitat Berlin. These projects 
+provide excellent and high quality APIs. SeqLib provides further performance enhancement and new capabilites for certain classes of 
+bioinformatics problems.
 
-SeqLib provides some overlapping functionality (eg BAM read/write) but in many cases with improved performance (~2x over BamTools). 
-SeqLib further provides in memory access to BWA-MEM, a chromosome aware interval tree and range operations, and to read correction and 
-sequence assembly with Fermi. BamTools has more support currently for network access and multi-BAM reading. SeqAn provides 
-additional capablities not currently supported in SeqLib, including graph operations and a more expanded suite of multi-sequence alignment
-tools (e.g. banded Smith-Waterman). Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or Fermi. 
-SeqLib is under active development, while Gamgee has been abandoned.
+Some differences:
+1. SeqLib has ~2-4x faster read/write speed over BamTools and SeqAn, and lower memory footprint.
+2. SeqLib has support for CRAM file
+3. SeqLib provides in memory access to BWA-MEM, BLAT, a chromosome aware interval tree and range operations, and to read correction and 
+sequence assembly with Fermi. BamTools has more support currently for network access. 
+4. SeqAn provide a substantial amount of additional capabilites not in SeqLib, including graph operations and a more expanded suite of multi-sequence alignments.
+5. BamTools has support for network access of BAMs. 
 
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools. Feature requests and comments are welcomed.
