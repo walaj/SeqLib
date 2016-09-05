@@ -587,8 +587,6 @@ namespace SeqLib {
     int op = CigarCharToInt[(int)t];
     if (op < 0)
       throw std::invalid_argument("Cigar type must be one of MIDSHPN=X");      
-    if (len < 0)
-      throw std::invalid_argument("Cigar length must be >= 0");
     data = len << BAM_CIGAR_SHIFT;
     data = data | static_cast<uint32_t>(op);
   }

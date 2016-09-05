@@ -1085,7 +1085,6 @@ BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
   BOOST_CHECK_EQUAL(cx.Type(), 'X');
 
   // check invalid constructions
-  BOOST_CHECK_THROW(SeqLib::CigarField('X', 0), std::invalid_argument);
   BOOST_CHECK_THROW(SeqLib::CigarField('L', 1), std::invalid_argument);
 
   // make a sequence
@@ -1506,7 +1505,7 @@ BOOST_AUTO_TEST_CASE ( ref_genome ) {
   r2.LoadIndex("test_data/test_ref.fa");
 }
 
-BOOST_AUTO_TEST_CASE ( ) {
+BOOST_AUTO_TEST_CASE ( set_cigar ) {
 
   SeqLib::BamReader rr;
   rr.Open(SBAM); 
@@ -1516,7 +1515,7 @@ BOOST_AUTO_TEST_CASE ( ) {
       SeqLib::Cigar c;
       c.add(SeqLib::CigarField('M', 70));
       c.add(SeqLib::CigarField('I', 80));
-      c.add(SeqLib::CigarField('M',));
+      c.add(SeqLib::CigarField('M',1));
       rec.SetCigar(c);
       std::cerr << rec << std::endl;
   }
