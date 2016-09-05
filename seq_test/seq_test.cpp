@@ -2,6 +2,8 @@
 #define BOOST_TEST_MODULE MyTest
 #include<boost/test/unit_test.hpp>
 
+//#define TESTBLAT 1
+
 #include <climits>
 #include <boost/test/unit_test.hpp>
 
@@ -12,7 +14,10 @@
 #include "SeqLib/FermiAssembler.h"
 #include "SeqLib/SeqPlot.h"
 #include "SeqLib/RefGenome.h"
+
+#ifdef TESTBLAT
 #include "SeqLib/BLATWrapper.h"
+#endif
 
 #define SBAM "test_data/small.bam"
 #define OBAM "test_data/small_out.bam"
@@ -142,6 +147,7 @@ BOOST_AUTO_TEST_CASE( correct_and_assemble ) {
   
 }
 
+#ifdef TESTBLAT
 BOOST_AUTO_TEST_CASE( BLAT_wrapper ) {
 
   BLATWrapper b;
@@ -170,6 +176,7 @@ BOOST_AUTO_TEST_CASE( BLAT_wrapper ) {
   }
 
 }
+#endif
 
 BOOST_AUTO_TEST_CASE( merge ) {
 
@@ -1089,7 +1096,7 @@ BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
   BOOST_CHECK_EQUAL(cx.Type(), 'X');
 
   // check invalid constructions
-  BOOST_CHECK_THROW(SeqLib::CigarField('X', 0), std::invalid_argument);
+  BOOST_CHECK_THROW(SeqLib::CigarField('X', -1), std::invalid_argument);
   BOOST_CHECK_THROW(SeqLib::CigarField('L', 1), std::invalid_argument);
 
   // make a sequence
@@ -1353,29 +1360,7 @@ BOOST_AUTO_TEST_CASE( bamout_to_stdout ) {
   
 }
 
-BOOST_AUTO_TEST_CASE( bam_poly ) {
->>>>>>> master
-
-  SeqLib::BamReader r;
-  r.Open(SBAM);
-  b.addHeader(r.Header().get_());
-  BamRecord rec;
-  BamWriter w;
-  w.Open("tmp.blat.bam");
-  w.SetHeader(r.Header());
-  w.WriteHeader();
-  size_t count = 0;
-  while (r.GetNextRecord(rec) && ++count < 10000) {
-    BamRecordVector brv;
-    b.querySequence(rec.Qname(), rec.Sequence(), brv);
-    for (auto& i : brv)
-      w.WriteRecord(i);
-  }
-  w.Close();
-
-}
-
-BOOST_AUTO_TEST_CASE ( ) {
+BOOST_AUTO_TEST_CASE ( set_cigar ) {
 
   SeqLib::BamReader rr;
   rr.Open(SBAM); 
@@ -1385,7 +1370,7 @@ BOOST_AUTO_TEST_CASE ( ) {
       SeqLib::Cigar c;
       c.add(SeqLib::CigarField('M', 70));
       c.add(SeqLib::CigarField('I', 80));
-      c.add(SeqLib::CigarField('M',));
+      c.add(SeqLib::CigarField('M', 1));
       rec.SetCigar(c);
       std::cerr << rec << std::endl;
   }

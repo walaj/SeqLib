@@ -51,16 +51,6 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_seq_test_OBJECTS = seq_test-seq_test.$(OBJEXT) \
-<<<<<<< HEAD
-	seq_test-BLATWrapper.$(OBJEXT) \
-	seq_test-GenomicRegion.$(OBJEXT) seq_test-BamWriter.$(OBJEXT) \
-	seq_test-BamReader.$(OBJEXT) seq_test-ReadFilter.$(OBJEXT) \
-	seq_test-BamRecord.$(OBJEXT) seq_test-BWAWrapper.$(OBJEXT) \
-	seq_test-RefGenome.$(OBJEXT) seq_test-SeqPlot.$(OBJEXT) \
-	seq_test-BamHeader.$(OBJEXT) seq_test-FermiAssembler.$(OBJEXT) \
-	seq_test-ssw_cpp.$(OBJEXT) seq_test-ssw.$(OBJEXT) \
-	seq_test-jsoncpp.$(OBJEXT)
-=======
 	seq_test-BFC.$(OBJEXT) seq_test-GenomicRegion.$(OBJEXT) \
 	seq_test-BamWriter.$(OBJEXT) seq_test-BamReader.$(OBJEXT) \
 	seq_test-ReadFilter.$(OBJEXT) seq_test-BamRecord.$(OBJEXT) \
@@ -68,10 +58,9 @@ am_seq_test_OBJECTS = seq_test-seq_test.$(OBJEXT) \
 	seq_test-SeqPlot.$(OBJEXT) seq_test-BamHeader.$(OBJEXT) \
 	seq_test-FermiAssembler.$(OBJEXT) seq_test-ssw_cpp.$(OBJEXT) \
 	seq_test-ssw.$(OBJEXT) seq_test-jsoncpp.$(OBJEXT)
->>>>>>> master
 seq_test_OBJECTS = $(am_seq_test_OBJECTS)
 seq_test_DEPENDENCIES = ../fermi-lite/libfml.a ../bwa/libbwa.a \
-	../htslib/libhts.a ../blat/lib/jkweb.a ../blat/lib/jkOwnLib.a
+	../htslib/libhts.a
 seq_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(seq_test_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -196,28 +185,19 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 seq_test_CPPFLAGS = \
-     -I../src \
      -I../htslib \
      -I.. \
-     -I../fermi-lite \
-     -I../blat/inc -I../blat/jkOwnLib \
-     -Wno-write-strings --coverage
+     -I../fermi-lite 
 
 seq_test_LDADD = \
 	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
-	../blat/lib/jkweb.a ../blat/lib/jkOwnLib.a \
 	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono
 
 seq_test_LDFLAGS = --coverage
 seq_test_SOURCES = seq_test.cpp \
-<<<<<<< HEAD
-	../src/BLATWrapper.cpp \
-	../src/GenomicRegion.cpp \
-=======
 	../src/BFC.cpp ../src/GenomicRegion.cpp \
->>>>>>> master
 	../src/BamWriter.cpp ../src/BamReader.cpp \
 	../src/ReadFilter.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp \
@@ -327,11 +307,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-<<<<<<< HEAD
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BLATWrapper.Po@am__quote@
-=======
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BFC.Po@am__quote@
->>>>>>> master
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BWAWrapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BamHeader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-BamReader.Po@am__quote@
@@ -403,21 +379,6 @@ seq_test-seq_test.obj: seq_test.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-seq_test.obj `if test -f 'seq_test.cpp'; then $(CYGPATH_W) 'seq_test.cpp'; else $(CYGPATH_W) '$(srcdir)/seq_test.cpp'; fi`
 
-<<<<<<< HEAD
-seq_test-BLATWrapper.o: ../src/BLATWrapper.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-BLATWrapper.o -MD -MP -MF $(DEPDIR)/seq_test-BLATWrapper.Tpo -c -o seq_test-BLATWrapper.o `test -f '../src/BLATWrapper.cpp' || echo '$(srcdir)/'`../src/BLATWrapper.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-BLATWrapper.Tpo $(DEPDIR)/seq_test-BLATWrapper.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BLATWrapper.cpp' object='seq_test-BLATWrapper.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-BLATWrapper.o `test -f '../src/BLATWrapper.cpp' || echo '$(srcdir)/'`../src/BLATWrapper.cpp
-
-seq_test-BLATWrapper.obj: ../src/BLATWrapper.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-BLATWrapper.obj -MD -MP -MF $(DEPDIR)/seq_test-BLATWrapper.Tpo -c -o seq_test-BLATWrapper.obj `if test -f '../src/BLATWrapper.cpp'; then $(CYGPATH_W) '../src/BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BLATWrapper.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-BLATWrapper.Tpo $(DEPDIR)/seq_test-BLATWrapper.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BLATWrapper.cpp' object='seq_test-BLATWrapper.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-BLATWrapper.obj `if test -f '../src/BLATWrapper.cpp'; then $(CYGPATH_W) '../src/BLATWrapper.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BLATWrapper.cpp'; fi`
-=======
 seq_test-BFC.o: ../src/BFC.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-BFC.o -MD -MP -MF $(DEPDIR)/seq_test-BFC.Tpo -c -o seq_test-BFC.o `test -f '../src/BFC.cpp' || echo '$(srcdir)/'`../src/BFC.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/seq_test-BFC.Tpo $(DEPDIR)/seq_test-BFC.Po
@@ -431,7 +392,6 @@ seq_test-BFC.obj: ../src/BFC.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/BFC.cpp' object='seq_test-BFC.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o seq_test-BFC.obj `if test -f '../src/BFC.cpp'; then $(CYGPATH_W) '../src/BFC.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/BFC.cpp'; fi`
->>>>>>> master
 
 seq_test-GenomicRegion.o: ../src/GenomicRegion.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT seq_test-GenomicRegion.o -MD -MP -MF $(DEPDIR)/seq_test-GenomicRegion.Tpo -c -o seq_test-GenomicRegion.o `test -f '../src/GenomicRegion.cpp' || echo '$(srcdir)/'`../src/GenomicRegion.cpp

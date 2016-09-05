@@ -1,29 +1,24 @@
 bin_PROGRAMS = seq_test
 
 seq_test_CPPFLAGS = \
-     -I../src \
      -I../htslib \
      -I.. \
-     -I../fermi-lite \
-     -I../blat/inc -I../blat/jkOwnLib \
-     -Wno-write-strings --coverage
+     -I../fermi-lite 
+##     -I../blat/inc -I../blat/jkOwnLib \
+##     -Wno-write-strings --coverage
 
 seq_test_LDADD = \
 	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
-	../blat/lib/jkOwnLib.a ../blat/lib/jkweb.a \
+##	../blat/lib/jkOwnLib.a ../blat/lib/jkweb.a \
 	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono
 
 seq_test_LDFLAGS = --coverage
 
 seq_test_SOURCES = seq_test.cpp \
-<<<<<<< HEAD
-	../src/BLATWrapper.cpp \
-	../src/GenomicRegion.cpp \
-=======
+##	../src/BLATWrapper.cpp \
 	../src/BFC.cpp ../src/GenomicRegion.cpp \
->>>>>>> master
 	../src/BamWriter.cpp ../src/BamReader.cpp \
 	../src/ReadFilter.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp \
