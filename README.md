@@ -31,6 +31,7 @@ cd SeqLib
 ./configure
 make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
 make install
+make seqtools ## for the command line version
 ```
  
 I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.

@@ -5070,7 +5070,7 @@ AM_CXXFLAGS="-g $fail_on_warning -Wno-unknown-pragmas"
 
 CXXFLAGS="$CXXFLAGS"
 
-CFLAGS="$CFLAGS -O3"
+CFLAGS="$CFLAGS"
 
 LDFLAGS="$LDFLAGS"
 
