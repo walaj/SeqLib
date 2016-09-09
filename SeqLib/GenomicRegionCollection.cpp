@@ -6,10 +6,59 @@
 #include <cassert>
 #include <set>
 #include <stdexcept>
+#include <algorithm>
 
 //#define DEBUG_OVERLAPS 1
 
 namespace SeqLib {
+
+  template<class T>
+  GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const HeaderSequenceVector& h) {
+    idx = 0;
+    __allocate_grc();
+
+    // undefined otherwise
+    if (width <= ovlp)
+      throw std::invalid_argument("Width should be > ovlp");
+
+    size_t chr = 0;
+    for (HeaderSequenceVector::const_iterator i = h.begin(); i != h.end(); ++i) {
+      
+      T gr;
+      gr.chr = chr;
+      gr.pos1 = 0;
+      gr.pos2 = i->Length;
+      ++chr;
+
+      if (width >= gr.Width()) {
+	m_grv->push_back(gr);
+	continue;
+      }
+
+      int32_t start = gr.pos1;
+      int32_t end = gr.pos1 + width;
+      
+      // region is smaller than width
+      if ( end > gr.pos2 ) {
+	std::cerr << "GenomicRegionCollection constructor: GenomicRegion is smaller than bin width" << std::endl;
+	return; 
+      }
+      
+      // loop through the sizes until done
+      while (end <= gr.pos2) {
+	T tg;
+	tg.chr = gr.chr;
+	tg.pos1 = start;
+	tg.pos2 = end;
+	m_grv->push_back(tg);
+	end += width - ovlp; // make the new one
+	start += width - ovlp;
+      }
+      assert(m_grv->size() > 0);
+
+
+    }
+  }
 
   static bool header_has_chr_string = false;
 
@@ -18,6 +67,16 @@ namespace SeqLib {
     
     std::sort(m_grv->begin(), m_grv->end());
     m_sorted = true;
+  }
+  
+  template<class T>
+  void GenomicRegionCollection<T>::Shuffle() {
+    
+    if (!m_grv->size())
+      return;
+
+    std::random_shuffle ( m_grv->begin(), m_grv->end() );
+    
   }
 
   template<class T>

@@ -62,6 +62,14 @@ class GenomicRegionCollection {
    */
   GenomicRegionCollection(int width, int ovlp, const T &gr);
 
+ /** Construct a tiled set of intervals across a genome
+  *
+  * @param width Width of each interval tile
+  * @param ovlp Amount of overlap between neighboring tiles
+  * @param h Set of chromosomes and their lengths to build the tile on
+  */
+ GenomicRegionCollection(int width, int ovlp, const HeaderSequenceVector& h);
+
  // Read in a MuTect call-stats file and adds to GenomicRegionCollection object.
    //
    // Reads a MuTect call-stats file and imports only
@@ -82,6 +90,9 @@ class GenomicRegionCollection {
    * @param file Path to VCF file. All elements will be width = 1 (just read start point)
    */
   bool ReadVCF(const std::string &file, const SeqLib::BamHeader& hdr);
+
+  /** Shuffle the order of the intervals */
+ void Shuffle();
 
   /** Read in a text file (can be gzipped) and construct a GenomicRegionCollection
    *
