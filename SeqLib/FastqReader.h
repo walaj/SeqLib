@@ -41,8 +41,9 @@ class FastqReader {
  private:
   
   std::string m_file;
-  std::ifstream * m_iss;
   char m_type;
+  std::ifstream * m_iss;
+
 
 };
 
