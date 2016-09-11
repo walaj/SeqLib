@@ -1,5 +1,8 @@
 #include "SeqLib/FastqReader.h"
 
+#include <cctype>
+#include <algorithm>
+
 namespace SeqLib {
 
   FastqReader::FastqReader(const std::string& file) : m_iss(NULL) {
@@ -23,7 +26,7 @@ namespace SeqLib {
 
 }
 
-bool FastqReader::GetNextSequence(std::string& qn, std::string& seq) {
+bool FastqReader::GetNextSequence(UnalignedSequence& s) {
 
   if (!m_iss)
     return false;
@@ -35,20 +38,33 @@ bool FastqReader::GetNextSequence(std::string& qn, std::string& seq) {
   while(std::getline(*m_iss, line, '\n')) {
     ++c;
 
-    // qname
-    if (c == 1) {
-      if (line.length() < 2) {
-	std::cerr << "FastqReader: Empty qname on line " << line << std::endl;
+    // stop on empty line
+    if (line.empty())
+      return false;
+
+    // determine if fastq or fasta
+    if (m_type == 'k') { 
+      if (line.at(0) == '@')
+	m_type = 'q';
+      else if (line.at(0) == '>')
+	m_type = 'a';
+      else {
+	std::cerr << "Cannot determine fasta vs fasta from line " << line << std::endl;
 	return false;
       }
-
-      // get the qname without the leading @ sign
-      qn = line.substr(1,line.length() - 1);
-    } else if (c == 2) {
-      seq = line;
-      return true; // fasta reader
-    } else if (c == 4) { // we're at the end
-      return true;
+    }
+    
+    // get the qname without the leading @ sign or >
+    switch (c) {
+    case 1: s.Name = line.substr(1,line.length() - 1); break;
+    case 2: 
+      s.Seq = line; 
+      transform(s.Seq.begin(), s.Seq.end(), s.Seq.begin(), ::toupper); 
+      if (m_type == 'a')
+	return true;
+      break;
+    case 3: s.Strand == line.at(0); break;
+    case 4: s.Qual = line; return true;
     }
     
   }
