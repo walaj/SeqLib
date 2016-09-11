@@ -5,26 +5,32 @@
 
 namespace SeqLib {
 
-  FastqReader::FastqReader(const std::string& file) : m_iss(NULL) {
+  bool FastqReader::Open(const std::string& f) {
 
-  m_file = file;
+    m_file = f;
 
-  // check if file exists
-  struct stat buffer;   
-  if (stat (file.c_str(), &buffer) != 0) {
-    std::cerr << "FastqReader: Failed to read non-existant file " << m_file << std::endl;
-    return;
+    // check if file exists
+    struct stat buffer;   
+    if (stat (m_file.c_str(), &buffer) != 0) {
+      std::cerr << "FastqReader: Failed to read non-existant file " << m_file << std::endl;
+      return false;
+    }
+    
+    // open the file
+    m_iss = new std::ifstream(m_file.c_str());
+    
+    if (!m_iss) {
+      std::cerr << "FastqReader: Failed to read " << m_file << std::endl;
+      return false;
+    }
+
+    return true;
+    
   }
 
-  // open the file
-  m_iss = new std::ifstream(file.c_str());
-
-  if (!m_iss) {
-    std::cerr << "FastqReader: Failed to read " << m_file << std::endl;
-    return;
+  FastqReader::FastqReader(const std::string& file) : m_file(file), m_type('*'), m_iss(NULL) {
+    Open(m_file);
   }
-
-}
 
 bool FastqReader::GetNextSequence(UnalignedSequence& s) {
 
