@@ -36,13 +36,6 @@ bool _Bam::SetRegion(const GenomicRegion& gp) {
   return true;
 }
 
-  bool BamReader::SetPreloadedHTSFile(const std::string& f, SharedHTSFile& i) {
-    if (!m_bams.count(f))
-      return false;
-    m_bams[f].set_file(i);
-    return true;
-  }
-
   bool BamReader::SetPreloadedIndex(const std::string& f, SharedIndex& i) {
     if (!m_bams.count(f))
       return false;
@@ -103,13 +96,6 @@ void BamReader::Reset() {
     return true;
   }
 
-  bool BamReader::SetPreloadedHTSFile(SharedHTSFile& i) {
-    if (!m_bams.size())
-      return false;
-    m_bams.begin()->second.set_file(i);
-    return true;
-  }
-  
   bool BamReader::SetRegion(const GenomicRegion& g) {
     m_region.clear();
     m_region.add(g);
@@ -182,11 +168,17 @@ BamReader::BamReader() {}
 
   }
 
+  BamHeader BamReader::Header() const { 
+    if (m_bams.size()) 
+      return m_bams.begin()->second.m_hdr; 
+    return BamHeader(); 
+  }
+
   bool _Bam::open_BAM_for_reading() {
-    
+
     // HTS open the reader
     fp = SharedHTSFile(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
-    
+
     // open cram reference
     if (!m_cram_reference.empty()) {
       char * m_cram_reference_cstr = strdup(m_cram_reference.c_str());

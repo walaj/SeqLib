@@ -415,7 +415,6 @@ namespace SeqLib {
       for (size_t i = 0; i < n_seqs; ++i)
 	if (m_seqs[i].seq)
 	  ++count;
-      std::cerr << " IN " << n_seqs << " OUT " << count << std::endl;
     }
   
 }
