@@ -517,6 +517,8 @@ std::string GenomicRegionCollection<T>::AsBEDString(const BamHeader& h) const {
 template<class T>
 void GenomicRegionCollection<T>::Concat(const GenomicRegionCollection<T>& g)
 {
+  if (!g.size())
+    return;
   m_sorted = false;
   m_grv->insert(m_grv->end(), g.m_grv->begin(), g.m_grv->end());
 }
