@@ -13,7 +13,7 @@ bool _Bam::SetRegion(const GenomicRegion& gp) {
     
   //HTS set region 
   if ( (fp->format.format == 4 || fp->format.format == 6) && !idx)  // BAM (4) or CRAM (6)
-    idx = SeqPointer<hts_idx_t>(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
+    idx = SharedIndex(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
   
   if (!idx) {
     std::cerr << "Failed to load index for " << m_in << ". Rebuild samtools index" << std::endl;
@@ -36,7 +36,7 @@ bool _Bam::SetRegion(const GenomicRegion& gp) {
   return true;
 }
 
-  bool BamReader::SetPreloadedIndex(const std::string& f, SeqPointer<hts_idx_t>& i) {
+  bool BamReader::SetPreloadedIndex(const std::string& f, SharedIndex& i) {
     if (!m_bams.count(f))
       return false;
     m_bams[f].set_index(i);
@@ -75,13 +75,27 @@ void BamReader::Reset() {
     return m_bams[f].close();
   }
 
+  SharedHTSFile BamReader::GetHTSFile () const {
+    if (!m_bams.size())
+      throw std::runtime_error("No BAMs have been opened yet");
+    return m_bams.begin()->second.fp;
+  }
+
+  SharedHTSFile BamReader::GetHTSFile(const std::string& f) const {
+    _BamMap::const_iterator ff = m_bams.find(f);
+    if (ff == m_bams.end())
+      throw std::runtime_error("File " + f + " has not been opened yet");
+    return ff->second.fp;
+  }
+  
+
   bool BamReader::SetPreloadedIndex(SharedIndex& i) {
     if (!m_bams.size())
       return false;
     m_bams.begin()->second.set_index(i);
     return true;
   }
-  
+
   bool BamReader::SetRegion(const GenomicRegion& g) {
     m_region.clear();
     m_region.add(g);
@@ -154,11 +168,17 @@ BamReader::BamReader() {}
 
   }
 
+  BamHeader BamReader::Header() const { 
+    if (m_bams.size()) 
+      return m_bams.begin()->second.m_hdr; 
+    return BamHeader(); 
+  }
+
   bool _Bam::open_BAM_for_reading() {
-    
+
     // HTS open the reader
-    fp = SeqPointer<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
-    
+    fp = SharedHTSFile(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+
     // open cram reference
     if (!m_cram_reference.empty()) {
       char * m_cram_reference_cstr = strdup(m_cram_reference.c_str());

@@ -133,7 +133,7 @@ namespace SeqLib {
     clear();
 
     // send reads to string
-    allocate_sequences_from_reads(brv, true);
+    allocate_sequences_from_reads(brv);
 
     // learn how to correct
     learn_correct();
@@ -163,7 +163,7 @@ namespace SeqLib {
     clear();
 
     // set m_seqs and n_seqs
-    allocate_sequences_from_reads(brv, false);
+    allocate_sequences_from_reads(brv);
 
     // learn correct, set ch
     learn_correct();
@@ -180,7 +180,7 @@ namespace SeqLib {
     clear();
 
     // send reads to string
-    allocate_sequences_from_reads(brv, true);
+    allocate_sequences_from_reads(brv);
 
     // do the correction
     correct_reads();
@@ -204,7 +204,7 @@ namespace SeqLib {
     clear();
 
     // send reads to string
-    allocate_sequences_from_reads(brv, true);
+    allocate_sequences_from_reads(brv);
 
     // do the correction
     correct_reads();
@@ -215,7 +215,7 @@ namespace SeqLib {
     flt_uniq = 0;
     clear();
 
-    allocate_sequences_from_reads(brv, false);
+    allocate_sequences_from_reads(brv);
 
     correct_reads();
     
@@ -264,7 +264,7 @@ namespace SeqLib {
 
   }
 
-  void BFC::allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too) {
+  void BFC::allocate_sequences_from_reads(const BamRecordVector& brv) {
       
     // alloc the memory
     m_seqs_size = brv.size();
@@ -415,7 +415,6 @@ namespace SeqLib {
       for (size_t i = 0; i < n_seqs; ++i)
 	if (m_seqs[i].seq)
 	  ++count;
-      std::cerr << " IN " << n_seqs << " OUT " << count << std::endl;
     }
   
 }

@@ -14,7 +14,9 @@ class BamReader;
 
 namespace SeqLib {
 
-  typedef SeqPointer<hts_idx_t> SharedIndex;
+  typedef SeqPointer<hts_idx_t> SharedIndex; ///< Shared pointer to the HTSlib index struct
+
+  typedef SeqPointer<htsFile> SharedHTSFile; ///< Shared pointer to the HTSlib file pointer
  
   // store file accessors for single BAM
   class _Bam {
@@ -69,14 +71,17 @@ namespace SeqLib {
 
     // set a pre-loaded index (save on loading each time)
     void set_index(SharedIndex& i) { idx = i; }
+
+    // set a pre-loaded htsfile (save on loading each time)
+    void set_file(SharedHTSFile& i) { fp = i; }
     
     // set a pre-loaded index and make a deep copy
     void deep_set_index();
 
     GRC* m_region; // local copy of region
 
-    SeqPointer<htsFile> fp;     // BAM file pointer
-    SeqPointer<hts_idx_t> idx;  // bam index
+    SharedHTSFile fp;     // BAM file pointer
+    SharedIndex idx;  // bam index
     SeqPointer<hts_itr_t> hts_itr; // iterator to index location
     std::string m_in;                   // file name
     BamHeader m_hdr;                    // the BAM header
@@ -149,7 +154,7 @@ class BamReader {
   /** Return if the reader has opened the first file */
   bool IsOpen() const { if (m_bams.size()) return m_bams.begin()->second.fp != 0; return false; }
 
-  /** Set pre-loaded raw index 
+  /** Set pre-loaded raw htslib index 
    * 
    * Provide the reader with an index structure that is already loaded.
    * This is useful if there are multiple newly created BamReader objects
@@ -161,6 +166,18 @@ class BamReader {
    * @return True if the file f is controlled by this object
    */
   bool SetPreloadedIndex(const std::string& f, SharedIndex& i);
+
+  /** Return a shared pointer to the raw htsFile object
+   * @exception Throws runtime_error if the requested file has not been opened already with Open
+   * @param f File to retrieve the htsFile from.
+   */
+  SharedHTSFile GetHTSFile (const std::string& f) const;
+
+  /** Return a shared pointer to the raw htsFile object from the first BAM
+   * @exception Throws runtime_error if no files have been opened already with Open
+   * @param f File to retrieve the htsFile from.
+   */
+  SharedHTSFile GetHTSFile () const;
 
   /** Set a pre-loaded raw index, to the first BAM
    * @note see SetPreloadedIndex(const std::string& f, SharedIndex& i)
@@ -233,8 +250,14 @@ class BamReader {
   /** Reset all the regions, but keep the loaded indicies and file-pointers */
   void Reset();
 
-  /** Return a header to the first file */
-  BamHeader Header() const { if (m_bams.size()) return m_bams.begin()->second.m_hdr; return BamHeader(); }
+  /** Return a copy of the header to the first file 
+   * @note The object returned is a copy of the BamHeader, but 
+   * this does not actually copy the actual header contents. Header contents
+   * are stored in a shared_ptr, and so the new returned BamHeader
+   * have a copy of the shared_ptr that will point to the originally alloced 
+   * raw header data.
+   */
+  BamHeader Header() const;
 
   /** Return a concatenation of all the headers */
   std::string HeaderConcat() const;

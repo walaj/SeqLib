@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/jwalabroad/SeqLib.svg?branch=master)](https://travis-ci.org/jwalabroad/SeqLib)
-[![Coverage Status](https://coveralls.io/repos/github/jwalabroad/SeqLib/badge.svg?branch=master)](https://coveralls.io/github/jwalabroad/SeqLib?branch=master)
+[![Build Status](https://travis-ci.org/walaj/SeqLib.svg?branch=master)](https://travis-ci.org/walaj/SeqLib)
+[![Coverage Status](https://coveralls.io/repos/github/walaj/SeqLib/badge.svg?branch=master)](https://coveralls.io/github/walaj/SeqLib?branch=master)
 
 C++ interface to HTSlib, BWA-MEM and Fermi
 
@@ -26,7 +26,7 @@ Installation
 
 #######
 ```bash
-git clone --recursive https://github.com/jwalabroad/SeqLib.git
+git clone --recursive https://github.com/walaj/SeqLib.git
 cd SeqLib
 ./configure
 make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
@@ -322,15 +322,15 @@ Development, support, guidance, testing:
 
 [BWA]: https://github.com/lh3/bwa
 
-[license]: https://github.com/jwalabroad/SeqLib/blob/new_license/LICENSE
+[license]: https://github.com/walaj/SeqLib/blob/new_license/LICENSE
 
 [BamTools]: https://raw.githubusercontent.com/wiki/pezmaster31/bamtools/Tutorial_Toolkit_BamTools-1.0.pdf
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
-[htmldoc]: http://jwalabroad.github.io/SeqLib/doxygen
+[htmldoc]: http://walaj.github.io/SeqLib/doxygen
 
-[var]: https://github.com/jwalabroad/VariantBam
+[var]: https://github.com/walaj/VariantBam
 
 [BT]: https://github.com/pezmaster31/bamtools
 
