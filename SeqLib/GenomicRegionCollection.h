@@ -163,7 +163,8 @@ class GenomicRegionCollection {
 
  /** Test if two intervals overlap the same element in the collection
   */
- bool OverlapSameInterval(const T &gr1, const T &gr2) const;
+ template<class K>
+ bool OverlapSameInterval(const K &gr1, const K &gr2) const;
 
  /** Count the number of intervals in the collection contained in this range */
  size_t CountContained(const T &gr);
