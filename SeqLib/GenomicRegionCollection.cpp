@@ -65,18 +65,15 @@ namespace SeqLib {
   template<class T>
   void GenomicRegionCollection<T>::CoordinateSort() {
     
-    std::sort(m_grv->begin(), m_grv->end());
-    m_sorted = true;
+    if (m_grv) {
+      std::sort(m_grv->begin(), m_grv->end());
+      m_sorted = true;
+    }
   }
   
   template<class T>
   void GenomicRegionCollection<T>::Shuffle() {
-    
-    if (!m_grv->size())
-      return;
-
     std::random_shuffle ( m_grv->begin(), m_grv->end() );
-    
   }
 
   template<class T>
@@ -87,14 +84,11 @@ namespace SeqLib {
     
     CoordinateSort();
 
-    if (max > 0 && max < m_grv->back().pos2) {
-      //std::cerr << "GenomicRegionCollection::SortAndStrech Can't stretch to max, as we are already past max. Max: " << max << " highest GRC " << m_grv->back() << std::endl;
+    if (max > 0 && max < m_grv->back().pos2) 
       throw std::out_of_range("GenomicRegionCollection::SortAndStrech Can't stretch to max, as we are already past max.");
-    }
 
-    for (size_t i = 0; i < m_grv->size() - 1; ++i) {
+    for (size_t i = 0; i < m_grv->size() - 1; ++i) 
       m_grv->at(i).pos2 = m_grv->at(i+1).pos1 - 1;
-    }
 
     if (max > 0)
       m_grv->back().pos2 = max;
@@ -109,17 +103,14 @@ namespace SeqLib {
     
     CoordinateSort();
 
-    if (min >= 0 && min < m_grv->begin()->pos1) {
-      std::cerr << "GenomicRegionCollection::SortAndStrechLeft Can't stretch to min, as we are already past max" << std::endl;
-      exit(EXIT_FAILURE);
-    }
+    if (min >= 0 && min < m_grv->begin()->pos1) 
+      throw std::out_of_range("GenomicRegionCollection::SortAndStrechLeft - Can't stretch to min, as we are already below min");
 
     if (min >= 0)
       m_grv->at(0).pos1 = min;
 
-    for (size_t i = 1; i < m_grv->size(); ++i) {
+    for (size_t i = 1; i < m_grv->size(); ++i) 
       m_grv->at(i).pos1 = m_grv->at(i-1).pos2 + 1;
-    }
 
   }
 
@@ -275,14 +266,14 @@ bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHead
 template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, const BamHeader& hdr) {
 
+  __allocate_grc();
+
   idx = 0;
   std::ifstream iss(file.c_str());
   if (!iss || file.length() == 0) { 
     std::cerr << "Region file does not exist: " << file << std::endl;
     return;
   }
-
-  __allocate_grc();
 
   // get the header line to check format
   std::string header;
@@ -360,6 +351,9 @@ GenomicRegionVector GenomicRegionCollection<T>::AsGenomicRegionVector() const {
   
 template <class T>
 void GenomicRegionCollection<T>::CreateTreeMap() {
+
+  if (!m_grv->size())
+    return;
 
   // sort the genomic intervals
   if (!m_sorted)
@@ -455,34 +449,34 @@ size_t GenomicRegionCollection<T>::CountOverlaps(const T &gr) const {
 }
 
   template<class T>
-  bool GenomicRegionCollection<T>::OverlapSameInterval(const T &gr1, const T &gr2) const {
-
-    if (m_tree->size() == 0 && m_grv->size() != 0) 
-     {
-     std::cerr << "!!!!!! WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
-     return 0;
+  template<class K>
+  bool GenomicRegionCollection<T>::OverlapSameInterval(const K &gr1, const K &gr2) const {
+    
+    // events on diff chr do not overlap same bin
+    if (gr1.chr != gr2.chr)
+      return false;
+    
+    if (m_tree->size() == 0 && m_grv->size() != 0) {
+      std::cerr << "!!!!!! WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
+      return false;
     }
-  
-  // events on diff chr do not overlap same bin
-  if (gr1.chr != gr2.chr)
-    return false;
-
-  GenomicIntervalVector giv1, giv2;
-  GenomicIntervalTreeMap::const_iterator ff1 = m_tree->find(gr1.chr);
-  GenomicIntervalTreeMap::const_iterator ff2 = m_tree->find(gr2.chr);
+    
+    GenomicIntervalTreeMap::const_iterator ff1 = m_tree->find(gr1.chr);
+    GenomicIntervalTreeMap::const_iterator ff2 = m_tree->find(gr2.chr);
   if (ff1 == m_tree->end() || ff2 == m_tree->end())
-    return 0;
-
-  ff1->second.findOverlapping(gr1.pos1, gr1.pos2, giv1);
-  ff2->second.findOverlapping(gr2.pos1, gr2.pos2, giv2);
-
-  if (giv1.size() == 0 || giv2.size() == 0)
     return false;
-  
-  // each one only overlapped one element
-  if (giv1.size() == 1 && giv2.size() == 1)
-    if (giv1[0].value == giv2[0].value)
-      return true;
+
+  // do the interval tree query
+   GenomicIntervalVector giv1, giv2;
+   ff1->second.findOverlapping(gr1.pos1, gr1.pos2, giv1);
+   ff2->second.findOverlapping(gr2.pos1, gr2.pos2, giv2);
+
+   if (!giv1.size() || !giv2.size())
+     return false;
+
+   // each one only overlapped one element
+   if (giv1.size() == 1 && giv2.size() == 1)
+     return (giv1[0].value == giv2[0].value);
 
   // make a set of the possible starts
   SeqHashSet<int> vals;
