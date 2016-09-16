@@ -82,13 +82,28 @@ namespace SeqLib {
     /** Add a set of unaligned sequences to stage for assembly */
     void AddReads(const UnalignedSequenceVector& v);
 
+    /** Add a single sequence to be assembled */
+    void AddRead(const UnalignedSequence& r);
+
+    /** Add a single sequence from an aligned reads to be assembled */
+    void AddRead(const BamRecord& r);
+
+    /** Return the number of sequences that are controlled by this assembler */
+    size_t NumSequences() const { return n_seqs; }
+
   private:
 
     // reads to assemble
     fseq1_t *m_seqs;
-    
+  
+    // size of m_seqs
+    size_t m;
+  
     std::vector<std::string> m_names;
 
+    // number of base-pairs
+    uint64_t size;
+    
     // number of reads
     size_t n_seqs;
 

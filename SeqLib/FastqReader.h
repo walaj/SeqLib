@@ -8,6 +8,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+//#include "BWAWrapper.h"
+
+#include <zlib.h>
+#include <stdint.h>
+#include "kseq.h"
+KSEQ_INIT(gzFile, gzread)
+
 #include "SeqLib/UnalignedSequence.h"
 
 namespace SeqLib{
@@ -16,10 +23,10 @@ namespace SeqLib{
 class FastqReader {
 
  public:
-
+  
   /** Construct an empty FASTQ/FASTA reader */
- FastqReader() : m_type('k'), m_iss(NULL) {}
-
+ FastqReader() {}
+  
   /** Construct a reader and open a FASTQ/FASTA reader 
    * @param file Path to a FASTQ or FASTA file
    */
@@ -36,14 +43,20 @@ class FastqReader {
    */
   bool GetNextSequence(UnalignedSequence& s);
 
-  ~FastqReader() { if (m_iss) delete m_iss; }
+  ~FastqReader() { 
+    if (seq)  
+      kseq_destroy(seq);
+    if (fp)
+      gzclose(fp);
+  }
+
 
  private:
   
   std::string m_file;
-  char m_type;
-  std::ifstream * m_iss;
 
+  gzFile fp; // file handler for kseq
+  kseq_t * seq; // current read
 
 };
 

@@ -22,7 +22,6 @@ extern "C" {
   #include "bwa/utils.h"
   #include "bwa/bwamem.h"
   int is_bwt(ubyte_t *T, int n);
-
 }
 
 KSEQ_DECLARE(gzFile)

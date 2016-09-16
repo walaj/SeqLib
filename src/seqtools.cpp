@@ -130,9 +130,13 @@ void runfml(int argc, char** argv) {
     SeqLib::UnalignedSequenceVector usv;
     std::string qn, seq;
     SeqLib::UnalignedSequence u;
+    if (opt::verbose)
+      std::cerr << "...reading fasta/fastq file " << opt::fasta << std::endl;
     while (f.GetNextSequence(u)) 
-      usv.push_back(u);
-    fml.AddReads(usv);
+      fml.AddRead(u);
+
+    if (opt::verbose)
+      std::cerr << "...read in " << SeqLib::AddCommas(fml.NumSequences()) << " sequences" <<  std::endl;
     
   } else {
 
@@ -147,7 +151,12 @@ void runfml(int argc, char** argv) {
 
   }
 
+  if (opt::verbose) 
+    std::cerr << "...error correcting " << std::endl;
   fml.CorrectReads();
+
+  if (opt::verbose) 
+    std::cerr << "...assembling " << std::endl;
   fml.PerformAssembly();
 
   // retrieve the reads
@@ -184,7 +193,10 @@ void runfml(int argc, char** argv) {
   
   bw.SetHeader(bwa.HeaderFromIndex());
   bw.WriteHeader();
-  
+
+  if (opt::verbose) 
+    std::cerr << "...aligning contig with BWA-MEM" << std::endl;
+ 
   // run through and read
   std::stringstream ss;
   for (std::vector<std::string>::const_iterator i = contigs.begin(); i != contigs.end(); ++i) {
@@ -229,14 +241,21 @@ void runbfc(int argc, char** argv) {
     }
   } 
 
+  if (opt::verbose)
+    std::cerr << "...read in " << SeqLib::AddCommas(b.NumSequences()) << " sequences" << std::endl;
+  
   if (!b.Train()) {
     std::cerr << "Training failed on " << b.NumSequences() << std::endl;
     exit(EXIT_FAILURE);
   }
+  if (opt::verbose)
+    std::cerr << "...finished training " << SeqLib::AddCommas(b.NumSequences()) << " sequences" << std::endl;
   if (!b.ErrorCorrect()) {
     std::cerr << "Correction failed on " << b.NumSequences() << std::endl;
     exit(EXIT_FAILURE);
   }
+  if (opt::verbose)
+    std::cerr << "...finished correcting " << SeqLib::AddCommas(b.NumSequences()) << " sequences" << std::endl;
 
   SeqLib::UnalignedSequenceVector u;
   b.GetSequences(u);
@@ -271,6 +290,8 @@ void runbfc(int argc, char** argv) {
   bw.Open("-");
   
   SeqLib::BWAWrapper bwa;
+  if (opt::verbose)
+    std::cerr << "...loading reference genome" << std::endl;
   if (!bwa.LoadIndex(opt::reference)) {
     std::cerr << "Failed to load index for BWA-MEM from: " << opt::reference << std::endl;
     exit(EXIT_FAILURE);
@@ -278,7 +299,9 @@ void runbfc(int argc, char** argv) {
   
   bw.SetHeader(bwa.HeaderFromIndex());
   bw.WriteHeader();
-  
+
+  if (opt::verbose)
+    std::cerr << "...realigning corrected sequences with BWA-MEM" << std::endl;
   // run through and read
   for (SeqLib::UnalignedSequenceVector::const_iterator i = u.begin(); i != u.end(); ++i) {
     SeqLib::BamRecordVector brv;
@@ -320,6 +343,7 @@ void parseOptions(int argc, char** argv, const char* msg) {
   for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
     std::istringstream arg(optarg != NULL ? optarg : "");
     switch (c) {
+    case 'v': opt::verbose = true; break;
     case 'f': opt::mode = 'f'; break;
     case 'F': arg >> opt::fasta; break;
     case 'b': opt::mode = 'b'; break;
