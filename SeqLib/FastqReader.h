@@ -8,13 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-//#include "BWAWrapper.h"
-
-#include <zlib.h>
-#include <stdint.h>
-#include "kseq.h"
-KSEQ_INIT(gzFile, gzread)
-
+// all kseq stuff is in UnaligedSequence
 #include "SeqLib/UnalignedSequence.h"
 
 namespace SeqLib{

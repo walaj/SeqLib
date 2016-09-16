@@ -109,8 +109,8 @@ seqtools bfc in.bam -G $REF -b > corrected.bam
 ## Skip realignment, send to fasta
 seqtools bfc in.bam -f > corrected.fasta
 
-## Input as fasta, send to aligned BAM
-seqtools bfc -F in.fasta -G $REG -b > corrected.bam
+## Input as gzipped or plain fasta (or fastq), send to aligned BAM
+seqtools bfc --infasta in.fasta -G $REG -b > corrected.bam
 
 
 ##### ASSEMBLY (same patterns as above)

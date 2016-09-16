@@ -11,20 +11,10 @@
 #include "SeqLib/BamHeader.h"
 #include "SeqLib/UnalignedSequence.h"
 
+// all of the bwa and kseq stuff is in unaligned sequence
+// best way I had to keep from clashes with klib macros
+
 #define MEM_F_SOFTCLIP  0x200
-
-extern "C" {
-  #include "bwa/bwa.h"
-  #include "bwa/bwt.h"
-  #include "bwa/bntseq.h"
-  #include "bwa/kseq.h"
-  #include <stdlib.h>
-  #include "bwa/utils.h"
-  #include "bwa/bwamem.h"
-  int is_bwt(ubyte_t *T, int n);
-}
-
-KSEQ_DECLARE(gzFile)
 
 namespace SeqLib {
  
