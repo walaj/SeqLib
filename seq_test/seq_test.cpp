@@ -13,6 +13,7 @@
 #include "SeqLib/SeqPlot.h"
 #include "SeqLib/RefGenome.h"
 
+#define GZBED "test_data/test.bed.gz"
 #define SBAM "test_data/small.bam"
 #define OBAM "test_data/small_out.bam"
 #define OCRAM "test_data/small_out.cram"
@@ -27,8 +28,17 @@ using namespace SeqLib::Filter;
 using namespace SeqLib;
 
 #include <fstream>
-
 #include "SeqLib/BFC.h"
+
+BOOST_AUTO_TEST_CASE( read_gzbed ) {
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+
+  SeqLib::GRC g(GZBED, br.Header());
+
+}
+
 BOOST_AUTO_TEST_CASE ( bfc ) {
 
   BFC b;

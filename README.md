@@ -322,7 +322,7 @@ Development, support, guidance, testing:
 
 [BWA]: https://github.com/lh3/bwa
 
-[license]: https://github.com/walaj/SeqLib/blob/new_license/LICENSE
+[license]: https://github.com/walaj/SeqLib/blob/master/LICENSE
 
 [BamTools]: https://raw.githubusercontent.com/wiki/pezmaster31/bamtools/Tutorial_Toolkit_BamTools-1.0.pdf
 

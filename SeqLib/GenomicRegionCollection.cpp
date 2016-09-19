@@ -7,6 +7,9 @@
 #include <set>
 #include <stdexcept>
 #include <algorithm>
+#include <zlib.h>
+
+#define GZBUFFER 4096
 
 //#define DEBUG_OVERLAPS 1
 
@@ -269,12 +272,40 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
   __allocate_grc();
 
   idx = 0;
-  std::ifstream iss(file.c_str());
-  if (!iss || file.length() == 0) { 
-    std::cerr << "Region file does not exist: " << file << std::endl;
+
+  // 
+  gzFile fp = NULL;
+  fp = strcmp(file.c_str(), "-")? gzopen(file.c_str(), "r") : gzdopen(fileno(stdin), "r");
+  
+  if (file.empty() || !fp) {
+    std::cerr << "Region file not readable: " << file << std::endl;
     return;
   }
 
+  // http://www.lemoda.net/c/gzfile-read/
+  size_t c = 0;
+  while (1) {
+
+    int err;                    
+    char buffer[GZBUFFER];
+    gzgets(fp, buffer, GZBUFFER);
+    int bytes_read = strlen(buffer);
+
+    if (bytes_read < GZBUFFER - 1) {
+      if (gzeof (fp)) break;
+      else {
+	const char * error_string;
+	error_string = gzerror (fp, &err);
+	if (err) {
+	  fprintf (stderr, "Error: %s.\n", error_string);
+	  exit (EXIT_FAILURE);
+	}
+      }
+    }
+
+    std::cerr << std::string(buffer) << " C " << c  << std::endl;
+  }
+  /*
   // get the header line to check format
   std::string header;
   if (!std::getline(iss, header, '\n')) {
@@ -296,6 +327,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
     ReadVCF(file, hdr);
   else // default is BED file
     ReadBED(file, hdr);    
+  */
 }
 
 // reduce a set of GenomicRegions into the minium overlapping set (same as GenomicRanges "reduce")
