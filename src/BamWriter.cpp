@@ -134,7 +134,7 @@ bool BamWriter::SetCramReference(const std::string& ref) {
   char* fn_list = samfaipath(ref.c_str()); // eg ref = my.fa  returns my.fa.fai
   if (fn_list) {
     int status = hts_set_fai_filename(fop.get(), fn_list);
-    if (!status) {
+    if (status != 0) {
       fprintf(stderr, "Failed to use reference \"%s\".\n", fn_list);
       return false;
     }

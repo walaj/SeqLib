@@ -298,7 +298,7 @@ namespace SeqLib {
 
   void BamRecord::SetQualities(const std::string& n, int offset) {
 
-    if (n.length() != b->core.l_qseq)
+    if (!n.empty() && n.length() != b->core.l_qseq)
       throw std::invalid_argument("New quality score should be same as seq length");
 
     char * q = strdup(n.data());
