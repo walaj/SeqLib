@@ -41,14 +41,14 @@ namespace SeqLib {
     b = SeqPointer<bam1_t>(a, free_delete()); 
   }
 
-  GenomicRegion BamRecord::asGenomicRegion() const {
+  GenomicRegion BamRecord::AsGenomicRegion() const {
     char s = '*';
     if (MappedFlag())
       s = ReverseFlag() ? '-' : '+';
     return GenomicRegion(b->core.tid, b->core.pos, PositionEnd(), s);
   }
 
-  GenomicRegion BamRecord::asGenomicRegionMate() const {
+  GenomicRegion BamRecord::AsGenomicRegionMate() const {
     char s = '*';
     if (MateMappedFlag())
       s = MateReverseFlag() ? '-' : '+';

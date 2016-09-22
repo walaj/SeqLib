@@ -141,6 +141,20 @@ class GenomicRegionCollection {
  /** Get the number of trees (eg number of chromosomes, each with own tree */
  int NumTree() const { return m_tree->size(); }
 
+ /** Get the IDs of all intervals that overlap with a query range
+  *
+  * The IDs are created during CreateTreeMap, and are the position of the 
+  * the individual intervals from the tree, in genomic order. e.g the first
+  * interval on chromosome 1 gets 0, the next one gets 1, etc.
+  * The returned IDs can then be used as lookups with [], as long as the 
+  * collection is not altered in between.
+  * @param gr Query range to check overlaps against
+  * @param ignore_strand Should strandedness be ignore when doing overlaps 
+  * @return A vector of IDs of intervals in this collection that overlap with gr
+  */
+ template<class K>
+ std::vector<int> FindOverlappedIntervals(const K& gr, bool ignore_strand) const;
+
  /** Get a const pointer to the genomic interval tree map */
  const GenomicIntervalTreeMap* GetTree() const { return m_tree.get(); }
 

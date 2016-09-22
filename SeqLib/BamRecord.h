@@ -440,10 +440,10 @@ class BamRecord {
   friend std::ostream& operator<<(std::ostream& out, const BamRecord &r);
 
   /** Return read as a GenomicRegion */
-  GenomicRegion asGenomicRegion() const;
+  GenomicRegion AsGenomicRegion() const;
 
   /** Return mate read as a GenomicRegion */
-  GenomicRegion asGenomicRegionMate() const;
+  GenomicRegion AsGenomicRegionMate() const;
 
    /** Return the number of "aligned bases" in the same style as BamTools
     *

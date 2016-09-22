@@ -17,6 +17,7 @@ namespace SeqLib {
 
   template<class T>
   GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const HeaderSequenceVector& h) {
+
     idx = 0;
     __allocate_grc();
 
@@ -305,6 +306,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
 
     std::cerr << std::string(buffer) << " C " << c  << std::endl;
   }
+
   /*
   // get the header line to check format
   std::string header;
@@ -587,6 +589,35 @@ const T& GenomicRegionCollection<T>::at(size_t i) const
   return m_grv->at(i); 
 }  
 
+
+// this is query
+template<class T>
+template<class K>
+std::vector<int> GenomicRegionCollection<T>::FindOverlappedIntervals(const K& gr, bool ignore_strand) const {  
+
+  if (m_tree->size() == 0 && m_grv->size() != 0) 
+    throw std::logic_error("Need to run CreateTreeMap to make the interval tree before doing range queries");
+  
+  // which chr (if any) are common between query and subject
+  GenomicIntervalTreeMap::const_iterator ff = m_tree->find(gr.chr);
+
+  std::vector<int> output;  
+
+  //must as least share a chromosome  
+  if (ff == m_tree->end())
+    return output;
+
+  // get the subject hits
+  GenomicIntervalVector giv;
+  ff->second.findOverlapping(gr.pos1, gr.pos2, giv);
+
+  for (GenomicIntervalVector::const_iterator i = giv.begin(); i != giv.end(); ++i)
+    if (ignore_strand || m_grv->at(i->value).strand == gr.strand) 
+      output.push_back(i->value);
+
+  return output;
+
+}
 
 // this is query
 template<class T>
