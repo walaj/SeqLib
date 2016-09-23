@@ -115,6 +115,7 @@ class GenomicRegionCollection {
   void CreateTreeMap();
   
   /** Reduces the GenomicRegion objects to minimal set by merging overlapping intervals
+   * @note This will merge intervals that touch. eg [4,6] and [6,8]
    * @note This will also call CreateTreeMap() at end to re-create the interval tree
    */
   void MergeOverlappingIntervals();

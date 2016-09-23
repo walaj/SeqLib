@@ -343,7 +343,7 @@ void GenomicRegionCollection<T>::MergeOverlappingIntervals() {
   typename std::list<T>::iterator inext(intervals.begin());
   ++inext;
   for (typename std::list<T>::iterator i(intervals.begin()), iend(intervals.end()); inext != iend;) {
-    if((i->pos2 > inext->pos1) && (i->chr == inext->chr))
+    if((i->pos2 >= inext->pos1) && (i->chr == inext->chr)) // change >= to > to not overlap touching intervals (eg [4,5][5,6])
       {
 	if(i->pos2 >= inext->pos2) intervals.erase(inext++);
 	else if(i->pos2 < inext->pos2)

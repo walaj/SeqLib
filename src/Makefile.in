@@ -39,7 +39,6 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
@@ -60,7 +59,7 @@ am_libseqlib_a_OBJECTS = libseqlib_a-FastqReader.$(OBJEXT) \
 	libseqlib_a-FermiAssembler.$(OBJEXT) \
 	libseqlib_a-BamHeader.$(OBJEXT)
 libseqlib_a_OBJECTS = $(am_libseqlib_a_OBJECTS)
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
+DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
@@ -139,6 +138,7 @@ am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
+boost_lib = @boost_lib@
 build_alias = @build_alias@
 builddir = @builddir@
 datadir = @datadir@
