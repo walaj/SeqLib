@@ -36,7 +36,6 @@ before_install:
 - if [ -n "${BOOST_VERSION}" ]; then export BOOST_ROOT="${TRAVIS_BUILD_DIR}/../boost-trunk"; export CMAKE_MODULE_PATH="${BOOST_ROOT}"; fi
 - if [ "${TRAVIS_OS_NAME}" = "osx" -a "${CXX}" = "clang++" ]; then export CXX="$(which c++)"; export CC="$(which cc)"; fi
 - .travis.scripts/travis-before-install.sh
-- echo "CXX: $CXX TRAVIS_BRANCH $TRAVIS_BRANCH CC $CC TRAVIS_OS_NAME $TRAVIS_OS_NAME"
 
 script: 
 - .travis.scripts/travis-install.sh

@@ -4,6 +4,8 @@
 set -e
 set -o pipefail
 
+echo "CXX: $CXX TRAVIS_BRANCH $TRAVIS_BRANCH CC $CC TRAVIS_OS_NAME $TRAVIS_OS_NAME"
+
 ## only build for one compiler
 #VALID=`g++ --version | grep 4.9 | wc -l`
 #if [[ "$VALID" -eq "1" ]]; then
