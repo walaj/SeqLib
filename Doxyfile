@@ -27,7 +27,7 @@ PROJECT_BRIEF	       = "C++ htslib/bwa-mem interface and command line tools for 
 
 PROJECT_NUMBER         = 0.0
 
-REPO_PATH	       = https://github.com/jwalabroad/SeqLib.git
+REPO_PATH	       = https://github.com/walaj/SeqLib.git
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
