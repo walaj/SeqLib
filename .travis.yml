@@ -8,6 +8,14 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - g++-4.5
+      env: COMPILER=g++-4.5
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-4.9
       env: COMPILER=g++-4.9
     - compiler: gcc

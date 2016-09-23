@@ -1,5 +1,11 @@
 #!/bin/bash
 
+## only build for one compiler
+VALID=`g++ --version | grep 4.9 | wc -l`
+if [[ "$VALID" -eq "0" ]]; then
+  exit 0;
+fi
+
 echo "...running unit tests and code coverage"
 #reuse -q .python-3.5.1
 #.zlib-1.2.8

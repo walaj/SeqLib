@@ -1,5 +1,11 @@
 #!/bin/bash
 
+## only build for one compiler
+VALID=`g++ --version | grep 4.9 | wc -l`
+if [[ "$VALID" -eq "0" ]]; then
+  exit 0;
+fi
+
 #if [ "$CXX" == "clang++" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; 
 #then 
 
