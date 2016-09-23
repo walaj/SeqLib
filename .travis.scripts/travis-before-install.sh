@@ -5,8 +5,8 @@ set -e
 set -o pipefail
 
 ## only build for one compiler
-VALID=`g++ --version | grep 4.9 | wc -l`
-if [[ "$VALID" -eq "1" ]]; then
+#VALID=`g++ --version | grep 4.9 | wc -l`
+#if [[ "$VALID" -eq "1" ]]; then
 
     if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
 	brew update
@@ -19,4 +19,4 @@ if [[ "$VALID" -eq "1" ]]; then
 	    | tar jxf - --strip-components=1 -C "${BOOST_ROOT}"
     fi
 
-fi
+#fi
