@@ -8,6 +8,7 @@ echo "CXX: $CXX TRAVIS_BRANCH $TRAVIS_BRANCH CC $CC TRAVIS_OS_NAME $TRAVIS_OS_NA
 
 ## only build for one compiler
 if [ "$CXX" == "g++" ] && [ "$TRAVIS_BRANCH" == "master" ]; 
+then
 
     if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
 	brew update
