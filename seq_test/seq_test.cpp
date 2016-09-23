@@ -14,6 +14,7 @@
 #include "SeqLib/RefGenome.h"
 
 #define GZBED "test_data/test.bed.gz"
+#define GZVCF "test_data/test.vcf.gz"
 #define SBAM "test_data/small.bam"
 #define OBAM "test_data/small_out.bam"
 #define OCRAM "test_data/small_out.cram"
@@ -36,7 +37,14 @@ BOOST_AUTO_TEST_CASE( read_gzbed ) {
   br.Open("test_data/small.bam");
 
   SeqLib::GRC g(GZBED, br.Header());
+  BOOST_CHECK_EQUAL(g.size(), 3);
 
+  BOOST_CHECK_EQUAL(g[2].chr, 22);
+
+  SeqLib::GRC v(GZVCF, br.Header());
+  BOOST_CHECK_EQUAL(v.size(), 31);
+
+  BOOST_CHECK_EQUAL(v[29].chr, 22);
 }
 
 BOOST_AUTO_TEST_CASE ( bfc ) {
@@ -405,15 +413,15 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
   size_t count = 0;
   br.GetNextRecord(r);
   
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().chr, 22);
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().pos1,999901);
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().pos2,1000002);
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().strand,'+');
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().chr, 22);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos1,999901);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos2,1000002);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().strand,'+');
 
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().chr, 22);
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().pos1,999993);
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().pos2,1000094);
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().strand,'-');
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().chr, 22);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos1,999993);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos2,1000094);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().strand,'-');
 
   BOOST_CHECK_EQUAL(std::floor(r.MeanPhred()), 34);
 
@@ -987,14 +995,6 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   // empty constructor
   SeqLib::BamWriter w;
   
-  // specify bam explicitly
-  //w = SeqLib::BamWriter(SeqLib::BAM);
-
-  //BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
-  //BOOST_CHECK_THROW(w.Close(), std::runtime_error);
-  //BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
-  //BOOST_CHECK_THROW(w.WriteRecord(rec), std::runtime_error);
-
   BOOST_CHECK(!w.WriteHeader());
   BOOST_CHECK(!w.Close());
   BOOST_CHECK(!w.BuildIndex());
@@ -1004,8 +1004,6 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   // check that set CRAM fails
   BOOST_CHECK(!w.SetCramReference("dummy")); 
-
-  //BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
   BOOST_CHECK(!w.WriteHeader());
 
   w.SetHeader(h);
@@ -1014,13 +1012,10 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   size_t count = 0;
 
-  while(br.GetNextRecord(rec) && count++ < 10000) {
+  while(br.GetNextRecord(rec) && count++ < 10000) 
     w.WriteRecord(rec);
-  }
-
 
   BOOST_CHECK(!w.BuildIndex());
-  //BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
   w.Close();
 
   w.BuildIndex();
@@ -1437,31 +1432,6 @@ BOOST_AUTO_TEST_CASE( plot_test ) {
 
 //   BOOST_CHECK_EQUAL(rec1.Qname(), rec2.Qname());
 //   }
-
-
-BOOST_AUTO_TEST_CASE( bed_read ) {
-  
-  SeqLib::BamReader r;
-  r.Open("test_data/small.bam");
- 
-  SeqLib::GRC g(BEDFILE, r.Header());
-
-  BOOST_CHECK_EQUAL(g.size(), 3);
-  BOOST_CHECK_EQUAL(g[2].chr, 22);
-  
-}
-
-BOOST_AUTO_TEST_CASE( vcf_read ) {
-  
-  SeqLib::BamReader r;
-  r.Open("test_data/small.bam");
- 
-  SeqLib::GRC g(VCFFILE, r.Header());
-
-  BOOST_CHECK_EQUAL(g.size(), 31);
-  BOOST_CHECK_EQUAL(g[29].chr, 22);
-  
-}
 
 BOOST_AUTO_TEST_CASE (json_parse) {
 

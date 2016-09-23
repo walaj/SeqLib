@@ -133,8 +133,14 @@ bool BamWriter::SetCramReference(const std::string& ref) {
   // need to open reference for CRAM writing 
   char* fn_list = samfaipath(ref.c_str()); // eg ref = my.fa  returns my.fa.fai
   if (fn_list) {
-    int status = hts_set_fai_filename(fop.get(), fn_list);
-    if (status != 0) {
+
+    // in theory hts_set_fai_filename should give back < 0
+    // if fn_list not there, but it doesnt
+    if (!read_access_test(std::string(fn_list)))
+      return false;
+	
+    int status = hts_set_fai_filename(fop.get(), fn_list); 
+    if (status < 0) {
       fprintf(stderr, "Failed to use reference \"%s\".\n", fn_list);
       return false;
     }

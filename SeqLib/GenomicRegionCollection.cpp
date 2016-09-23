@@ -64,8 +64,6 @@ namespace SeqLib {
     }
   }
 
-  static bool header_has_chr_string = false;
-
   template<class T>
   void GenomicRegionCollection<T>::CoordinateSort() {
     
@@ -169,118 +167,14 @@ template<class T>
 bool GenomicRegionCollection<T>::ReadBED(const std::string & file, const BamHeader& hdr) {
 
   m_sorted = false;
-  std::ifstream iss(file.c_str());
-  if (!iss || file.length() == 0) { 
-    std::cerr << "BED file does not exist: " << file << std::endl;
-    return false;
-  }
-
-  std::string line;
-  std::string curr_chr = "-1";
-  while (std::getline(iss, line, '\n')) {
-
-    size_t counter = 0;
-    std::string chr, pos1, pos2;
-    std::istringstream iss_line(line);
-    std::string val;
-    
-    if (line.find("#") == std::string::npos) {
-      while(std::getline(iss_line, val, '\t')) {
-	switch (counter) { 
-	case 0 : chr = val; break; 
-	case 1 : pos1 = val; break;
-	case 2 : pos2 = val; break;
-	}
-	if (counter >= 2)
-	  break;
-	++counter;
-	
-	if (chr != curr_chr) {
-	  //std::cerr << "...reading from BED - chr" << chr << std::endl;
-	  curr_chr = chr;
-	}
-	
-      }
-
-      if (header_has_chr_string) {
-	//if (chr == "X" || chr == "Y" || std::stoi(chr) < 23)
-	  chr = "chr" + chr;
-      }
-      
-      // construct the GenomicRegion
-      T gr(chr, pos1, pos2, hdr);
-
-      if (gr.chr >= 0) {
-	m_grv->push_back(gr);
-      }
-	
-	//}
-    } // end "keep" conditional
-  } // end main while
-
-  return true;
-}
-
-template<class T>
-bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHeader& hdr) {
-
-  m_sorted = false;
-  std::ifstream iss(file.c_str());
-  if (!iss || file.length() == 0) { 
-    std::cerr << "VCF file does not exist: " << file << std::endl;
-    return false;
-  }
-
-  std::string line;
-  
-  while (std::getline(iss, line, '\n')) {
-    if (line.length() > 0) {
-      if (line.at(0) != '#') { // its a valid line
-	std::istringstream iss_this(line);
-	int count = 0;
-	std::string val, chr, pos;
-	
-	while (std::getline(iss_this, val, '\t')) {
-	  switch (count) {
-	  case 0 : chr = val;
-	  case 1 : pos = val;
-	  }
-	  count++;
-	}
-	if (count < 3) {
-	  std::cerr << "Didn't parse VCF line properly: " << line << std::endl;
-	  return false;
-	} else {
-
-	  // construct the GenomicRegion
-	  T gr(chr, pos, pos, hdr);
-	  if (gr.chr >= 0) {
-	    m_grv->push_back(gr);
-	  }
-	}
-	
-      }
-    }
-  }
-  
-  return true;
-  
-}
-
-template<class T>
-GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, const BamHeader& hdr) {
-
-  __allocate_grc();
-
   idx = 0;
 
-  // 
   gzFile fp = NULL;
   fp = strcmp(file.c_str(), "-")? gzopen(file.c_str(), "r") : gzdopen(fileno(stdin), "r");
   
   if (file.empty() || !fp) {
-    std::cerr << "Region file not readable: " << file << std::endl;
-    return;
+    std::cerr << "BED file not readable: " << file << std::endl;
+    return false;
   }
 
   // http://www.lemoda.net/c/gzfile-read/
@@ -292,6 +186,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
     gzgets(fp, buffer, GZBUFFER);
     int bytes_read = strlen(buffer);
 
+    // get one line
     if (bytes_read < GZBUFFER - 1) {
       if (gzeof (fp)) break;
       else {
@@ -304,8 +199,108 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
       }
     }
 
-    std::cerr << std::string(buffer) << " C " << c  << std::endl;
+    // prepare to loop through each field of BED line
+    size_t counter = 0;
+    std::string chr, pos1, pos2;
+    std::string line(buffer);
+    std::istringstream iss_line(line);
+    std::string val;
+    if (line.find("#") != std::string::npos) 
+      continue;
+    
+    // loop BED lines
+    while(std::getline(iss_line, val, '\t')) {
+      switch (counter) { 
+      case 0 : chr = val; break; 
+      case 1 : pos1 = val; break;
+      case 2 : pos2 = val; break;
+      }
+      if (counter >= 2)
+	break;
+      ++counter;
+    }
+    
+    // construct the GenomicRegion
+    T gr(chr, pos1, pos2, hdr);
+    
+    if (gr.chr >= 0)
+      m_grv->push_back(gr);
   }
+
+  return true;
+}
+
+template<class T>
+bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHeader& hdr) {
+
+  m_sorted = false;
+  idx = 0;
+
+  gzFile fp = NULL;
+  fp = strcmp(file.c_str(), "-")? gzopen(file.c_str(), "r") : gzdopen(fileno(stdin), "r");
+  
+  if (file.empty() || !fp) {
+    std::cerr << "VCF file not readable: " << file << std::endl;
+    return false;
+  }
+
+  // http://www.lemoda.net/c/gzfile-read/
+  size_t c = 0;
+  while (1) {
+
+    int err;                    
+    char buffer[GZBUFFER];
+    gzgets(fp, buffer, GZBUFFER);
+    int bytes_read = strlen(buffer);
+
+    // get one line
+    if (bytes_read < GZBUFFER - 1) {
+      if (gzeof (fp)) break;
+      else {
+	const char * error_string;
+	error_string = gzerror (fp, &err);
+	if (err) {
+	  fprintf (stderr, "Error: %s.\n", error_string);
+	  exit (EXIT_FAILURE);
+	}
+      }
+    }
+
+    // prepare to loop through each field of BED line
+    size_t counter = 0;
+    std::string chr, pos;
+    std::string line(buffer);
+    std::istringstream iss_line(line);
+    std::string val;
+    if (line.empty() || line.at(0) == '#')
+      continue;
+    
+    // loop VCF lines
+    while(std::getline(iss_line, val, '\t')) {
+      switch (counter) { 
+      case 0 : chr = val; break; 
+      case 1 : pos = val; break;
+      }
+      if (counter >= 2)
+	break;
+      ++counter;
+    }
+    
+    // construct the GenomicRegion
+    T gr(chr, pos, pos, hdr);
+    if (gr.chr >= 0) 
+      m_grv->push_back(gr);
+  }
+
+  return true;
+}
+
+template<class T>
+GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, const BamHeader& hdr) {
+
+  __allocate_grc();
+
+  idx = 0;
 
   /*
   // get the header line to check format
@@ -316,20 +311,17 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
   }
   iss.close();
 
-  // MUTECT CALL STATS
-  if ((header.find("MuTect") != std::string::npos) ||
-      (file.find("call_stats") != std::string::npos) || 
-      (file.find("callstats") != std::string::npos))
-    std::cerr << "MuTect reading not currently available" << std::endl; //ReadMuTect(file, hdr);
+  */
+
   // BED file
-  else if (file.find(".bed") != std::string::npos)
+  if (file.find(".bed") != std::string::npos)
     ReadBED(file, hdr);
   // VCF file
   else if (file.find(".vcf") != std::string::npos) 
     ReadVCF(file, hdr);
   else // default is BED file
     ReadBED(file, hdr);    
-  */
+
 }
 
 // reduce a set of GenomicRegions into the minium overlapping set (same as GenomicRanges "reduce")
