@@ -4,8 +4,8 @@
 #VALID=`g++ --version | grep 4.9 | wc -l`
 #if [[ "$VALID" -eq "1" ]]; then
 
-#if [ "$CXX" == "clang++" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; 
-#then 
+if [ "$CXX" == "g++" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; 
+then 
     
     echo -e "Downloading latest Doxygen...";
     cd ${HOME};
@@ -31,6 +31,5 @@
     
     echo -e "Published doxygen.\n"
     
-#fi
-
+fi
 #fi
