@@ -7,8 +7,7 @@ set -o pipefail
 echo "CXX: $CXX TRAVIS_BRANCH $TRAVIS_BRANCH CC $CC TRAVIS_OS_NAME $TRAVIS_OS_NAME"
 
 ## only build for one compiler
-#VALID=`g++ --version | grep 4.9 | wc -l`
-#if [[ "$VALID" -eq "1" ]]; then
+if [ "$CXX" == "g++" ] && [ "$TRAVIS_BRANCH" == "master" ]; 
 
     if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
 	brew update
@@ -21,4 +20,4 @@ echo "CXX: $CXX TRAVIS_BRANCH $TRAVIS_BRANCH CC $CC TRAVIS_OS_NAME $TRAVIS_OS_NA
 	    | tar jxf - --strip-components=1 -C "${BOOST_ROOT}"
     fi
 
-#fi
+fi
