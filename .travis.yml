@@ -2,7 +2,7 @@ language: cpp
 
 matrix:
   include:
-- compiler: gcc
+    - compiler: gcc
       addons:
         apt:
           sources:
