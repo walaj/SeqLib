@@ -2,7 +2,7 @@
 
 echo "...running unit tests and code coverage"
 
-if [ "$CXX" == "g++" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; 
+if [ "$BUILDDOX" == "1" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; 
 then
   ## only install if not on home environment (eg travis ci)
     if [ -z "$REFHG19" ]; then
