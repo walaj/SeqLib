@@ -152,7 +152,7 @@ class BamReader {
   bool SetMultipleRegions(const GRC& grc);
 
   /** Return if the reader has opened the first file */
-  bool IsOpen() const { if (m_bams.size()) return m_bams.begin()->second.fp != 0; return false; }
+  bool IsOpen() const { if (m_bams.size()) return m_bams.begin()->second.fp.get() != NULL; return false; }
 
   /** Set pre-loaded raw htslib index 
    * 
@@ -191,7 +191,7 @@ class BamReader {
     SeqHashMap<std::string, _Bam>::const_iterator ff = m_bams.find(f);
     if (ff == m_bams.end())
       return false;
-    return ff->second.fp != 0; 
+    return ff->second.fp.get() != NULL; 
   }
 
   /** Close all of the BAMs */

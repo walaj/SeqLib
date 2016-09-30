@@ -219,7 +219,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 
   // shortcut if we have only a single bam
   if (m_bams.size() == 1) {
-    if (m_bams.begin()->second.fp == 0 || m_bams.begin()->second.mark_for_closure) // cant read if not opened
+    if (m_bams.begin()->second.fp.get() == NULL || m_bams.begin()->second.mark_for_closure) // cant read if not opened
       return false;
     if (m_bams.begin()->second.__load_read(r)) { // try to read
       return true;
@@ -240,7 +240,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       continue;
 
     // skip un-opened BAMs
-    if (tb->fp == 0) 
+    if (tb->fp.get() == NULL) 
       continue;
 
     // if next read is not marked as empty, skip to next
@@ -303,7 +303,7 @@ std::string BamReader::PrintRegions() const {
   bam1_t* b = bam_init1(); 
   int32_t valid;
 
-  if (hts_itr == 0) {
+  if (hts_itr.get() == NULL) {
     valid = sam_read1(fp.get(), m_hdr.get_(), b);    
     if (valid < 0) { 
       

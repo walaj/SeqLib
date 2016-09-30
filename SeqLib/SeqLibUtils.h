@@ -15,10 +15,16 @@
 
     
 #if __cplusplus > 199711L
-#define HAVE_C11 1
-#endif
+  #include <memory>
+  #include <unordered_set>
+  #include <unordered_map>
+  #define SeqHashMap std::unordered_map
+  #define SeqHashSet std::unordered_set
+  #define SeqPointer std::shared_ptr
+  #define HAVE_C11 1
+#else
 
-#ifdef HAVE_C11
+#ifdef __APPLE__
   #include <memory>
   #include <unordered_set>
   #include <unordered_map>
@@ -32,6 +38,7 @@
   #define SeqHashMap std::tr1::unordered_map
   #define SeqHashSet std::tr1::unordered_set
   #define SeqPointer std::tr1::shared_ptr
+#endif
 #endif
 
 namespace SeqLib {

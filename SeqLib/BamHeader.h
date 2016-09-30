@@ -73,7 +73,7 @@ namespace SeqLib {
     int GetSequenceLength(const std::string& id) const;
 
     /** Return if the header has been opened  */
-    bool IsOpen() const { return h != 0; }
+    bool IsOpen() const { return h.get() != NULL; }
 
     /** Return the full text of the header */
     std::string AsString() const;
@@ -88,7 +88,7 @@ namespace SeqLib {
 
     /** Check if the header has been initialized
      */
-    bool isEmpty() const { return h.get() == 0; }
+    bool isEmpty() const { return h.get() == NULL; }
 
     /** Return the raw bam_hdr_t */
     const bam_hdr_t* get() const { return h.get(); }
