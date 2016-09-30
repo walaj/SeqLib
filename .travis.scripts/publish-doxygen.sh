@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## only build for one compiler
-if [ "$BUILDDOX" == "g++" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; 
+if [ "$COMPILER" == "g++-4.9" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; 
 then 
     
     echo -e "Downloading latest Doxygen...";

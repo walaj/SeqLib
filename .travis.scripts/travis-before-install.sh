@@ -7,7 +7,7 @@ set -o pipefail
 echo "CXX: $CXX TRAVIS_BRANCH $TRAVIS_BRANCH CC $CC TRAVIS_OS_NAME $TRAVIS_OS_NAME"
 
 ## only build for one compiler
-if [ "$BUILDDOX" == "1" ] && [ "$TRAVIS_BRANCH" == "master" ]; 
+if [ "$COMPILER" == "g++-4.9" ] && [ "$TRAVIS_BRANCH" == "master" ]; 
 then
 
     if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
