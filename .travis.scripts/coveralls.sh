@@ -10,6 +10,12 @@ then
     fi
     cd seq_test
 
+    ## download the latest matched gcov
+    sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.9 90
+    sudo ln -sf /usr/bin/gcov-4.9 /usr/bin/gcov
+    GCOV_VERSION=`gcov --version`
+    echo "GCOV version $GCOV_VERSION"
+
     ## download the test data
     mkdir test_data
     cd test_data
@@ -20,7 +26,8 @@ then
     echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
     ./configure --with-boost=${BOOST_ROOT}
     make CXXFLAGS='-DHAVE_C11=1 -std=c++11' CXX=$COMPILER
-    ./seq_test
+    ./seq_test 1> stdout.log 2> stderr.log
+    tail -n stderr.log 
     
     EXCL="-e src/non_api -e seq_test/seq_test.cpp -e htslib -e bwa -e fermi-lite -e config.h -e seq_test/config.h -e seq_test/config.h -e src/jsoncpp.cpp -e src/json -e src/SeqLib/ssw.h -e src/SeqLib/ssw_cpp.h -e src/ssw.c -e src/ssw_cpp.cpp"
     cpp-coveralls -r ../ -t ${COVERALLS_TOKEN} ${EXCL} ##--dryrun

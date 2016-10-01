@@ -96,7 +96,6 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   v.clear();
   b.FilterUnique();
   b.GetSequences(v);
-  std::cerr << " FILTERED NOW SIZE " << v.size() << std::endl;
 
   // do everything at once
   b.TrainAndCorrect(brv2);
