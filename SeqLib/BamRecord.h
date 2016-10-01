@@ -453,7 +453,7 @@ class BamRecord {
     * 3M1D3M - ATG-TGA 
     * 3M1I3M - ATGCTGA
     *
-    * @return The number of M, D, and I bases
+    * @return The number of M, D, X, = and I bases
     */
   inline int NumAlignedBases() const {
     int out = 0;
@@ -461,6 +461,8 @@ class BamRecord {
     for (size_t i = 0; i < b->core.n_cigar; i++) 
       if (bam_cigar_opchr(c[i]) == 'M' || 
 	  bam_cigar_opchr(c[i]) == 'I' || 
+	  bam_cigar_opchr(c[i]) == '=' || 
+	  bam_cigar_opchr(c[i]) == 'X' || 
 	  bam_cigar_opchr(c[i]) == 'D')
 	out += bam_cigar_oplen(c[i]);
     return out;
