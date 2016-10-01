@@ -3,6 +3,10 @@
 set -e
 set -o pipefail
 
+## print info aobut compiler
+TC=`$COMPILER --version`
+echo "True compiler is $TC"
+
 ## only build for one compiler
 #VALID=`g++ --version | grep 4.9 | wc -l`
 #if [[ "$VALID" -eq "0" ]]; then
