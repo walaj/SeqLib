@@ -912,8 +912,8 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
 
   // make a set of locations
   SeqLib::GRC grc;
-  grc.add(SeqLib::GenomicRegion(0, 1, 100));
-  grc.add(SeqLib::GenomicRegion(1, 1, 100));
+  for (size_t i = 0; i < 24; ++i)
+    grc.add(SeqLib::GenomicRegion(i, 1, 100));
 
   // set regions
   bw.SetMultipleRegions(grc);
@@ -945,6 +945,10 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
   // reset the walker
   bw.Reset();
 
+  // set a smaller region
+  bw.SetRegion(SeqLib::GenomicRegion(0, 1, 100));  
+  std::cerr << bw << std::endl;
+
   // write as a cram
   //bw.OpenWriteBam(OCRAM);
     
@@ -963,6 +967,29 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
 
 }
 
+BOOST_AUTO_TEST_CASE( header_constructor ) {
+
+  SeqLib::HeaderSequenceVector hsv;
+  hsv.push_back(SeqLib::HeaderSequence("1", 1000));
+  hsv.push_back(SeqLib::HeaderSequence("chr2", 1200));
+  SeqLib::BamHeader hdr(hsv);
+  
+}
+
+BOOST_AUTO_TEST_CASE( gr_chr_region_set) {
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+  
+
+  SeqLib::GenomicRegion gr("1", br.Header());
+  BOOST_CHECK_EQUAL(gr.chr, 0);
+  BOOST_CHECK_EQUAL(gr.pos2, 249250621);
+  BOOST_CHECK_EQUAL(gr.pos1, 1);
+
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion gr2("-1", br.Header()), std::invalid_argument);
+
+}
 
 BOOST_AUTO_TEST_CASE( sequtils ) {
 

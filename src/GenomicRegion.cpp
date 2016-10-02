@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <climits>
 
 // 4 billion
 #define END_MAX 4000000000
@@ -142,11 +143,12 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
       std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
       throw std::invalid_argument(inv);
     }
-    
-  } else if ( hdr.Name2ID(reg) != -1) { // single chrom
-    tid = hdr.Name2ID(reg);
-    pos1 = 1;
-    pos2 = hdr.GetSequenceLength(reg);
+
+    if (end == INT_MAX) { // single chrome
+      tid = hdr.Name2ID(reg);
+      beg = 0;
+      end = hdr.GetSequenceLength(reg);
+    }
   } else {
     std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
     throw std::invalid_argument(inv);
@@ -155,6 +157,7 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   chr = tid;
   pos1 = beg+1;
   pos2 = end;
+  strand = '*';
 
 }
 

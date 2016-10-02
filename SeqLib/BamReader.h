@@ -70,13 +70,13 @@ namespace SeqLib {
     }
 
     // set a pre-loaded index (save on loading each time)
-    void set_index(SharedIndex& i) { idx = i; }
+    //void set_index(SharedIndex& i) { idx = i; }
 
     // set a pre-loaded htsfile (save on loading each time)
-    void set_file(SharedHTSFile& i) { fp = i; }
+    //void set_file(SharedHTSFile& i) { fp = i; }
     
     // set a pre-loaded index and make a deep copy
-    void deep_set_index();
+    //void deep_set_index();
 
     GRC* m_region; // local copy of region
 
@@ -154,35 +154,33 @@ class BamReader {
   /** Return if the reader has opened the first file */
   bool IsOpen() const { if (m_bams.size()) return m_bams.begin()->second.fp.get() != NULL; return false; }
 
-  /** Set pre-loaded raw htslib index 
-   * 
-   * Provide the reader with an index structure that is already loaded.
-   * This is useful if there are multiple newly created BamReader objects
-   * that use the same index (e.g. make a BAM index in a loop)
-   * @note This does not make a copy, so ops on this index are shared with
-   * every other object that controls it.
-   * @param i Pointer to an HTSlib index
-   * @param f Name of the file to set index for
-   * @return True if the file f is controlled by this object
-   */
+  /*
+  Set pre-loaded raw htslib index 
+    Provide the reader with an index structure that is already loaded.
+    This is useful if there are multiple newly created BamReader objects
+    that use the same index (e.g. make a BAM index in a loop)
+    @note This does not make a copy, so ops on this index are shared with
+    every other object that controls it.
+    @param i Pointer to an HTSlib index
+    @param f Name of the file to set index for
+    @return True if the file f is controlled by this object
   bool SetPreloadedIndex(const std::string& f, SharedIndex& i);
 
-  /** Return a shared pointer to the raw htsFile object
-   * @exception Throws runtime_error if the requested file has not been opened already with Open
-   * @param f File to retrieve the htsFile from.
-   */
+  Return a shared pointer to the raw htsFile object
+    @exception Throws runtime_error if the requested file has not been opened already with Open
+    @param f File to retrieve the htsFile from.
+   
   SharedHTSFile GetHTSFile (const std::string& f) const;
 
-  /** Return a shared pointer to the raw htsFile object from the first BAM
-   * @exception Throws runtime_error if no files have been opened already with Open
-   * @param f File to retrieve the htsFile from.
-   */
+  Return a shared pointer to the raw htsFile object from the first BAM
+    @exception Throws runtime_error if no files have been opened already with Open
+    @param f File to retrieve the htsFile from.
   SharedHTSFile GetHTSFile () const;
 
-  /** Set a pre-loaded raw index, to the first BAM
-   * @note see SetPreloadedIndex(const std::string& f, SharedIndex& i)
-   */
+  Set a pre-loaded raw index, to the first BAM
+   @note see SetPreloadedIndex(const std::string& f, SharedIndex& i)
   bool SetPreloadedIndex(SharedIndex& i);
+  */
 
   /** Return if the reader has opened the file
    * @param f Name of file to check

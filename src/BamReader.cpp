@@ -36,13 +36,6 @@ bool _Bam::SetRegion(const GenomicRegion& gp) {
   return true;
 }
 
-  bool BamReader::SetPreloadedIndex(const std::string& f, SharedIndex& i) {
-    if (!m_bams.count(f))
-      return false;
-    m_bams[f].set_index(i);
-    return true;
-  }
-
 void BamReader::Reset() {
   for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b) 
      b->second.reset();
@@ -75,7 +68,7 @@ void BamReader::Reset() {
     return m_bams[f].close();
   }
 
-  SharedHTSFile BamReader::GetHTSFile () const {
+  /*  SharedHTSFile BamReader::GetHTSFile () const {
     if (!m_bams.size())
       throw std::runtime_error("No BAMs have been opened yet");
     return m_bams.begin()->second.fp;
@@ -95,6 +88,15 @@ void BamReader::Reset() {
     m_bams.begin()->second.set_index(i);
     return true;
   }
+
+  bool BamReader::SetPreloadedIndex(const std::string& f, SharedIndex& i) {
+    if (!m_bams.count(f))
+      return false;
+    m_bams[f].set_index(i);
+    return true;
+  }
+
+  */
 
   bool BamReader::SetRegion(const GenomicRegion& g) {
     m_region.clear();
