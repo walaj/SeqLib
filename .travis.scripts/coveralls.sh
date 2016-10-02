@@ -29,7 +29,7 @@ then
     ./seq_test 1> stdout.log 2> stderr.log
     tail -n stderr.log 
     
-    EXCL="-e src/non_api -e seq_test/seq_test.cpp -e htslib -e bwa -e fermi-lite -e config.h -e seq_test/config.h -e seq_test/config.h -e src/jsoncpp.cpp -e src/json -e src/SeqLib/ssw.h -e src/SeqLib/ssw_cpp.h -e src/ssw.c -e src/ssw_cpp.cpp -e SeqLib/aho_corasick.hpp json/json.h SeqLib/ssw.h SeqLib/ssw_cpp.h"
+    EXCL="-e src/non_api -e seq_test/seq_test.cpp -e htslib -e bwa -e fermi-lite -e config.h -e seq_test/config.h -e seq_test/config.h -e src/jsoncpp.cpp -e src/json -e src/SeqLib/ssw.h -e src/SeqLib/ssw_cpp.h -e src/ssw.c -e src/ssw_cpp.cpp -e SeqLib/aho_corasick.hpp -e json/json.h -e SeqLib/ssw.h -e SeqLib/ssw_cpp.h"
     cpp-coveralls -r ../ -t ${COVERALLS_TOKEN} ${EXCL} ##--dryrun
     cd ..
 fi
