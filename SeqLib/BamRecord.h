@@ -538,12 +538,19 @@ class BamRecord {
    */
   BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
 
-  /** Get the quality scores of this read as a string */
-  inline std::string Qualities() const { 
+  /** Get the quality scores of this read as a string 
+   * @param offset Encoding offset for phred quality scores. Default 33
+   * @return Qualties scores after converting offset. If first char is empty, returns empty string
+   */
+  inline std::string Qualities(int offset = 33) const { 
     uint8_t * p = bam_get_qual(b);
+    if (!p)
+      return std::string();
+    if (!p[0])
+      return std::string();
     std::string out(b->core.l_qseq, ' ');
     for (int32_t i = 0; i < b->core.l_qseq; ++i) 
-      out[i] = (char)(p[i]+33);
+      out[i] = (char)(p[i] + offset);
     return out;
   }
 

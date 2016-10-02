@@ -300,6 +300,13 @@ namespace SeqLib {
 
     if (!n.empty() && n.length() != b->core.l_qseq)
       throw std::invalid_argument("New quality score should be same as seq length");
+    
+    // length of qual is always same as seq. If empty qual, just set first bit of qual to 0
+    if (n.empty()) {
+      uint8_t* r = bam_get_qual(b); 
+      r[0] = 0;
+      return;
+    }
 
     char * q = strdup(n.data());
     for (size_t i = 0; i < n.length(); ++i)

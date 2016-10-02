@@ -967,6 +967,23 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
 
 }
 
+BOOST_AUTO_TEST_CASE( set_qualities ) {
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+
+
+  SeqLib::BamRecord r;
+  while (br.GetNextRecord(r)) {
+    r.SetQualities("", 0);
+    BOOST_CHECK_EQUAL(r.Qualities(), std::string());
+    r.SetQualities(std::string(r.Length(), '#'), 33);
+    BOOST_CHECK_EQUAL(r.Qualities(), std::string(r.Length(), '#'));    
+    BOOST_CHECK_THROW(r.SetQualities(std::string(8, '#'), 0), std::invalid_argument);
+    break;
+  }
+}
+
 BOOST_AUTO_TEST_CASE( header_constructor ) {
 
   SeqLib::HeaderSequenceVector hsv;
