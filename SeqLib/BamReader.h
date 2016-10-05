@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BAM_POLYREADER_H__
-#define SEQLIB_BAM_POLYREADER_H__
+#ifndef SEQLIB_BAM_POLYREADER_H
+#define SEQLIB_BAM_POLYREADER_H
 
 #include <cassert>
 #include "SeqLib/ReadFilter.h"
@@ -42,7 +42,7 @@ namespace SeqLib {
   private:
 
     // do the read loading
-    bool __load_read(BamRecord& r);
+    bool load_read(BamRecord& r);
 
     void reset() {
       empty = true;

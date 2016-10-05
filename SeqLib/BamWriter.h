@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BAM_WRITER_H__
-#define SEQLIB_BAM_WRITER_H__
+#ifndef SEQLIB_BAM_WRITER_H
+#define SEQLIB_BAM_WRITER_H
 
 #include <cassert>
 #include "SeqLib/BamRecord.h"
@@ -94,7 +94,7 @@ class BamWriter  {
   std::string m_out; 
 
   // open m_out, true if success
-  void __open_BAM_for_writing();
+  void open_BAM_for_writing();
   
   // output format
   std::string output_format; 

@@ -289,7 +289,7 @@ namespace SeqLib {
     return;
   }
 
-  void __free_char(char*& c) {
+  void free_char(char*& c) {
     if (c) {
       free (c);
       c = NULL;
@@ -300,9 +300,9 @@ namespace SeqLib {
     
     assert(m_names.size() == n_seqs);
     for (size_t i = 0; i < n_seqs; ++i) {
-      __free_char(m_names[i]);
-      __free_char(m_seqs[i].seq);
-      __free_char(m_seqs[i].qual);
+      free_char(m_names[i]);
+      free_char(m_seqs[i].seq);
+      free_char(m_seqs[i].qual);
     }
 
     if (m_seqs)

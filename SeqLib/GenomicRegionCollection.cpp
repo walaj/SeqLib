@@ -19,7 +19,7 @@ namespace SeqLib {
   GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const HeaderSequenceVector& h) {
 
     idx = 0;
-    __allocate_grc();
+    allocate_grc();
 
     // undefined otherwise
     if (width <= ovlp)
@@ -298,7 +298,7 @@ bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHead
 template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, const BamHeader& hdr) {
 
-  __allocate_grc();
+  allocate_grc();
 
   idx = 0;
 
@@ -418,7 +418,7 @@ template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection(int width, int ovlp, const T &gr) {
 
   idx = 0;
-  __allocate_grc();
+  allocate_grc();
 
   // undefined otherwise
   if (width <= ovlp)
@@ -546,7 +546,7 @@ void GenomicRegionCollection<T>::Concat(const GenomicRegionCollection<T>& g)
 template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection() {
   idx = 0;
-  __allocate_grc();
+  allocate_grc();
 }
 
 template<class T>
@@ -555,7 +555,7 @@ GenomicRegionCollection<T>::~GenomicRegionCollection() {
 
 
 template<class T>
-void GenomicRegionCollection<T>::__allocate_grc() {
+void GenomicRegionCollection<T>::allocate_grc() {
   m_sorted = false;
   m_grv =  SeqPointer<std::vector<T> >(new std::vector<T>()) ;
   m_tree = SeqPointer<GenomicIntervalTreeMap>(new GenomicIntervalTreeMap()) ;
@@ -565,7 +565,7 @@ template<class T>
 GenomicRegionCollection<T>::GenomicRegionCollection(const BamRecordVector& brv) {
   idx = 0;
 
-  __allocate_grc();
+  allocate_grc();
 
   //for (auto& i : brv) 
   for (BamRecordVector::const_iterator i = brv.begin(); i != brv.end(); ++i) 
@@ -726,7 +726,7 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const T& gr)
 {
   m_sorted = true;
   idx = 0;
-  __allocate_grc();
+  allocate_grc();
   m_grv->push_back(gr);
 }
 

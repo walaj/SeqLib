@@ -1,5 +1,5 @@
-#ifndef SEQLIB_FASTQ_READER_H__
-#define SEQLIB_FASTQ_READER_H__
+#ifndef SEQLIB_FASTQ_READER_H
+#define SEQLIB_FASTQ_READER_H
 
 #include <string>
 

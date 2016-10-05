@@ -1,5 +1,5 @@
-#ifndef SEQLIB_CONTIG_PLOT_H__
-#define SEQLIB_CONTIG_PLOT_H__
+#ifndef SEQLIB_CONTIG_PLOT_H
+#define SEQLIB_CONTIG_PLOT_H
 
 #include "SeqLib/BamRecord.h"
 

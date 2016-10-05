@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BAM_RECORD_H__
-#define SEQLIB_BAM_RECORD_H__
+#ifndef SEQLIB_BAM_RECORD_H
+#define SEQLIB_BAM_RECORD_H
 
 #include <stdint.h>
 //#include <cstdint> //+11

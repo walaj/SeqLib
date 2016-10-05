@@ -1,5 +1,5 @@
-#ifndef SWAP_GENOMIC_REGION_COLLECTION_H__
-#define SWAP_GENOMIC_REGION_COLLECTION_H__
+#ifndef SWAP_GENOMIC_REGION_COLLECTION_H
+#define SWAP_GENOMIC_REGION_COLLECTION_H
 
 #include <vector>
 #include <string>
@@ -291,7 +291,7 @@ class GenomicRegionCollection {
  size_t idx;
 
  // open the memory
- void __allocate_grc();
+ void allocate_grc();
 
 };
 

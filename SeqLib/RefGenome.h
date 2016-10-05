@@ -1,5 +1,5 @@
-#ifndef SEQLIB_REF_GENOME_H__
-#define SEQLIB_REF_GENOME_H__
+#ifndef SEQLIB_REF_GENOME_H
+#define SEQLIB_REF_GENOME_H
 
 #include <string>
 #include <cstdlib>

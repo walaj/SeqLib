@@ -1,5 +1,5 @@
-#ifndef SEQLIB_READ_FILTER_H__
-#define SEQLIB_READ_FILTER_H__
+#ifndef SEQLIB_READ_FILTER_H
+#define SEQLIB_READ_FILTER_H
 
 #define AHO_CORASICK 1
 
@@ -256,7 +256,7 @@ private:
   uint32_t m_any_on_flag; // if read has any of these, keep
   uint32_t m_any_off_flag;// if read has any of these, fail
 
-  int __parse_json_int(const Json::Value& v);
+  int parse_json_int(const Json::Value& v);
 
 };
 
@@ -548,7 +548,6 @@ class ReadFilterCollection {
 
   bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
 
-  //bool __validate_json_value(const Json::Value value);
 };
 
 }

@@ -1,5 +1,5 @@
-#ifndef SNOWUTILS_H__
-#define SNOWUTILS_H__
+#ifndef SNOWUTILS_H
+#define SNOWUTILS_H
 
 #include <string>
 #include <time.h>

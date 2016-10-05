@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BFC_H__
-#define SEQLIB_BFC_H__
+#ifndef SEQLIB_BFC_H
+#define SEQLIB_BFC_H
 
 extern "C" {
   #include "fermi-lite/bfc.h"

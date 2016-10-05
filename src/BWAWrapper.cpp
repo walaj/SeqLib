@@ -6,7 +6,6 @@ BWA is copyrighted by Heng Li with the Apache2 License
 
 */
 
-
 #include "SeqLib/BWAWrapper.h"
 
 #include <stdexcept>
@@ -117,10 +116,10 @@ namespace SeqLib {
     idx = (bwaidx_t*)calloc(1, sizeof(bwaidx_t));;
 
     // construct the forward-only pac
-    uint8_t* fwd_pac = __make_pac(v, true); //true->for_only
+    uint8_t* fwd_pac = seqlib_make_pac(v, true); //true->for_only
 
     // construct the forward-reverse pac ("packed" 2 bit sequence)
-    uint8_t* pac = __make_pac(v, false); // don't write, becasue only used to make BWT
+    uint8_t* pac = seqlib_make_pac(v, false); // don't write, becasue only used to make BWT
 
     size_t tlen = 0;
     for (UnalignedSequenceVector::const_iterator i = v.begin(); i != v.end(); ++i)
@@ -132,7 +131,7 @@ namespace SeqLib {
 
     // make the bwt
     bwt_t *bwt;
-    bwt = __bwt_pac2bwt(pac, tlen*2); // *2 for fwd and rev
+    bwt = seqlib_bwt_pac2bwt(pac, tlen*2); // *2 for fwd and rev
     bwt_bwtupdate_core(bwt);
     free(pac); // done with fwd-rev pac 
     
@@ -151,7 +150,7 @@ namespace SeqLib {
     bns->anns = (bntann1_t*)calloc(v.size(), sizeof(bntann1_t));
     size_t offset = 0;
     for (size_t k = 0; k < v.size(); ++k) {
-      __add_to_anns(v[k].Name, v[k].Seq, &bns->anns[k], offset);
+      seqlib_add_to_anns(v[k].Name, v[k].Seq, &bns->anns[k], offset);
       offset += v[k].Seq.length();
     }
 
@@ -428,7 +427,8 @@ namespace SeqLib {
     
 }
 
-uint8_t* BWAWrapper::__add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q)
+  // modified from bwa (heng li)
+uint8_t* BWAWrapper::seqlib_add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q)
 {
   bntann1_t *p;
   int lasts;
@@ -477,7 +477,8 @@ uint8_t* BWAWrapper::__add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int6
   return pac;
 }
 
-uint8_t* BWAWrapper::__make_pac(const UnalignedSequenceVector& v, bool for_only)
+  // modified from bwa (heng li)
+uint8_t* BWAWrapper::seqlib_make_pac(const UnalignedSequenceVector& v, bool for_only)
 {
 
   bntseq_t * bns = (bntseq_t*)calloc(1, sizeof(bntseq_t));
@@ -517,7 +518,7 @@ uint8_t* BWAWrapper::__make_pac(const UnalignedSequenceVector& v, bool for_only)
     ks->name = *name;
     
     // make the forward only pac
-    pac = __add1(ks, bns, pac, &m_pac, &m_seqs, &m_holes, &q);
+    pac = seqlib_add1(ks, bns, pac, &m_pac, &m_seqs, &m_holes, &q);
 
     // clear it out
     free(name->s);
@@ -548,7 +549,8 @@ uint8_t* BWAWrapper::__make_pac(const UnalignedSequenceVector& v, bool for_only)
   return pac;
 }
 
-bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
+  // modified from bwa (heng li)
+bwt_t *BWAWrapper::seqlib_bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
 {
 
   bwt_t *bwt;
@@ -586,7 +588,8 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
   return bwt;
 }
 
-  bntann1_t* BWAWrapper::__add_to_anns(const std::string& name, const std::string& seq, bntann1_t* ann, size_t offset) 
+  // modified from bwa (heng li)
+  bntann1_t* BWAWrapper::seqlib_add_to_anns(const std::string& name, const std::string& seq, bntann1_t* ann, size_t offset) 
   {
 
     ann->offset = offset;
@@ -633,13 +636,13 @@ bwt_t *BWAWrapper::__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr)
     bwt_dump_bwt(bwt_name.c_str(), idx->bwt); 
     bwt_dump_sa(sa_name.c_str(), idx->bwt);
     bns_dump(idx->bns, index_name.c_str());
-    __write_pac_to_file(index_name);
+    seqlib_write_pac_to_file(index_name);
 
     return true;
   }
 
-
-  void BWAWrapper::__write_pac_to_file(const std::string& file) const
+  // modified from bwa (heng li)
+  void BWAWrapper::seqlib_write_pac_to_file(const std::string& file) const
   {
     // finalize .pac file
     FILE *fp;

@@ -1,5 +1,5 @@
-#ifndef SEQLIB_FERMI_H__
-#define SEQLIB_FERMI_H__
+#ifndef SEQLIB_FERMI_H
+#define SEQLIB_FERMI_H
 
 #include <string>
 #include <cstdlib>

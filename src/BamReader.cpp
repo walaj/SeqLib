@@ -223,7 +223,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
   if (m_bams.size() == 1) {
     if (m_bams.begin()->second.fp.get() == NULL || m_bams.begin()->second.mark_for_closure) // cant read if not opened
       return false;
-    if (m_bams.begin()->second.__load_read(r)) { // try to read
+    if (m_bams.begin()->second.load_read(r)) { // try to read
       return true;
     }
     // didn't find anything, clear it
@@ -250,7 +250,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       continue; 
     
     // load the next read
-    if (!tb->__load_read(r)) { // if cant load, mark for closing
+    if (!tb->load_read(r)) { // if cant load, mark for closing
       tb->empty = true;
       tb->mark_for_closure = true; // no more reads in this BAM
       continue; 
@@ -299,7 +299,7 @@ std::string BamReader::PrintRegions() const {
 
 }
 
-  bool _Bam::__load_read(BamRecord& r) {
+  bool _Bam::load_read(BamRecord& r) {
 
   // allocated the memory
   bam1_t* b = bam_init1(); 
