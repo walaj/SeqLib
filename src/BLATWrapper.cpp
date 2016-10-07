@@ -344,7 +344,7 @@ namespace SeqLib {
 	      //cig += std::to_string(query->size - nEnd) + "S";
 	    }
 
-	    std::unordered_map<std::string, int>::const_iterator fff = m_name2id.find(std::string(bun->genoSeq->name));
+	    SeqHashMap<std::string, int>::const_iterator fff = m_name2id.find(std::string(bun->genoSeq->name));
 	    if (fff == m_name2id.end())
 	      throw std::out_of_range("No header entry for " + std::string(bun->genoSeq->name));
 	    
@@ -430,8 +430,9 @@ namespace SeqLib {
 	      cigr[i] = cigv[i].raw(); //Length << BAM_CIGAR_SHIFT | BAM_CMATCH;
 
 	    // assign the read by making a copy of this bam1_t
-	    BamRecord b(raw_b);
-	    free(raw_b);
+	    BamRecord b;
+	    b.assign(raw_b);
+	    //free(raw_b);
 
 	    // add the alignment score, as calculate by psl2sam
 	    int a_param = 1;
@@ -520,7 +521,7 @@ namespace SeqLib {
 	reverseComplement(seq->dna, seq->size);
       }
 
-      FILE * f = nullptr;
+      FILE * f = NULL;
     gfOutputQuery(gvo, f);
   }
   
@@ -707,14 +708,14 @@ namespace SeqLib {
     memcpy(seq.dna, lower.c_str(), sequence.length());  //cloneString();
     seq.dna[sequence.length()] = 0;
     seq.size = sequence.length();
-    seq.next = nullptr;
-    seq.mask = nullptr;
+    seq.next = NULL;
+    seq.mask = NULL;
 
     //setup the output
 
     // search the sequence
     bool isProt = false;
-    FILE * outFile = nullptr;
+    FILE * outFile = NULL;
     BamRecordVector bavr;
     searchOneMaskTrim(&seq, isProt, gf,maskHash, &totalSize, &count, bavr);
 

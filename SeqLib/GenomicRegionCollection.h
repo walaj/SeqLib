@@ -1,5 +1,5 @@
-#ifndef SWAP_GENOMIC_REGION_COLLECTION_H__
-#define SWAP_GENOMIC_REGION_COLLECTION_H__
+#ifndef SWAP_GENOMIC_REGION_COLLECTION_H
+#define SWAP_GENOMIC_REGION_COLLECTION_H
 
 #include <vector>
 #include <string>
@@ -62,6 +62,14 @@ class GenomicRegionCollection {
    */
   GenomicRegionCollection(int width, int ovlp, const T &gr);
 
+ /** Construct a tiled set of intervals across a genome
+  *
+  * @param width Width of each interval tile
+  * @param ovlp Amount of overlap between neighboring tiles
+  * @param h Set of chromosomes and their lengths to build the tile on
+  */
+ GenomicRegionCollection(int width, int ovlp, const HeaderSequenceVector& h);
+
  // Read in a MuTect call-stats file and adds to GenomicRegionCollection object.
    //
    // Reads a MuTect call-stats file and imports only
@@ -82,6 +90,9 @@ class GenomicRegionCollection {
    * @param file Path to VCF file. All elements will be width = 1 (just read start point)
    */
   bool ReadVCF(const std::string &file, const SeqLib::BamHeader& hdr);
+
+  /** Shuffle the order of the intervals */
+ void Shuffle();
 
   /** Read in a text file (can be gzipped) and construct a GenomicRegionCollection
    *
@@ -104,6 +115,7 @@ class GenomicRegionCollection {
   void CreateTreeMap();
   
   /** Reduces the GenomicRegion objects to minimal set by merging overlapping intervals
+   * @note This will merge intervals that touch. eg [4,6] and [6,8]
    * @note This will also call CreateTreeMap() at end to re-create the interval tree
    */
   void MergeOverlappingIntervals();
@@ -130,6 +142,20 @@ class GenomicRegionCollection {
  /** Get the number of trees (eg number of chromosomes, each with own tree */
  int NumTree() const { return m_tree->size(); }
 
+ /** Get the IDs of all intervals that overlap with a query range
+  *
+  * The IDs are created during CreateTreeMap, and are the position of the 
+  * the individual intervals from the tree, in genomic order. e.g the first
+  * interval on chromosome 1 gets 0, the next one gets 1, etc.
+  * The returned IDs can then be used as lookups with [], as long as the 
+  * collection is not altered in between.
+  * @param gr Query range to check overlaps against
+  * @param ignore_strand Should strandedness be ignore when doing overlaps 
+  * @return A vector of IDs of intervals in this collection that overlap with gr
+  */
+ template<class K>
+ std::vector<int> FindOverlappedIntervals(const K& gr, bool ignore_strand) const;
+
  /** Get a const pointer to the genomic interval tree map */
  const GenomicIntervalTreeMap* GetTree() const { return m_tree.get(); }
 
@@ -152,7 +178,8 @@ class GenomicRegionCollection {
 
  /** Test if two intervals overlap the same element in the collection
   */
- bool OverlapSameInterval(const T &gr1, const T &gr2) const;
+ template<class K>
+ bool OverlapSameInterval(const K &gr1, const K &gr2) const;
 
  /** Count the number of intervals in the collection contained in this range */
  size_t CountContained(const T &gr);
@@ -264,7 +291,7 @@ class GenomicRegionCollection {
  size_t idx;
 
  // open the memory
- void __allocate_grc();
+ void allocate_grc();
 
 };
 

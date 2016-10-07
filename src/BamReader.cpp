@@ -13,7 +13,7 @@ bool _Bam::SetRegion(const GenomicRegion& gp) {
     
   //HTS set region 
   if ( (fp->format.format == 4 || fp->format.format == 6) && !idx)  // BAM (4) or CRAM (6)
-    idx = SeqPointer<hts_idx_t>(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
+    idx = SharedIndex(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
   
   if (!idx) {
     std::cerr << "Failed to load index for " << m_in << ". Rebuild samtools index" << std::endl;
@@ -35,13 +35,6 @@ bool _Bam::SetRegion(const GenomicRegion& gp) {
   
   return true;
 }
-
-  bool BamReader::SetPreloadedIndex(const std::string& f, SeqPointer<hts_idx_t>& i) {
-    if (!m_bams.count(f))
-      return false;
-    m_bams[f].set_index(i);
-    return true;
-  }
 
 void BamReader::Reset() {
   for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b) 
@@ -75,13 +68,36 @@ void BamReader::Reset() {
     return m_bams[f].close();
   }
 
+  /*  SharedHTSFile BamReader::GetHTSFile () const {
+    if (!m_bams.size())
+      throw std::runtime_error("No BAMs have been opened yet");
+    return m_bams.begin()->second.fp;
+  }
+
+  SharedHTSFile BamReader::GetHTSFile(const std::string& f) const {
+    _BamMap::const_iterator ff = m_bams.find(f);
+    if (ff == m_bams.end())
+      throw std::runtime_error("File " + f + " has not been opened yet");
+    return ff->second.fp;
+  }
+  
+
   bool BamReader::SetPreloadedIndex(SharedIndex& i) {
     if (!m_bams.size())
       return false;
     m_bams.begin()->second.set_index(i);
     return true;
   }
-  
+
+  bool BamReader::SetPreloadedIndex(const std::string& f, SharedIndex& i) {
+    if (!m_bams.count(f))
+      return false;
+    m_bams[f].set_index(i);
+    return true;
+  }
+
+  */
+
   bool BamReader::SetRegion(const GenomicRegion& g) {
     m_region.clear();
     m_region.add(g);
@@ -146,11 +162,25 @@ void BamReader::Reset() {
   
 BamReader::BamReader() {}
 
+  std::string BamReader::HeaderConcat() const {
+    std::stringstream ss;
+    for (_BamMap::const_iterator i = m_bams.begin(); i != m_bams.end(); ++i) 
+      ss << i->second.m_hdr.AsString();
+    return ss.str();
+
+  }
+
+  BamHeader BamReader::Header() const { 
+    if (m_bams.size()) 
+      return m_bams.begin()->second.m_hdr; 
+    return BamHeader(); 
+  }
+
   bool _Bam::open_BAM_for_reading() {
-    
+
     // HTS open the reader
-    fp = SeqPointer<htsFile>(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
-    
+    fp = SharedHTSFile(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+
     // open cram reference
     if (!m_cram_reference.empty()) {
       char * m_cram_reference_cstr = strdup(m_cram_reference.c_str());
@@ -191,9 +221,9 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 
   // shortcut if we have only a single bam
   if (m_bams.size() == 1) {
-    if (m_bams.begin()->second.fp == 0 || m_bams.begin()->second.mark_for_closure) // cant read if not opened
+    if (m_bams.begin()->second.fp.get() == NULL || m_bams.begin()->second.mark_for_closure) // cant read if not opened
       return false;
-    if (m_bams.begin()->second.__load_read(r)) { // try to read
+    if (m_bams.begin()->second.load_read(r)) { // try to read
       return true;
     }
     // didn't find anything, clear it
@@ -212,7 +242,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       continue;
 
     // skip un-opened BAMs
-    if (tb->fp == 0) 
+    if (tb->fp.get() == NULL) 
       continue;
 
     // if next read is not marked as empty, skip to next
@@ -220,7 +250,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       continue; 
     
     // load the next read
-    if (tb->__load_read(r)) {
+    if (!tb->load_read(r)) { // if cant load, mark for closing
       tb->empty = true;
       tb->mark_for_closure = true; // no more reads in this BAM
       continue; 
@@ -237,11 +267,11 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 
   for (_BamMap::iterator bam = m_bams.begin(); 
        bam != m_bams.end(); ++bam) {
-    
-    // dont check if already marked for removal
+
+    // dont check if already marked for removal or doesnt need new read
     if (bam->second.empty || bam->second.mark_for_closure) 
       continue;
-    
+
     found = true;
     if (bam->second.next_read.ChrID() < min_chr || // check if read in this BAM is lowest
 	(bam->second.next_read.Position() <  min_pos && bam->second.next_read.ChrID() == min_chr)) {
@@ -250,7 +280,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       hit = bam; // read is lowest, so mark this BAM as having the hit
     }
   }
-  
+
   // mark the one we just found as empty
   if (found) {
     r = hit->second.next_read; // read is lowest, so assign
@@ -269,13 +299,13 @@ std::string BamReader::PrintRegions() const {
 
 }
 
-  bool _Bam::__load_read(BamRecord& r) {
+  bool _Bam::load_read(BamRecord& r) {
 
   // allocated the memory
   bam1_t* b = bam_init1(); 
   int32_t valid;
 
-  if (hts_itr == 0) {
+  if (hts_itr.get() == NULL) {
     valid = sam_read1(fp.get(), m_hdr.get_(), b);    
     if (valid < 0) { 
       

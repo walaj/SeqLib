@@ -11,6 +11,8 @@
 #include "SeqLib/BWAWrapper.h"
 #include "SeqLib/FermiAssembler.h"
 
+void kt_pipeline(int n_threads, void *(*func)(void*, int, void*), void *shared_data, int n_steps);
+
 #define AUTHOR "Jeremiah Wala <jwala@broadinstitute.org>"
 
 static const char *SEQTOOLS_USAGE_MESSAGE =
@@ -35,6 +37,17 @@ static const char *BFC_USAGE_MESSAGE =
 "  --reference, -G <file> Reference genome if using BWA-MEM realignment\n"
 "\nReport bugs to jwala@broadinstitute.org \n\n";
 
+static const char *GOFISH_USAGE_MESSAGE =
+"Program: seqtools gofish \n"
+"Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
+"Description: Enrich for reads that align to a target\n"
+"Usage: seqtools gofish [options]\n\n"
+"Commands:\n"
+"  --verbose,   -v        Set verbose output\n"
+"  --infasta,   -F <file> Input a FASTA insted of BAM/SAM/CRAM stream\n"
+"  --target,    -T <file> Target sequence to index and enrich for\n"
+"\nReport bugs to jwala@broadinstitute.org \n\n";
+
 static const char *FML_USAGE_MESSAGE =
 "Program: seqtools fml \n"
 "Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
@@ -51,6 +64,7 @@ static const char *FML_USAGE_MESSAGE =
 
 void runbfc(int argc, char** argv);
 void runfml(int argc, char** argv);
+void rungofish(int argc, char** argv);
 void parseOptions(int argc, char** argv, const char* msg);
 
 namespace opt {
@@ -60,9 +74,10 @@ namespace opt {
   static std::string input;
   static std::string reference = "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta";
   static std::string fasta; // input is a fasta
+  static std::string target; // input target sequence
 }
 
-static const char* shortopts = "hbfvCG:F:";
+static const char* shortopts = "hbfvCG:F:T:";
 static const struct option longopts[] = {
   { "help",                    no_argument, NULL, 'h' },
   { "verbose",                 no_argument, NULL, 'v' },
@@ -71,8 +86,11 @@ static const struct option longopts[] = {
   { "fasta",                   no_argument, NULL, 'f' },
   { "infasta",                 required_argument, NULL, 'F' },
   { "reference",               required_argument, NULL, 'G' },
+  { "target",                  required_argument, NULL, 'T' },
   { NULL, 0, NULL, 0 }
 };
+
+static void* gofish_worker(void* shared, int step, void *_data);
 
 int main(int argc, char** argv) {
 
@@ -88,6 +106,8 @@ int main(int argc, char** argv) {
       runbfc(argc -1, argv + 1);
     } else if (command == "fml") {
       runfml(argc -1, argv + 1);
+    } else if (command == "gofish") {
+      rungofish(argc - 1, argv + 1);
     } else {
       std::cerr << SEQTOOLS_USAGE_MESSAGE;
       return 0;
@@ -109,12 +129,14 @@ void runfml(int argc, char** argv) {
 
     SeqLib::UnalignedSequenceVector usv;
     std::string qn, seq;
-    while (f.GetNextSequence(qn, seq)) {
-      std::string e;
-      usv.push_back(SeqLib::UnalignedSequence(qn, seq, std::string()));
-    }
+    SeqLib::UnalignedSequence u;
+    if (opt::verbose)
+      std::cerr << "...reading fasta/fastq file " << opt::fasta << std::endl;
+    while (f.GetNextSequence(u)) 
+      fml.AddRead(u);
 
-    fml.AddReads(usv);
+    if (opt::verbose)
+      std::cerr << "...read in " << SeqLib::AddCommas(fml.NumSequences()) << " sequences" <<  std::endl;
     
   } else {
 
@@ -129,7 +151,12 @@ void runfml(int argc, char** argv) {
 
   }
 
+  if (opt::verbose) 
+    std::cerr << "...error correcting " << std::endl;
   fml.CorrectReads();
+
+  if (opt::verbose) 
+    std::cerr << "...assembling " << std::endl;
   fml.PerformAssembly();
 
   // retrieve the reads
@@ -166,7 +193,10 @@ void runfml(int argc, char** argv) {
   
   bw.SetHeader(bwa.HeaderFromIndex());
   bw.WriteHeader();
-  
+
+  if (opt::verbose) 
+    std::cerr << "...aligning contig with BWA-MEM" << std::endl;
+ 
   // run through and read
   std::stringstream ss;
   for (std::vector<std::string>::const_iterator i = contigs.begin(); i != contigs.end(); ++i) {
@@ -195,11 +225,10 @@ void runbfc(int argc, char** argv) {
     // read in a fasta file
     SeqLib::FastqReader f(opt::fasta);
     
-    std::string qn, seq;
-    while (f.GetNextSequence(qn, seq)) {
-      std::string e;
-      if (!b.AddSequence(seq.c_str(), e.c_str(), qn.c_str())) {
-	std::cerr << "Error adding sequence from fasta: " << seq << std::endl;
+    SeqLib::UnalignedSequence u;
+    while (f.GetNextSequence(u)) {
+      if (!b.AddSequence(u.Seq.c_str(), u.Qual.c_str(), u.Name.c_str())) {
+	std::cerr << "Error adding sequence from fasta: " << u.Seq << std::endl;
 	exit(EXIT_FAILURE);
       }
     }
@@ -212,14 +241,21 @@ void runbfc(int argc, char** argv) {
     }
   } 
 
+  if (opt::verbose)
+    std::cerr << "...read in " << SeqLib::AddCommas(b.NumSequences()) << " sequences" << std::endl;
+  
   if (!b.Train()) {
     std::cerr << "Training failed on " << b.NumSequences() << std::endl;
     exit(EXIT_FAILURE);
   }
+  if (opt::verbose)
+    std::cerr << "...finished training " << SeqLib::AddCommas(b.NumSequences()) << " sequences" << std::endl;
   if (!b.ErrorCorrect()) {
     std::cerr << "Correction failed on " << b.NumSequences() << std::endl;
     exit(EXIT_FAILURE);
   }
+  if (opt::verbose)
+    std::cerr << "...finished correcting " << SeqLib::AddCommas(b.NumSequences()) << " sequences" << std::endl;
 
   SeqLib::UnalignedSequenceVector u;
   b.GetSequences(u);
@@ -254,6 +290,8 @@ void runbfc(int argc, char** argv) {
   bw.Open("-");
   
   SeqLib::BWAWrapper bwa;
+  if (opt::verbose)
+    std::cerr << "...loading reference genome" << std::endl;
   if (!bwa.LoadIndex(opt::reference)) {
     std::cerr << "Failed to load index for BWA-MEM from: " << opt::reference << std::endl;
     exit(EXIT_FAILURE);
@@ -261,7 +299,9 @@ void runbfc(int argc, char** argv) {
   
   bw.SetHeader(bwa.HeaderFromIndex());
   bw.WriteHeader();
-  
+
+  if (opt::verbose)
+    std::cerr << "...realigning corrected sequences with BWA-MEM" << std::endl;
   // run through and read
   for (SeqLib::UnalignedSequenceVector::const_iterator i = u.begin(); i != u.end(); ++i) {
     SeqLib::BamRecordVector brv;
@@ -279,6 +319,17 @@ void runbfc(int argc, char** argv) {
   
 }
 
+// fish for target sequence
+void rungofish(int argc, char** argv) {
+
+  parseOptions(argc, argv, GOFISH_USAGE_MESSAGE);
+
+  const int n_threads = 1;
+  //kt_pipeline(n_threads, gofish_worker, &aux, 3);  
+  
+  
+}
+
 // parse the command line options
 void parseOptions(int argc, char** argv, const char* msg) {
 
@@ -292,10 +343,12 @@ void parseOptions(int argc, char** argv, const char* msg) {
   for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
     std::istringstream arg(optarg != NULL ? optarg : "");
     switch (c) {
+    case 'v': opt::verbose = true; break;
     case 'f': opt::mode = 'f'; break;
     case 'F': arg >> opt::fasta; break;
     case 'b': opt::mode = 'b'; break;
     case 'C': opt::mode = 'C'; break;
+    case 'T': arg >> opt::target; break;
     case 'G': arg >> opt::reference; break;
     default: die= true; 
     }
@@ -308,4 +361,17 @@ void parseOptions(int argc, char** argv, const char* msg) {
       else 
 	exit(EXIT_SUCCESS);	
     }
+}
+
+typedef struct {
+  bseq1_t *seqs;
+  int n_seqs;
+} fish_data_t;
+
+
+// gofish process
+static void* gofish_worker(void* shared, int step, void *_data) {
+
+  
+
 }

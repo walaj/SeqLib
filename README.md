@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/jwalabroad/SeqLib.svg?branch=master)](https://travis-ci.org/jwalabroad/SeqLib)
-[![Coverage Status](https://coveralls.io/repos/github/jwalabroad/SeqLib/badge.svg?branch=master)](https://coveralls.io/github/jwalabroad/SeqLib?branch=master)
+[![Build Status](https://travis-ci.org/walaj/SeqLib.svg?branch=master)](https://travis-ci.org/walaj/SeqLib)
+[![Coverage Status](https://coveralls.io/repos/github/walaj/SeqLib/badge.svg?branch=master)](https://coveralls.io/github/walaj/SeqLib?branch=master)
 
 C++ interface to HTSlib, BWA-MEM and Fermi
 
@@ -29,11 +29,12 @@ Installation
 
 #######
 ```bash
-git clone --recursive https://github.com/jwalabroad/SeqLib.git
+git clone --recursive https://github.com/walaj/SeqLib.git
 cd SeqLib
 ./configure
 make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
 make install
+make seqtools ## for the command line version
 ```
  
 I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.
@@ -47,13 +48,13 @@ Integrating into build system
 After building, you will need to add the relevant header directories:
 ```bash
 SEQ=<path_to_seqlib_git_repos>
-C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
+C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib:$SEQ/blat/inc:$SEQ/blat/jkOwnLib
 ```
 
 And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 ```bash
 SEQ=<path_to_seqlib>
-LDADD="$LDADD -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
+LDADD="$LDADD -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a -L$SEQ/blat/lib/jkOwnLib.a $SEQ/blat/lib/jkweb.a" 
 ```
 
 Description
@@ -85,17 +86,17 @@ destructors.
 
 Other C++ APIs
 ------------------------------
-There are overlaps between this project and the [BamTools][BT] project from Derek Barnett, the [Gamgee][gam] 
-project from the Broad Institute, and the [SeqAn][seqan] library from Freie Universitat Berlin. These projects 
-provide excellent and high quality APIs. SeqLib provides further performance and capabilites for certain classes of 
-bioinformatics problems, without attempting to replace these projects.
+There are overlaps between this project and [BamTools][BT] from Derek Barnett, [Gamgee][gam] 
+from the Broad Institute, and [SeqAn][seqan] from Freie Universitat Berlin. These projects 
+provide excellent and high quality APIs. SeqLib provides further performance enhancement and new capabilites for certain classes of 
+bioinformatics problems.
 
-SeqLib provides some overlapping functionality (eg BAM read/write) but in many cases with improved performance (~2x over BamTools). 
-SeqLib further provides in memory access to BWA-MEM, a chromosome aware interval tree and range operations, and to read correction and 
-sequence assembly with Fermi. BamTools has more support currently for network access and multi-BAM reading. SeqAn provides 
-additional capablities not currently supported in SeqLib, including graph operations and a more expanded suite of multi-sequence alignment
-tools (e.g. banded Smith-Waterman). Gamgee provides similar functionality as a C++ interface to HTSlib, but does not incorportate BWA-MEM or Fermi. 
-SeqLib is under active development, while Gamgee has been abandoned.
+Some differences:
+* SeqLib has ~2-4x faster read/write speed over BamTools and SeqAn, and lower memory footprint.
+* SeqLib has support for CRAM file
+* SeqLib provides in memory access to BWA-MEM, BLAT, a chromosome aware interval tree and range operations, and to read correction and sequence assembly with Fermi. BamTools has more support currently for network access. 
+* SeqAn provide a substantial amount of additional capabilites not in SeqLib, including graph operations and a more expanded suite of multi-sequence alignments.
+* BamTools has support for network access of BAMs. 
 
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools. Feature requests and comments are welcomed.
@@ -112,8 +113,8 @@ seqtools bfc in.bam -G $REF -b > corrected.bam
 ## Skip realignment, send to fasta
 seqtools bfc in.bam -f > corrected.fasta
 
-## Input as fasta, send to aligned BAM
-seqtools bfc -F in.fasta -G $REG -b > corrected.bam
+## Input as gzipped or plain fasta (or fastq), send to aligned BAM
+seqtools bfc --infasta in.fasta -G $REG -b > corrected.bam
 
 
 ##### ASSEMBLY (same patterns as above)
@@ -325,15 +326,15 @@ Development, support, guidance, testing:
 
 [BWA]: https://github.com/lh3/bwa
 
-[license]: https://github.com/jwalabroad/SeqLib/blob/new_license/LICENSE
+[license]: https://github.com/walaj/SeqLib/blob/master/LICENSE
 
 [BamTools]: https://raw.githubusercontent.com/wiki/pezmaster31/bamtools/Tutorial_Toolkit_BamTools-1.0.pdf
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
-[htmldoc]: http://jwalabroad.github.io/SeqLib/doxygen
+[htmldoc]: http://walaj.github.io/SeqLib/doxygen
 
-[var]: https://github.com/jwalabroad/VariantBam
+[var]: https://github.com/walaj/VariantBam
 
 [BT]: https://github.com/pezmaster31/bamtools
 

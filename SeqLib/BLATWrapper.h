@@ -65,7 +65,10 @@ class BLATWrapper {
 
  public:
 
-  BLATWrapper() {}
+ BLATWrapper() : tileSize(11), stepSize(0), minMatch(0), minScore(30), maxGap(2), repMatch(1024),
+    dotEvery(0), oneOff(false), noHead(false), trimA(false), trimHardA(false), trimT(false),
+    fastMap(false), makeOoc(NULL), ooc(NULL), qType(gftDna), tType(gftDna), mask(NULL),
+    repeats(NULL), minRepDivergence(15), minIdentity(90), outputFormat("psl") {}
 
   /** Provide BLAT with information about the reference genome 
    * @param h Header object containing referene genome information
@@ -102,7 +105,7 @@ class BLATWrapper {
 
  private:
 
-  std::unordered_map<std::string, int> m_name2id;
+  SeqHashMap<std::string, int> m_name2id;
 
   char** dbFiles;
   struct dnaSeq *dbSeqList;
@@ -110,29 +113,29 @@ class BLATWrapper {
 
   struct gfOutput *gvo;		/* Overall output controller */
 
-  int tileSize = 11;
-  int stepSize = 0;	/* Default (same as tileSize) */
-  int minMatch = 2;
-  int minScore = 30;
-  int maxGap = 2;
-  int repMatch = 1024; //*4;
-  int dotEvery = 0;
-  boolean oneOff = false;
-  boolean noHead = false;
-  boolean trimA = false;
-  boolean trimHardA = false;
-  boolean trimT = false;
-  boolean fastMap = false;
-  char *makeOoc = NULL;
-  char *ooc = NULL;
-  enum gfType qType = gftDna;
-  enum gfType tType = gftDna;
-  char *mask = NULL;
-  char *repeats = NULL;
-  char *qMask = NULL;
-  double minRepDivergence = 15;
-  double minIdentity = 90;
-  char *outputFormat = "psl";
+  int tileSize;
+  int stepSize;	/* Default (same as tileSize) */
+  int minMatch;
+  int minScore;
+  int maxGap;
+  int repMatch; //*4;
+  int dotEvery;
+  boolean oneOff;
+  boolean noHead;
+  boolean trimA;
+  boolean trimHardA;
+  boolean trimT;
+  boolean fastMap;
+  char *makeOoc;
+  char *ooc;
+  enum gfType qType;
+  enum gfType tType;
+  char *mask;
+  char *repeats;
+  char *qMask;
+  double minRepDivergence;
+  double minIdentity;
+  char *outputFormat;
   
   void searchOneStrand(struct dnaSeq *seq, struct genoFind *gf, 
 		       boolean isRc, Bits *qMaskBits, BamRecordVector& brv);

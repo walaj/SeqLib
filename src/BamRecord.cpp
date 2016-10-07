@@ -37,14 +37,14 @@ namespace SeqLib {
     b = SeqPointer<bam1_t>(a, free_delete()); 
   }
 
-  GenomicRegion BamRecord::asGenomicRegion() const {
+  GenomicRegion BamRecord::AsGenomicRegion() const {
     char s = '*';
     if (MappedFlag())
       s = ReverseFlag() ? '-' : '+';
     return GenomicRegion(b->core.tid, b->core.pos, PositionEnd(), s);
   }
 
-  GenomicRegion BamRecord::asGenomicRegionMate() const {
+  GenomicRegion BamRecord::AsGenomicRegionMate() const {
     char s = '*';
     if (MateMappedFlag())
       s = MateReverseFlag() ? '-' : '+';
@@ -294,8 +294,15 @@ namespace SeqLib {
 
   void BamRecord::SetQualities(const std::string& n, int offset) {
 
-    if (n.length() != b->core.l_qseq)
+    if (!n.empty() && n.length() != b->core.l_qseq)
       throw std::invalid_argument("New quality score should be same as seq length");
+    
+    // length of qual is always same as seq. If empty qual, just set first bit of qual to 0
+    if (n.empty()) {
+      uint8_t* r = bam_get_qual(b); 
+      r[0] = 0;
+      return;
+    }
 
     char * q = strdup(n.data());
     for (size_t i = 0; i < n.length(); ++i)
@@ -583,8 +590,6 @@ namespace SeqLib {
     int op = CigarCharToInt[(int)t];
     if (op < 0)
       throw std::invalid_argument("Cigar type must be one of MIDSHPN=X");      
-    if (len < 0)
-      throw std::invalid_argument("Cigar length must be >= 0");
     data = len << BAM_CIGAR_SHIFT;
     data = data | static_cast<uint32_t>(op);
   }

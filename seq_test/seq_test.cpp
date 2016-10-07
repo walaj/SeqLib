@@ -15,10 +15,8 @@
 #include "SeqLib/SeqPlot.h"
 #include "SeqLib/RefGenome.h"
 
-#ifdef TESTBLAT
-#include "SeqLib/BLATWrapper.h"
-#endif
-
+#define GZBED "test_data/test.bed.gz"
+#define GZVCF "test_data/test.vcf.gz"
 #define SBAM "test_data/small.bam"
 #define OBAM "test_data/small_out.bam"
 #define OCRAM "test_data/small_out.cram"
@@ -33,8 +31,24 @@ using namespace SeqLib::Filter;
 using namespace SeqLib;
 
 #include <fstream>
-
 #include "SeqLib/BFC.h"
+
+BOOST_AUTO_TEST_CASE( read_gzbed ) {
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+
+  SeqLib::GRC g(GZBED, br.Header());
+  BOOST_CHECK_EQUAL(g.size(), 3);
+
+  BOOST_CHECK_EQUAL(g[2].chr, 22);
+
+  SeqLib::GRC v(GZVCF, br.Header());
+  BOOST_CHECK_EQUAL(v.size(), 31);
+
+  BOOST_CHECK_EQUAL(v[29].chr, 22);
+}
+
 BOOST_AUTO_TEST_CASE ( bfc ) {
 
   BFC b;
@@ -84,7 +98,6 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   v.clear();
   b.FilterUnique();
   b.GetSequences(v);
-  std::cerr << " FILTERED NOW SIZE " << v.size() << std::endl;
 
   // do everything at once
   b.TrainAndCorrect(brv2);
@@ -406,15 +419,15 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
   size_t count = 0;
   br.GetNextRecord(r);
   
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().chr, 22);
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().pos1,999901);
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().pos2,1000002);
-  BOOST_CHECK_EQUAL(r.asGenomicRegion().strand,'+');
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().chr, 22);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos1,999901);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos2,1000002);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().strand,'+');
 
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().chr, 22);
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().pos1,999993);
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().pos2,1000094);
-  BOOST_CHECK_EQUAL(r.asGenomicRegionMate().strand,'-');
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().chr, 22);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos1,999993);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos2,1000094);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().strand,'-');
 
   BOOST_CHECK_EQUAL(std::floor(r.MeanPhred()), 34);
 
@@ -906,8 +919,8 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
 
   // make a set of locations
   SeqLib::GRC grc;
-  grc.add(SeqLib::GenomicRegion(0, 1, 100));
-  grc.add(SeqLib::GenomicRegion(1, 1, 100));
+  for (size_t i = 0; i < 24; ++i)
+    grc.add(SeqLib::GenomicRegion(i, 1, 100));
 
   // set regions
   bw.SetMultipleRegions(grc);
@@ -939,6 +952,10 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
   // reset the walker
   bw.Reset();
 
+  // set a smaller region
+  bw.SetRegion(SeqLib::GenomicRegion(0, 1, 100));  
+  std::cerr << bw << std::endl;
+
   // write as a cram
   //bw.OpenWriteBam(OCRAM);
     
@@ -957,6 +974,46 @@ BOOST_AUTO_TEST_CASE( bam_reader ) {
 
 }
 
+BOOST_AUTO_TEST_CASE( set_qualities ) {
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+
+
+  SeqLib::BamRecord r;
+  while (br.GetNextRecord(r)) {
+    r.SetQualities("", 0);
+    BOOST_CHECK_EQUAL(r.Qualities(), std::string());
+    r.SetQualities(std::string(r.Length(), '#'), 33);
+    BOOST_CHECK_EQUAL(r.Qualities(), std::string(r.Length(), '#'));    
+    BOOST_CHECK_THROW(r.SetQualities(std::string(8, '#'), 0), std::invalid_argument);
+    break;
+  }
+}
+
+BOOST_AUTO_TEST_CASE( header_constructor ) {
+
+  SeqLib::HeaderSequenceVector hsv;
+  hsv.push_back(SeqLib::HeaderSequence("1", 1000));
+  hsv.push_back(SeqLib::HeaderSequence("chr2", 1200));
+  SeqLib::BamHeader hdr(hsv);
+  
+}
+
+BOOST_AUTO_TEST_CASE( gr_chr_region_set) {
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+  
+
+  SeqLib::GenomicRegion gr("1", br.Header());
+  BOOST_CHECK_EQUAL(gr.chr, 0);
+  BOOST_CHECK_EQUAL(gr.pos2, 249250621);
+  BOOST_CHECK_EQUAL(gr.pos1, 1);
+
+  BOOST_CHECK_THROW(SeqLib::GenomicRegion gr2("-1", br.Header()), std::invalid_argument);
+
+}
 
 BOOST_AUTO_TEST_CASE( sequtils ) {
 
@@ -988,14 +1045,6 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
   // empty constructor
   SeqLib::BamWriter w;
   
-  // specify bam explicitly
-  //w = SeqLib::BamWriter(SeqLib::BAM);
-
-  //BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
-  //BOOST_CHECK_THROW(w.Close(), std::runtime_error);
-  //BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
-  //BOOST_CHECK_THROW(w.WriteRecord(rec), std::runtime_error);
-
   BOOST_CHECK(!w.WriteHeader());
   BOOST_CHECK(!w.Close());
   BOOST_CHECK(!w.BuildIndex());
@@ -1005,8 +1054,6 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   // check that set CRAM fails
   BOOST_CHECK(!w.SetCramReference("dummy")); 
-
-  //BOOST_CHECK_THROW(w.WriteHeader(), std::runtime_error);
   BOOST_CHECK(!w.WriteHeader());
 
   w.SetHeader(h);
@@ -1015,13 +1062,10 @@ BOOST_AUTO_TEST_CASE( bam_write ) {
 
   size_t count = 0;
 
-  while(br.GetNextRecord(rec) && count++ < 10000) {
+  while(br.GetNextRecord(rec) && count++ < 10000) 
     w.WriteRecord(rec);
-  }
-
 
   BOOST_CHECK(!w.BuildIndex());
-  //BOOST_CHECK_THROW(w.BuildIndex(), std::runtime_error);
   w.Close();
 
   w.BuildIndex();
@@ -1096,7 +1140,6 @@ BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
   BOOST_CHECK_EQUAL(cx.Type(), 'X');
 
   // check invalid constructions
-  BOOST_CHECK_THROW(SeqLib::CigarField('X', -1), std::invalid_argument);
   BOOST_CHECK_THROW(SeqLib::CigarField('L', 1), std::invalid_argument);
 
   // make a sequence
@@ -1360,6 +1403,138 @@ BOOST_AUTO_TEST_CASE( bamout_to_stdout ) {
   
 }
 
+BOOST_AUTO_TEST_CASE( bam_poly ) {
+
+  SeqLib::BamReader r;
+  
+  BOOST_CHECK(r.Open("test_data/small.bam"));
+  BOOST_CHECK(r.Open("test_data/small.cram"));
+
+  BOOST_CHECK(r.SetRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100)));
+  BOOST_CHECK(!r.SetRegion(SeqLib::GenomicRegion(1000, 1001000, 1001100))); // should fail
+
+  SeqLib::BamWriter w(SeqLib::BAM);
+  w.Open("tmp_out_poly.bam");
+  w.SetHeader(r.Header());
+  w.WriteHeader();
+
+  SeqLib::BamRecord rec;
+  while(r.GetNextRecord(rec)) {
+    w.WriteRecord(rec);
+  }
+
+  BOOST_CHECK(r.Reset("test_data/small.bam"));
+  BOOST_CHECK(!r.Reset("dum"));
+
+  BOOST_CHECK(r.Close("test_data/small.bam"));
+  BOOST_CHECK(r.Close("test_data/small.cram"));
+  
+  // problematic here FIXME
+  //SeqLib::BamReader r2;
+  //BOOST_CHECK(r2.Open("tmp_out_poly.bam"));
+  // should return false, no index
+  //BOOST_CHECK(!r2.SetRegion(SeqLib::GenomicRegion(r.Header().Name2ID("X"),1001000, 1001100)));
+
+}
+
+
+BOOST_AUTO_TEST_CASE( plot_test ) {
+
+  SeqLib::BamReader r;
+  r.Open("test_data/small.bam");
+  
+  // should return false on empty region
+  BOOST_CHECK(!r.SetMultipleRegions(SeqLib::GRC()));
+
+  SeqLib::GenomicRegion gr("X:1,002,942-1,003,294", r.Header());
+  r.SetRegion(gr);
+
+  SeqLib::SeqPlot s;
+
+  s.SetView(gr);
+
+  SeqLib::BamRecord rec;
+  SeqLib::BamRecordVector brv;
+  while(r.GetNextRecord(rec))
+    if (!rec.CountNBases() && rec.MappedFlag())
+      brv.push_back(rec);
+
+  s.SetPadding(20);
+
+  std::cout << s.PlotAlignmentRecords(brv);
+
+}
+
+
+// CURRENTLY DOES NOT WORK
+// need to find how to do reset
+// BOOST_AUTO_TEST_CASE ( reset_works ) {
+
+//   SeqLib::BamReader r;
+//   r.Open("test_data/small.bam");
+//   //r.Open("test_data/small.cram");
+
+//   SeqLib::BamRecord rec1, rec2;
+//   r.GetNextRecord(rec1);
+//   r.Reset();
+//   std::cerr << " AFTER RESET " << std::endl;
+//   std::cerr << r.GetNextRecord(rec2) << std::endl;
+
+//   BOOST_CHECK_EQUAL(rec1.Qname(), rec2.Qname());
+//   }
+
+BOOST_AUTO_TEST_CASE (json_parse) {
+
+  SeqLib::BamReader r;
+  r.Open("test_data/small.bam");
+  ReadFilterCollection rfc(JSON1, r.Header());
+
+  ReadFilter rf;
+  SeqLib::GRC g(VCFFILE, r.Header());
+  rf.addRegions(g);
+  AbstractRule ar;
+  ar.isize = Range(10,100, false);
+  rf.SetMateLinked(true);
+  rf.AddRule(ar);
+  rfc.AddReadFilter(rf);
+
+  std::cout << rfc << std::endl;
+
+  SeqLib::BamRecord rec;
+  size_t count = 0;
+  int start, end;
+  while(r.GetNextRecord(rec) && ++count < 10) {
+    rec.QualityTrimmedSequence(4, start, end); // phred trim first
+    rfc.isValid(rec);
+  }
+
+  // empty
+  ReadFilterCollection rfc2("", r.Header());
+  
+}
+
+
+BOOST_AUTO_TEST_CASE ( ref_genome ) {
+
+  //SeqLib::RefGenome r("test_data/test_ref.fa");
+  SeqLib::RefGenome r;
+  r.LoadIndex("test_data/test_ref.fa");
+
+  BOOST_CHECK(!r.IsEmpty());
+
+  std::string out = r.QueryRegion("ref1", 0, 5);
+  BOOST_CHECK_EQUAL(out, "ATCTAT");
+
+  BOOST_CHECK_THROW(r.QueryRegion("ref1", 5,4), std::invalid_argument);
+  BOOST_CHECK_THROW(r.QueryRegion("ref1", -1,4), std::invalid_argument);
+
+  SeqLib::RefGenome r2;
+  BOOST_CHECK_THROW(r2.QueryRegion("ref1",1,2), std::invalid_argument);
+
+  // reload
+  r2.LoadIndex("test_data/test_ref.fa");
+}
+
 BOOST_AUTO_TEST_CASE ( set_cigar ) {
 
   SeqLib::BamReader rr;
@@ -1370,7 +1545,7 @@ BOOST_AUTO_TEST_CASE ( set_cigar ) {
       SeqLib::Cigar c;
       c.add(SeqLib::CigarField('M', 70));
       c.add(SeqLib::CigarField('I', 80));
-      c.add(SeqLib::CigarField('M', 1));
+      c.add(SeqLib::CigarField('M',1));
       rec.SetCigar(c);
       std::cerr << rec << std::endl;
   }

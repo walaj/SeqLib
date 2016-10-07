@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BFC_H__
-#define SEQLIB_BFC_H__
+#ifndef SEQLIB_BFC_H
+#define SEQLIB_BFC_H
 
 extern "C" {
   #include "fermi-lite/bfc.h"
@@ -139,7 +139,7 @@ namespace SeqLib {
     std::vector<char*> m_names;
 
     // assign names, qualities and seq to m_seqs
-    void allocate_sequences_from_reads(const BamRecordVector& brv, bool name_and_qual_too);
+    void allocate_sequences_from_reads(const BamRecordVector& brv);
 
     // assign names, qualities and seq to m_seqs
     void allocate_sequences_from_char(const std::vector<char*>& v);

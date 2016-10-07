@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BWAWRAPPER_H__
-#define SEQLIB_BWAWRAPPER_H__
+#ifndef SEQLIB_BWAWRAPPER_H
+#define SEQLIB_BWAWRAPPER_H
 
 #include <string>
 #include <vector>
@@ -11,21 +11,10 @@
 #include "SeqLib/BamHeader.h"
 #include "SeqLib/UnalignedSequence.h"
 
+// all of the bwa and kseq stuff is in unaligned sequence
+// best way I had to keep from clashes with klib macros
+
 #define MEM_F_SOFTCLIP  0x200
-
-extern "C" {
-  #include "bwa/bwa.h"
-  #include "bwa/bwt.h"
-  #include "bwa/bntseq.h"
-  #include "bwa/kseq.h"
-  #include <stdlib.h>
-  #include "bwa/utils.h"
-  #include "bwa/bwamem.h"
-  int is_bwt(ubyte_t *T, int n);
-
-}
-
-KSEQ_DECLARE(gzFile)
 
 namespace SeqLib {
  
@@ -184,19 +173,19 @@ class BWAWrapper {
   std::string bwa_print_sam_hdr2(const bntseq_t *bns, const char *hdr_line) const;
 
   // overwrite the bwa bwt_pac2pwt function
-  bwt_t *__bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr);
+  bwt_t *seqlib_bwt_pac2bwt(const uint8_t *pac, int bwt_seq_lenr);
 
   // add an anns (chr annotation structure) 
-  bntann1_t* __add_to_anns(const std::string& name, const std::string& seq, bntann1_t * ann, size_t offset);
+  bntann1_t* seqlib_add_to_anns(const std::string& name, const std::string& seq, bntann1_t * ann, size_t offset);
 
   // overwrite the bwa-mem add1 function, which takes a sequence and adds to pac
-  uint8_t* __add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q);
+  uint8_t* seqlib_add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q);
 
   // make the pac structure (2-bit encoded packed sequence)
-  uint8_t* __make_pac(const UnalignedSequenceVector& v, bool for_only);
+  uint8_t* seqlib_make_pac(const UnalignedSequenceVector& v, bool for_only);
 
   // write pac part of the index
-  void __write_pac_to_file(const std::string& file) const;
+  void seqlib_write_pac_to_file(const std::string& file) const;
 
   // write the bns file of the index
   std::string print_bns();

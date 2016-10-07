@@ -63,7 +63,7 @@ bool ReadFilter::isValid(const BamRecord &r) {
 
 }
 
-  int FlagRule::__parse_json_int(const Json::Value& v) {
+  int FlagRule::parse_json_int(const Json::Value& v) {
     
     if (v.asInt())
       return v.asInt();
@@ -72,7 +72,7 @@ bool ReadFilter::isValid(const BamRecord &r) {
     return 0;
   }
 
-  bool __convert_to_bool(const Json::Value& value, const std::string& name) {
+  bool convert_to_bool(const Json::Value& value, const std::string& name) {
 
     Json::Value null(Json::nullValue);
     Json::Value v = value.get(name, null);
@@ -86,31 +86,6 @@ bool ReadFilter::isValid(const BamRecord &r) {
     return false;
     
   }
-
-    //bool ReadFilterCollection::__validate_json_value(const Json::Value value) {
-
-      /*static const StringSet valid_vals;
-      if (valid_vals.empty())
-	{ 
-	  "duplicate", "supplementary", "qcfail", "hardclip", "fwd_strand",
-	  "rev_strand", "mate_fwd_strand", "mate_rev_strand", "mapped",
-	  "mate_mapped", "isize","clip", "length","nm",
-	  "mapq", "all", "ff", "xp","fr","rr","rf",
-	  "ic", "discordant","motif","nbases","!motif","allflag", "!allflag", "anyflag", "!anyflag",
-	  "ins","del",  "subsample", "rg", "region","pad", "matelink", "exclude", "rules"
-	};
-      */
-
-      // verify that it has appropriate values
-      /*for (auto& i : value.getMemberNames()) {
-	if (!valid_vals.count(i)) {
-	  std::cerr << "Invalid key value in JSON: " << i << std::endl;
-	  return false;
-	}
-	}*/
-
-      //return true;
-    //}
 
 // check whether a BamAlignment (or optionally it's mate) is overlapping the regions
 // contained in these rules
@@ -220,14 +195,11 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
     
     // iterator over regions
     for (Json::ValueConstIterator regions = root.begin(); regions != root.end(); ++regions) {
-     
-      //if (!__validate_json_value(*regions))
-      //	throw std::invalid_argument("JSON contains invalid keys, or otherwise failed to validate");
 
       ReadFilter mr;
       
       // check if mate applies
-      mr.m_applies_to_mate = __convert_to_bool(*regions, "matelink");
+      mr.m_applies_to_mate = convert_to_bool(*regions, "matelink");
 
       // check for region padding
       int pad = regions->get("pad", 0).asInt();
@@ -269,8 +241,6 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
       // loop through the rules
       for (Json::ValueIterator vv = v.begin(); vv != v.end(); ++vv) {
 	if (*vv != null) {
-	  //if (!__validate_json_value(*vv))
-	  //throw std::invalid_argument("Invalid argument in filter JSON");
 	  AbstractRule ar = rule_all; // always start with the global rule
 	  ar.parseJson(*vv);
 	  // add the rule to the region
@@ -358,7 +328,7 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
   bool Flag::parseJson(const Json::Value& value, const std::string& name) {
 
     if (value.isMember(name.c_str())) {
-      __convert_to_bool(value, name) ? setOn() : setOff();
+      convert_to_bool(value, name) ? setOn() : setOff();
       return true;
     }
     
@@ -370,13 +340,13 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 
     Json::Value null(Json::nullValue);
     if (value.isMember("allflag"))
-      setAllOnFlag(__parse_json_int(value.get("allflag", null)));
+      setAllOnFlag(parse_json_int(value.get("allflag", null)));
     if (value.isMember("!allflag"))
-      setAllOffFlag(__parse_json_int(value.get("!allflag", null)));
+      setAllOffFlag(parse_json_int(value.get("!allflag", null)));
     if (value.isMember("anyflag"))
-      setAnyOnFlag(__parse_json_int(value.get("anyflag", null)));
+      setAnyOnFlag(parse_json_int(value.get("anyflag", null)));
     if (value.isMember("!anyflag"))
-      setAnyOffFlag(m_any_off_flag = __parse_json_int(value.get("!anyflag", null)));
+      setAnyOffFlag(m_any_off_flag = parse_json_int(value.get("!anyflag", null)));
     
     // have to set the every if find flag so that rule knows it cant skip checking
     if (dup.parseJson(value, "duplicate")) every = false;

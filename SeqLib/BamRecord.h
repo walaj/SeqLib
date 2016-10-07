@@ -1,5 +1,5 @@
-#ifndef SEQLIB_BAM_RECORD_H__
-#define SEQLIB_BAM_RECORD_H__
+#ifndef SEQLIB_BAM_RECORD_H
+#define SEQLIB_BAM_RECORD_H
 
 #include <stdint.h>
 //#include <cstdint> //+11
@@ -222,11 +222,6 @@ class BamRecord {
    */
   BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
 
-  /** Construct a BamRecord by copying the contents of a bam1_t.
-   * @param bt bam1_t that will get duplicated into this object
-   */
-  BamRecord(const bam1_t* bt) { b = std::shared_ptr<bam1_t>(bam_dup1(bt), free_delete()); }
-  
   /** Construct an empty BamRecord by calling bam_init1() 
    */
   void init();
@@ -450,10 +445,10 @@ class BamRecord {
   friend std::ostream& operator<<(std::ostream& out, const BamRecord &r);
 
   /** Return read as a GenomicRegion */
-  GenomicRegion asGenomicRegion() const;
+  GenomicRegion AsGenomicRegion() const;
 
   /** Return mate read as a GenomicRegion */
-  GenomicRegion asGenomicRegionMate() const;
+  GenomicRegion AsGenomicRegionMate() const;
 
    /** Return the number of "aligned bases" in the same style as BamTools
     *
@@ -463,7 +458,7 @@ class BamRecord {
     * 3M1D3M - ATG-TGA 
     * 3M1I3M - ATGCTGA
     *
-    * @return The number of M, D, and I bases
+    * @return The number of M, D, X, = and I bases
     */
   inline int NumAlignedBases() const {
     int out = 0;
@@ -471,6 +466,8 @@ class BamRecord {
     for (size_t i = 0; i < b->core.n_cigar; i++) 
       if (bam_cigar_opchr(c[i]) == 'M' || 
 	  bam_cigar_opchr(c[i]) == 'I' || 
+	  bam_cigar_opchr(c[i]) == '=' || 
+	  bam_cigar_opchr(c[i]) == 'X' || 
 	  bam_cigar_opchr(c[i]) == 'D')
 	out += bam_cigar_oplen(c[i]);
     return out;
@@ -546,12 +543,19 @@ class BamRecord {
    */
   BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
 
-  /** Get the quality scores of this read as a string */
-  inline std::string Qualities() const { 
+  /** Get the quality scores of this read as a string 
+   * @param offset Encoding offset for phred quality scores. Default 33
+   * @return Qualties scores after converting offset. If first char is empty, returns empty string
+   */
+  inline std::string Qualities(int offset = 33) const { 
     uint8_t * p = bam_get_qual(b);
+    if (!p)
+      return std::string();
+    if (!p[0])
+      return std::string();
     std::string out(b->core.l_qseq, ' ');
     for (int32_t i = 0; i < b->core.l_qseq; ++i) 
-      out[i] = (char)(p[i]+33);
+      out[i] = (char)(p[i] + offset);
     return out;
   }
 

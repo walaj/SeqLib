@@ -3,7 +3,7 @@
 
 namespace SeqLib {
 
-  FermiAssembler::FermiAssembler()  : m_seqs(0), n_seqs(0), n_utg(0), m_utgs(0) {
+  FermiAssembler::FermiAssembler()  : m_seqs(0), m(0), size(0), n_seqs(0), n_utg(0), m_utgs(0)  {
     fml_opt_init(&opt);
   }
   
@@ -27,13 +27,42 @@ namespace SeqLib {
     m_utgs = fml_mag2utg(g, &n_utg);
   }
 
+  void FermiAssembler::AddRead(const BamRecord& r) {
+    AddRead(UnalignedSequence(r.Qname(), r.Sequence(), r.Qualities())); // probably faster way
+  }
+
+  void FermiAssembler::AddRead(const UnalignedSequence& r) {
+
+    if (r.Seq.empty())
+      return;
+    if (r.Name.empty())
+      return;
+
+    // dynamically alloc the memory
+    if (m <= n_seqs)
+      m = m <= 0 ? 32 : (m*2); // if out of mem, double it
+    m_seqs = (fseq1_t*)realloc(m_seqs, m * sizeof(fseq1_t));
+    
+    // add the name
+    m_names.push_back(r.Name);
+
+    // construct the seq
+    fseq1_t *s;
+    s = &m_seqs[n_seqs];
+    s->seq   = strdup(r.Seq.c_str());
+    s->qual  = strdup(r.Qual.c_str());
+    
+    s->l_seq = r.Seq.length();
+    size += m_seqs[n_seqs++].l_seq;
+
+  }
+  
   void FermiAssembler::AddReads(const UnalignedSequenceVector& v) {
 
     // alloc the memory
-    m_seqs = (fseq1_t*)realloc(m_seqs, (n_seqs + v.size()) * sizeof(fseq1_t));
+    m = n_seqs + v.size();
+    m_seqs = (fseq1_t*)realloc(m_seqs, m * sizeof(fseq1_t));
 
-    int m = 0;
-    uint64_t size = 0;
     for (UnalignedSequenceVector::const_iterator r = v.begin(); r != v.end(); ++r) {
       m_names.push_back(r->Name);
       fseq1_t *s;

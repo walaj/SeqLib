@@ -1,5 +1,5 @@
-#ifndef SEQLIB_COMMON_H__
-#define SEQLIB_COMMON_H__
+#ifndef SEQLIB_COMMON_H
+#define SEQLIB_COMMON_H
 
 /*! \mainpage SeqLib 1.0
  *
