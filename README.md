@@ -128,12 +128,12 @@ Examples
 ```
 #include "SeqLib/RefGenome.h"
 #include "SeqLib/BWAWrapper.h"
-using SeqLib;
+using namespace SeqLib;
 RefGenome ref;
 ref.LoadIndex("hg19.fasta");
 
 // get sequence at given locus
-std::string seq = ref.queryRegion("1", 1000000,1001000);
+std::string seq = ref.QueryRegion("1", 1000000,1001000);
 
 // Make an in-memory BWA-MEM index of region
 BWAWrapper bwa;
@@ -155,7 +155,7 @@ for (auto& i : results)
 ```
 #include "SeqLib/BamReader.h"
 #include "SeqLib/BWAWrapper.h"
-using SeqLib;
+using namespace SeqLib;
 
 // open the reader BAM/SAM/CRAM
 BamReader bw;
@@ -189,7 +189,7 @@ while (GetNextRecord(r)) {
 ```
 
 #include "SeqLib/FermiAssembler.h"
-using SeqLib;
+using namespace SeqLib;
 
 FermiAssembler f;
 
@@ -221,7 +221,7 @@ for (size_t i = 0; i < contigs.size(); ++i)
 
 ##### Plot a collection of gapped alignments
 ```
-using SeqLib;
+using namespace SeqLib;
 BamReader r;
 r.Open("test_data/small.bam");
 
@@ -259,7 +259,7 @@ CTATCTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTAT                    
 
 ##### Read simultaneously from a BAM, CRAM and SAM file and send to stdout
 ```
-using SeqLib;
+using namespace SeqLib;
 #include "SeqLib/BamReader.h"
 BamReader r;
   
@@ -282,7 +282,7 @@ w.Close();               // Optional. Will close on destruction
 ##### Perform error correction on reads, using [BFC][bfc]
 ```
 #include "SeqLib/BFC.h"
-using SeqLib;
+using namespace SeqLib;
 
 // brv is some set of reads to train the error corrector
 b.TrainCorrection(brv);
