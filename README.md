@@ -51,8 +51,20 @@ C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
 And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 ```bash
 SEQ=<path_to_seqlib>
-LDADD="$LDADD -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
+LDFLAGS="$LDFLAGS -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
 ```
+
+To add support for reading BAMs, etc with HTTPS, FTP, S3, Google cloud, etc, you must compile and link with libcurl.
+```bash
+## set hts to build with libcurl links and hfile_libcurl.c
+cd htslib
+./configure --enable-libcurl 
+## compile seqlib with libcurl support
+./configure LDFLAGS="-lcurl -lcrypto"
+make 
+make install
+```
+Remember then to then link any projects made with SeqLib with the additional ``-lcurl -lcrypto`` flags.
 
 Description
 -----------
