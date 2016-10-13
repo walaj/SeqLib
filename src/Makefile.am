@@ -6,13 +6,13 @@ libseqlib_a_SOURCES =   FastqReader.cpp BFC.cpp ReadFilter.cpp SeqPlot.cpp jsonc
 			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp \
 			BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
 
-##bin_PROGRAMS = seqtools
+bin_PROGRAMS = seqtools
+seqtools_SOURCES = seqtools.cpp
+seqtools_LDADD=libseqlib.a ../htslib/libhts.a ../bwa/libbwa.a ../fermi-lite/libfml.a
+seqtools_CPPFLAGS=-I../htslib -I..
 
-LIBS=libseqlib.a ../htslib/libhts.a ../bwa/libbwa.a ../fermi-lite/libfml.a
-INCLUDES=-I../htslib -I..
+#seqtools.o: seqtools.cpp
+#	g++ -c seqtools.cpp $(INCLUDES) $(CFLAGS) $(CXXFLAGS)
 
-seqtools.o: seqtools.cpp
-	g++ -c seqtools.cpp $(INCLUDES) $(CFLAGS) $(CXXFLAGS)
-
-seqtools: seqtools.o libseqlib.a
-	g++ seqtools.o -o seqtools $(LIBS) -lrt -lpthread -lz -lm
+#seqtools: seqtools.o libseqlib.a
+#	g++ seqtools.o -o seqtools $(LIBS) -lrt -lpthread -lz -lm

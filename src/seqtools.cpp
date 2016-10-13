@@ -141,10 +141,17 @@ void runfml(int argc, char** argv) {
   } else {
 
     SeqLib::BamReader br;
-    br.Open(opt::input == "-" ? "-" : opt::input);
+    if (!br.Open(opt::input == "-" ? "-" : opt::input)) 
+      exit(EXIT_FAILURE);
+      
+    if (opt::verbose)
+      std::cerr << "...opened " << opt::input << std::endl;
     SeqLib::BamRecord rec;
     SeqLib::BamRecordVector brv;
+    size_t count = 0;
     while(br.GetNextRecord(rec)) {
+      if (++count % 1000000 == 0 && opt::verbose)
+	std::cerr << "...at read " << SeqLib::AddCommas(count) << " " << rec.Brief() << std::endl;
       brv.push_back(rec); //rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
     }
     fml.AddReads(brv);
@@ -183,7 +190,8 @@ void runfml(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   
-  bw.Open("-");
+  if (!bw.Open("-"))
+    exit(EXIT_FAILURE);
   
   SeqLib::BWAWrapper bwa;
   if (!bwa.LoadIndex(opt::reference)) {
@@ -234,9 +242,15 @@ void runbfc(int argc, char** argv) {
     }
   } else { //if (opt::mode == 'b' || opt::mode == 's' || opt::mode == 'C') {
     SeqLib::BamReader br;
-    br.Open(opt::input == "-" ? "-" : opt::input);
+    if (!br.Open(opt::input == "-" ? "-" : opt::input))
+      exit(EXIT_FAILURE);
+    if (opt::verbose)
+      std::cerr << "...opened " << opt::input << std::endl;
     SeqLib::BamRecord rec;
+    size_t count = 0;
     while(br.GetNextRecord(rec)) {
+      if (++count % 1000000 == 0 && opt::verbose)
+	std::cerr << "...at read " << SeqLib::AddCommas(count) << " " << rec.Brief() << std::endl;
       b.AddSequence(rec); //rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
     }
   } 
@@ -287,7 +301,8 @@ void runbfc(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   
-  bw.Open("-");
+  if (!bw.Open("-"))
+    exit(EXIT_FAILURE);
   
   SeqLib::BWAWrapper bwa;
   if (opt::verbose)

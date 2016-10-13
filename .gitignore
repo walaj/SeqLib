@@ -31,3 +31,5 @@ Makefile
 *.pico
 benchmark
 config.status
+seqtools
+config.h
