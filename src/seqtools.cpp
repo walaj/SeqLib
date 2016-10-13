@@ -37,17 +37,6 @@ static const char *BFC_USAGE_MESSAGE =
 "  --reference, -G <file> Reference genome if using BWA-MEM realignment\n"
 "\nReport bugs to jwala@broadinstitute.org \n\n";
 
-static const char *GOFISH_USAGE_MESSAGE =
-"Program: seqtools gofish \n"
-"Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
-"Description: Enrich for reads that align to a target\n"
-"Usage: seqtools gofish [options]\n\n"
-"Commands:\n"
-"  --verbose,   -v        Set verbose output\n"
-"  --infasta,   -F <file> Input a FASTA insted of BAM/SAM/CRAM stream\n"
-"  --target,    -T <file> Target sequence to index and enrich for\n"
-"\nReport bugs to jwala@broadinstitute.org \n\n";
-
 static const char *FML_USAGE_MESSAGE =
 "Program: seqtools fml \n"
 "Contact: Jeremiah Wala [ jwala@broadinstitute.org ]\n"
@@ -64,7 +53,6 @@ static const char *FML_USAGE_MESSAGE =
 
 void runbfc(int argc, char** argv);
 void runfml(int argc, char** argv);
-void rungofish(int argc, char** argv);
 void parseOptions(int argc, char** argv, const char* msg);
 
 namespace opt {
@@ -90,8 +78,6 @@ static const struct option longopts[] = {
   { NULL, 0, NULL, 0 }
 };
 
-static void* gofish_worker(void* shared, int step, void *_data);
-
 int main(int argc, char** argv) {
 
    if (argc <= 1) {
@@ -106,8 +92,6 @@ int main(int argc, char** argv) {
       runbfc(argc -1, argv + 1);
     } else if (command == "fml") {
       runfml(argc -1, argv + 1);
-    } else if (command == "gofish") {
-      rungofish(argc - 1, argv + 1);
     } else {
       std::cerr << SEQTOOLS_USAGE_MESSAGE;
       return 0;
@@ -209,11 +193,11 @@ void runfml(int argc, char** argv) {
   std::stringstream ss;
   for (std::vector<std::string>::const_iterator i = contigs.begin(); i != contigs.end(); ++i) {
     SeqLib::BamRecordVector brv;
-    bool hardclip = false;
-    double frac = 0.9;
-    int max_secondary = 10;
+    const bool hardclip = false;
+    const double frac = 0.9;
     ss << "contig" << ++count;
-    bwa.AlignSequence(*i, ss.str(), brv, false, frac, 10);
+    const int max_secondary = 10;
+    bwa.AlignSequence(*i, ss.str(), brv, hardclip, frac, max_secondary);
     ss.str(std::string());
     for (SeqLib::BamRecordVector::iterator r = brv.begin();
 	 r != brv.end(); ++r) {
@@ -320,10 +304,10 @@ void runbfc(int argc, char** argv) {
   // run through and read
   for (SeqLib::UnalignedSequenceVector::const_iterator i = u.begin(); i != u.end(); ++i) {
     SeqLib::BamRecordVector brv;
-    bool hardclip = false;
-    double frac = 0.9;
-    int max_secondary = 10;
-    bwa.AlignSequence(i->Seq, i->Name, brv, false, frac, 10);
+    const bool hardclip = false;
+    const double frac = 0.9;
+    const int max_secondary = 10;
+    bwa.AlignSequence(i->Seq, i->Name, brv, hardclip, frac, max_secondary);
     for (SeqLib::BamRecordVector::iterator r = brv.begin();
 	 r != brv.end(); ++r) {
       if (!i->Qual.empty())
@@ -333,18 +317,6 @@ void runbfc(int argc, char** argv) {
   }
   
 }
-
-// fish for target sequence
-void rungofish(int argc, char** argv) {
-
-  parseOptions(argc, argv, GOFISH_USAGE_MESSAGE);
-
-  const int n_threads = 1;
-  //kt_pipeline(n_threads, gofish_worker, &aux, 3);  
-  
-  
-}
-
 // parse the command line options
 void parseOptions(int argc, char** argv, const char* msg) {
 
@@ -376,17 +348,4 @@ void parseOptions(int argc, char** argv, const char* msg) {
       else 
 	exit(EXIT_SUCCESS);	
     }
-}
-
-typedef struct {
-  bseq1_t *seqs;
-  int n_seqs;
-} fish_data_t;
-
-
-// gofish process
-static void* gofish_worker(void* shared, int step, void *_data) {
-
-  
-
 }

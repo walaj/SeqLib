@@ -178,7 +178,6 @@ bool GenomicRegionCollection<T>::ReadBED(const std::string & file, const BamHead
   }
 
   // http://www.lemoda.net/c/gzfile-read/
-  size_t c = 0;
   while (1) {
 
     int err;                    
@@ -245,7 +244,6 @@ bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHead
   }
 
   // http://www.lemoda.net/c/gzfile-read/
-  size_t c = 0;
   while (1) {
 
     int err;                    
