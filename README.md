@@ -35,7 +35,6 @@ make seqtools ## for the command line version
 ```
  
 I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.
-(OSX may require C++11 libs if ``tr1`` not present) 
 
 SeqLib is compatible with c++98 and later.
 
@@ -57,9 +56,10 @@ LDFLAGS="$LDFLAGS -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a
 To add support for reading BAMs, etc with HTTPS, FTP, S3, Google cloud, etc, you must compile and link with libcurl.
 ```bash
 ## set hts to build with libcurl links and hfile_libcurl.c
-cd htslib
+cd SeqLib/htslib
 ./configure --enable-libcurl 
 ## compile seqlib with libcurl support
+cd ../ # back to SeqLib main directory
 ./configure LDFLAGS="-lcurl -lcrypto"
 make 
 make install
