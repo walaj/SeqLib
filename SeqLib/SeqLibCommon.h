@@ -7,7 +7,7 @@
  *
  * SeqLib is a C++ package for querying BAM/SAM/CRAM files with HTSlib, performing 
  * BWA-MEM operations in memory, and peforming sequence assembly with FermiKit.
- * See https://github.com/jwalabroad/SeqLib for 
+ * See https://github.com/walaj/SeqLib for 
  * full description.
  * \section attribution Attributions
  * - Jeremiah Wala - Harvard MD-PhD candidate, Bioinformatics and Integrative Genomics

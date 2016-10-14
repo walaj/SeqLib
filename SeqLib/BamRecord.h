@@ -799,7 +799,11 @@ class BamRecord {
   /** Return the raw pointer */
   inline bam1_t* raw() const { return b.get(); }
 
-  /** Return the number of bases on the reference that are covered by a match (M) on both reads */
+  /** Return the number of bases on the query that are covered by a match (M) on both reads 
+   * This is for tracking overlapping coverage on the reads, regardless of their alignment locations.
+   * For instance, two reads with 101M will have overlapping coverage of 101, regardless of alignment location.
+   * A read with 50S50M and 50M50S will have 0 overlapping coverage.
+   */
   int OverlappingCoverage(const BamRecord& r) const;
   
   private:
