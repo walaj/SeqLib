@@ -339,7 +339,7 @@ Development, support, guidance, testing:
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
-[htmldoc]: http://walaj.github.io/SeqLib/doxygen
+[htmldoc]: http://walaj.github.io/seqlibdocs/doxygen
 
 [var]: https://github.com/walaj/VariantBam
 
