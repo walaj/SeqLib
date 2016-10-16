@@ -242,6 +242,7 @@ int32_t GenomicRegion::DistanceBetweenEnds(const GenomicRegion &gr) const {
 
   GenomicRegion::GenomicRegion(const std::string& tchr, const std::string& tpos1, const std::string& tpos2, const SeqLib::BamHeader& hdr)
   {
+    strand = '*';
     // convert the pos strings
     // throws invalid_argument if conversion can't be performed
     // or throws an out_of_range if it is too big for result

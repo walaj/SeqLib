@@ -124,7 +124,7 @@ class GenomicRegionCollection {
    */
   size_t size() const { return m_grv->size(); }
 
-  /** Add a new GenomicRegion to end
+  /** Add a new GenomicRegion (or child of) to end
    */
  void add(const T& g) { m_grv->push_back(g); /*createTreeMap();*/ }
 
@@ -193,7 +193,7 @@ class GenomicRegionCollection {
   * inside the query collection
   */
  template<class K>
- GenomicRegionCollection<GenomicRegion> FindOverlaps(GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const;
+ GenomicRegionCollection<GenomicRegion> FindOverlaps(const GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const;
 
  /** Return the overlaps between the collection and the query interval
   * @param gr Query region 
@@ -203,6 +203,14 @@ class GenomicRegionCollection {
   */
  template<class K>
  GenomicRegionCollection<GenomicRegion> FindOverlaps(const K& gr, bool ignore_strand) const;
+
+ /** Return the number of bases in query that overlap this collection 
+  * @param gr Query GenomicRegion (or child of)
+  * @param ignore_strand If true, won't exclude overlap if on different strand
+  * @return Number of bases in query that overlap with region in collection
+  */
+ template<class K>
+ size_t FindOverlapWidth(const K& gr, bool ignore_strand) const;
 
  /** Return the total amount spanned by this collection */
  int TotalWidth() const; 
@@ -275,9 +283,10 @@ class GenomicRegionCollection {
   /** Shortcut to FindOverlaps that just returns the intersecting regions
    * without keeping track of the query / subject ids
    */
-  GenomicRegionCollection<GenomicRegion> Intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand) const;
+  template<class K>
+  GenomicRegionCollection<GenomicRegion> Intersection(const GenomicRegionCollection<K>& subject, bool ignore_strand) const;
  
- private:
+ protected:
 
  bool m_sorted;
  
