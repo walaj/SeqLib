@@ -99,7 +99,7 @@ class GenomicRegionCollection {
    * This function will automatically detect which file type is being input:
    * -- ends in .vcf -> readVCFfile
    * -- ends in .bed -> readBEDfile
-   * -- header contains "MuTect" -> readMuTect
+   * -- contains ':' -> Assumes single samtools-style region (eg 1:100-100)
    * The values are appended to existing vector of GenomicRegion objects
    * @param file Text file to read and store intervals
    * @param hdr BamHeader to serve as dictionary for chromosomes

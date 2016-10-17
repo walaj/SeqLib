@@ -308,8 +308,14 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
     return;
   }
   iss.close();
-
   */
+
+  // check if it's samtools-style file
+  if (file.find(":") != std::string::npos) {
+    m_sorted = true; // only one, so sorted
+    m_grv->push_back(T(file, hdr));
+    return;
+  }
 
   // BED file
   if (file.find(".bed") != std::string::npos)
