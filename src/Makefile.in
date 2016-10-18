@@ -110,7 +110,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
-LIBS = libseqlib.a ../htslib/libhts.a ../bwa/libbwa.a ../fermi-lite/libfml.a
+LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
@@ -177,7 +177,6 @@ libseqlib_a_SOURCES = FastqReader.cpp BFC.cpp ReadFilter.cpp SeqPlot.cpp jsoncpp
 			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp \
 			BLATWrapper.cpp BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
 
-INCLUDES = -I../htslib -I.. 
 all: all-am
 
 .SUFFIXES:
@@ -690,12 +689,6 @@ uninstall-am:
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am
 
-
-seqtools.o: seqtools.cpp
-	g++ -c seqtools.cpp $(INCLUDES) $(CFLAGS) $(CXXFLAGS)
-
-seqtools: seqtools.o libseqlib.a
-	g++ seqtools.o -o seqtools $(LIBS) -lrt -lpthread -lz -lm
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

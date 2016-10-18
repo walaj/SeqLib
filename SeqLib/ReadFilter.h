@@ -221,29 +221,58 @@ class FlagRule {
   }
   
   Flag dup; ///< Filter for duplicated flag 
-  Flag supp; ///< Flag for  
-  Flag qcfail, hardclip, fwd_strand, rev_strand;
-  Flag mate_fwd_strand, mate_rev_strand, mapped, mate_mapped, ff, fr, rf, rr, ic, paired;
+  Flag supp; ///< Flag for supplementary flag 
+  Flag qcfail; ///< Flag for qcfail flag
+  Flag hardclip; ///< Flag for presence of hardclip in cigar string
+  Flag fwd_strand; ///< Flag for forward strand alignment
+  Flag rev_strand; ///< Flag for reverse strand alignment
+  Flag mate_fwd_strand; ///< Flag for forward strand alignment for mate 
+  Flag mate_rev_strand; ///< Flag for reverse strand alignment for mate 
+  Flag mapped; ///< Flag for mapped alignment
+  Flag mate_mapped; ///< Flag for mate-mapped alignment
+  Flag ff; ///< Flag for both reads on forward strand
+  Flag fr; ///< Flag for lower (by position) read on forward strand, higher on reverse
+  Flag rf; ///< Flag for lower (by position) read on reverse strand, higher on forward
+  Flag rr; ///< Flag for both reads on reverse strand 
+  Flag ic; ///< Flag for read and mate aligned to different chromosomes
+  Flag paired; ///< Flag for read is part of pair
 
+  /** Parse a FlagRule from a JSON object
+   */
   void parseJson(const Json::Value& value);
 
+  /** Set rule to pass all alignment flags that have any bit in f on
+   * @param f Alignment flags to be on for alignment record to pass
+   */  
   void setAnyOnFlag(uint32_t f) { m_any_on_flag = f;   every = (every && f == 0); } 
   //  NOTE: every = (every && f == 0) means to set every to true only if 
   //  input flag is zero and every was already true
 
+  /** Set rule to pass all alignment flags that have any bit in f off
+   * @param f Alignment flags to be off for alignment record to pass
+   */  
   void setAnyOffFlag(uint32_t f) { m_any_off_flag = f; every = (every && f == 0); } 
 
+  /** Set rule to reject all alignment flags that have any bit in f off
+   * @param f Alignment flags to be on for alignment record to pass
+   */
   void setAllOnFlag(uint32_t f) { m_all_on_flag = f;   every = (every && f == 0); } 
 
+  /** Set rule to reject all alignment flags that have any bit in f on
+   * @param f Alignment flags to be off for alignment record to pass
+   */
   void setAllOffFlag(uint32_t f) { m_all_off_flag = f; every = (every && f == 0); } 
 
-  // ask whether a read passes the rule
+  /** Return whether a read passes the alignment flag rules in this object 
+   * @param r Alignment record to query
+   * @return true if record passes rules
+   */
   bool isValid(const BamRecord &r);
 
   /** Print the flag rule */
   friend std::ostream& operator<<(std::ostream &out, const FlagRule &fr);
 
-  // ask if every flag is set to EVERY (most permissive)
+  /** Return if every this object will pass all records provided to it */
   bool isEvery() const { return every; }
 
 private:
@@ -278,14 +307,6 @@ class AbstractRule {
   /** Destroy the filter */
   ~AbstractRule() {}
 
-  /** Trim a sequence by removing bases with low phred quality. Stores new
-   * sequence in GV tag of read, but otherwise does not change the read.
-   * @param r Sequence read to be trimmed
-   * @param p Minimum acceptable phred score (eg 4)
-   * @return Returns true if read was trimmed
-   */
-  bool TrimRead(BamRecord& r);
-  
   /** Add a list of motifs that will be search as sub-strings
    * of the read sequence
    * @param f Path to new-line separted file of motifs
@@ -300,7 +321,7 @@ class AbstractRule {
   bool isValid(const BamRecord &r);
 
   /** Supply the rule parameters with a JSON
-   * @param A JSON object created by parsing a string
+   * @param value JSON object created by parsing a string
    */
   void parseJson(const Json::Value& value);
 
@@ -308,7 +329,8 @@ class AbstractRule {
    */
   friend std::ostream& operator<<(std::ostream &out, const AbstractRule &fr);
 
-  // return if this rule accepts all reads
+  /** Return if this rule accepts all reads
+   */
   bool isEvery() const;
 
   /** Set the rate to subsample (default 1 = no subsampling) 
@@ -324,7 +346,7 @@ class AbstractRule {
   /** Specify a read-group for this filter.
    * Reads that do not belong to this read group
    * will not pass isValid
-   * @param A read group to be matched against RG:Z:<readgroup>
+   * @param rg Read group to be matched against RG:Z:readgroup
    */
   void SetReadGroup(const std::string& rg) { read_group = rg; }
 
@@ -482,7 +504,7 @@ class ReadFilterCollection {
   /** Create a new filter collection directly from a JSON 
    * @param script A JSON file or directly as JSON formatted string
    * @param h BamHeader to convert chr sequence to id
-   * @excption invalid_argument if cannot parse JSON
+   * @exception invalid_argument if cannot parse JSON
    */
   ReadFilterCollection(const std::string& script, const SeqLib::BamHeader& h);
 

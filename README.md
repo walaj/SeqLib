@@ -38,7 +38,6 @@ make seqtools ## for the command line version
 ```
  
 I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.
-(OSX may require C++11 libs if ``tr1`` not present) 
 
 SeqLib is compatible with c++98 and later.
 
@@ -56,6 +55,19 @@ And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 SEQ=<path_to_seqlib>
 LDADD="$LDADD -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a -L$SEQ/blat/lib/jkOwnLib.a $SEQ/blat/lib/jkweb.a" 
 ```
+
+To add support for reading BAMs, etc with HTTPS, FTP, S3, Google cloud, etc, you must compile and link with libcurl.
+```bash
+## set hts to build with libcurl links and hfile_libcurl.c
+cd SeqLib/htslib
+./configure --enable-libcurl 
+## compile seqlib with libcurl support
+cd ../ # back to SeqLib main directory
+./configure LDFLAGS="-lcurl -lcrypto"
+make 
+make install
+```
+Remember then to then link any projects made with SeqLib with the additional ``-lcurl -lcrypto`` flags.
 
 Description
 -----------
@@ -96,7 +108,6 @@ Some differences:
 * SeqLib has support for CRAM file
 * SeqLib provides in memory access to BWA-MEM, BLAT, a chromosome aware interval tree and range operations, and to read correction and sequence assembly with Fermi. BamTools has more support currently for network access. 
 * SeqAn provide a substantial amount of additional capabilites not in SeqLib, including graph operations and a more expanded suite of multi-sequence alignments.
-* BamTools has support for network access of BAMs. 
 
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools. Feature requests and comments are welcomed.
@@ -332,7 +343,7 @@ Development, support, guidance, testing:
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
-[htmldoc]: http://walaj.github.io/SeqLib/doxygen
+[htmldoc]: http://walaj.github.io/seqlibdocs/doxygen
 
 [var]: https://github.com/walaj/VariantBam
 

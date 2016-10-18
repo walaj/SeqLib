@@ -651,6 +651,7 @@ namespace SeqLib {
 
   int BamRecord::OverlappingCoverage(const BamRecord& r) const {
     
+    std::cerr << " BAMO " << r << " " << *this << std::endl;
     uint32_t* c  = bam_get_cigar(b);
     uint32_t* c2 = bam_get_cigar(r.b);
     uint8_t * cov1 = (uint8_t*)calloc(b->core.l_qseq, sizeof(uint8_t));

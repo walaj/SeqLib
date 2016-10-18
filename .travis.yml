@@ -60,7 +60,6 @@ script:
 
 after_success: 
 - .travis.scripts/coveralls.sh
-- .travis.scripts/publish-doxygen.sh
 
 branches: 
   only: 

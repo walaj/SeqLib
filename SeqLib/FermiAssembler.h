@@ -29,7 +29,7 @@ namespace SeqLib {
     ~FermiAssembler();
 
     /** Provide a set of reads to be assembled 
-     * @param Reads with or without quality scores
+     * @param brv Reads with or without quality scores
      * @note This will copy the reads and quality scores
      * into this object. Deallocation is automatic with object
      * destruction, or with ClearReads.
@@ -66,7 +66,8 @@ namespace SeqLib {
      */
     void PerformAssembly();
 
-    /** Return the assembled contigs. 
+    /** Return the assembled contigs
+     * @return Assembled contigs in upper case strings (ACTGN)
      */
     std::vector<std::string> GetContigs() const;
 
@@ -75,6 +76,28 @@ namespace SeqLib {
 
     /** Set the minimum overlap between reads during string graph construction */
     void SetMinOverlap(uint32_t m) { opt.min_asm_ovlp = m; }
+
+    /** Aggressively trim graph to discard heterozygotes. 
+     * Suggested by lh3 for bacterial assembly
+     * @note See: https://github.com/lh3/fermi-lite/blob/master/example.c
+     */
+    void SetAggressiveTrim() { opt.mag_opt.flag |= MAG_F_AGGRESSIVE; }
+
+    /** From lh3: Drop an overlap if its length is below max_overlap * ratio
+     * @param ratio Overlaps below ratio * max_overlap will be removed
+     */
+    void SetDropOverlapRatio(double ratio) { opt.mag_opt.min_dratio1 = ratio; }
+
+    /** From lh3: Min k-mer & read count thresholds for ec and graph cleaning
+     */
+    void SetKmerMinThreshold(int min) { opt.min_cnt = min; }
+
+    /** From lh3: Max k-mer & read count thresholds for ec and graph cleaning
+     */
+    void SetKmerMaxThreshold(int max) { opt.max_cnt = max; }
+
+    // From lh3: retain a bubble if one side is longer than the other side by >INT-bp
+    //void SetBubbleDifference(int bdiff) { opt.mag_opt.max_bdiff; }
 
     /** Return the minimum overlap parameter for this assembler */
     uint32_t GetMinOverlap() const { return opt.min_asm_ovlp; }

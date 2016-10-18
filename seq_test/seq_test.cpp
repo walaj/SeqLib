@@ -382,6 +382,27 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
   }
 }
 
+BOOST_AUTO_TEST_CASE ( fermi_add_reads ) {
+
+  SeqLib::FermiAssembler f;
+  
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+  SeqLib::BamRecord r;
+  size_t count = 0;
+  while (br.GetNextRecord(r) && count++ < 1000) 
+    f.AddRead(r);
+  while (br.GetNextRecord(r) && count++ < 2000)   
+    f.AddRead(SeqLib::UnalignedSequence(r.Qname(), r.Sequence(), r.Qualities()));
+  
+  f.CorrectReads();
+  f.PerformAssembly();
+  std::vector<std::string> out = f.GetContigs();
+
+  
+  
+}
+
 BOOST_AUTO_TEST_CASE ( seq_utils ) {
   
   // add commas
@@ -1000,6 +1021,21 @@ BOOST_AUTO_TEST_CASE( header_constructor ) {
   
 }
 
+BOOST_AUTO_TEST_CASE( overlapping_coverage ) {
+
+  SeqLib::BamReader br;
+  br.Open("test_data/small.bam");
+  SeqLib::BamRecordVector brv;
+  size_t count = 0;
+  SeqLib::BamRecord r;
+  while(br.GetNextRecord(r) && ++count < 4) {
+    std::cout << " r " << r << std::endl;
+    brv.push_back(r);
+  }
+  BOOST_CHECK_EQUAL(brv[0].OverlappingCoverage(brv[2]), 101);
+
+}
+
 BOOST_AUTO_TEST_CASE( gr_chr_region_set) {
 
   SeqLib::BamReader br;
@@ -1024,14 +1060,6 @@ BOOST_AUTO_TEST_CASE( sequtils ) {
   BOOST_CHECK_EQUAL(seq, "NGAnACGTcagt");
 
 }
-
-//BOOST_AUTO_TEST_CASE( gr_random ) {
-
-//  SeqLib::GenomicRegion gr;
-//  gr.Random();
-//  std::cerr << " RANDOM " << gr << std::endl;
-
-//}
 
 BOOST_AUTO_TEST_CASE( bam_write ) {
 

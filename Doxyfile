@@ -463,7 +463,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = 
+INPUT                  = /xchip/gistic/Jeremiah/GIT/SeqLib
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -484,27 +484,19 @@ RECURSIVE              = YES
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = bwa \
-		         figs \ 
-		         htslib \
-		         multifast-v1.4.2 \
-		         blat \
-			 src/non_api \
-			 fermi-lite \
-			 src/SeqLib/BLATWrapper.h \
-			 src/BLATWrapper.cpp \
-			 src/json \
-			 src/old \
-			 src/ssw.c \
-			 src/ssw_cpp.cpp \
-			 src/SeqLib/ssw.h \
-			 src/SeqLib/ssw_cpp.h \
-			 src/gzstream.C \
-		         SGA \
-		         seq_test \ 
-		         .git \
-			 .travis.scripts \
-		         README.md
+EXCLUDE                = /xchip/gistic/Jeremiah/GIT/SeqLib/bwa \
+		         /xchip/gistic/Jeremiah/GIT/SeqLib/figs \ 
+		         /xchip/gistic/Jeremiah/GIT/SeqLib/htslib \
+		         /xchip/gistic/Jeremiah/GIT/SeqLib/blat \
+			 /xchip/gistic/Jeremiah/GIT/SeqLib/src/non_api \
+			 /xchip/gistic/Jeremiah/GIT/SeqLib/fermi-lite \
+			 /xchip/gistic/Jeremiah/GIT/SeqLib/json \
+			 /xchip/gistic/Jeremiah/GIT/SeqLib/SeqLib/ssw.h \
+			 /xchip/gistic/Jeremiah/GIT/SeqLib/SeqLib/ssw_cpp.h \
+		         /xchip/gistic/Jeremiah/GIT/SeqLib/SeqLib/seq_test \ 
+		         /xchip/gistic/Jeremiah/GIT/SeqLib/SeqLib/.git \
+			 /xchip/gistic/Jeremiah/GIT/SeqLib/SeqLib/.travis.scripts \
+		         /xchip/gistic/Jeremiah/GIT/SeqLib/SeqLib/README.md
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 

@@ -24,13 +24,18 @@ class GenomicRegion {
 
   /** Construct an "empty" GenomicRegion at (chr -1), pos 0, width = 1
    */
-  GenomicRegion() : chr(-1), pos1(0), pos2(0) {};
+ GenomicRegion() : chr(-1), pos1(0), pos2(0), strand('*') {};
+
+  /** Construct a GenomicRegion from another 
+   * @param gr A GenomicRegion to copy
+   */
+ GenomicRegion(const GenomicRegion& gr) : chr(gr.chr), pos1(gr.pos1), pos2(gr.pos2), strand(gr.strand) {}
 
   /** Construct a GenomicRegion at a specific start and end location 
    * @param t_chr Chromosome id  (chr1 = 0, etc)
    * @param t_pos1 Start position
    * @param t_pos2 End position. Must be >= start position.
-   * @param strand. +, -, or * (default is *)
+   * @param t_strand +, -, or * (default is *)
    * @exception throws an invalid_argument exception if pos2 < pos1
    * @exception throws an invalid_argument exception if char not one of +, - , *
   */
@@ -54,7 +59,7 @@ class GenomicRegion {
    * Note that this requires that a BamHeader be provided as well 
    * to convert the text representation of the chr to the id number.
    * @param reg Samtools-style string (e.g. "1:1,000,000-2,000,000") or single chr
-   * @param h Pointer to BAM header that will be used to convert chr string to ref id
+   * @param hdr Pointer to BAM header that will be used to convert chr string to ref id
    * @exception throws an invalid_argument exception if cannot parse correctly
    */
   GenomicRegion(const std::string& reg, const BamHeader& hdr);

@@ -122,9 +122,9 @@ class BamReader {
 
   /** Explicitly set a reference genome to be used to decode CRAM file.
    * If no reference is specified, will automatically load from
-   * file pointed to in CRAM header using the @SQ tags. 
+   * file pointed to in CRAM header using the SQ tags. 
    * @note This function is useful if the reference path pointed
-   * to by the UR field of @SQ is not on your system, and you would
+   * to by the UR field of SQ is not on your system, and you would
    * like to explicitly provide one.
    * @param ref Path to an index reference genome
    */
@@ -262,8 +262,9 @@ class BamReader {
 
  protected:
 
-  // regions to walk
-  GRC m_region;
+  GRC m_region; ///< Regions to access
+
+ private:
 
   // store the file pointers etc to BAM files
   _BamMap m_bams;

@@ -50,7 +50,7 @@ namespace SeqLib {
     fseq1_t *s;
     s = &m_seqs[n_seqs];
     s->seq   = strdup(r.Seq.c_str());
-    s->qual  = strdup(r.Qual.c_str());
+    s->qual = r.Qual.empty() ? NULL : strdup(r.Qual.c_str());
     
     s->l_seq = r.Seq.length();
     size += m_seqs[n_seqs++].l_seq;
