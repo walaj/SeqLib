@@ -24,7 +24,12 @@ class GenomicRegion {
 
   /** Construct an "empty" GenomicRegion at (chr -1), pos 0, width = 1
    */
-  GenomicRegion() : chr(-1), pos1(0), pos2(0) {};
+ GenomicRegion() : chr(-1), pos1(0), pos2(0), strand('*') {};
+
+  /** Construct a GenomicRegion from another 
+   * @param gr A GenomicRegion to copy
+   */
+ GenomicRegion(const GenomicRegion& gr) : chr(gr.chr), pos1(gr.pos1), pos2(gr.pos2), strand(gr.strand) {}
 
   /** Construct a GenomicRegion at a specific start and end location 
    * @param t_chr Chromosome id  (chr1 = 0, etc)

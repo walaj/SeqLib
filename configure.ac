@@ -40,6 +40,7 @@ AC_SUBST(LDFLAGS, "$LDFLAGS")
 AC_SUBST(LIBS, "$LIBS -pthread")
 
 AC_CONFIG_FILES([Makefile
-	         src/Makefile])
+	         src/Makefile
+	         src/seqtools/Makefile])	
 
 AC_OUTPUT
