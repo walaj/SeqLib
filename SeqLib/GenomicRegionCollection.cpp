@@ -729,10 +729,11 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const T& gr)
 }
 
 template<class T>
-GRC GenomicRegionCollection<T>::Intersection(GRC& subject, bool ignore_strand) const
+template<class K>
+GRC GenomicRegionCollection<T>::Intersection(GenomicRegionCollection<K>& subject, bool ignore_strand) const
 {
   std::vector<int32_t> sub, que;
-  GRC out = this->FindOverlaps(subject, que, sub, ignore_strand);
+  GRC out = this->FindOverlaps<K>(subject, que, sub, ignore_strand);
   return out;
 }
 

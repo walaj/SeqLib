@@ -105,7 +105,7 @@ class BWAWrapper {
   void SetGapOpen(int gap_open);
 
   /** Set the gap open penalty
-   * @param gap_open Gap extension penalty. Default 1
+   * @param gap_ext Gap extension penalty. Default 1
    * @exception Throws invalid_argument if gap_ext < 0
    */
   void SetGapExtension(int gap_ext);

@@ -76,9 +76,9 @@ class BamWriter  {
 
   /** Explicitly set a reference genome to be used to decode CRAM file.
    * If no reference is specified, will automatically load from
-   * file pointed to in CRAM header using the @SQ tags. 
+   * file pointed to in CRAM header using the SQ tags. 
    * @note This function is useful if the reference path pointed
-   * to by the UR field of @SQ is not on your system, and you would
+   * to by the UR field of SQ is not on your system, and you would
    * like to explicitly provide one.
    * @param ref Path to an index reference genome
    * @return Returns true if reference loaded.
@@ -88,7 +88,7 @@ class BamWriter  {
   /** Return the BAM header */
   BamHeader Header() const { return hdr; };
 
- protected:
+ private:
 
   // path to output file
   std::string m_out; 

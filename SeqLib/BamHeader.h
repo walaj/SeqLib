@@ -13,13 +13,13 @@
 namespace SeqLib {
 
   /** Store a reference chromosome and its length
-   * @note This parallels the data found in @SQ tag of BAM header
+   * @note This parallels the data found in SQ tag of BAM header
    */
   struct HeaderSequence {
     
     /** Make a new header sequence 
-     * @param Name of the chromosome
-     * @param Length of the chromosome
+     * @param n Name of the chromosome
+     * @param l Length of the chromosome
      */
   HeaderSequence(const std::string& n, uint32_t l) : Name(n), Length(l) {}
 
@@ -50,8 +50,8 @@ namespace SeqLib {
     BamHeader(const HeaderSequenceVector& hsv);
 
     /** Initialize a BamHeader from a string containing
-     * a BAM header in human-readable form (e.g. @PG ... )
-     * @param Text of a BAM header, with newlines separating lines
+     * a BAM header in human-readable form (e.g. PG ... )
+     * @param hdr Text of a BAM header, with newlines separating lines
      */
     BamHeader(const std::string& hdr);
 
