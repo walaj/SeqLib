@@ -9,15 +9,12 @@
  * BWA-MEM operations in memory, and peforming sequence assembly with FermiKit.
  * See https://github.com/walaj/SeqLib for 
  * full description.
- * \section attribution Attributions
- * - Jeremiah Wala - Harvard MD-PhD candidate, Bioinformatics and Integrative Genomics
- * - Steve Huang - Research Scientist, Broad Institute
- * - Rameen Beroukhim - Asst Professor, Harvard Medical School
  */
 
 #include <string>
 #include <vector>
 
+/** HTSlib/BWA-MEM/BLAT/Fermi operations */
 namespace SeqLib {
 
   static const char RCOMPLEMENT_TABLE[128] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
