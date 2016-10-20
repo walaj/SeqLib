@@ -267,7 +267,6 @@ class BamReader {
   _BamMap m_bams; ///< store the htslib file pointers etc to BAM files
 
  private:
-
   // hold the reference for CRAM reading
   std::string m_cram_reference;
 
