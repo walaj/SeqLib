@@ -264,10 +264,9 @@ class BamReader {
 
   GRC m_region; ///< Regions to access
 
- private:
+  _BamMap m_bams; ///< store the htslib file pointers etc to BAM files
 
-  // store the file pointers etc to BAM files
-  _BamMap m_bams;
+ private:
 
   // hold the reference for CRAM reading
   std::string m_cram_reference;
