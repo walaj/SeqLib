@@ -30,8 +30,9 @@ Installation
 #######
 ```bash
 git clone --recursive https://github.com/walaj/SeqLib.git
-cd SeqLib
-./configure
+cd SeqLib &&
+## cd htslib && ./configure --enable-libcurl && cd ..  ## compile with support for FTP/S3/HTTPS/GoogleCloud BAMs
+./configure ## or ./configure LDFLAGS='-lcurl -lcrpyto' # for FTP etc support
 make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
 make install
 make seqtools ## for the command line version

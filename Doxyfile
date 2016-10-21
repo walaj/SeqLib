@@ -505,7 +505,7 @@ EXCLUDE                = /xchip/gistic/Jeremiah/GIT/SeqLib/bwa \
 EXCLUDE_SYMLINKS       = NO
 
 EXCLUDE_SYMBOLS	       = atm_free_delete bam_hdr_delete bgzf_delete s_align sam_write_delete \
-                         idx_delete hts_itr_delete htsFile_delete _Bam PlottedRead PlottedReadLine
+                         free_delete idx_delete hts_itr_delete htsFile_delete _Bam PlottedRead PlottedReadLine
 
 # If the value of the INPUT tag contains directories, you can use the 
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude 
