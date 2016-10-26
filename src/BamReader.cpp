@@ -16,7 +16,10 @@ bool _Bam::SetRegion(const GenomicRegion& gp) {
     idx = SharedIndex(sam_index_load(fp.get(), m_in.c_str()), idx_delete());
   
   if (!idx) {
-    std::cerr << "Failed to load index for " << m_in << ". Rebuild samtools index" << std::endl;
+    if (m_in != "-")
+      std::cerr << "Failed to load index for " << m_in << ". Rebuild samtools index" << std::endl;
+    else
+      std::cerr << "Random access with SetRegion not available for STDIN reading (no index file)" << std::endl;
     return false;
   }
   

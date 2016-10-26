@@ -222,7 +222,7 @@ class BamRecord {
   void init();
 
   /** Check if a read is empty (not initialized)
-   * @value true if read was not initialized with any values
+   * @return true if read was not initialized with any values
    */
   bool isEmpty() const { return !b; }
 
@@ -427,13 +427,24 @@ class BamRecord {
   /** Set the query name */
   void SetQname(const std::string& n);
 
-  //Set the quality scores 
+  /** Set the quality scores 
+   * @param n String of quality scores or empty string
+   * @param offset Offset parameter for encoding (eg 33)
+   * @exception Throws an invalid_argument if n is non-empty
+   * and different length than sequence
+   */
   void SetQualities(const std::string& n, int offset);
 
-  /** Set the sequence name */
+  /** Set the sequence name 
+   * @param seq Sequence in upper-case (ACTGN) letters. 
+   */
   void SetSequence(const std::string& seq);
 
-  /** Set the cigar field explicitly */
+  /** Set the cigar field explicitly 
+   * @param c Cigar operation to set
+   * @note Will not check if the cigar ops are consistent with 
+   * the length of the sequence.
+   */
   void SetCigar(const Cigar& c);
 
   /** Print a SAM-lite record for this alignment */
@@ -515,10 +526,7 @@ class BamRecord {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
     for (int k = b->core.n_cigar - 1; k >= 0; --k) 
-      //cig.add(CigarField(c[k]));
       cig.add(CigarField(c[k]));
-      //cig.push_back(CigarField(c[k]));
-    //cig.add(CigarField("MIDSSHP=XB"[c[k]&BAM_CIGAR_MASK], bam_cigar_oplen(c[k])));
     return cig;
   }
 
@@ -527,14 +535,19 @@ class BamRecord {
    */
   void ClearSeqQualAndTags();
 
-  /** Get the sequence of this read as a string */
-  /*inline */std::string Sequence() const;
+  /** Retrieve the sequence of this read as a string (ACTGN) */
+  std::string Sequence() const;
 
-  /** Return the mean phred score 
+  /** Return the mean quality score 
    */
   double MeanPhred() const;
 
-  /** Do a smith waterman alignment
+  /** Performa a Smith-Waterman alignment between two strings
+   * @param name Name of the query sequence to align
+   * @param seq Sequence (ACTGN) of the query string
+   * @param ref Sequence (ACTGN) of the reference string
+   * @param gr Location of the reference string. The alignment record after Smith-Waterman alignment
+   * will be relative to this location.
    */
   BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
 
@@ -651,6 +664,8 @@ class BamRecord {
   std::string GetZTag(const std::string& tag) const;
   
   /** Get a vector of type int from a Z tag delimited by "^"
+   * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
+   * do not require an additional data structure on top of bseq1_t. 
    * @param tag Name of the tag eg "AL"
    * @return A vector of ints, retrieved from the x delimited Z tag
    * @exception Throws an invalid_argument if cannot convert delimited field val to int
@@ -658,6 +673,8 @@ class BamRecord {
   std::vector<int> GetSmartIntTag(const std::string& tag) const;
 
   /** Get a vector of type double from a Z tag delimited by "x"
+   * Smart-tags allow one to store vectors of string, ints or doubles in the alignment tags, and
+   * do not require an additional data structure on top of bseq1_t. 
    * @param tag Name of the tag eg "AL"
    * @return A vector of double elems, retrieved from the "^" delimited Z tag
    * @exception Throws an invalid_argument if cannot convert delimited field val to double
@@ -665,6 +682,8 @@ class BamRecord {
   std::vector<double> GetSmartDoubleTag(const std::string& tag) const;
 
   /** Get a vector of strings from a Z tag delimited by "^"
+   * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
+   * do not require an additional data structure on top of bseq1_t. 
    * @param tag Name of the tag eg "CN"
    * @return A vector of strngs, retrieved from the x delimited Z tag
    */
@@ -680,7 +699,6 @@ class BamRecord {
       return 0;
     return bam_aux2i(p);
   }
-
 
   /** Add a string (Z) tag
    * @param tag Name of the tag. eg "XP"
@@ -722,6 +740,9 @@ class BamRecord {
   
   /** Return a human readable chromosome name assuming chr is indexed
    * from 0 (eg id 0 return "1")
+   * @note This is a quick convienence function, and is not robust to non-numbered
+   * chromosomes (eg chrX becomes 23). For accurate string representation of 
+   * any chromosomes, use the full ChrName with BamHeader input.
    */
   inline std::string ChrName() const {
     std::stringstream ss;
@@ -732,9 +753,7 @@ class BamRecord {
   }
 
   /** Retrieve the human readable chromosome name. 
-   * 
-   * Note that this requires that the header not be empty. If
-   * it is empty, assumes this ia chr1 based reference
+   * @param h Dictionary for chr name lookup. If it is empty, assumes this is chr1 based reference.
    * @exception Throws an out_of_range exception if chr id is not in dictionary
    * @return Empty string if chr id < 0, otherwise chromosome name from dictionary.
    */
@@ -799,7 +818,11 @@ class BamRecord {
   /** Return the raw pointer */
   inline bam1_t* raw() const { return b.get(); }
 
-  /** Return the number of bases on the reference that are covered by a match (M) on both reads */
+  /** Return the number of bases on the query that are covered by a match (M) on both reads 
+   * This is for tracking overlapping coverage on the reads, regardless of their alignment locations.
+   * For instance, two reads with 101M will have overlapping coverage of 101, regardless of alignment location.
+   * A read with 50S50M and 50M50S will have 0 overlapping coverage.
+   */
   int OverlappingCoverage(const BamRecord& r) const;
   
   private:
@@ -808,11 +831,11 @@ class BamRecord {
 
 };
 
- typedef std::vector<BamRecord> BamRecordVector; 
+ typedef std::vector<BamRecord> BamRecordVector; ///< Store a vector of alignment records
  
- typedef std::vector<BamRecordVector> BamRecordClusterVector;
+ typedef std::vector<BamRecordVector> BamRecordClusterVector; ///< Store a vector of alignment vectors
 
- /** @brief Sort methods for reads
+ /** @brief Sort methods for alignment records
   */
  namespace BamRecordSort {
 
@@ -825,7 +848,7 @@ class BamRecord {
      }
    };
 
-   /** @brief Sort by read-mate position 
+   /** @brief Sort by mate position 
     */
    struct ByMatePosition
    {

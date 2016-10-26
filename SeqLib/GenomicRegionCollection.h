@@ -82,12 +82,14 @@ class GenomicRegionCollection {
 
   /** Read in a BED file and adds to GenomicRegionCollection object
    * @param file Path to BED file
+   * @param hdr Dictionary for converting chromosome strings in BED file to chr indicies
    * @return True if file was succesfully read
    */
    bool ReadBED(const std::string &file, const SeqLib::BamHeader& hdr);
 
   /** Read in a VCF file and adds to GenomicRegionCollection object
    * @param file Path to VCF file. All elements will be width = 1 (just read start point)
+   * @param hdr Dictionary for converting chromosome strings in BED file to chr indicies
    */
   bool ReadVCF(const std::string &file, const SeqLib::BamHeader& hdr);
 
@@ -99,7 +101,7 @@ class GenomicRegionCollection {
    * This function will automatically detect which file type is being input:
    * -- ends in .vcf -> readVCFfile
    * -- ends in .bed -> readBEDfile
-   * -- header contains "MuTect" -> readMuTect
+   * -- contains ':' -> Assumes single samtools-style region (eg 1:100-100)
    * The values are appended to existing vector of GenomicRegion objects
    * @param file Text file to read and store intervals
    * @param hdr BamHeader to serve as dictionary for chromosomes
@@ -124,7 +126,7 @@ class GenomicRegionCollection {
    */
   size_t size() const { return m_grv->size(); }
 
-  /** Add a new GenomicRegion to end
+  /** Add a new GenomicRegion (or child of) to end
    */
  void add(const T& g) { m_grv->push_back(g); /*createTreeMap();*/ }
 
@@ -185,7 +187,9 @@ class GenomicRegionCollection {
  size_t CountContained(const T &gr);
 
  /** Return the overlaps between the collection and the query collection
-  * @param gr Query collection of intervals
+  * @param subject Subject collection of intervals
+  * @param query_id Indices of the queries that have an overlap. Will be same size as output and subject_id and in same order
+  * @param subject_id Indices of the subject that have an overlap. Will be same size as output and query_id and in same order
   * @param ignore_strand If true, won't exclude overlap if on different strand
   * @return A collection of overlapping intervals from this collection, trimmed to be contained
   * @exception Throws a logic_error if this tree is non-empty, but the interval tree has not been made with 
@@ -193,7 +197,7 @@ class GenomicRegionCollection {
   * inside the query collection
   */
  template<class K>
- GenomicRegionCollection<GenomicRegion> FindOverlaps(GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const;
+ GenomicRegionCollection<GenomicRegion> FindOverlaps(const GenomicRegionCollection<K> &subject, std::vector<int32_t>& query_id, std::vector<int32_t>& subject_id, bool ignore_strand) const;
 
  /** Return the overlaps between the collection and the query interval
   * @param gr Query region 
@@ -203,6 +207,14 @@ class GenomicRegionCollection {
   */
  template<class K>
  GenomicRegionCollection<GenomicRegion> FindOverlaps(const K& gr, bool ignore_strand) const;
+
+ /** Return the number of bases in query that overlap this collection 
+  * @param gr Query GenomicRegion (or child of)
+  * @param ignore_strand If true, won't exclude overlap if on different strand
+  * @return Number of bases in query that overlap with region in collection
+  */
+ template<class K>
+ size_t FindOverlapWidth(const K& gr, bool ignore_strand) const;
 
  /** Return the total amount spanned by this collection */
  int TotalWidth() const; 
@@ -253,31 +265,28 @@ class GenomicRegionCollection {
  /** Return elements as an STL vector of GenomicRegion objects */
  GenomicRegionVector AsGenomicRegionVector() const;
  
+ /** Iterator to first element of the region collection */
  typename std::vector<T>::iterator begin() { return m_grv->begin(); } 
- 
+
+ /** Iterator to end of the region collection */ 
  typename std::vector<T>::iterator end() { return m_grv->end(); } 
- 
+
+ /** Const iterator to first element of the region collection */  
  typename std::vector<T>::const_iterator begin() const { return m_grv->begin(); } 
  
+ /** Const iterator to end of the region collection */ 
  typename std::vector<T>::const_iterator end() const { return m_grv->end(); } 
-
- /*
-   typedef typename std::vector<T>::const_iterator end;
-   const_iterator end() const { return m_grv->end(); }  
-   typedef std::vector<T>::const_iterator begin;
-   const_iterator begin() const { return m_grv->begin(); }  
-   typedef std::vector<T>::iterator end;
-   iterator end()  { return m_grv->end(); }  
-   typedef std::vector<T>::iterator begin;
-   iterator begin()  { return m_grv->begin(); }  
- */
 
   /** Shortcut to FindOverlaps that just returns the intersecting regions
    * without keeping track of the query / subject ids
+   * @param subject Collection of regions to intersect this object with
+   * @param ignore_strand Ignore strand considerations when performing intersection
+   * @return Intersecting regions between subject and query
    */
-  GenomicRegionCollection<GenomicRegion> Intersection(GenomicRegionCollection<GenomicRegion>& subject, bool ignore_strand) const;
+  template <class K>
+  GenomicRegionCollection<GenomicRegion> Intersection(const GenomicRegionCollection<K>& subject, bool ignore_strand) const;
  
- private:
+ protected:
 
  bool m_sorted;
  

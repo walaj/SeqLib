@@ -28,14 +28,14 @@ Installation
 ```bash
 git clone --recursive https://github.com/walaj/SeqLib.git
 cd SeqLib
-./configure
+## cd htslib && ./configure --enable-libcurl && cd .. # support for remote (FTP/HTTPS/Google etc) BAM access
+./configure ## or: ./configure LDFLAGS='-lcurl -lcrypto' # for remote support
 make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
 make install
 make seqtools ## for the command line version
 ```
  
 I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.
-(OSX may require C++11 libs if ``tr1`` not present) 
 
 SeqLib is compatible with c++98 and later.
 
@@ -51,8 +51,21 @@ C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
 And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 ```bash
 SEQ=<path_to_seqlib>
-LDADD="$LDADD -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
+LDFLAGS="$LDFLAGS -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
 ```
+
+To add support for reading BAMs, etc with HTTPS, FTP, S3, Google cloud, etc, you must compile and link with libcurl.
+```bash
+## set hts to build with libcurl links and hfile_libcurl.c
+cd SeqLib/htslib
+./configure --enable-libcurl 
+## compile seqlib with libcurl support
+cd ../ # back to SeqLib main directory
+./configure LDFLAGS="-lcurl -lcrypto"
+make 
+make install
+```
+Remember then to then link any projects made with SeqLib with the additional ``-lcurl -lcrypto`` flags.
 
 Description
 -----------
@@ -92,7 +105,6 @@ Some differences:
 * SeqLib has support for CRAM file
 * SeqLib provides in memory access to BWA-MEM, BLAT, a chromosome aware interval tree and range operations, and to read correction and sequence assembly with Fermi. BamTools has more support currently for network access. 
 * SeqAn provide a substantial amount of additional capabilites not in SeqLib, including graph operations and a more expanded suite of multi-sequence alignments.
-* BamTools has support for network access of BAMs. 
 
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools. Feature requests and comments are welcomed.
@@ -124,12 +136,12 @@ Examples
 ```
 #include "SeqLib/RefGenome.h"
 #include "SeqLib/BWAWrapper.h"
-using SeqLib;
+using namespace SeqLib;
 RefGenome ref;
 ref.LoadIndex("hg19.fasta");
 
 // get sequence at given locus
-std::string seq = ref.queryRegion("1", 1000000,1001000);
+std::string seq = ref.QueryRegion("1", 1000000,1001000);
 
 // Make an in-memory BWA-MEM index of region
 BWAWrapper bwa;
@@ -151,7 +163,7 @@ for (auto& i : results)
 ```
 #include "SeqLib/BamReader.h"
 #include "SeqLib/BWAWrapper.h"
-using SeqLib;
+using namespace SeqLib;
 
 // open the reader BAM/SAM/CRAM
 BamReader bw;
@@ -185,7 +197,7 @@ while (GetNextRecord(r)) {
 ```
 
 #include "SeqLib/FermiAssembler.h"
-using SeqLib;
+using namespace SeqLib;
 
 FermiAssembler f;
 
@@ -217,7 +229,7 @@ for (size_t i = 0; i < contigs.size(); ++i)
 
 ##### Plot a collection of gapped alignments
 ```
-using SeqLib;
+using namespace SeqLib;
 BamReader r;
 r.Open("test_data/small.bam");
 
@@ -255,7 +267,7 @@ CTATCTATCTATCTCTTCTTCTGTCCGTTCATGTGTCTGTCCATCTATCTATCCATCTAT                    
 
 ##### Read simultaneously from a BAM, CRAM and SAM file and send to stdout
 ```
-using SeqLib;
+using namespace SeqLib;
 #include "SeqLib/BamReader.h"
 BamReader r;
   
@@ -278,7 +290,7 @@ w.Close();               // Optional. Will close on destruction
 ##### Perform error correction on reads, using [BFC][bfc]
 ```
 #include "SeqLib/BFC.h"
-using SeqLib;
+using namespace SeqLib;
 
 // brv is some set of reads to train the error corrector
 b.TrainCorrection(brv);
@@ -328,7 +340,7 @@ Development, support, guidance, testing:
 
 [API]: http://pezmaster31.github.io/bamtools/annotated.html
 
-[htmldoc]: http://walaj.github.io/SeqLib/doxygen
+[htmldoc]: http://walaj.github.io/seqlibdocs/doxygen
 
 [var]: https://github.com/walaj/VariantBam
 

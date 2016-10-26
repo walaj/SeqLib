@@ -48,8 +48,10 @@ namespace SeqLib {
      */
     bool AllocateMemory(size_t n);
 
+    /** Peform BFC error correction on the sequences stored in this object */
     bool ErrorCorrect();
 
+    /** Train the error corrector using the reads stored in this object */
     bool Train();
 
     /** Add a sequence for either training or correction */

@@ -6,7 +6,7 @@
 #include <stdint.h> 
 #include "SeqLib/BamRecord.h"
 
-// dont understand this
+// not sure what going on here...
 #ifndef INT32_MAX
 #define INT32_MAX 0x7fffffffL
 #endif
@@ -58,13 +58,13 @@ inline char *samfaipath(const char *fn_ref)
 
 namespace SeqLib {
 
-  /** Small class to store a counter to measure BamWalker progress.
-   *
+  /** Small class to store a counter to measure BamReader progress.
    * Currently only stores number of reads seen / kept. 
    */
 struct ReadCount {
 
-  uint32_t keep, total;
+  uint32_t keep; ///< Store total number of reads kept
+  uint32_t total; ///< Store total number of reads seen
 
   ReadCount() : keep(0), total(0) {}
   
