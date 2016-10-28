@@ -27,6 +27,8 @@ namespace SeqLib {
   typedef SeqHashSet<std::string> StringSet;
 
   namespace Filter {
+
+#ifdef HAVE_C11
   /** Tool for using the Aho-Corasick method for substring queries of 
    * using large dictionaries 
    * @note Trie construction / searching implemented by https://github.com/blockchaindev/aho_corasick
@@ -35,9 +37,7 @@ namespace SeqLib {
     
     /** Allocate a new empty trie */
     AhoCorasick() { 
-#ifdef HAVE_C11
       aho_trie = SeqPointer<aho_corasick::trie>(new aho_corasick::trie()); 
-#endif
       inv = false;
       count = 0;
     } 
@@ -51,9 +51,7 @@ namespace SeqLib {
      * O(n) where (n) is length of query string.
      */
     void AddMotif(const std::string& m) { 
-#ifdef HAVE_C11
       aho_trie->insert(m);
-#endif
     } 
     
     /** Add a set of motifs to the trie from a file 
@@ -68,9 +66,7 @@ namespace SeqLib {
      */
     int QueryText(const std::string& t) const;
 
-#ifdef HAVE_C11
     SeqPointer<aho_corasick::trie> aho_trie; ///< The trie for the Aho-Corasick search
-#endif
     
     std::string file; ///< Name of the file holding the motifs
 
@@ -79,7 +75,7 @@ namespace SeqLib {
     int count; ///< Number of motifs in dictionary
     
   };
-
+#endif
 
 /** Stores a rule for a single alignment flag.
  *
@@ -374,7 +370,9 @@ class AbstractRule {
   size_t m_count;
 
   // the aho-corasick trie
+#ifdef HAVE_C11
   AhoCorasick aho;
+#endif
 
   // id for this rule
   std::string id;

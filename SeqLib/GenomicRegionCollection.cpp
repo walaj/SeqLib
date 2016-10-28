@@ -116,53 +116,6 @@ namespace SeqLib {
 
   }
 
-  /*template<class T>
-bool GenomicRegionCollection<T>::ReadMuTect(const std::string &file, const BamHeader& hdr) {
-
-  std::string curr_chr = "dum";
-  
-  std::ifstream iss(file.c_str());
-  if (!iss || file.length() == 0) { 
-    std::cerr << "MuTect call-stats file does not exist: " << file << std::endl;
-    return false;
-  }
-
-  std::string line;
-  while (std::getline(iss, line, '\n')) {
-    size_t counter = 0;
-      std::string chr, pos, judge;
-      std::istringstream iss_line(line);
-      std::string val;
-      if (line.find("KEEP") != std::string::npos) {
-	while(std::getline(iss_line, val, '\t')) {
-	  switch (counter) { 
-	  case 0 : chr = val; break; 
-	  case 1 : pos = val; break;
-	  }
-	  if (counter >= 1)
-	    break;
-	  ++counter;
-	  
-	  if (curr_chr != chr) {
-	    std::cerr << "...reading MuTect call-stats -- chr" << chr << std::endl;
-	    curr_chr = chr;
-	  }
-
-	}
-
-	// parse the strings and send to genomci region
-	T gr(chr, pos, pos, hdr);
-	if (gr.chr >= 0) {
-	  m_grv->push_back(gr);
-	}
-
-      } // end "keep" conditional
-    } // end main while
-
-  return true;
-}
-  */
-
 template<class T>
 bool GenomicRegionCollection<T>::ReadBED(const std::string & file, const BamHeader& hdr) {
 
@@ -199,7 +152,7 @@ bool GenomicRegionCollection<T>::ReadBED(const std::string & file, const BamHead
     }
 
     // prepare to loop through each field of BED line
-    size_t counter = 0;
+    //size_t counter = 0;
     std::string chr, pos1, pos2;
     std::string line(buffer);
     std::istringstream iss_line(line);
@@ -207,18 +160,9 @@ bool GenomicRegionCollection<T>::ReadBED(const std::string & file, const BamHead
     if (line.find("#") != std::string::npos) 
       continue;
     
-    // loop BED lines
-    while(std::getline(iss_line, val, '\t')) {
-      switch (counter) { 
-      case 0 : chr = val; break; 
-      case 1 : pos1 = val; break;
-      case 2 : pos2 = val; break;
-      }
-      if (counter >= 2)
-	break;
-      ++counter;
-    }
-    
+    // read first three BED columns
+    iss_line >> chr >> pos1 >> pos2;
+
     // construct the GenomicRegion
     T gr(chr, pos1, pos2, hdr);
     
@@ -265,7 +209,6 @@ bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHead
     }
 
     // prepare to loop through each field of BED line
-    size_t counter = 0;
     std::string chr, pos;
     std::string line(buffer);
     std::istringstream iss_line(line);
@@ -273,16 +216,8 @@ bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHead
     if (line.empty() || line.at(0) == '#')
       continue;
     
-    // loop VCF lines
-    while(std::getline(iss_line, val, '\t')) {
-      switch (counter) { 
-      case 0 : chr = val; break; 
-      case 1 : pos = val; break;
-      }
-      if (counter >= 2)
-	break;
-      ++counter;
-    }
+    // read first two columnes
+    iss_line >> chr >> pos;
     
     // construct the GenomicRegion
     T gr(chr, pos, pos, hdr);
@@ -299,16 +234,6 @@ GenomicRegionCollection<T>::GenomicRegionCollection(const std::string &file, con
   allocate_grc();
 
   idx = 0;
-
-  /*
-  // get the header line to check format
-  std::string header;
-  if (!std::getline(iss, header, '\n')) {
-    std::cerr << "Region file is empty: " << file << std::endl;
-    return;
-  }
-  iss.close();
-  */
 
   // check if it's samtools-style file
   if (file.find(":") != std::string::npos) {

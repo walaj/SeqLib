@@ -23,7 +23,11 @@ namespace SeqLib {
     return read_group.empty() && ins.isEvery() && del.isEvery() && isize.isEvery() && 
       mapq.isEvery() && len.isEvery() && clip.isEvery() && nm.isEvery() && 
       nbases.isEvery() && fr.isEvery() && 
-      (subsam_frac >= 1) && xp.isEvery() && !aho.count;
+      (subsam_frac >= 1) && xp.isEvery() 
+#ifdef HAVE_C11
+      && !aho.count
+#endif
+      ;
   }
 
 // define what is a valid condition
@@ -499,13 +503,15 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     // get the sequence as trimmed
     std::string tseq = r.QualitySequence(); //AddZTag("GV", r.Sequence().substr(startpoint, new_len));
     
+#ifdef HAVE_C11
     // check for aho corasick motif match
     if (aho.count) {
       if (!aho.QueryText(tseq))
       return false;
       DEBUGIV(r, "aho pass")
     }
-    
+#endif    
+
     // check for valid NM
     if (!nm.isEvery()) {
       int32_t nm_val = r.GetIntTag("NM");
@@ -671,8 +677,10 @@ std::ostream& operator<<(std::ostream &out, const AbstractRule &ar) {
       out << "del:" << ar.del << " -- ";
     if (ar.subsam_frac < 1)
       out << "sub:" << ar.subsam_frac << " -- ";
+#ifdef HAVE_C11
     if (ar.aho.count)
       out << "motif: " << ar.aho.file << " -- ";
+#endif
     out << ar.fr;
   }
   return out;
@@ -785,31 +793,38 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
 
   void AbstractRule::parseSeqLine(const Json::Value& value) {
     
+#ifdef HAVE_C11
     bool i = false; // invert motif?
+#endif
     std::string motif_file;
     Json::Value null(Json::nullValue);
     if (value.get("motif", null) != null) 
       motif_file = value.get("motif", null).asString();
     else if (value.get("!motif", null) != null) {
       motif_file = value.get("!motif", null).asString();
+#ifdef HAVE_C11
       i = true;
+#endif
     }
     else
       return;
-
+#ifdef HAVE_C11
     addMotifRule(motif_file, i);
+#else
+    if (!motif_file.empty())
+      std::cerr << "WARNING: Need to compile with C++11 for Aho-Corasick matching" << std::endl;
+#endif
 
   return;
 
   }
 
-  void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
 #ifdef HAVE_C11
+  void AbstractRule::addMotifRule(const std::string& f, bool inverted) {
     std::cerr << "...making the AhoCorasick trie from " << f << std::endl;
     aho.TrieFromFile(f);
     std::cerr << "...finished making AhoCorasick trie with " << AddCommas(aho.count) << " motifs" << std::endl;
     aho.inv = inverted;
-#endif
   }
 
   void AhoCorasick::TrieFromFile(const std::string& f) {
@@ -828,6 +843,7 @@ std::ostream& operator<<(std::ostream &out, const Range &r) {
       AddMotif(pat);
     }
   }
+#endif
   
   void AbstractRule::parseSubLine(const Json::Value& value) {
     Json::Value null(Json::nullValue);
@@ -845,14 +861,13 @@ GRC ReadFilterCollection::getAllRegions() const
   return out;
 }
     
-    int AhoCorasick::QueryText(const std::string& t) const {
 #ifdef HAVE_C11
+    int AhoCorasick::QueryText(const std::string& t) const {
       auto matches = aho_trie->parse_text(t);
       return matches.size();
-#else
       return 0;
-#endif
     }
+#endif
 
   }
 }
