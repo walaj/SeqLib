@@ -9,6 +9,10 @@ API Documentation
 -----------------
 [API Documentation][htmldoc]
 
+Citation
+--------
+If you use SeqLib in your applications, please cite: http://bioinformatics.oxfordjournals.org/content/early/2016/12/21/bioinformatics.btw741.full.pdf+html
+
 Table of contents
 =================
 
@@ -51,7 +55,7 @@ C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
 And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 ```bash
 SEQ=<path_to_seqlib>
-LDFLAGS="$LDFLAGS -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
+LDFLAGS="$LDFLAGS $SEQ/bin/libseqlib.a $SEQ/bin/libbwa.a $SEQ/bin/libfml.a $SEQ/bin/libhts.a"
 ```
 
 To add support for reading BAMs, etc with HTTPS, FTP, S3, Google cloud, etc, you must compile and link with libcurl.
@@ -152,7 +156,7 @@ bwa.ConstructIndex(usv);
 std::string querySeq = "CAGCCTCACCCAGGAAAGCAGCTGGGGGTCCACTGGGCTCAGGGAAG";
 BamRecordVector results;
 // hardclip=false, secondary score cutoff=0.9, max secondary alignments=10
-bwa.AlignSequence("my_seq", querySeq, results, false, 0.9, 10); 
+bwa.AlignSequence(querySeq, "my_seq", results, false, 0.9, 10); 
 
 // print results to stdout
 for (auto& i : results)
