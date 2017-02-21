@@ -559,8 +559,8 @@ class BamRecord {
     uint8_t * p = bam_get_qual(b);
     if (!p)
       return std::string();
-    if (!p[0])
-      return std::string();
+    //if (!p[0])
+    //  return std::string();
     std::string out(b->core.l_qseq, ' ');
     for (int32_t i = 0; i < b->core.l_qseq; ++i) 
       out[i] = (char)(p[i] + offset);
