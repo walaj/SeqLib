@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE( read_gzbed ) {
   SeqLib::GRC g(GZBED, br.Header());
   BOOST_CHECK_EQUAL(g.size(), 3);
 
-  BOOST_CHECK_EQUAL(g[2].chr, 22);
+  BOOST_CHECK_EQUAL(g[2].chr, 21);
 
   SeqLib::GRC v(GZVCF, br.Header());
   BOOST_CHECK_EQUAL(v.size(), 31);
@@ -80,29 +80,29 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   b.Train();
   b.clear();
 
-  b.ErrorCorrectToTag(brv2, "KC");  
+  //b.ErrorCorrectToTag(brv2, "KC");  
 
-  UnalignedSequenceVector v;
-  b.GetSequences(v);
+  //UnalignedSequenceVector v;
+  //b.GetSequences(v);
 
   // write to corrected
-  for (auto& i : v) {
-    corr << ">" << i.Name << std::endl << i.Seq << std::endl;
-  }
-  orig.close();
-  corr.close();
+  //for (auto& i : v) {
+  //  corr << ">" << i.Name << std::endl << i.Seq << std::endl;
+  //}
+  //orig.close();
+  //corr.close();
   
   //
-  v.clear();
-  b.FilterUnique();
-  b.GetSequences(v);
+  //v.clear();
+  //b.FilterUnique();
+  //b.GetSequences(v);
 
   // do everything at once
-  b.TrainAndCorrect(brv2);
+  //b.TrainAndCorrect(brv2);
 
   // do everything in place
-  b.TrainCorrection(brv2);
-  b.ErrorCorrectInPlace(brv2);
+  //b.TrainCorrection(brv2);
+  //b.ErrorCorrectInPlace(brv2);
 }
 
 BOOST_AUTO_TEST_CASE( correct_and_assemble ) {
@@ -118,28 +118,23 @@ BOOST_AUTO_TEST_CASE( correct_and_assemble ) {
   while(br.GetNextRecord(rec) && count++ < 10000) 
     brv.push_back(rec);
 
-  b.TrainAndCorrect(brv);
+  //b.TrainAndCorrect(brv);
 
   float kcov = b.GetKCov();
   int   kmer = b.GetKMer();
 
   UnalignedSequenceVector v;
-  b.GetSequences(v);
-
-  std::ofstream corr("corr.fa");
-  for (auto& i : v)
-    corr << ">" << i.Name << std::endl << i.Seq << std::endl;
-  corr.close();
 
   v.clear();
-  b.FilterUnique();
-  b.GetSequences(v);
+  std::string seq, name;
+  while (b.GetSequence(seq, name))
+    v.push_back({name, seq});
 
-  std::ofstream filt("filt.fa");
-  for (auto& i : v) {
-    filt << ">" << i.Name << std::endl << i.Seq << std::endl;
-  }
-  filt.close();
+  //std::ofstream filt("filt.fa");
+  //for (auto& i : v) {
+  //  filt << ">" << i.Name << std::endl << i.Seq << std::endl;
+  //}
+  //filt.close();
 
   FermiAssembler f;
   f.AddReads(v);
@@ -391,8 +386,6 @@ BOOST_AUTO_TEST_CASE ( fermi_add_reads ) {
   f.CorrectReads();
   f.PerformAssembly();
   std::vector<std::string> out = f.GetContigs();
-
-  
   
 }
 
@@ -1174,7 +1167,7 @@ BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
   ss << cig;
 
   // cigar from string
-  SeqLib::Cigar cig2 = SeqLib::cigarFromString(ss.str());
+  SeqLib::Cigar cig2(ss.str());
 
   // check that the string from / to are consistent
   assert(cig == cig2);

@@ -108,6 +108,14 @@ class CigarField {
 
  public:
 
+   /** Construct an empty CIGAR */
+   Cigar() {} 
+
+   /** Construct from a CIGAR string 
+    * @param cig CIGAR string, e.g. 54M46S
+    */
+   Cigar(const std::string& cig);
+
    typedef std::vector<CigarField>::iterator iterator; ///< Iterator for move between CigarField ops
    typedef std::vector<CigarField>::const_iterator const_iterator; ///< Iterator (const) for move between CigarField ops
    iterator begin() { return m_data.begin(); } ///< Iterator (aka std::vector<CigarField>.begin()
@@ -185,10 +193,7 @@ class CigarField {
 
  };
 
- //typedef std::vector<CigarField> Cigar;
  typedef SeqHashMap<std::string, size_t> CigarMap;
-
- Cigar cigarFromString(const std::string& cig);
 
 /** Class to store and interact with a SAM alignment record
  *
@@ -345,7 +350,10 @@ class BamRecord {
   int32_t CountBWAChimericAlignments() const;
 
   /** Get the end of the alignment */
-  inline int32_t PositionEnd() const { return b ? bam_endpos(b.get()) : -1; }
+  int32_t PositionEnd() const;
+
+  /** Get the end of the aligment mate pair */
+  int32_t PositionEndMate() const;
 
   /** Get the chromosome ID of the read */
   inline int32_t ChrID() const { return b ? b->core.tid : -1; }
@@ -414,7 +422,7 @@ class BamRecord {
     if (b->core.tid != b->core.mtid || !PairMappedFlag())
       return 0;
 
-    return std::abs(b->core.pos - b->core.mpos) + Length();
+    return std::abs(b->core.pos - b->core.mpos) + GetCigar().NumQueryConsumed();
 
   }
   
@@ -825,7 +833,10 @@ class BamRecord {
    */
   int OverlappingCoverage(const BamRecord& r) const;
   
-  private:
+  /** Return the shared pointer */
+  SeqPointer<bam1_t> shared_pointer() const { return b; }
+
+  protected:
   
   SeqPointer<bam1_t> b; // bam1_t shared pointer
 
