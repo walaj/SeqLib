@@ -117,9 +117,10 @@ BOOST_AUTO_TEST_CASE( correct_and_assemble ) {
   BamRecordVector brv, brv2;
   size_t count = 0;
   while(br.GetNextRecord(rec) && count++ < 10000) 
-    brv.push_back(rec);
-
-  //b.TrainAndCorrect(brv);
+    b.AddSequence(rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
+  
+  b.Train();
+  b.ErrorCorrect();
 
   float kcov = b.GetKCov();
   int   kmer = b.GetKMer();
@@ -990,7 +991,7 @@ BOOST_AUTO_TEST_CASE( set_qualities ) {
   SeqLib::BamRecord r;
   while (br.GetNextRecord(r)) {
     r.SetQualities("", 0);
-    BOOST_CHECK_EQUAL(r.Qualities(), std::string());
+    BOOST_CHECK_EQUAL(r.Qualities().at(0), '!');
     r.SetQualities(std::string(r.Length(), '#'), 33);
     BOOST_CHECK_EQUAL(r.Qualities(), std::string(r.Length(), '#'));    
     BOOST_CHECK_THROW(r.SetQualities(std::string(8, '#'), 0), std::invalid_argument);
