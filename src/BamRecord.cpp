@@ -190,7 +190,8 @@ namespace SeqLib {
     // get the old tag
     assert(tag.length());
     assert(val.length());
-    std::string tmp = GetZTag(tag);
+    std::string tmp;
+    GetZTag(tag, tmp);
     if (!tmp.length()) 
       {
 	AddZTag(tag, val);
@@ -337,7 +338,8 @@ namespace SeqLib {
   }
 
   std::string BamRecord::QualitySequence() const {
-    std::string seq = GetZTag("GV");
+    std::string seq;
+    GetZTag("GV", seq);
     if (!seq.length()) 
       seq = Sequence();
     return seq;
@@ -349,15 +351,12 @@ namespace SeqLib {
       out << "empty read";
       return out;
     }
-
     out << bam_get_qname(r.b) << "\t" << r.b->core.flag
 	<< "\t" << (r.b->core.tid+1) << "\t" << r.b->core.pos 
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
         << r.FullInsertSize() //r.b->core.isize 
-	<< "\t" << r.Sequence() << "\t*" << 
-      "\tAS:" << r.GetIntTag("AS") << 
-      "\tDD:" << r.GetIntTag("DD");/* << "\t" << r.Qualities()*/;;/* << "\t" << r.Qualities()*/;
+	<< "\t" << r.Sequence() << "\t*" << std::endl;
     return out;
       
     
@@ -368,7 +367,8 @@ namespace SeqLib {
     int xp_count = 0;
     
     // xa tag
-    std::string xar_s = GetZTag("XA");
+    std::string xar_s;
+    GetZTag("XA", xar_s);
     if (xar_s.length()) {
       xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
     }
@@ -382,12 +382,14 @@ namespace SeqLib {
     int xp_count = 0;
     
     // sa tag (post bwa mem v0.7.5)
-    std::string xar_s = GetZTag("SA");
+    std::string xar_s;
+    GetZTag("SA", xar_s);
     if (xar_s.length()) 
       xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
 
     // xp tag (pre bwa mem v0.7.5)
-    std::string xpr_s = GetZTag("XP");
+    std::string xpr_s;
+    GetZTag("XP", xpr_s);
     if (xpr_s.length()) 
       xp_count += std::count(xpr_s.begin(), xpr_s.end(), ';');
 
@@ -450,14 +452,15 @@ namespace SeqLib {
     bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
   }
 
-  std::string BamRecord::GetZTag(const std::string& tag) const {
+  bool BamRecord::GetZTag(const std::string& tag, std::string& s) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
-      return std::string();
+      return false;
     char* pp = bam_aux2Z(p);
     if (!pp) 
-      return std::string();
-    return std::string(pp);
+      return false;
+    s = std::string(pp);
+    return true;
   }
 
   
@@ -465,7 +468,8 @@ namespace SeqLib {
   std::vector<std::string> BamRecord::GetSmartStringTag(const std::string& tag) const {
     
     std::vector<std::string> out;
-    std::string tmp = GetZTag(tag);
+    std::string tmp;
+    GetZTag(tag, tmp);
 
     if (tmp.empty())
       return std::vector<std::string>();
@@ -491,9 +495,7 @@ namespace SeqLib {
     std::vector<int> out;
     std::string tmp;
     
-    tmp = GetZTag(tag);
-    //r_get_Z_tag(a, tag.c_str(), tmp);
-    //assert(tmp.length());
+    GetZTag(tag, tmp);
     if (tmp.empty())
       return std::vector<int>();
     
@@ -516,7 +518,7 @@ namespace SeqLib {
     std::vector<double> out;
     std::string tmp;
     
-    tmp = GetZTag(tag);
+    GetZTag(tag, tmp);
     if (tmp.empty())
       return std::vector<double>();
     

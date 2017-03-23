@@ -1,7 +1,7 @@
 #define USE_BOOST
 
-#define JUMPING_TEST 1
-//#define READ_TEST 1
+//#define JUMPING_TEST 1
+#define READ_TEST 1
 
 #include "SeqLib/SeqLibUtils.h"
 
@@ -14,6 +14,7 @@
 //#define RUN_SEQAN 1
 //#define RUN_BAMTOOLS 1
 #define RUN_SEQLIB 1
+//#define RUN_HTSLIB 1
 
 #ifdef RUN_SEQAN
 #include <seqan/bam_io.h>
@@ -26,7 +27,18 @@ using namespace seqan;
 #include "SeqLib/BamWriter.h"
 #endif
 
-#define BAMTOOLS_GET_CORE 1
+#ifdef RUN_HTSLIB
+#include <iostream>
+extern "C" {
+#include "htslib/htslib/hts.h"
+#include "htslib/htslib/sam.h"
+#include "htslib/htslib/bgzf.h"
+#include "htslib/htslib/kstring.h"
+#include "htslib/htslib/faidx.h"
+}
+#endif
+
+//#define BAMTOOLS_GET_CORE 1
 
 #ifdef RUN_BAMTOOLS
 #include "api/BamReader.h"
@@ -37,7 +49,9 @@ int main()
   
   const size_t limit       = 5000000;
   const size_t print_limit = 1000000;
+#ifdef JUMPING_TEST
   const size_t jump_limit  = 1000;
+#endif
   size_t count = 0;
 
   //std::string bam  = "/xchip/gistic/Jeremiah/GIT/SeqLib/seq_test/test_data/small.bam";
@@ -99,13 +113,18 @@ int main()
 
   SeqLib::BamRecord rec;
   SeqLib::BamRecordVector bav;
+  std::string dummy;
+  std::stringstream ss;
 #ifdef READ_TEST
   std::vector<std::string> sq;
   while(r.GetNextRecord(rec) && count++ < limit) {
     if (count % print_limit == 0)
       std::cerr << "...at read " << SeqLib::AddCommas(count) << std::endl;
     bav.push_back(rec);
+    //dummy = rec.Sequence();
     //sq.push_back(rec.Sequence());
+    //sq.push_back(rec.Qname());
+    //sq.push_back(rec.CigarString());
   }
 #endif
 
@@ -162,6 +181,7 @@ int main()
     }
 
   bool hasAlignments = false;
+  long l = 0;
   for (int i = 0; i < jump_limit; ++i) {
     int chr = rand() % 22;
     int pos = rand() % 1000000 + 1000000;
@@ -171,7 +191,8 @@ int main()
       }
     if (hasAlignments) {
 	  readRecord(record, bamFileIn);
-	  bav.push_back(record);
+	  l += getAlignmentLengthInRef(record);
+	  //bav.push_back(record);
     } else {
       std::cerr << "no alignments here " << std::endl;
     }
@@ -200,6 +221,47 @@ int main()
     }
 #endif
 
+#endif
+
+#ifdef RUN_HTSLIB
+
+  std::cerr << " **** RUNNING HTSLIB **** " << std::endl;
+  bam1_t* b = bam_init1();
+  htsFile* in = hts_open(bam.c_str(), "r");
+  bam_hdr_t* header;
+  if (in == NULL)
+    return -1;
+  if (b == NULL)
+    return -1;
+  header = sam_hdr_read(in);
+  int i = 0;
+  std::vector<bam1_t*> bav;
+  while (sam_read1(in, header, b) >= 0 && count++ < limit) {
+    if (count % print_limit == 0)
+      std::cerr << "...at read " << SeqLib::AddCommas(count) << std::endl;
+    bav.push_back(b);
+    /*
+        int i;
+        const bam1_core_t* c = &b->core;
+        uint8_t *s = bam1_seq(b), *t = bam1_qual(b);
+        fwrite(bam1_qname(b), c->l_qname - 1, sizeof(char), stdout);
+        fputc('\t', stdout);
+        for (i = 0; i < c->l_qseq; ++i)
+            fputc(bam_nt16_rev_table[bam1_seqi(s, i)], stdout);
+        fputc('\t', stdout);
+        if (t[0] == 0xff) {
+            fputs("*", stdout);
+        }
+        else {
+            for (i = 0; i < c->l_qseq; ++i)
+                fputc(t[i] + 33, stdout);
+        }
+        fputc('\n', stdout);
+    */
+  }
+  printf("%d", i);
+  bam_hdr_destroy(header);
+  hts_close(in);
 #endif
 
   std::cerr << " Copied " << bav.size() << " records " << std::endl;

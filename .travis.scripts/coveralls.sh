@@ -19,7 +19,7 @@ then
     ## download the test data
     mkdir test_data
     cd test_data
-    wget -r -nH -nd -np -R index.html* https://data.broadinstitute.org/snowman/SeqLibTest/
+    wget -r -nH -nd -np -R index.html* https://data.broadinstitute.org/snowman/SeqLib/
     cd ..
     
     export LD_LIBRARY_PATH=${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}

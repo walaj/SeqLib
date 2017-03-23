@@ -406,8 +406,8 @@ class BamRecord {
   inline std::string ParseReadGroup() const {
 
     // try to get from RG tag first
-    std::string RG = GetZTag("RG");
-    if (!RG.empty())
+    std::string RG;
+    if (GetZTag("RG", RG))
       return RG;
 
     // try to get the read group tag from qname second
@@ -567,8 +567,8 @@ class BamRecord {
     uint8_t * p = bam_get_qual(b);
     if (!p)
       return std::string();
-    if (!p[0])
-      return std::string();
+    //if (!p[0])
+    //  return std::string();
     std::string out(b->core.l_qseq, ' ');
     for (int32_t i = 0; i < b->core.l_qseq; ++i) 
       out[i] = (char)(p[i] + offset);
@@ -667,9 +667,10 @@ class BamRecord {
   
   /** Get a string (Z) tag 
    * @param tag Name of the tag. eg "XP"
-   * @return The value stored in the tag. Returns empty string if it does not exist.
+   * @param s The string to be filled in with the tag information
+   * @return Returns true if the tag is present, even if empty. Return false if no tag or not a Z tag.
    */
-  std::string GetZTag(const std::string& tag) const;
+  bool GetZTag(const std::string& tag, std::string& s) const;
   
   /** Get a vector of type int from a Z tag delimited by "^"
    * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
@@ -699,13 +700,15 @@ class BamRecord {
 
   /** Get an int (i) tag 
    * @param tag Name of the tag. eg "XP"
-   * @return The value stored in the tag. Returns 0 if it does not exist.
+   * @param t Value to be filled in with the tag value.
+   * @return Return true if the tag exists.
    */
-  inline int32_t GetIntTag(const std::string& tag) const {
+  inline bool GetIntTag(const std::string& tag, int32_t& t) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
-      return 0;
-    return bam_aux2i(p);
+      return false;
+    t = bam_aux2i(p);
+    return true;
   }
 
   /** Add a string (Z) tag
