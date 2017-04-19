@@ -664,6 +664,13 @@ class BamRecord {
    */
   bool GetZTag(const std::string& tag, std::string& s) const;
   
+  /** Get a string of either Z, f or i type. Useful if tag type not known at compile time.
+   * @param tag Name of the tag. eg "XP"
+   * @param s The string to be filled in with the tag information
+   * @return Returns true if the tag is present and is either Z or i, even if empty. Return false if no tag or not Z or i.
+   */  
+  bool GetTag(const std::string& tag, std::string& s) const;
+  
   /** Get a vector of type int from a Z tag delimited by "^"
    * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
    * do not require an additional data structure on top of bseq1_t. 
@@ -700,6 +707,19 @@ class BamRecord {
     if (!p)
       return false;
     t = bam_aux2i(p);
+    return true;
+  }
+
+  /** Get a float (f) tag 
+   * @param tag Name of the tag. eg "AS"
+   * @param t Value to be filled in with the tag value.
+   * @return Return true if the tag exists.
+   */
+  inline bool GetFloatTag(const std::string& tag, float& t) const {
+    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
+    if (!p)
+      return false;
+    t = bam_aux2f(p);
     return true;
   }
 
