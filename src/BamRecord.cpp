@@ -41,6 +41,14 @@ namespace SeqLib {
     b = SeqPointer<bam1_t>(a, free_delete()); 
   }
 
+  int32_t BamRecord::PositionEnd() const { 
+    return b ? (b->core.l_qseq > 0 ? bam_endpos(b.get()) : b->core.pos + GetCigar().NumQueryConsumed()) : -1;
+  }
+
+  int32_t BamRecord::PositionEndMate() const { 
+    return b ? (b->core.mpos + (b->core.l_qseq > 0 ? b->core.l_qseq : GetCigar().NumQueryConsumed())) : -1;
+  }
+
   GenomicRegion BamRecord::AsGenomicRegion() const {
     char s = '*';
     if (MappedFlag())
@@ -52,7 +60,7 @@ namespace SeqLib {
     char s = '*';
     if (MateMappedFlag())
       s = MateReverseFlag() ? '-' : '+';
-    return GenomicRegion(b->core.mtid, b->core.mpos, b->core.mpos + Length(), s);
+    return GenomicRegion(b->core.mtid, b->core.mpos, PositionEndMate(), s);
   }
 
   std::string BamRecord::Sequence() const {
@@ -633,9 +641,9 @@ namespace SeqLib {
   }
 
 
-  Cigar cigarFromString(const std::string& cig) {
+  Cigar::Cigar(const std::string& cig) {
 
-    Cigar tc;
+    //Cigar tc;
 
     // get the ops (MIDSHPN)
     std::vector<char> ops;
@@ -656,10 +664,10 @@ namespace SeqLib {
 
     assert(ops.size() == lens.size());
     for (size_t i = 0; i < lens.size(); ++i) {
-      tc.add(CigarField(ops[i], std::atoi(lens[i].c_str())));
+      add(CigarField(ops[i], std::atoi(lens[i].c_str())));
     }
     
-    return tc;
+    //return tc;
 
   }
 
@@ -679,7 +687,9 @@ namespace SeqLib {
     
     uint32_t* c  = bam_get_cigar(b);
     uint32_t* c2 = bam_get_cigar(r.b);
-    uint8_t * cov1 = (uint8_t*)calloc(b->core.l_qseq, sizeof(uint8_t));
+    
+    //uint8_t * cov1 = (uint8_t*)calloc(l > 0 ? l : b->core.l_qseq, sizeof(uint8_t));
+    uint8_t * cov1 = (uint8_t*)calloc(GetCigar().NumQueryConsumed(), sizeof(uint8_t));
     size_t pos = 0;
     for (int k = 0; k < b->core.n_cigar; ++k) {
       if (bam_cigar_opchr(c[k]) == 'M')  // is match, so track locale

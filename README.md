@@ -301,21 +301,22 @@ w.Close();               // Optional. Will close on destruction
 using namespace SeqLib;
 
 // brv is some set of reads to train the error corrector
-b.TrainCorrection(brv);
+for (BamRecordVector::const_iterator r = brv.begin(); r != brv.end(); ++r)
+    b.AddSequence(r->Sequence().c_str(), r->Qualities().c_str(), r->Qname().c_str());
+b.Train();
+b.clear(); // clear the training sequences. Training parameters saved in BFC object
+
 // brv2 is some set to correct
-b.ErrorCorrect(brv2);
+for (BamRecordVector::const_iterator r = brv2.begin(); r != brv2.end(); ++r)
+    b.AddSequence(r->Sequence().c_str(), r->Qualities().c_str(), r->Qname().c_str());
+b.ErrorCorrect();
 
 // retrieve the sequences
 UnalignedSequenceVector v;
-b.GetSequences(v);
+std::string name, seq;
+while (b.GetSequences(seq, name))
+  v.push_back({name, seq});      			   
 
-// alternatively, to train and correct the same set of reads
-b.TrainAndCorrect(brv);
-b.GetSequences(v);
-
-// alternatively, train and correct, and modify the sequence in-place
-b.TrainCorrection(brv);
-b.ErrorCorrectInPlace(brv);
 ```
 
 Support

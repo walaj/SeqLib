@@ -235,7 +235,8 @@ void runbfc(int argc, char** argv) {
     while(br.GetNextRecord(rec)) {
       if (++count % 1000000 == 0 && opt::verbose)
 	std::cerr << "...at read " << SeqLib::AddCommas(count) << " " << rec.Brief() << std::endl;
-      b.AddSequence(rec); //rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
+      //b.AddSequence(rec); //rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
+      b.AddSequence(rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
     }
   } 
 
@@ -256,12 +257,14 @@ void runbfc(int argc, char** argv) {
     std::cerr << "...finished correcting " << SeqLib::AddCommas(b.NumSequences()) << " sequences" << std::endl;
 
   SeqLib::UnalignedSequenceVector u;
-  b.GetSequences(u);
+  std::string seqr, namr;
+  while (b.GetSequence(seqr, namr)) 
+    u.push_back(SeqLib::UnalignedSequence(namr, seqr));
+
   if (opt::verbose)
     std::cerr << "nseqs: " << u.size() 
 	      << " kcov: " << b.GetKCov() 
 	      << " kmer: " << b.GetKMer() << std::endl;
-  
   
   if (opt::mode == 'f') {
     for (SeqLib::UnalignedSequenceVector::const_iterator i = u.begin();
