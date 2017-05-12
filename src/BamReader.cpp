@@ -230,7 +230,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
     
     // try and get the next read
     int32_t status = m_bams.begin()->second.load_read(r);
-    if (status == 0)
+    if (status >= 0)
       return true;
     if (status == -1) {
       // didn't find anything, clear it
@@ -270,7 +270,7 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       tb->empty = true;
       tb->mark_for_closure = true; // no more reads in this BAM
       continue; 
-    } else if (status != 0) { // error sent back from sam_read1
+    } else if (status < 0) { // error sent back from sam_read1
       // run time error
       std::stringstream ss;
       ss << "sam_read1 return status: " << status << " file: " << bam->first;
@@ -328,6 +328,7 @@ std::string BamReader::PrintRegions() const {
 
   if (hts_itr.get() == NULL) {
     valid = sam_read1(fp.get(), m_hdr.get_(), b);    
+
     if (valid < 0) { 
       
 #ifdef DEBUG_WALKER

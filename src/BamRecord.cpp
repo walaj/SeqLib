@@ -452,6 +452,26 @@ namespace SeqLib {
     bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
   }
 
+  bool BamRecord::GetTag(const std::string& tag, std::string& s) const {
+    if (GetZTag(tag, s))
+      return true;
+    int32_t t;
+    if (GetIntTag(tag, t)) {
+      std::stringstream ss; 
+      ss << t;
+      s = ss.str();
+      return true;
+    } 
+    float f;
+    if (GetFloatTag(tag, f)) {
+      std::stringstream ss; 
+      ss << f;
+      s = ss.str();
+      return true;
+    }     
+    return false;
+  }
+
   bool BamRecord::GetZTag(const std::string& tag, std::string& s) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
