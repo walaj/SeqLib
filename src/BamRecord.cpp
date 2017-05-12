@@ -453,8 +453,10 @@ namespace SeqLib {
   }
 
   bool BamRecord::GetTag(const std::string& tag, std::string& s) const {
+
     if (GetZTag(tag, s))
       return true;
+
     int32_t t;
     if (GetIntTag(tag, t)) {
       std::stringstream ss; 
@@ -462,6 +464,7 @@ namespace SeqLib {
       s = ss.str();
       return true;
     } 
+
     float f;
     if (GetFloatTag(tag, f)) {
       std::stringstream ss; 
@@ -469,13 +472,20 @@ namespace SeqLib {
       s = ss.str();
       return true;
     }     
+
     return false;
+
   }
 
   bool BamRecord::GetZTag(const std::string& tag, std::string& s) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
       return false;
+
+    int type = *p; 
+    if (type != 'Z')
+      return false;
+    
     char* pp = bam_aux2Z(p);
     if (!pp) 
       return false;
