@@ -364,6 +364,14 @@ class BamRecord {
   /** Get the mapping quality */
   inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
 
+  /** Set the qc fail flag on/off (true -> on) */
+  inline void SetQCFail(bool f) { 
+    if (f)
+      b->core.flag |= BAM_FQCFAIL;
+    else
+      b->core.flag &= ~BAM_FQCFAIL;
+  }
+
   /** Set the mapping quality */
   inline void SetMapQuality(int32_t m) { if (b) b->core.qual = m; }
 
@@ -376,11 +384,21 @@ class BamRecord {
   /** Set the position of the mate read */
   inline void SetPositionMate(int32_t i) { b->core.mpos = i; }
 
-  /** Set the pair mapped flag on */
-  inline void SetPairMappedFlag() { b->core.flag |= BAM_FPAIRED; }
+  /** Set the pair mapped flag on/off (true -> on) */
+  inline void SetPairMappedFlag(bool f) { 
+    if (f)
+      b->core.flag |= BAM_FPAIRED;
+    else
+      b->core.flag &= ~BAM_FPAIRED;
+  }
 
-  /** Set the mate reverse flag on */
-  inline void SetMateReverseFlag() { b->core.flag |= BAM_FMREVERSE; }
+  /** Set the mate reverse flag on/off (true -> on) */
+  inline void SetMateReverseFlag(bool f) { 
+    if (f)
+      b->core.flag |= BAM_FMREVERSE;
+    else
+      b->core.flag &= ~BAM_FMREVERSE;
+  }
 
   /** Get the number of cigar fields */
   inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
