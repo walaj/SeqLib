@@ -1,8 +1,8 @@
 #ifndef SEQLIB_THREAD_POOL_H
 #define SEQLIB_THREAD_POOL_H
 
+#include <stdexcept>
 #include "SeqLib/BamWalker.h"
-
 #include "htslib/thread_pool.h"
 
 namespace SeqLib{
