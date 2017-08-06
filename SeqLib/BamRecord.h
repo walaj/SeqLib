@@ -541,7 +541,7 @@ class BamRecord {
   Cigar GetCigar() const {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
-    for (int k = 0; k < b->core.n_cigar; ++k) {
+    for (size_t k = 0; k < b->core.n_cigar; ++k) {
       cig.add(CigarField(c[k]));
     }
     return cig;
@@ -614,7 +614,7 @@ class BamRecord {
   inline int32_t AlignmentEndPositionReverse() const {
     uint32_t* c = bam_get_cigar(b);
     int32_t p = 0;
-    for (int32_t i = 0; i < b->core.n_cigar; ++i) { // loop from the end
+    for (size_t i = 0; i < b->core.n_cigar; ++i) { // loop from the end
       if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
 	p += bam_cigar_oplen(c[i]);
       else // not a clip, so stop counting
@@ -629,7 +629,7 @@ class BamRecord {
   inline int32_t AlignmentPosition() const {
     uint32_t* c = bam_get_cigar(b);
     int32_t p = 0;
-    for (int32_t i = 0; i < b->core.n_cigar; ++i) {
+    for (size_t i = 0; i < b->core.n_cigar; ++i) {
       if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
 	p += bam_cigar_oplen(c[i]);
       else // not a clip, so stop counting
@@ -656,7 +656,7 @@ class BamRecord {
   inline int32_t NumSoftClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
-      for (int32_t i = 0; i < b->core.n_cigar; ++i)
+      for (size_t i = 0; i < b->core.n_cigar; ++i)
 	if (bam_cigar_opchr(c[i]) == 'S')
 	  p += bam_cigar_oplen(c[i]);
       return p;
@@ -666,7 +666,7 @@ class BamRecord {
   inline int32_t NumHardClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
-      for (int32_t i = 0; i < b->core.n_cigar; ++i) 
+      for (size_t i = 0; i < b->core.n_cigar; ++i) 
 	if (bam_cigar_opchr(c[i]) == 'H')
 	  p += bam_cigar_oplen(c[i]);
       return p;
@@ -677,7 +677,7 @@ class BamRecord {
   inline int32_t NumClip() const {
     int32_t p = 0;
     uint32_t* c = bam_get_cigar(b);
-    for (int32_t i = 0; i < b->core.n_cigar; ++i)
+    for (size_t i = 0; i < b->core.n_cigar; ++i)
       if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H') )
 	p += bam_cigar_oplen(c[i]);
     return p;
@@ -790,7 +790,7 @@ class BamRecord {
   inline std::string CigarString() const {
     std::stringstream cig;
     uint32_t* c = bam_get_cigar(b);
-    for (int k = 0; k < b->core.n_cigar; ++k)
+    for (size_t k = 0; k < b->core.n_cigar; ++k)
       cig << bam_cigar_oplen(c[k]) << "MIDNSHP=XB"[c[k]&BAM_CIGAR_MASK];
     return cig.str();
   }

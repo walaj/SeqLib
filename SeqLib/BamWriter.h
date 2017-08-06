@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "SeqLib/BamRecord.h"
+#include "SeqLib/ThreadPool.h"
 
 namespace SeqLib {
 
@@ -36,6 +37,16 @@ class BamWriter  {
    * @return False if cannot write header
    */
   bool WriteHeader() const;
+
+  /** Assign this BamWriter a thread pool
+   * 
+   * The thread pool with stay with this object, but
+   * will not be created or destroyed. This must be done
+   * separately, which allows for multiple readers/writers
+   * to be connected to one thread pool
+   * @return false if the thread pool has not been opened
+   */
+  bool SetThreadPool(ThreadPool p);
 
   /** Provide a header to this writer 
    * @param h Header for this writer. Copies contents
@@ -93,9 +104,6 @@ class BamWriter  {
   // path to output file
   std::string m_out; 
 
-  // open m_out, true if success
-  void open_BAM_for_writing();
-  
   // output format
   std::string output_format; 
   
@@ -104,6 +112,9 @@ class BamWriter  {
 
   // header
   SeqLib::BamHeader hdr;
+
+  // for multicore reading/writing
+  ThreadPool pool;
   
 };
 

@@ -1,6 +1,5 @@
 #include "SeqLib/BamReader.h"
 
-
 //#define DEBUG_WALKER 1
 
 namespace SeqLib {
@@ -150,7 +149,7 @@ void BamReader::Reset() {
     
     _Bam new_bam(bam);
     new_bam.m_region = &m_region;
-    bool success = new_bam.open_BAM_for_reading();
+    bool success = new_bam.open_BAM_for_reading(pool);
     m_bams.insert(std::pair<std::string, _Bam>(bam, new_bam));
     return success;
   }
@@ -173,16 +172,28 @@ BamReader::BamReader() {}
 
   }
 
+  bool BamReader::SetThreadPool(ThreadPool p) {
+    if (!p.IsOpen())
+      return false;
+    pool = p;
+    for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b)
+      b->second.set_pool(p);
+    return true;
+  }
+  
   BamHeader BamReader::Header() const { 
     if (m_bams.size()) 
       return m_bams.begin()->second.m_hdr; 
     return BamHeader(); 
   }
 
-  bool _Bam::open_BAM_for_reading() {
+  bool _Bam::open_BAM_for_reading(SeqLib::ThreadPool t) {
 
     // HTS open the reader
     fp = SharedHTSFile(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+
+    // connect the thread pool (may already be done, but its ok
+    set_pool(t);
 
     // open cram reference
     if (!m_cram_reference.empty()) {
