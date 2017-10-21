@@ -18,6 +18,8 @@ AC_CHECK_HEADER([zlib.h])
 
 # Check for libraries
 AC_SEARCH_LIBS([gzopen],[z],,[AC_MSG_ERROR([libz not found, please install zlib (http://www.zlib.net/)])])
+AC_SEARCH_LIBS([lzma_code],[lzma],,[AC_MSG_ERROR([liblzma not found, please install lzma (http://www.7-zip.org/sdk.html)])])
+AC_SEARCH_LIBS([BZ2_bzBuffToBuffDecompress],[bz2],,[AC_MSG_ERROR([lib bz2 not found, please install])])
 AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [clock_getttime found])], )
 
 # check for c++11

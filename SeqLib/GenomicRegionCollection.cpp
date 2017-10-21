@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <zlib.h>
 
-#define GZBUFFER 4096
+#define GZBUFFER 65472
 
 //#define DEBUG_OVERLAPS 1
 
@@ -124,7 +124,7 @@ bool GenomicRegionCollection<T>::ReadBED(const std::string & file, const BamHead
 
   gzFile fp = NULL;
   fp = strcmp(file.c_str(), "-")? gzopen(file.c_str(), "r") : gzdopen(fileno(stdin), "r");
-  
+
   if (file.empty() || !fp) {
     std::cerr << "BED file not readable: " << file << std::endl;
     return false;
@@ -215,12 +215,19 @@ bool GenomicRegionCollection<T>::ReadVCF(const std::string & file, const BamHead
     std::string val;
     if (line.empty() || line.at(0) == '#')
       continue;
-    
+
     // read first two columnes
     iss_line >> chr >> pos;
-    
+
     // construct the GenomicRegion
-    T gr(chr, pos, pos, hdr);
+    T gr;
+    try {
+      gr = T(chr, pos, pos, hdr);
+    } catch (...) {
+      std::cerr << "...Could not parse pos: " << pos << std::endl << std::endl
+		<< "...on line " << line << std::endl;
+      
+    }
     if (gr.chr >= 0) 
       m_grv->push_back(gr);
   }

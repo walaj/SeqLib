@@ -4,6 +4,7 @@
 #include <cassert>
 #include "SeqLib/ReadFilter.h"
 #include "SeqLib/BamWalker.h"
+#include "SeqLib/ThreadPool.h"
 
 // forward declare this from hts.c
 extern "C" {
@@ -44,6 +45,11 @@ namespace SeqLib {
     // do the read loading
     // the return value here is just passed along from sam_read1
     int32_t load_read(BamRecord& r);
+
+    void set_pool(ThreadPool t) {
+      if (t.IsOpen() && fp) // probably dont need this, it can handle null
+	hts_set_opt(fp.get(),  HTS_OPT_THREAD_POOL, &t.p); //t.p is htsThreadPool
+    }
 
     void reset() {
       empty = true;
@@ -97,7 +103,7 @@ namespace SeqLib {
     bool mark_for_closure;
     
     // open the file pointer
-    bool open_BAM_for_reading();
+    bool open_BAM_for_reading(SeqLib::ThreadPool t);
 
     // hold the reference for CRAM reading
     std::string m_cram_reference;
@@ -141,6 +147,16 @@ class BamReader {
    */
   bool SetRegion(const GenomicRegion& gp);
 
+  /** Assign this BamReader a thread pool
+   * 
+   * The thread pool with stay with this object, but
+   * will not be created or destroyed. This must be done
+   * separately, which allows for multiple readers/writers
+   * to be connected to one thread pool
+   * @return false if the thread pool has not been opened 
+   */
+  bool SetThreadPool(ThreadPool p);
+  
   /** Set up multiple regions. Overwrites current regions. 
    * 
    * This will set the BAM pointer to the first element of the
@@ -270,6 +286,9 @@ class BamReader {
  private:
   // hold the reference for CRAM reading
   std::string m_cram_reference;
+
+  // for multicore reading/writing
+  ThreadPool pool;
 
 };
 
