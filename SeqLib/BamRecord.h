@@ -732,10 +732,11 @@ class BamRecord {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
       return false;
+    t = bam_aux2i(p);
     int type = *p++;
     if (!(type == 'i' || type == 'C' || type=='S' || type=='s' || type =='I' || type=='c'))
       return false;
-    t = bam_aux2i(p);
+
     return true;
   }
 
@@ -749,12 +750,12 @@ class BamRecord {
     if (!p)
       return false;
 
+    t = bam_aux2f(p);
     int type = *p;
     type = *p++;
     if (!(type == 'f' || type == 'd'))
       return false;
 
-    t = bam_aux2f(p);
     return true;
   }
 
