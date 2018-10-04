@@ -16,6 +16,25 @@ extern "C" {
   #include <string.h>
 }
 
+// custom sort 
+bool aln_sort(const mem_aln_t& lhs, const mem_aln_t& rhs)
+{
+  if (lhs.mapq > rhs.mapq) //want descending order of mapq
+    return true;
+  else if (lhs.mapq < rhs.mapq)
+    return false;
+  // break tied mapq with position
+  if (lhs.rid < rhs.rid)
+    return true;
+  else if (lhs.rid > rhs.rid)
+    return false;
+  if (lhs.pos < rhs.pos)
+    return true;
+  else if (lhs.pos > rhs.pos)
+    return false;
+  return false;
+}
+
 //#define DEBUG_BWATOOLS 1
 
 #define _set_pac(pac, l, c) ((pac)[(l)>>2] |= (c)<<((~(l)&3)<<1))
@@ -244,12 +263,24 @@ namespace SeqLib {
     ar = mem_align1(memopt, idx->bwt, idx->bns, idx->pac, seq.length(), seq.data()); // get all the hits (was c_str())
 
 #ifdef DEBUG_BWATOOLS
-    std::cout << "num hits: " << ar.n << std::endl;
+      std::cerr << "num hits: " << ar.n << " " << name << std::endl;
+      size_t secondary_count_debug = 0;
+      for (size_t i = 0; i < ar.n; ++i) {
+	if (ar.a[i].secondary >= 0)
+	  secondary_count_debug++;
+      }
+      std::cerr << "secondary count " << secondary_count_debug << std::endl;
+    }
 #endif    
 
     double primary_score = 0;
 
     int secondary_count = 0;
+
+    //setup a vector to store the hits. Why remake a vector? Because
+    //I want them to be in the same order for all runs. With BWA multithreading,
+    //it may not be so in the initial ar.a vector.
+    std::vector<mem_aln_t> a;
 
     //size_t num_secondary = 0;
     // loop through the hits
@@ -259,34 +290,40 @@ namespace SeqLib {
       	continue; // skip secondary alignments
       
       // get forward-strand position and CIGAR
-      mem_aln_t a;
+      mem_aln_t a_aln;
 
-      a = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
+      a_aln = mem_reg2aln(memopt, idx->bns, idx->pac, seq.length(), seq.c_str(), &ar.a[i]); 
 
+      a.push_back(a_aln);
+    }
+    
+    // sort it 
+    std::sort(a.begin(), a.end(), aln_sort);
+    
+    for (size_t i = 0; i < a.size(); ++i) {
+      
       // if score not sufficient or past cap, continue
-      bool sec_and_low_score =  ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score;
-      bool sec_and_cap_hit = ar.a[i].secondary >= 0 && (int)i > max_secondary;
+      //bool sec_and_low_score =  ar.a[i].secondary >= 0 && (primary_score * keep_sec_with_frac_of_primary_score) > a.score;
+      //bool sec_and_cap_hit = ar.a[i].secondary >= 0 && (int)i > max_secondary;
+      bool sec_and_low_score = (a[i].flag&BAM_FSECONDARY) && (primary_score * keep_sec_with_frac_of_primary_score) > a[i].score;
+      bool sec_and_cap_hit =   (a[i].flag&BAM_FSECONDARY) && (int)i > max_secondary;
       if (sec_and_low_score || sec_and_cap_hit) {
-	free(a.cigar);
+	free(a[i].cigar);
 	continue;
-      } else if (ar.a[i].secondary < 0) {
-	primary_score = a.score;
+      } else if (!(a[i].flag&BAM_FSECONDARY)) {
+	primary_score = a[i].score;
 	//num_secondary = 0;
       }
-
-#ifdef DEBUG_BWATOOLS
-      std::cerr << "allocing bamread" << std::endl;
-#endif
 
       // instantiate the read
       BamRecord b;
       b.init();
 
-      b.b->core.tid = a.rid;
-      b.b->core.pos = a.pos;
-      b.b->core.qual = a.mapq;
-      b.b->core.flag = a.flag;
-      b.b->core.n_cigar = a.n_cigar;
+      b.b->core.tid = a[i].rid;
+      b.b->core.pos = a[i].pos;
+      b.b->core.qual = a[i].mapq;
+      b.b->core.flag = a[i].flag;
+      b.b->core.n_cigar = a[i].n_cigar;
       
       // set dumy mate
       b.b->core.mtid = -1;
@@ -294,7 +331,7 @@ namespace SeqLib {
       b.b->core.isize = 0;
 
       // if alignment is reverse, set it
-      if (a.is_rev) 
+      if (a[i].is_rev) 
 	b.b->core.flag |= BAM_FREVERSE;
 
       std::string new_seq = seq;
@@ -302,11 +339,11 @@ namespace SeqLib {
       if (hardclip) {
 	size_t tstart = 0;
 	size_t len = 0;
-	for (int i = 0; i < a.n_cigar; ++i) {
-	  if (i == 0 && bam_cigar_op(a.cigar[i]) == BAM_CREF_SKIP) // first N (e.g. 20N50M)
-	    tstart = bam_cigar_oplen(a.cigar[i]);
-	  else if (bam_cigar_type(bam_cigar_op(a.cigar[i]))&1) // consumes query, but not N
-	    len += bam_cigar_oplen(a.cigar[i]);
+	for (int i = 0; i < a[i].n_cigar; ++i) {
+	  if (i == 0 && bam_cigar_op(a[i].cigar[i]) == BAM_CREF_SKIP) // first N (e.g. 20N50M)
+	    tstart = bam_cigar_oplen(a[i].cigar[i]);
+	  else if (bam_cigar_type(bam_cigar_op(a[i].cigar[i]))&1) // consumes query, but not N
+	    len += bam_cigar_oplen(a[i].cigar[i]);
 	}
 	assert(len > 0);
 	assert(tstart + len <= seq.length());
@@ -316,19 +353,15 @@ namespace SeqLib {
       // allocate all the data
       b.b->core.l_qname = name.length() + 1;
       b.b->core.l_qseq = new_seq.length(); //(seq.length()>>1) + seq.length() % 2; // 4-bit encoding
-      b.b->l_data = b.b->core.l_qname + (a.n_cigar<<2) + ((b.b->core.l_qseq+1)>>1) + (b.b->core.l_qseq);
+      b.b->l_data = b.b->core.l_qname + (a[i].n_cigar<<2) + ((b.b->core.l_qseq+1)>>1) + (b.b->core.l_qseq);
       b.b.get()->data = (uint8_t*)malloc(b.b.get()->l_data);
-
-#ifdef DEBUG_BWATOOLS
-      std::cerr << "memcpy" << std::endl;
-#endif
 
       // allocate the qname
       memcpy(b.b->data, name.c_str(), name.length() + 1);
 
       // allocate the cigar. Reverse if aligned to neg strand, since mem_aln_t stores
       // cigars relative to referemce string oreiatnion, not forward alignment
-      memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a.cigar, a.n_cigar<<2);
+      memcpy(b.b->data + b.b->core.l_qname, (uint8_t*)a[i].cigar, a[i].n_cigar<<2);
 
       // convert N to S or H
       int new_val = hardclip ? BAM_CHARD_CLIP : BAM_CSOFT_CLIP;
@@ -346,7 +379,7 @@ namespace SeqLib {
       // TODO move this out of bigger loop
       int slen = new_seq.length();
       int j = 0;
-      if (a.is_rev) {
+      if (a[i].is_rev) {
 	for (int i = slen-1; i >= 0; --i) {
 	  
 	  // bad idea but works for now
@@ -384,23 +417,19 @@ namespace SeqLib {
 	}
       }
 
-#ifdef DEBUG_BWATOOLS
-      std::cerr << "memcpy3" << std::endl;
-#endif
-
       // allocate the quality to NULL
       uint8_t* s = bam_get_qual(b.b);
       s[0] = 0xff;
 
       b.AddIntTag("NA", ar.n); // number of matches
-      b.AddIntTag("NM", a.NM);
+      b.AddIntTag("NM", a[i].NM);
 
-      if (a.XA)
-	b.AddZTag("XA", std::string(a.XA));
+      if (a[i].XA)
+	b.AddZTag("XA", std::string(a[i].XA));
 
       // add num sub opt
-      b.AddIntTag("SB", ar.a[i].sub_n);
-      b.AddIntTag("AS", a.score);
+      //b.AddIntTag("SB", ar.a[i].sub_n);
+      b.AddIntTag("AS", a[i].score);
 
       // count num secondaries
       if (b.SecondaryFlag())
@@ -410,22 +439,22 @@ namespace SeqLib {
 
 #ifdef DEBUG_BWATOOLS
       // print alignment
-      printf("\t%c\t%s\t%ld\t%d\t", "+-"[a.is_rev], idx->bns->anns[a.rid].name, (long)a.pos, a.mapq);
-      for (int k = 0; k < a.n_cigar; ++k) // print CIGAR
-      	printf("%d%c", a.cigar[k]>>4, "MIDSH"[a.cigar[k]&0xf]);
-      printf("\t%d\n", a.NM); // print edit distance
-      std::cerr << "final done" << std::endl;
+      printf("\t%c\t%s\t%ld\t%d\t", "+-"[a[i].is_rev], idx->bns->anns[a[i].rid].name, (long)a[i].pos, a[i].mapq);
+      for (int k = 0; k < a[i].n_cigar; ++k) // print CIGAR
+      	printf("%d%c", a[i].cigar[k]>>4, "MIDSH"[a[i].cigar[k]&0xf]);
+      printf("\t%d\n", a[i].NM); // print edit distance
 #endif
       
-      free(a.cigar); // don't forget to deallocate CIGAR
+      free(a[i].cigar); // don't forget to deallocate CIGAR
     }
+    
     free (ar.a); // dealloc the hit list
-
+    
     // add the secondary counts
     for (BamRecordVector::iterator i = vec.begin(); i != vec.end(); ++i)
       i->AddIntTag("SQ", secondary_count);
     
-}
+  }
 
   // modified from bwa (heng li)
 uint8_t* BWAWrapper::seqlib_add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q)
