@@ -11,9 +11,10 @@ extern "C" {
 int hts_useek(htsFile *file, long uoffset, int where);
 }
 
-class BamReader;
 
 namespace SeqLib {
+
+  class BamReader;
 
   typedef SeqPointer<hts_idx_t> SharedIndex; ///< Shared pointer to the HTSlib index struct
 
