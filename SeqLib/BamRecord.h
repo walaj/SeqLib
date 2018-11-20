@@ -332,6 +332,9 @@ class BamRecord {
 
   /** Get the alignment position */
   inline int32_t Position() const { return b ? b->core.pos : -1; }
+
+  /** Get the alignment position, including soft clips */
+  int32_t PositionWithSClips() const;
   
   /** Get the alignment position of mate */
   inline int32_t MatePosition() const { return b ? b->core.mpos: -1; }
@@ -351,6 +354,9 @@ class BamRecord {
 
   /** Get the end of the alignment */
   int32_t PositionEnd() const;
+
+  /** Get the end of the alignment, including soft clips */
+  int32_t PositionEndWithSClips() const;
 
   /** Get the end of the aligment mate pair */
   int32_t PositionEndMate() const;
