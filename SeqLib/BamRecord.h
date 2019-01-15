@@ -826,7 +826,7 @@ class BamRecord {
     if (b->core.tid < 0)
       return std::string();
 
-    if (h.isEmpty())
+    if (!h.isEmpty())
       return h.IDtoName(b->core.tid);
 
     // c++98    
