@@ -61,9 +61,9 @@ int GenomicRegion::GetOverlap(const GenomicRegion& gr) const {
   }
 
   
-  std::string GenomicRegion::PointString() const {
+  std::string GenomicRegion::PointString(const BamHeader& h) const {
     std::stringstream out;
-    out << chrToString(chr) << ":" << SeqLib::AddCommas<int>(pos1) << "(" << strand << ")";
+    out << ChrName(h) << ":" << SeqLib::AddCommas<int>(pos1) << "(" << strand << ")";
     return out.str();
   }
 
@@ -112,10 +112,16 @@ bool GenomicRegion::operator>=(const GenomicRegion &b) const {
   return (*this > b || *this == b);
 }
 
-  std::string GenomicRegion::ToString() const {
+  /*  std::string GenomicRegion::ToString() const {
     return chrToString(chr) + ":" + SeqLib::AddCommas<int>(pos1) + "-" + AddCommas<int>(pos2) + "(" +
       strand + ")"; 
+      }*/
+
+  std::string GenomicRegion::ToString(const BamHeader& h) const {
+    return ChrName(h) + ":" + SeqLib::AddCommas<int>(pos1) + "-" + AddCommas<int>(pos2) + "(" +
+      strand + ")"; 
   }
+
 
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
   out << gr.chrToString(gr.chr) << ":" << SeqLib::AddCommas<int>(gr.pos1) << "-" << AddCommas<int>(gr.pos2) << "(" << 
