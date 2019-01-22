@@ -1,6 +1,5 @@
 #include "SeqLib/BamReader.h"
 
-
 //#define DEBUG_WALKER 1
 
 namespace SeqLib {
@@ -150,7 +149,7 @@ void BamReader::Reset() {
     
     _Bam new_bam(bam);
     new_bam.m_region = &m_region;
-    bool success = new_bam.open_BAM_for_reading();
+    bool success = new_bam.open_BAM_for_reading(pool);
     m_bams.insert(std::pair<std::string, _Bam>(bam, new_bam));
     return success;
   }
@@ -173,16 +172,28 @@ BamReader::BamReader() {}
 
   }
 
+  bool BamReader::SetThreadPool(ThreadPool p) {
+    if (!p.IsOpen())
+      return false;
+    pool = p;
+    for (_BamMap::iterator b = m_bams.begin(); b != m_bams.end(); ++b)
+      b->second.set_pool(p);
+    return true;
+  }
+  
   BamHeader BamReader::Header() const { 
     if (m_bams.size()) 
       return m_bams.begin()->second.m_hdr; 
     return BamHeader(); 
   }
 
-  bool _Bam::open_BAM_for_reading() {
+  bool _Bam::open_BAM_for_reading(SeqLib::ThreadPool t) {
 
     // HTS open the reader
     fp = SharedHTSFile(hts_open(m_in.c_str(), "r"), htsFile_delete()); 
+
+    // connect the thread pool (may already be done, but its ok
+    set_pool(t);
 
     // open cram reference
     if (!m_cram_reference.empty()) {
@@ -224,13 +235,24 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 
   // shortcut if we have only a single bam
   if (m_bams.size() == 1) {
+    
     if (m_bams.begin()->second.fp.get() == NULL || m_bams.begin()->second.mark_for_closure) // cant read if not opened
       return false;
-    if (m_bams.begin()->second.load_read(r)) { // try to read
+    
+    // try and get the next read
+    int32_t status = m_bams.begin()->second.load_read(r);
+    if (status >= 0)
       return true;
+    if (status == -1) {
+      // didn't find anything, clear it
+      m_bams.begin()->second.mark_for_closure = true;
+      return false;
     }
-    // didn't find anything, clear it
-    m_bams.begin()->second.mark_for_closure = true;
+    
+    // run time error
+    std::stringstream ss;
+    ss << "sam_read1 return status: " << status << " file: " << m_bams.begin()->first;
+    throw std::runtime_error(ss.str());
     return false;
   }
 
@@ -253,10 +275,17 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       continue; 
     
     // load the next read
-    if (!tb->load_read(r)) { // if cant load, mark for closing
+    int32_t status = tb->load_read(r);
+    if (status == -1) {
+      // can't load, so mark for closing
       tb->empty = true;
       tb->mark_for_closure = true; // no more reads in this BAM
       continue; 
+    } else if (status < 0) { // error sent back from sam_read1
+      // run time error
+      std::stringstream ss;
+      ss << "sam_read1 return status: " << status << " file: " << bam->first;
+      throw std::runtime_error(ss.str());
     }
     
   }
@@ -302,14 +331,15 @@ std::string BamReader::PrintRegions() const {
 
 }
 
-  bool _Bam::load_read(BamRecord& r) {
+  int32_t _Bam::load_read(BamRecord& r) {
 
   // allocated the memory
   bam1_t* b = bam_init1(); 
-  int32_t valid;
+  int32_t valid = -1; // start with EOF return code
 
   if (hts_itr.get() == NULL) {
     valid = sam_read1(fp.get(), m_hdr.get_(), b);    
+
     if (valid < 0) { 
       
 #ifdef DEBUG_WALKER
@@ -317,7 +347,7 @@ std::string BamReader::PrintRegions() const {
 #endif
       //goto endloop;
       bam_destroy1(b);
-      return false;
+      return valid;
     }
   } else {
     
@@ -326,7 +356,7 @@ std::string BamReader::PrintRegions() const {
     valid = sam_itr_next(fp.get(), hts_itr.get(), b);
   }
   
-  if (valid < 0) { // read not found
+  if (valid < 0) { // read still not found
     do {
       
 #ifdef DEBUG_WALKER
@@ -336,7 +366,7 @@ std::string BamReader::PrintRegions() const {
       ++m_region_idx; // increment to next region
       if (m_region_idx >= m_region->size()) {
 	bam_destroy1(b);
-	return false;
+	return valid;
       }
 	//goto endloop;
       
@@ -351,7 +381,7 @@ std::string BamReader::PrintRegions() const {
   next_read.assign(b); // assign the shared_ptr for the bam1_t
   r = next_read;
 
-  return true;
+  return valid;
 }
 
 std::ostream& operator<<(std::ostream& out, const BamReader& b)

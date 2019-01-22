@@ -41,8 +41,27 @@ namespace SeqLib {
     b = SeqPointer<bam1_t>(a, free_delete()); 
   }
 
+  int32_t BamRecord::PositionWithSClips() const {
+    if(!b) return -1; // to be consistent with BamRecord::Position()
+
+    uint32_t* cig = bam_get_cigar(b);
+    return ((*cig) & 0xF) == BAM_CSOFT_CLIP ? b->core.pos - ((*cig) >> 4) : b->core.pos;
+  }
+
   int32_t BamRecord::PositionEnd() const { 
     return b ? (b->core.l_qseq > 0 ? bam_endpos(b.get()) : b->core.pos + GetCigar().NumQueryConsumed()) : -1;
+  }
+
+  int32_t BamRecord::PositionEndWithSClips() const {
+    if(!b) return -1; // to be consistent with BamRecord::PositionEnd()
+
+    uint32_t* cig_last = bam_get_cigar(b) + b->core.n_cigar - 1;
+    if(b->core.l_qseq > 0) {
+      return ((*cig_last) & 0xF) == BAM_CSOFT_CLIP ? bam_endpos(b.get()) + ((*cig_last) >> 4) :
+                                                     bam_endpos(b.get());
+    } else {
+      return b->core.pos + GetCigar().NumQueryConsumed();
+    }
   }
 
   int32_t BamRecord::PositionEndMate() const { 
@@ -452,10 +471,40 @@ namespace SeqLib {
     bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
   }
 
+  bool BamRecord::GetTag(const std::string& tag, std::string& s) const {
+
+    if (GetZTag(tag, s))
+      return true;
+
+    int32_t t;
+    if (GetIntTag(tag, t)) {
+      std::stringstream ss; 
+      ss << t;
+      s = ss.str();
+      return true;
+    } 
+
+    float f;
+    if (GetFloatTag(tag, f)) {
+      std::stringstream ss; 
+      ss << f;
+      s = ss.str();
+      return true;
+    }     
+
+    return false;
+
+  }
+
   bool BamRecord::GetZTag(const std::string& tag, std::string& s) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
       return false;
+
+    int type = *p; 
+    if (type != 'Z')
+      return false;
+    
     char* pp = bam_aux2Z(p);
     if (!pp) 
       return false;

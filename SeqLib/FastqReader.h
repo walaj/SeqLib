@@ -19,7 +19,10 @@ class FastqReader {
  public:
   
   /** Construct an empty FASTQ/FASTA reader */
- FastqReader() {}
+ FastqReader() {
+   seq = NULL;
+   fp = NULL;
+ }
   
   /** Construct a reader and open a FASTQ/FASTA reader 
    * @param file Path to a FASTQ or FASTA file

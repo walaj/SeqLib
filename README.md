@@ -108,7 +108,7 @@ provide excellent and high quality APIs. SeqLib provides further performance enh
 bioinformatics problems.
 
 Some differences:
-* SeqLib has ~2-4x faster read/write speed over BamTools and SeqAn, and lower memory footprint.
+* SeqLib has ~2-4x faster read/write speed over BamTools and lower memory footprint.
 * SeqLib has support for CRAM file
 * SeqLib provides in memory access to BWA-MEM, BLAT, chromosome aware interval tree, read correction, and sequence assembly with Fermi.
 * SeqAn provide a substantial amount of additional capabilites not in SeqLib, including graph operations and an expanded suite of multi-sequence alignments.

@@ -332,6 +332,9 @@ class BamRecord {
 
   /** Get the alignment position */
   inline int32_t Position() const { return b ? b->core.pos : -1; }
+
+  /** Get the alignment position, including soft clips */
+  int32_t PositionWithSClips() const;
   
   /** Get the alignment position of mate */
   inline int32_t MatePosition() const { return b ? b->core.mpos: -1; }
@@ -352,6 +355,9 @@ class BamRecord {
   /** Get the end of the alignment */
   int32_t PositionEnd() const;
 
+  /** Get the end of the alignment, including soft clips */
+  int32_t PositionEndWithSClips() const;
+
   /** Get the end of the aligment mate pair */
   int32_t PositionEndMate() const;
 
@@ -363,6 +369,14 @@ class BamRecord {
   
   /** Get the mapping quality */
   inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
+
+  /** Set the qc fail flag on/off (true -> on) */
+  inline void SetQCFail(bool f) { 
+    if (f)
+      b->core.flag |= BAM_FQCFAIL;
+    else
+      b->core.flag &= ~BAM_FQCFAIL;
+  }
 
   /** Set the mapping quality */
   inline void SetMapQuality(int32_t m) { if (b) b->core.qual = m; }
@@ -376,11 +390,21 @@ class BamRecord {
   /** Set the position of the mate read */
   inline void SetPositionMate(int32_t i) { b->core.mpos = i; }
 
-  /** Set the pair mapped flag on */
-  inline void SetPairMappedFlag() { b->core.flag |= BAM_FPAIRED; }
+  /** Set the pair mapped flag on/off (true -> on) */
+  inline void SetPairMappedFlag(bool f) { 
+    if (f)
+      b->core.flag |= BAM_FPAIRED;
+    else
+      b->core.flag &= ~BAM_FPAIRED;
+  }
 
-  /** Set the mate reverse flag on */
-  inline void SetMateReverseFlag() { b->core.flag |= BAM_FMREVERSE; }
+  /** Set the mate reverse flag on/off (true -> on) */
+  inline void SetMateReverseFlag(bool f) { 
+    if (f)
+      b->core.flag |= BAM_FMREVERSE;
+    else
+      b->core.flag &= ~BAM_FMREVERSE;
+  }
 
   /** Get the number of cigar fields */
   inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
@@ -523,7 +547,7 @@ class BamRecord {
   Cigar GetCigar() const {
     uint32_t* c = bam_get_cigar(b);
     Cigar cig;
-    for (int k = 0; k < b->core.n_cigar; ++k) {
+    for (size_t k = 0; k < b->core.n_cigar; ++k) {
       cig.add(CigarField(c[k]));
     }
     return cig;
@@ -596,7 +620,7 @@ class BamRecord {
   inline int32_t AlignmentEndPositionReverse() const {
     uint32_t* c = bam_get_cigar(b);
     int32_t p = 0;
-    for (int32_t i = 0; i < b->core.n_cigar; ++i) { // loop from the end
+    for (size_t i = 0; i < b->core.n_cigar; ++i) { // loop from the end
       if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
 	p += bam_cigar_oplen(c[i]);
       else // not a clip, so stop counting
@@ -611,7 +635,7 @@ class BamRecord {
   inline int32_t AlignmentPosition() const {
     uint32_t* c = bam_get_cigar(b);
     int32_t p = 0;
-    for (int32_t i = 0; i < b->core.n_cigar; ++i) {
+    for (size_t i = 0; i < b->core.n_cigar; ++i) {
       if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
 	p += bam_cigar_oplen(c[i]);
       else // not a clip, so stop counting
@@ -638,7 +662,7 @@ class BamRecord {
   inline int32_t NumSoftClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
-      for (int32_t i = 0; i < b->core.n_cigar; ++i)
+      for (size_t i = 0; i < b->core.n_cigar; ++i)
 	if (bam_cigar_opchr(c[i]) == 'S')
 	  p += bam_cigar_oplen(c[i]);
       return p;
@@ -648,7 +672,7 @@ class BamRecord {
   inline int32_t NumHardClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
-      for (int32_t i = 0; i < b->core.n_cigar; ++i) 
+      for (size_t i = 0; i < b->core.n_cigar; ++i) 
 	if (bam_cigar_opchr(c[i]) == 'H')
 	  p += bam_cigar_oplen(c[i]);
       return p;
@@ -659,7 +683,7 @@ class BamRecord {
   inline int32_t NumClip() const {
     int32_t p = 0;
     uint32_t* c = bam_get_cigar(b);
-    for (int32_t i = 0; i < b->core.n_cigar; ++i)
+    for (size_t i = 0; i < b->core.n_cigar; ++i)
       if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H') )
 	p += bam_cigar_oplen(c[i]);
     return p;
@@ -671,6 +695,13 @@ class BamRecord {
    * @return Returns true if the tag is present, even if empty. Return false if no tag or not a Z tag.
    */
   bool GetZTag(const std::string& tag, std::string& s) const;
+  
+  /** Get a string of either Z, f or i type. Useful if tag type not known at compile time.
+   * @param tag Name of the tag. eg "XP"
+   * @param s The string to be filled in with the tag information
+   * @return Returns true if the tag is present and is either Z or i, even if empty. Return false if no tag or not Z or i.
+   */  
+  bool GetTag(const std::string& tag, std::string& s) const;
   
   /** Get a vector of type int from a Z tag delimited by "^"
    * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
@@ -708,6 +739,29 @@ class BamRecord {
     if (!p)
       return false;
     t = bam_aux2i(p);
+    int type = *p++;
+    if (!(type == 'i' || type == 'C' || type=='S' || type=='s' || type =='I' || type=='c'))
+      return false;
+
+    return true;
+  }
+
+  /** Get a float (f) tag 
+   * @param tag Name of the tag. eg "AS"
+   * @param t Value to be filled in with the tag value.
+   * @return Return true if the tag exists.
+   */
+  inline bool GetFloatTag(const std::string& tag, float& t) const {
+    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
+    if (!p)
+      return false;
+
+    t = bam_aux2f(p);
+    int type = *p;
+    type = *p++;
+    if (!(type == 'f' || type == 'd'))
+      return false;
+
     return true;
   }
 
@@ -744,7 +798,7 @@ class BamRecord {
   inline std::string CigarString() const {
     std::stringstream cig;
     uint32_t* c = bam_get_cigar(b);
-    for (int k = 0; k < b->core.n_cigar; ++k)
+    for (size_t k = 0; k < b->core.n_cigar; ++k)
       cig << bam_cigar_oplen(c[k]) << "MIDNSHP=XB"[c[k]&BAM_CIGAR_MASK];
     return cig.str();
   }
@@ -772,7 +826,7 @@ class BamRecord {
     if (b->core.tid < 0)
       return std::string();
 
-    if (h.isEmpty())
+    if (!h.isEmpty())
       return h.IDtoName(b->core.tid);
 
     // c++98    

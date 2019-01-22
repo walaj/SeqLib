@@ -263,20 +263,27 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
       
     }
     
-    // check that there is at least one non-excluder region. 
-    // if not, give global includer
-    bool has_includer = false;
-    for (std::vector<ReadFilter>::const_iterator kk = m_regions.begin(); kk != m_regions.end(); ++kk) 
-      if (!kk->excluder)
-	has_includer = true;
-    if (!has_includer) {
-      ReadFilter mr;
-      mr.m_abstract_rules.push_back(rule_all);
-      mr.id = "WG_includer";
-      m_regions.push_back(mr);
-    }
-    
+    // make sure that there is at least one includer region
+    this->CheckHasIncluder();
+
   }
+
+    void ReadFilterCollection::CheckHasIncluder() {
+
+      // check that there is at least one non-excluder region. 
+      // if not, give global includer
+      bool has_includer = false;
+      for (std::vector<ReadFilter>::const_iterator kk = m_regions.begin(); kk != m_regions.end(); ++kk) 
+	if (!kk->excluder)
+	  has_includer = true;
+      if (!has_includer) {
+	ReadFilter mr;
+	mr.m_abstract_rules.push_back(rule_all);
+	mr.id = "WG_includer";
+	m_regions.push_back(mr);
+      }
+
+    }
   
   void ReadFilter::setRegions(const GRC& g) {
     m_grv = g;
