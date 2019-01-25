@@ -148,6 +148,7 @@ void BamReader::Reset() {
       return false;
     
     _Bam new_bam(bam);
+    if (!m_cram_reference.empty()) new_bam.m_cram_reference = m_cram_reference;
     new_bam.m_region = &m_region;
     bool success = new_bam.open_BAM_for_reading(pool);
     m_bams.insert(std::pair<std::string, _Bam>(bam, new_bam));
