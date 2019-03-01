@@ -47,6 +47,8 @@ bool FastqReader::GetNextSequence(UnalignedSequence& s) {
 
   if (seq->name.s)
     s.Name = std::string(seq->name.s, seq->name.l);
+  if (seq->comment.s)
+      s.Com = std::string(seq->comment.s, seq->comment.l);
   if (seq->seq.s)
     s.Seq = std::string(seq->seq.s, seq->seq.l);
   if (seq->qual.s)

@@ -33,6 +33,7 @@ class BWAWrapper {
    */
   BWAWrapper() { 
     idx = 0;
+    copy_comment = false;
     memopt = mem_opt_init();
     memopt->flag |= MEM_F_SOFTCLIP;
   }
@@ -64,6 +65,16 @@ class BWAWrapper {
    */
   void AlignSequence(const std::string& seq, const std::string& name, BamRecordVector& vec, bool hardclip, 
 			   double keep_sec_with_frac_of_primary_score, int max_secondary) const;
+
+  /** Perform a BWA-MEM alignment of a single sequence, and store hits in BamReadVector
+   * @param us UnalignedSequence to be aligned
+   * @param vec Alignment hits are appended to vec
+   * @param hardclip Should the output BamRecord objects be hardclipped
+   * @param keep_sec_with_frac_of_primary_score Set a threshold for whether a secondary alignment should be output
+   * @param max_secondary Set a hard-limit on the number of secondary hits that will be reported
+   */
+  void AlignSequence(const UnalignedSequence& us, BamRecordVector& vec, bool hardclip,
+          double keep_sec_with_frac_of_primary_score, int max_secondary) const;
 
   /** Construct a new bwa index for this object. 
    * @param v vector of references to input (e.g. v = {{"r1", "AT"}};)
@@ -157,6 +168,11 @@ class BWAWrapper {
 
   /** Check if the index is empty */
   bool IsEmpty() const { return !idx; }
+
+  /** Append FASTA/Q comment to SAM output */
+  void AppendFqComment(){
+      copy_comment = true;
+  }
   
  private:
 
@@ -165,6 +181,9 @@ class BWAWrapper {
 
   // Store the options in memory
   mem_opt_t * memopt;
+
+  // Store append FASTA/Q comment to SAM output
+  bool copy_comment;
 
   // hold the full index structure
   bwaidx_t* idx;
