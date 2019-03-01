@@ -286,6 +286,9 @@ class BamRecord {
   /** BamRecord is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
+  /** BamRecord is supplementary alignment */
+  inline bool SupplementaryFlag() const { return b ? ((b->core.flag&BAM_FSUPPLEMENTARY) != 0) : false; }
+
   /** BamRecord is mapped */
   inline bool MappedFlag() const { return b ? ((b->core.flag&BAM_FUNMAP) == 0) : false; }
 
