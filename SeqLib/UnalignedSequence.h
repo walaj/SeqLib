@@ -59,7 +59,7 @@ namespace SeqLib {
      * @param us UnalignedSequence
      */
     friend std::ostream& operator<<(std::ostream& os, const SeqLib::UnalignedSequence& us){
-        os << us.Name << " " << us.Com << "\n";
+        os << "@" << us.Name << " " << us.Com << "\n";
         os << us.Seq << "\n+\n";
         os << us.Qual << "\n";
         return os;
