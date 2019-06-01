@@ -639,9 +639,9 @@ class BamRecord {
     uint32_t* c = bam_get_cigar(b);
     int32_t p = 0;
     for (size_t i = 0; i < b->core.n_cigar; ++i) {
-      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
+      if (bam_cigar_opchr(c[i]) == 'S')
 	p += bam_cigar_oplen(c[i]);
-      else // not a clip, so stop counting
+      else if (bam_cigar_opchr(c[i]) != 'H') 
 	break;
     }
     return p;
