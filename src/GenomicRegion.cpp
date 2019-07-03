@@ -277,7 +277,7 @@ int32_t GenomicRegion::DistanceBetweenEnds(const GenomicRegion &gr) const {
       // specifying our contigs in b37 style whereas dict is hg** style;
       // let's attempt to automatically convert [0-9XY]+ -> chr[0-9XY]+
 #ifdef HAVE_C11
-      static std::regex b37_regex("([0-9XY]+)");
+      static std::regex b37_regex("[0-9XY]+");
       if(chr == -1 && std::regex_match(tchr, b37_regex)) {
 	 chr = hdr.Name2ID("chr" + tchr);
       }
