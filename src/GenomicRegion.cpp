@@ -3,6 +3,9 @@
 #include <cassert>
 #include <stdexcept>
 #include <climits>
+#ifdef HAVE_C11
+#include <regex>
+#endif
 
 // 4 billion
 #define END_MAX 4000000000

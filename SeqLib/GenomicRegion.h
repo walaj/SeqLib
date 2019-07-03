@@ -7,9 +7,6 @@
 #include <utility>
 #include <list>
 #include <cstring>
-#ifdef HAVE_C11
-#include <regex>
-#endif
 
 #include "SeqLib/SeqLibCommon.h"
 #include "SeqLib/SeqLibUtils.h"
