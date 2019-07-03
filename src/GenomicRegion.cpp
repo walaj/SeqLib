@@ -269,6 +269,15 @@ int32_t GenomicRegion::DistanceBetweenEnds(const GenomicRegion &gr) const {
       return;
     } else {
       chr = hdr.Name2ID(tchr); //bam_name2id(hdr.get(), tchr.c_str());
+
+      // if tchr was not found in sequence dictionary, it's possible that we're 
+      // specifying our contigs in b37 style whereas dict is hg** style;
+      // let's attempt to automatically convert [0-9XY]+ -> chr[0-9XY]+
+#ifdef HAVE_C11
+      if(chr == -1 && std::regex_match(tchr, std::regex("([0-9XY]+)"))) {
+	 chr = hdr.Name2ID("chr" + tchr);
+      }
+#endif
     }
   }
 }
