@@ -1,7 +1,7 @@
 #include "SeqLib/ReadFilter.h"
 
 #include <cassert>
-#include "htslib/htslib/khash.h"
+#include <htslib/khash.h>
 
 //#define QNAME "D0EN0ACXX111207:7:2306:6903:136511"
 //#define QFLAG -1

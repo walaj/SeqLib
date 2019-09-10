@@ -12,8 +12,7 @@
 #endif
 
 extern "C" {
-#include "htslib/cram/cram.h"
-#include "htslib/cram/cram_io.h"
+#include <htslib/cram.h>
 }
 
 struct idx_delete {
