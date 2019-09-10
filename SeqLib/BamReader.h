@@ -11,9 +11,10 @@ extern "C" {
 int hts_useek(htsFile *file, long uoffset, int where);
 }
 
-class BamReader;
 
 namespace SeqLib {
+
+  class BamReader;
 
   typedef SeqPointer<hts_idx_t> SharedIndex; ///< Shared pointer to the HTSlib index struct
 
@@ -30,6 +31,11 @@ namespace SeqLib {
 
   _Bam() : m_region_idx(0), empty(true), mark_for_closure(false) {}
 
+    //! Return the header for this BAM
+    const BamHeader& GetHeader() const {
+      return m_hdr;
+    }
+    
     ~_Bam() {}
 
     std::string GetFileName() const { return m_in; }

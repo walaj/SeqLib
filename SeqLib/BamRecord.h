@@ -286,6 +286,9 @@ class BamRecord {
   /** BamRecord is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
 
+  /** BamRecord is supplementary alignment */
+  inline bool SupplementaryFlag() const { return b ? ((b->core.flag&BAM_FSUPPLEMENTARY) != 0) : false; }
+
   /** BamRecord is mapped */
   inline bool MappedFlag() const { return b ? ((b->core.flag&BAM_FUNMAP) == 0) : false; }
 
@@ -636,9 +639,9 @@ class BamRecord {
     uint32_t* c = bam_get_cigar(b);
     int32_t p = 0;
     for (size_t i = 0; i < b->core.n_cigar; ++i) {
-      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
+      if (bam_cigar_opchr(c[i]) == 'S')
 	p += bam_cigar_oplen(c[i]);
-      else // not a clip, so stop counting
+      else if (bam_cigar_opchr(c[i]) != 'H') 
 	break;
     }
     return p;
@@ -826,7 +829,7 @@ class BamRecord {
     if (b->core.tid < 0)
       return std::string();
 
-    if (h.isEmpty())
+    if (!h.isEmpty())
       return h.IDtoName(b->core.tid);
 
     // c++98    

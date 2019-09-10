@@ -455,8 +455,18 @@ namespace SeqLib {
       i->AddIntTag("SQ", secondary_count);
     
   }
-
-  // modified from bwa (heng li)
+  
+  void BWAWrapper::AlignSequence(const UnalignedSequence& us, BamRecordVector& vec, bool hardclip,
+          double keep_sec_with_frac_of_primary_score, int max_secondary) const{
+      // call overloaded AlignSequence to do alignment
+      AlignSequence(us.Seq, us.Name, vec, hardclip, keep_sec_with_frac_of_primary_score, max_secondary);
+      // append FASTA/Q comment to SAM output if needed
+      for (BamRecordVector::iterator i = vec.begin(); i != vec.end(); ++i)
+          if (copy_comment)
+              i->AddZTag("BC", us.Com);
+}
+  
+// modified from bwa (heng li)
 uint8_t* BWAWrapper::seqlib_add1(const kseq_t *seq, bntseq_t *bns, uint8_t *pac, int64_t *m_pac, int *m_seqs, int *m_holes, bntamb1_t **q)
 {
   bntann1_t *p;

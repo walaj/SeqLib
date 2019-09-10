@@ -65,9 +65,10 @@ class GenomicRegion {
   GenomicRegion(const std::string& reg, const BamHeader& hdr);
 
   /** Return a string representation of just the first base-pair 
+   * @param h BamHeader used as a lookup table for id to string (i.e. chr name)
    * e.g. 1:10,000
    */
-  std::string PointString() const;
+  std::string PointString(const BamHeader& h) const;
 
   // Randomize the position of this GenomicRegion on the genome
   // 
@@ -93,9 +94,6 @@ class GenomicRegion {
    * @param gr GenomicRegion object to compare with
    */
   int32_t DistanceBetweenEnds(const GenomicRegion &gr) const;
-
-  /** Returns identical string as would be obtained from << */
-  std::string ToString() const;
 
   /** Returns true if a.chr < b.chr or a.pos1 < a.pos1 if on same chrome, or if a.pos2 < b.pos2 if same chrom and same pos1 */
   bool operator < (const GenomicRegion& b) const;
@@ -128,6 +126,11 @@ class GenomicRegion {
    * print as "1"
    */
   friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr);
+
+  /** Print the chromosome with the correct chromosome name as store in the header 
+   * @param h BamHeader that stores the lookup between chr id and chr name string
+   */
+  std::string ToString(const BamHeader& h) const;
 
   /** Extract the chromosome name as a string 
    * @param h BamHeader to serve as sequence dictionary
