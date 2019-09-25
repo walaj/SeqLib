@@ -665,31 +665,29 @@ class BamRecord {
   inline int32_t NumSoftClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
-      for (size_t i = 0; i < b->core.n_cigar; ++i)
-	if (bam_cigar_opchr(c[i]) == 'S')
-	  p += bam_cigar_oplen(c[i]);
+
+      p = (((*c) & 0xF) == BAM_CSOFT_CLIP ? ((*c) >> 4) : 0);
+      c += b->core.n_cigar - 1;
+      p += (((*c) & 0xF) == BAM_CSOFT_CLIP ? ((*c) >> 4) : 0);
+
       return p;
-    }
+  }
 
   /** Get the number of hard clipped bases */
   inline int32_t NumHardClip() const {
       int32_t p = 0;
       uint32_t* c = bam_get_cigar(b);
-      for (size_t i = 0; i < b->core.n_cigar; ++i) 
-	if (bam_cigar_opchr(c[i]) == 'H')
-	  p += bam_cigar_oplen(c[i]);
-      return p;
-    }
 
+      p = (((*c) & 0xF) == BAM_CHARD_CLIP ? ((*c) >> 4) : 0);
+      c += b->core.n_cigar - 1;
+      p += (((*c) & 0xF) == BAM_CHARD_CLIP ? ((*c) >> 4) : 0);
+
+      return p;
+  }
 
   /** Get the number of clipped bases (hard clipped and soft clipped) */
   inline int32_t NumClip() const {
-    int32_t p = 0;
-    uint32_t* c = bam_get_cigar(b);
-    for (size_t i = 0; i < b->core.n_cigar; ++i)
-      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H') )
-	p += bam_cigar_oplen(c[i]);
-    return p;
+      return NumSoftClip() + NumHardClip();
   }
   
   /** Get a string (Z) tag 
