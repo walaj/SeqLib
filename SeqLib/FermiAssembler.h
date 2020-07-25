@@ -114,6 +114,7 @@ namespace SeqLib {
     /** Return the number of sequences that are controlled by this assembler */
     size_t NumSequences() const { return n_seqs; }
 
+    void WriteGFA(std::ostream &out);
   private:
 
     // reads to assemble
