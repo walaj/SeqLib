@@ -183,8 +183,7 @@ SeqLib::FermiAssembler::WriteGFA(std::ostream &out)
   for (i = 0; i < n_utg; ++i) {
     const fml_utg_t *u = m_utgs + i;
     out << "S\t" << i << "\t";
-    out << u->seq << std::endl;
-    out << "\tLN:i:" << u->len << "\tRC:i:" << u->nsr << "\tPD:Z:";
+    out << u->seq << "\tLN:i:" << u->len << "\tRC:i:" << u->nsr << "\tPD:Z:";
     out << u->cov << std::endl;
     for (j = 0; j < u->n_ovlp[0] + u->n_ovlp[1]; ++j) {
       fml_ovlp_t *o = &u->ovlp[j];
