@@ -174,3 +174,24 @@ namespace SeqLib {
   }
   
 }
+
+void
+SeqLib::FermiAssembler::WriteGFA(std::ostream &out)
+{
+  int i, j;
+  out << "H\tVN:Z:1.0" << std::endl;
+  for (i = 0; i < n_utg; ++i) {
+    const fml_utg_t *u = m_utgs + i;
+    out << "S\t" << i << "\t";
+    out << u->seq << "\tLN:i:" << u->len << "\tRC:i:" << u->nsr << "\tPD:Z:";
+    out << u->cov << std::endl;
+    for (j = 0; j < u->n_ovlp[0] + u->n_ovlp[1]; ++j) {
+      fml_ovlp_t *o = &u->ovlp[j];
+      if (i < o->id) {
+        out << "L\t" << i << "\t"
+            << "+-"[!o->from] << "\t" << o->id << "\t"
+            << "+-"[o->to] << "\t" << o->len << "M" << std::endl;
+      }
+    }
+  }
+}
