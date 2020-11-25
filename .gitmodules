@@ -1,6 +1,6 @@
 [submodule "fermi-lite"]
 	path = fermi-lite
-	url = https://github.com/jwalabroad/fermi-lite
+	url = https://github.com/lh3/fermi-lite
 [submodule "htslib"]
 	path = htslib
 	url = https://github.com/samtools/htslib
