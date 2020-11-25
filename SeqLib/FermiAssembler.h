@@ -84,11 +84,9 @@ namespace SeqLib {
     void SetAggressiveTrim() { opt.mag_opt.flag |= MAG_F_AGGRESSIVE; }
 
     // Added by Cristian Groza
-      void SetSimplifyBubble() {
-          std::cerr << std::bitset<sizeof(int)*8>(opt.mag_opt.flag) << std::endl;
-          opt.mag_opt.flag &= ~MAG_F_NO_SIMPL;
-          std::cerr << std::bitset<sizeof(int)*8>(opt.mag_opt.flag) << std::endl;
-      }
+    void SetSimplifyBubble() {
+        opt.mag_opt.flag &= ~MAG_F_NO_SIMPL;
+    }
 
     /** From lh3: Drop an overlap if its length is below max_overlap * ratio
      * @param ratio Overlaps below ratio * max_overlap will be removed
