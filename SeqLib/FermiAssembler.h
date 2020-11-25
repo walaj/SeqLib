@@ -85,9 +85,9 @@ namespace SeqLib {
 
     // Added by Cristian Groza
       void SetSimplifyBubble() {
-          std::cerr << std::bitset<sizeof(int)*sizeof(char)>(opt.mag_opt.flag) << std::endl;
+          std::cerr << std::bitset<sizeof(int)*8>(opt.mag_opt.flag) << std::endl;
           opt.mag_opt.flag &= ~MAG_F_NO_SIMPL;
-          std::cerr << std::bitset<sizeof(int)*sizeof(char)>(opt.mag_opt.flag) << std::endl;
+          std::cerr << std::bitset<sizeof(int)*8>(opt.mag_opt.flag) << std::endl;
       }
 
     /** From lh3: Drop an overlap if its length is below max_overlap * ratio
