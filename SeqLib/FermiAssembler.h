@@ -13,7 +13,7 @@ extern "C"
 #include "fermi-lite/fml.h"
 #include "fermi-lite/bfc.h"
 }
-
+#include <bitset>
 namespace SeqLib {
 
   /** Sequence assembly using FermiKit from Heng Li
@@ -82,6 +82,13 @@ namespace SeqLib {
      * @note See: https://github.com/lh3/fermi-lite/blob/master/example.c
      */
     void SetAggressiveTrim() { opt.mag_opt.flag |= MAG_F_AGGRESSIVE; }
+
+    // Added by Cristian Groza
+      void SetSimplifyBubble() {
+          std::cerr << std::bitset<sizeof(int)*sizeof(char)>(opt.mag_opt.flag) << std::endl;
+          opt.mag_opt.flag &= ~MAG_F_NO_SIMPL;
+          std::cerr << std::bitset<sizeof(int)*sizeof(char)>(opt.mag_opt.flag) << std::endl;
+      }
 
     /** From lh3: Drop an overlap if its length is below max_overlap * ratio
      * @param ratio Overlaps below ratio * max_overlap will be removed
