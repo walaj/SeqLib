@@ -25,6 +25,8 @@ namespace SeqLib {
     /** Create an empty FermiAssembler with default parameters */
     FermiAssembler ();
 
+    /** Create an Empty FermiAssembler with the provided parameters */
+    FermiAssembler(fml_opt_t &_opt);
     /** Destroy by clearing all stored reads from memory */
     ~FermiAssembler();
 
