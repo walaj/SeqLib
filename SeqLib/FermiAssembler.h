@@ -13,7 +13,6 @@ extern "C"
 #include "fermi-lite/fml.h"
 #include "fermi-lite/bfc.h"
 }
-#include <bitset>
 namespace SeqLib {
 
   /** Sequence assembly using FermiKit from Heng Li
