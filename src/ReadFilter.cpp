@@ -193,7 +193,8 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
 
     // assign the global rule if there is one
     // remove from the rest of the rules
-    Json::Value glob = root.removeMember("global");
+    Json::Value glob = root.get("global", null);
+    root.removeMember("global");
     if (!glob.isNull()) 
       rule_all.parseJson(glob);
     
