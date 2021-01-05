@@ -48,7 +48,6 @@ env:
 
 before_install: 
 - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-- sudo apt-get install libjsoncpp-dev
 - sudo apt-get install wget
 - sudo apt-get -qq update
 - mkdir test_data && cd test_data && wget --recursive -np -nc -nH --cut-dirs=4 --random-wait --wait 1 -e robots=off -A "test*" -A "small*" -A "motif*" -A "example*" https://data.broadinstitute.org/snowman/SeqLib/ && cd ..

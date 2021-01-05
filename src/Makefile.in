@@ -115,7 +115,7 @@ am_libseqlib_a_OBJECTS = libseqlib_a-FastqReader.$(OBJEXT) \
 	libseqlib_a-BWAWrapper.$(OBJEXT) \
 	libseqlib_a-BamRecord.$(OBJEXT) \
 	libseqlib_a-FermiAssembler.$(OBJEXT) \
-	libseqlib_a-BamHeader.$(OBJEXT)
+	libseqlib_a-BamHeader.$(OBJEXT) libseqlib_a-jsoncpp.$(OBJEXT)
 libseqlib_a_OBJECTS = $(am_libseqlib_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -144,6 +144,7 @@ am__depfiles_remade = ./$(DEPDIR)/libseqlib_a-BFC.Po \
 	./$(DEPDIR)/libseqlib_a-ReadFilter.Po \
 	./$(DEPDIR)/libseqlib_a-RefGenome.Po \
 	./$(DEPDIR)/libseqlib_a-SeqPlot.Po \
+	./$(DEPDIR)/libseqlib_a-jsoncpp.Po \
 	./$(DEPDIR)/libseqlib_a-ssw.Po \
 	./$(DEPDIR)/libseqlib_a-ssw_cpp.Po
 am__mv = mv -f
@@ -302,7 +303,7 @@ noinst_LIBRARIES = libseqlib.a
 libseqlib_a_CPPFLAGS = -I../htslib -Wno-sign-compare
 libseqlib_a_SOURCES = FastqReader.cpp BFC.cpp ReadFilter.cpp SeqPlot.cpp ssw_cpp.cpp ssw.c \
 			GenomicRegion.cpp RefGenome.cpp BamWriter.cpp BamReader.cpp \
-			BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp
+			BWAWrapper.cpp BamRecord.cpp FermiAssembler.cpp BamHeader.cpp jsoncpp.cpp
 
 all: all-am
 
@@ -364,6 +365,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-ReadFilter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-RefGenome.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-SeqPlot.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-jsoncpp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-ssw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libseqlib_a-ssw_cpp.Po@am__quote@ # am--include-marker
 
@@ -597,6 +599,20 @@ libseqlib_a-BamHeader.obj: BamHeader.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-BamHeader.obj `if test -f 'BamHeader.cpp'; then $(CYGPATH_W) 'BamHeader.cpp'; else $(CYGPATH_W) '$(srcdir)/BamHeader.cpp'; fi`
 
+libseqlib_a-jsoncpp.o: jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-jsoncpp.o -MD -MP -MF $(DEPDIR)/libseqlib_a-jsoncpp.Tpo -c -o libseqlib_a-jsoncpp.o `test -f 'jsoncpp.cpp' || echo '$(srcdir)/'`jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libseqlib_a-jsoncpp.Tpo $(DEPDIR)/libseqlib_a-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='jsoncpp.cpp' object='libseqlib_a-jsoncpp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-jsoncpp.o `test -f 'jsoncpp.cpp' || echo '$(srcdir)/'`jsoncpp.cpp
+
+libseqlib_a-jsoncpp.obj: jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libseqlib_a-jsoncpp.obj -MD -MP -MF $(DEPDIR)/libseqlib_a-jsoncpp.Tpo -c -o libseqlib_a-jsoncpp.obj `if test -f 'jsoncpp.cpp'; then $(CYGPATH_W) 'jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/jsoncpp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libseqlib_a-jsoncpp.Tpo $(DEPDIR)/libseqlib_a-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='jsoncpp.cpp' object='libseqlib_a-jsoncpp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libseqlib_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libseqlib_a-jsoncpp.obj `if test -f 'jsoncpp.cpp'; then $(CYGPATH_W) 'jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/jsoncpp.cpp'; fi`
+
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
 tags: tags-am
@@ -733,6 +749,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libseqlib_a-ReadFilter.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-RefGenome.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-SeqPlot.Po
+	-rm -f ./$(DEPDIR)/libseqlib_a-jsoncpp.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-ssw.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-ssw_cpp.Po
 	-rm -f Makefile
@@ -792,6 +809,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libseqlib_a-ReadFilter.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-RefGenome.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-SeqPlot.Po
+	-rm -f ./$(DEPDIR)/libseqlib_a-jsoncpp.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-ssw.Po
 	-rm -f ./$(DEPDIR)/libseqlib_a-ssw_cpp.Po
 	-rm -f Makefile

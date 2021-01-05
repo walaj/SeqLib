@@ -116,7 +116,8 @@ am_seq_test_OBJECTS = seq_test-seq_test.$(OBJEXT) \
 	../src/seq_test-BamHeader.$(OBJEXT) \
 	../src/seq_test-FermiAssembler.$(OBJEXT) \
 	../src/seq_test-ssw_cpp.$(OBJEXT) \
-	../src/seq_test-ssw.$(OBJEXT)
+	../src/seq_test-ssw.$(OBJEXT) \
+	../src/seq_test-jsoncpp.$(OBJEXT)
 seq_test_OBJECTS = $(am_seq_test_OBJECTS)
 seq_test_DEPENDENCIES = ../fermi-lite/libfml.a ../bwa/libbwa.a \
 	../htslib/libhts.a
@@ -148,6 +149,7 @@ am__depfiles_remade = ../src/$(DEPDIR)/seq_test-BFC.Po \
 	../src/$(DEPDIR)/seq_test-ReadFilter.Po \
 	../src/$(DEPDIR)/seq_test-RefGenome.Po \
 	../src/$(DEPDIR)/seq_test-SeqPlot.Po \
+	../src/$(DEPDIR)/seq_test-jsoncpp.Po \
 	../src/$(DEPDIR)/seq_test-ssw.Po \
 	../src/$(DEPDIR)/seq_test-ssw_cpp.Po \
 	./$(DEPDIR)/seq_test-seq_test.Po
@@ -338,7 +340,7 @@ seq_test_LDADD = \
 	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
-	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono -ljsoncpp -lbz2 -llzma
+	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono -lbz2 -llzma
 
 seq_test_LDFLAGS = --coverage -pthread
 seq_test_SOURCES = seq_test.cpp \
@@ -347,7 +349,7 @@ seq_test_SOURCES = seq_test.cpp \
 	../src/ReadFilter.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp \
         ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
-	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c
+	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -476,6 +478,8 @@ clean-binPROGRAMS:
 	../src/$(DEPDIR)/$(am__dirstamp)
 ../src/seq_test-ssw.$(OBJEXT): ../src/$(am__dirstamp) \
 	../src/$(DEPDIR)/$(am__dirstamp)
+../src/seq_test-jsoncpp.$(OBJEXT): ../src/$(am__dirstamp) \
+	../src/$(DEPDIR)/$(am__dirstamp)
 
 seq_test$(EXEEXT): $(seq_test_OBJECTS) $(seq_test_DEPENDENCIES) $(EXTRA_seq_test_DEPENDENCIES) 
 	@rm -f seq_test$(EXEEXT)
@@ -499,6 +503,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/seq_test-ReadFilter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/seq_test-RefGenome.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/seq_test-SeqPlot.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/seq_test-jsoncpp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/seq_test-ssw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/seq_test-ssw_cpp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seq_test-seq_test.Po@am__quote@ # am--include-marker
@@ -736,6 +741,20 @@ seq_test-seq_test.obj: seq_test.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/ssw_cpp.cpp' object='../src/seq_test-ssw_cpp.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ../src/seq_test-ssw_cpp.obj `if test -f '../src/ssw_cpp.cpp'; then $(CYGPATH_W) '../src/ssw_cpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ssw_cpp.cpp'; fi`
+
+../src/seq_test-jsoncpp.o: ../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ../src/seq_test-jsoncpp.o -MD -MP -MF ../src/$(DEPDIR)/seq_test-jsoncpp.Tpo -c -o ../src/seq_test-jsoncpp.o `test -f '../src/jsoncpp.cpp' || echo '$(srcdir)/'`../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/seq_test-jsoncpp.Tpo ../src/$(DEPDIR)/seq_test-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/jsoncpp.cpp' object='../src/seq_test-jsoncpp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ../src/seq_test-jsoncpp.o `test -f '../src/jsoncpp.cpp' || echo '$(srcdir)/'`../src/jsoncpp.cpp
+
+../src/seq_test-jsoncpp.obj: ../src/jsoncpp.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ../src/seq_test-jsoncpp.obj -MD -MP -MF ../src/$(DEPDIR)/seq_test-jsoncpp.Tpo -c -o ../src/seq_test-jsoncpp.obj `if test -f '../src/jsoncpp.cpp'; then $(CYGPATH_W) '../src/jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/jsoncpp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/seq_test-jsoncpp.Tpo ../src/$(DEPDIR)/seq_test-jsoncpp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/jsoncpp.cpp' object='../src/seq_test-jsoncpp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(seq_test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ../src/seq_test-jsoncpp.obj `if test -f '../src/jsoncpp.cpp'; then $(CYGPATH_W) '../src/jsoncpp.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/jsoncpp.cpp'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -1024,6 +1043,7 @@ distclean: distclean-am
 	-rm -f ../src/$(DEPDIR)/seq_test-ReadFilter.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-RefGenome.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-SeqPlot.Po
+	-rm -f ../src/$(DEPDIR)/seq_test-jsoncpp.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-ssw.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-ssw_cpp.Po
 	-rm -f ./$(DEPDIR)/seq_test-seq_test.Po
@@ -1085,6 +1105,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ../src/$(DEPDIR)/seq_test-ReadFilter.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-RefGenome.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-SeqPlot.Po
+	-rm -f ../src/$(DEPDIR)/seq_test-jsoncpp.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-ssw.Po
 	-rm -f ../src/$(DEPDIR)/seq_test-ssw_cpp.Po
 	-rm -f ./$(DEPDIR)/seq_test-seq_test.Po

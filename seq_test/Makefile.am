@@ -12,7 +12,7 @@ seq_test_LDADD = \
 	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
-	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono -ljsoncpp -lbz2 -llzma
+	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono -lbz2 -llzma
 
 seq_test_LDFLAGS = --coverage -pthread
 
@@ -22,4 +22,4 @@ seq_test_SOURCES = seq_test.cpp \
 	../src/ReadFilter.cpp ../src/BamRecord.cpp \
 	../src/BWAWrapper.cpp \
         ../src/RefGenome.cpp ../src/SeqPlot.cpp ../src/BamHeader.cpp \
-	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c
+	../src/FermiAssembler.cpp ../src/ssw_cpp.cpp ../src/ssw.c ../src/jsoncpp.cpp
