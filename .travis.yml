@@ -48,7 +48,10 @@ env:
 
 before_install: 
 - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+- sudo apt-get install libjsoncpp-dev
+- sudo apt-get install wget
 - sudo apt-get -qq update
+- mkdir test_data && cd test_data && wget --recursive -np -nc -nH --cut-dirs=4 --random-wait --wait 1 -e robots=off -A "test*" -A "small*" -A "motif*" -A "example*" https://data.broadinstitute.org/snowman/SeqLib/ && cd ..
 - if [ "${TRAVIS_BRANCH}" = "master" ]; then export BOOST_VERSION="${BOOST_VERSION_MIN}"; else export BOOST_VERSION="${BOOST_VERSION_MAX}"; fi
 - if [ -n "${BOOST_VERSION}" ]; then export BOOST_ROOT="${TRAVIS_BUILD_DIR}/../boost-trunk"; export CMAKE_MODULE_PATH="${BOOST_ROOT}"; fi
 - if [ "${TRAVIS_OS_NAME}" = "osx" -a "${CXX}" = "clang++" ]; then export CXX="$(which c++)"; export CC="$(which cc)"; fi
