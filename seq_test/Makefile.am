@@ -6,7 +6,7 @@ seq_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
      -I.. \
-     -I../fermi-lite --coverage
+     -I../fermi-lite --coverage -D_GLIBCXX_USE_CXX11_ABI=0
 
 seq_test_LDADD = \
 	../fermi-lite/libfml.a \
