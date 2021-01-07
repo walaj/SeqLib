@@ -23,12 +23,12 @@ AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [clo
 AC_ARG_WITH(boost, AS_HELP_STRING([--with-boost=PATH],
 	[specify directory containing the boost library)]))
 if test "$with_boost" -a -d "$with_boost"; then
-    boost_include="-I$with_boost"
+    boost_include="-I$with_boost/include"
     AC_CHECK_FILE("$with_boost/stage/lib", STAGE_PATH=1, STAGE_PATH=0)
     if test ${STAGE_PATH} = 1; then
-        boost_lib="-L$with_boost/stage/lib"  
+        boost_lib="-L$with_boost/stage/lib"
     else
-        boost_lib="-L$with_boost/lib"        
+        boost_lib="-L$with_boost/lib"
     fi
     AC_SUBST(boost_lib)	
 fi

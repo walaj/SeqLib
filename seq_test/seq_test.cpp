@@ -3,7 +3,7 @@
 #include<boost/test/unit_test.hpp>
 
 #include <climits>
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 
 #include "SeqLib/BWAWrapper.h"
 #include "SeqLib/BamReader.h"
