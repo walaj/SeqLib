@@ -296,7 +296,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib fermi-lite src
+SUBDIRS = bwa fermi-lite src
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -778,7 +778,7 @@ uninstall-am:
 
 
 install:  
-	mkdir -p lib && cp src/libseqlib.a fermi-lite/libfml.a bwa/libbwa.a htslib/libhts.a lib
+	mkdir -p lib && cp src/libseqlib.a fermi-lite/libfml.a bwa/libbwa.a lib
 
 seqtools:
 	mkdir -p bin && cd src/seqtools && make && mv seqtools ../../bin
