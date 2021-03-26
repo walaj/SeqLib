@@ -1,16 +1,18 @@
 bin_PROGRAMS = seq_test
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 seq_test_CPPFLAGS = \
      -I../src \
      -I../htslib \
      -I.. \
-     -I../fermi-lite --coverage
+     -I../fermi-lite --coverage -D_GLIBCXX_USE_CXX11_ABI=0
 
 seq_test_LDADD = \
 	../fermi-lite/libfml.a \
 	../bwa/libbwa.a \
 	../htslib/libhts.a \
-	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono
+	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono -lbz2 -llzma
 
 seq_test_LDFLAGS = --coverage -pthread
 

@@ -37,14 +37,16 @@ git clone --recursive https://github.com/walaj/SeqLib.git
 cd SeqLib
 ## cd htslib && ./configure --enable-libcurl && cd .. # support for remote (FTP/HTTPS/Google etc) BAM access
 ./configure ## or: ./configure LDFLAGS='-lcurl -lcrypto' # for remote support
-make ## for c++11 (req. for AhoCorasick), run as: make CXXFLAGS='-std=c++11'
+make
 make install
 make seqtools ## for the command line version
 ```
- 
+
+You will need to have JsonCPP (v1.9.4 or higher) installed.
+
 I have successfully compiled with GCC-4.5+ and Clang on Linux and OSX.
 
-SeqLib is compatible with c++98 and later.
+SeqLib is compatible with c++11 and later.
 
 Integrating into build system
 -----------------------------

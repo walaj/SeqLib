@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59) ## specificy version of autoconf
-AC_INIT(seqlibtest, 1.0, jwala@broadinstitute.org)
+AC_INIT(seqlibtest, 1.0, jeremiah.wala@gmail.com)
 AM_INIT_AUTOMAKE(foreign)
 AC_CONFIG_SRCDIR([seq_test.cpp])
 AC_CONFIG_HEADER([config.h])
@@ -23,12 +23,12 @@ AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [clo
 AC_ARG_WITH(boost, AS_HELP_STRING([--with-boost=PATH],
 	[specify directory containing the boost library)]))
 if test "$with_boost" -a -d "$with_boost"; then
-    boost_include="-I$with_boost"
+    boost_include="-I$with_boost/include"
     AC_CHECK_FILE("$with_boost/stage/lib", STAGE_PATH=1, STAGE_PATH=0)
     if test ${STAGE_PATH} = 1; then
-        boost_lib="$with_boost/stage/lib"  
+        boost_lib="-L$with_boost/stage/lib"
     else
-        boost_lib="$with_boost/lib"        
+        boost_lib="-L$with_boost/lib"
     fi
     AC_SUBST(boost_lib)	
 fi
@@ -47,7 +47,7 @@ AC_SUBST(CFLAGS, "$CFLAGS")
 AC_SUBST(CPPFLAGS, "$CPPFLAGS $boost_include")
 AC_SUBST(LDFLAGS, "$LDFLAGS")
 
-AC_SUBST(LIBS, "-L$boost_lib $LIBS")
+AC_SUBST(LIBS, "$LIBS $boost_lib")
 
 # Make sure the boost headers can be found
 AC_CHECK_HEADERS([boost/test/unit_test.hpp],,[AC_MSG_ERROR([The Boost library must be installed for unit testing. Specify its path with the --with-boost=PATH option])])

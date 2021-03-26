@@ -198,10 +198,7 @@ BamReader::BamReader() {}
 
     // open cram reference
     if (!m_cram_reference.empty()) {
-      char * m_cram_reference_cstr = strdup(m_cram_reference.c_str());
-      // TODO: verify that this does what I think it does
-      int ret = cram_set_option(fp->fp.cram, CRAM_OPT_REFERENCE, m_cram_reference_cstr);
-      free(m_cram_reference_cstr);
+      int ret = hts_set_fai_filename(fp.get(), m_cram_reference.c_str());
       if (ret < 0) 
 	throw std::invalid_argument("Could not read reference genome " + m_cram_reference + " for CRAM opt");
     }

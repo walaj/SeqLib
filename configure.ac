@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59) ## specificy version of autoconf
-AC_INIT(seqkit, 1.0, jwala@broadinstitute.org)
+AC_INIT(seqkit, 1.0, jeremiah.wala@gmail.com)
 AM_INIT_AUTOMAKE(foreign)
 AC_CONFIG_SRCDIR([src/BamReader.cpp])
 AC_CONFIG_HEADER([config.h])
@@ -33,7 +33,7 @@ if test "$enable_development"; then
 fi
 
 # Set compiler flags.
-AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -Wno-unknown-pragmas")
+AC_SUBST(AM_CXXFLAGS, "-g $fail_on_warning -std=c++11 -Wno-unknown-pragmas")
 AC_SUBST(CXXFLAGS, "$CXXFLAGS")
 AC_SUBST(CFLAGS, "$CFLAGS")
 AC_SUBST(LDFLAGS, "$LDFLAGS")

@@ -3,7 +3,7 @@
 #include<boost/test/unit_test.hpp>
 
 #include <climits>
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 
 #include "SeqLib/BWAWrapper.h"
 #include "SeqLib/BamReader.h"
@@ -724,7 +724,7 @@ BOOST_AUTO_TEST_CASE( genomic_region_constructors ) {
   BOOST_CHECK_EQUAL(grc.strand, '-');
 
   // check point string
-  BOOST_CHECK_EQUAL(grb.PointString(), "1:10,000(+)");
+  BOOST_CHECK_EQUAL(grb.PointString(br.Header()), "1:10,000(+)");
 
   // check pretty string
   std::stringstream ss;
@@ -890,9 +890,9 @@ BOOST_AUTO_TEST_CASE( bwa_wrapper ) {
   std::cerr << "...aligning sequences" << std::endl;
   SeqLib::BamRecordVector brv, brv2;
   bool hardclip = false;
-  bwa.AlignSequence("ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCG", "name", brv, 0.9, hardclip, 1);
+  bwa.AlignSequence("ACATGGCGAGCACTTCTAGCATCAGCTAGCTACGATCG", "name", brv, false, 0.9, 1);
   // reverse complement
-  bwa.AlignSequence("CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGC", "name", brv2, 0.9, hardclip, 2);
+  bwa.AlignSequence("CGATCGTAGCTAGCTGATGCTAGAAGTGCTCGC", "name", brv2, false, 0.9, 2);
 
   BOOST_CHECK_EQUAL(brv[0].Qname(), "name");
   BOOST_CHECK_EQUAL(brv[0].ChrID(), 2);

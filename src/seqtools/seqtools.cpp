@@ -10,6 +10,7 @@
 #include "SeqLib/BamWriter.h"
 #include "SeqLib/BWAWrapper.h"
 #include "SeqLib/FermiAssembler.h"
+#include "SeqLib/ReadFilter.h"
 
 void kt_pipeline(int n_threads, void *(*func)(void*, int, void*), void *shared_data, int n_steps);
 
@@ -127,6 +128,9 @@ void runfml(int argc, char** argv) {
     SeqLib::BamReader br;
     if (!br.Open(opt::input == "-" ? "-" : opt::input)) 
       exit(EXIT_FAILURE);
+
+    SeqLib::Filter::ReadFilter rf;
+
       
     if (opt::verbose)
       std::cerr << "...opened " << opt::input << std::endl;

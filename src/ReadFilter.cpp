@@ -30,25 +30,6 @@ namespace SeqLib {
       ;
   }
 
-// define what is a valid condition
-/*    static const StringSet valid = 
-  { 
-  "duplicate", "supplementary", "qcfail", "hardclip", "fwd_strand",
-  "rev_strand", "mate_fwd_strand", "mate_rev_strand", "mapped",
-  "mate_mapped", "isize","clip", "length","nm",
-  "mapq", "all", "ff", "xp","fr","rr","rf",
-  "ic", "discordant","motif","nbases","!motif","allflag", "!allflag", "anyflag", "!anyflag",
-  "ins","del",  "subsample", "rg"
-};
-
-    static const StringSet allowed_region_annots = 
-    { "region","pad", "matelink", "exclude", "rules"};
-
-    static const StringSet allowed_flag_annots = 
-    {"duplicate", "supplementary", "qcfail", "hardclip", 
-     "fwd_strand", "rev_strand", "mate_fwd_strand", "mate_rev_strand",
-     "mapped", "mate_mapped", "ff", "fr", "rr", "rf", "ic"};
-*/
 bool ReadFilter::isValid(const BamRecord &r) {
 
   // empty default is pass
@@ -178,6 +159,25 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
 
     // set up JsonCPP reader and attempt to parse script
     Json::Value root;
+    //warning: 'Reader' is deprecated: Use CharReader and CharReaderBuilder instead
+
+    //new way JSON 1.9.4
+    Json::CharReaderBuilder builder;
+    const auto rawJsonLength = static_cast<int>(tscript.length());
+    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    JSONCPP_STRING err;
+    if (!reader->parse(tscript.c_str(), tscript.c_str() + rawJsonLength, &root,
+                       &err)) {
+      
+      if (script.empty()) {
+	std::cerr << "JSON script is empty. Setting default to filter all reads" << std::endl;
+	return;
+      }
+      throw std::invalid_argument("ERROR: failed to parse JSON script");
+    }
+    
+    // old way: Json::CharReader reader;
+    /*
     Json::Reader reader;
     if ( !reader.parse(tscript, root)) {
       if (script.empty()) {
@@ -186,14 +186,15 @@ bool ReadFilter::isReadOverlappingRegion(const BamRecord &r) const {
       }
       throw std::invalid_argument("ERROR: failed to parse JSON script");
     }
-
+    */
     Json::Value null(Json::nullValue);
     
     int level = 1;
 
     // assign the global rule if there is one
     // remove from the rest of the rules
-    Json::Value glob = root.removeMember("global");
+    Json::Value glob = root.get("global", null);
+    root.removeMember("global");
     if (!glob.isNull()) 
       rule_all.parseJson(glob);
     

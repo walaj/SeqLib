@@ -13,7 +13,6 @@ extern "C"
 #include "fermi-lite/fml.h"
 #include "fermi-lite/bfc.h"
 }
-
 namespace SeqLib {
 
   /** Sequence assembly using FermiKit from Heng Li
@@ -25,6 +24,8 @@ namespace SeqLib {
     /** Create an empty FermiAssembler with default parameters */
     FermiAssembler ();
 
+    /** Create an Empty FermiAssembler with the provided parameters */
+    FermiAssembler(fml_opt_t &_opt);
     /** Destroy by clearing all stored reads from memory */
     ~FermiAssembler();
 
@@ -83,6 +84,11 @@ namespace SeqLib {
      */
     void SetAggressiveTrim() { opt.mag_opt.flag |= MAG_F_AGGRESSIVE; }
 
+    // Added by Cristian Groza
+    void SetSimplifyBubble() {
+        opt.mag_opt.flag &= ~MAG_F_NO_SIMPL;
+    }
+
     /** From lh3: Drop an overlap if its length is below max_overlap * ratio
      * @param ratio Overlaps below ratio * max_overlap will be removed
      */
@@ -114,6 +120,7 @@ namespace SeqLib {
     /** Return the number of sequences that are controlled by this assembler */
     size_t NumSequences() const { return n_seqs; }
 
+    void WriteGFA(std::ostream &out);
   private:
 
     // reads to assemble
