@@ -174,6 +174,11 @@ class BamReader {
    */
   bool SetMultipleRegions(const GRC& grc);
 
+  /** Return the current region index
+   * @return current region index
+   */
+  size_t GetRegionIdx();
+
   /** Return if the reader has opened the first file */
   bool IsOpen() const { if (m_bams.size()) return m_bams.begin()->second.fp.get() != NULL; return false; }
 

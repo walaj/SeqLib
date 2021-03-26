@@ -141,6 +141,11 @@ void BamReader::Reset() {
   return false;
 }
 
+  size_t BamReader::GetRegionIdx() {
+    // this ought to be in sync across all open BAMs
+    return m_bams.begin()->second.m_region_idx;
+  }
+
   bool BamReader::Open(const std::string& bam) {
 
     // dont open same bam twice
