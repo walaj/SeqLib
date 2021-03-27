@@ -21,4 +21,14 @@ then
 	    | tar jxf - --strip-components=1 -C "${BOOST_ROOT}"
     fi
 
+    ## install htslib
+    mkdir htslib
+    wget --no-verbose --output-document=- https://github.com/samtools/htslib/releases/download/1.12/htslib-1.12.tar.bz2 | tar xfj - --strip-components=1 -C htslib
+    cd htslib && ./configure
+    sudo make
+    sudo make install
+
+    #git clone https://github.com/samtools/htslib.git
+    #sudo make -C htslib
+
 fi
