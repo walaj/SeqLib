@@ -414,6 +414,9 @@ class BamRecord {
   
   /** Check if this read is first in pair */
   inline bool FirstFlag() const { return (b->core.flag&BAM_FREAD1); }
+
+  /** Check if this read is last in pair */
+  inline bool LastFlag() const { return (b->core.flag&BAM_FREAD2); }
   
   /** Get the qname of this read as a string */
   inline std::string Qname() const { return std::string(bam_get_qname(b)); }
