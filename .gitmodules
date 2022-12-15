@@ -1,0 +1,3 @@
+[submodule "fermi-lite"]
+	path = fermi-lite
+	url = git@github.com:julianhess/fermi-lite.git
