@@ -2,7 +2,7 @@
 #define SEQLIB_BFC_H
 
 extern "C" {
-  #include "fermi-lite/bfc.h"
+  #include "fermi-lite/htab.h"
   #include "fermi-lite/fml.h"
 }
 

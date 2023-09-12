@@ -24,9 +24,10 @@ if(NOT LZMA_INCLUDE_DIR OR NOT LZMA_LIBRARY)
   message(FATAL_ERROR "LZMA library or headers not found!")
 endif()
 
-
+## BZip2
 find_package(BZip2 REQUIRED)
 
+## HTSLIB
 if (htslib_FOUND)
     # If htslib was found on the system, use it
     message(STATUS "Using system htslib")
@@ -38,7 +39,7 @@ else()
     set(HTSLIB_LIBRARY "" CACHE FILEPATH "Path to custom htslib library file")
 
     # Check if the user provided custom paths and they are valid
-    if (HTSLIB_INCLUDE_DIR AND EXISTS ${HTSLIB_INCLUDE_DIR} AND HTSLIB_LIBRARY AND EXISTS ${HTSLIB_LIBRARY})
+    if (HTSLIB_INCLUDE_DIR AND EXISTS "${HTSLIB_INCLUDE_DIR}" AND HTSLIB_LIBRARY AND EXISTS "${HTSLIB_LIBRARY}")
         include_directories(${HTSLIB_INCLUDE_DIR})
         message(STATUS "Using custom htslib from specified paths")
     else()
@@ -67,22 +68,15 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/fermi-lite
 )
 
-add_custom_target(
-    BuildHTS ALL
-    COMMAND make
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/htslib
-)
-
-
 # If MyProject depends on the submodules, you might want to ensure they're built first
-add_dependencies(seqlib BuildBWA BuildFermiLite BuildHTS)
+add_dependencies(seqlib BuildBWA BuildFermiLite)
 
 target_link_libraries(seqlib
     ${CMAKE_CURRENT_SOURCE_DIR}/bwa/libbwa.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/htslib/libhts.a    
     ${CMAKE_CURRENT_SOURCE_DIR}/fermi-lite/libfml.a
     Threads::Threads
     ZLIB::ZLIB
+    ${HTSLIB_LIBRARY}
     ${LZMA_LIBRARY}
     BZip2::BZip2
 )

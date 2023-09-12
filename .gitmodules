@@ -1,6 +1,6 @@
 [submodule "fermi-lite"]
 	path = fermi-lite
-	url = https://github.com/lh3/fermi-lite
+	url = https://github.com/walaj/fermi-lite
 [submodule "bwa"]
 	path = bwa
 	url = https://github.com/lh3/bwa
