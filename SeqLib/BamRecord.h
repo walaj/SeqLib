@@ -893,7 +893,13 @@ class BamRecord {
   /** Return the shared pointer */
   SeqPointer<bam1_t> shared_pointer() const { return b; }
 
-  protected:
+  // Less than operator
+  bool operator<(const BamRecord& other) const;
+  
+  // Equality operator
+  bool operator==(const BamRecord& other) const;
+  
+protected:
   
   SeqPointer<bam1_t> b; // bam1_t shared pointer
 

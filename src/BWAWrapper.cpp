@@ -19,6 +19,10 @@ extern "C" {
 // custom sort 
 bool aln_sort(const mem_aln_t& lhs, const mem_aln_t& rhs)
 {
+
+  //  std::cerr << "LHS " << lhs.rid << ":" << lhs.pos << " -- RHS " <<
+  //  rhs.rid << ":" << rhs.pos << " mapqL " << lhs.mapq << " mapqR " << rhs.mapq << std::endl;
+  
   if (lhs.mapq > rhs.mapq) //want descending order of mapq
     return true;
   else if (lhs.mapq < rhs.mapq)

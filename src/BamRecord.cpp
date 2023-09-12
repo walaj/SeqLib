@@ -372,7 +372,7 @@ namespace SeqLib {
     }
     out << bam_get_qname(r.b) << "\t" << r.b->core.flag
 	<< "\t" << (r.b->core.tid+1) << "\t" << r.b->core.pos 
-	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
+	<< "\t" << static_cast<int>(r.b->core.qual) << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
         << r.FullInsertSize() //r.b->core.isize 
 	<< "\t" << r.Sequence() << "\t*" << std::endl;
@@ -648,7 +648,6 @@ namespace SeqLib {
       }
   }
   
-
   CigarField::CigarField(char  t, uint32_t len) {
     int op = CigarCharToInt[(int)t];
     if (op < 0)
@@ -657,6 +656,22 @@ namespace SeqLib {
     data = data | static_cast<uint32_t>(op);
   }
 
+  // Less than operator
+  bool BamRecord::operator<(const BamRecord& other) const {
+    if (b->core.tid < other.b->core.tid) {
+      return true;
+    } else if (b->core.tid == other.b->core.tid) {
+      return b->core.pos < other.b->core.pos;
+    } else {
+      return false;
+    }
+  }
+  
+  // Equality operator
+  bool BamRecord::operator==(const BamRecord& other) const {
+    return (b->core.tid == other.b->core.tid) && (b->core.pos == other.b->core.pos);
+  }
+  
   std::ostream& operator<<(std::ostream& out, const CigarField& c) { 
     out << bam_cigar_oplen(c.data) << bam_cigar_opchr(c.data); 
     return out; 
