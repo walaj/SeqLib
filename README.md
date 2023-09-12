@@ -35,11 +35,10 @@ Installation
 ```bash
 git clone --recursive https://github.com/walaj/SeqLib.git
 cd SeqLib
-## cd htslib && ./configure --enable-libcurl && cd .. # support for remote (FTP/HTTPS/Google etc) BAM access
-./configure ## or: ./configure LDFLAGS='-lcurl -lcrypto' # for remote support
+mkdir build
+cd build
+cmake .. ## if system htslib not found, add to the cmake .. command this: -DHTSLIB_INCLUDE_DIR=/path/to/htslib -DHTSLIB_LIBRARY=/path/to/htslib/libhts.a
 make
-make install
-make seqtools ## for the command line version
 ```
 
 You will need to have JsonCPP (v1.9.4 or higher) installed.
@@ -118,27 +117,6 @@ Some differences:
 
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
 bioinformatics tools, or to be used in conjuction with the capablities in SeqAn and BamTools. Feature requests and comments are welcomed.
-
-Command Line Usage
-------------------
-```bash
-## BFC correction (input mode -m is b (BAM/SAM/CRAM), output mode -w is SAM stream
-samtools view in.bam -h 1:1,000,000-1,002,000 | seqtools bfc - -G $REF | samtools sort - -m 4g -o corrected.bam
-
-## Without a pipe, write to BAM
-seqtools bfc in.bam -G $REF -b > corrected.bam
-
-## Skip realignment, send to fasta
-seqtools bfc in.bam -f > corrected.fasta
-
-## Input as gzipped or plain fasta (or fastq), send to aligned BAM
-seqtools bfc --infasta in.fasta -G $REG -b > corrected.bam
-
-
-##### ASSEMBLY (same patterns as above)
-samtools view in.bam -h 1:1,000,000-1,002,000 | seqtools fml - -G $REF | samtools sort - -m 4g -o assembled.bam
-
-```
 
 Examples
 --------
