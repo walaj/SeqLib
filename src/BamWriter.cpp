@@ -78,7 +78,7 @@ bool BamWriter::BuildIndex() const {
     fop = SeqPointer<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), htsFile_delete());
 
     // open the thread pool. It's OK if already connected before opening
-    SetThreadPool(pool);
+    //SetThreadPool(pool);
 
     if (!fop) {
       return false;
@@ -120,14 +120,15 @@ std::ostream& operator<<(std::ostream& out, const BamWriter& b)
   return out;
 }
 
-bool BamWriter::SetThreadPool(ThreadPool p) {
-  if (!p.IsOpen()) 
-    return false;
-  pool = p;
-  if (fop.get())
-    hts_set_opt(fop.get(),  HTS_OPT_THREAD_POOL, &pool.p);
-  return true;
-}
+// bool BamWriter::SetThreadPool(ThreadPool p) {
+//   if (!p.IsOpen()) 
+//     return false;
+//   pool = p;
+//   if (fop.get())
+//     hts_set_opt(fop.get(),  HTS_OPT_THREAD_POOL, &pool.p);
+//   return true;
+// }
+       
   //does not return false if file not found
 bool BamWriter::SetCramReference(const std::string& ref) {
 

@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include "SeqLib/BamRecord.h"
-#include "SeqLib/ThreadPool.h"
+//#include "SeqLib/ThreadPool.h"
 
 namespace SeqLib {
 
@@ -38,15 +38,15 @@ class BamWriter  {
    */
   bool WriteHeader() const;
 
-  /** Assign this BamWriter a thread pool
-   * 
-   * The thread pool with stay with this object, but
-   * will not be created or destroyed. This must be done
-   * separately, which allows for multiple readers/writers
-   * to be connected to one thread pool
-   * @return false if the thread pool has not been opened
-   */
-  bool SetThreadPool(ThreadPool p);
+  // /** Assign this BamWriter a thread pool
+  //  * 
+  //  * The thread pool with stay with this object, but
+  //  * will not be created or destroyed. This must be done
+  //  * separately, which allows for multiple readers/writers
+  //  * to be connected to one thread pool
+  //  * @return false if the thread pool has not been opened
+  //  */
+  // bool SetThreadPool(ThreadPool p);
 
   /** Provide a header to this writer 
    * @param h Header for this writer. Copies contents
@@ -114,7 +114,7 @@ class BamWriter  {
   SeqLib::BamHeader hdr;
 
   // for multicore reading/writing
-  ThreadPool pool;
+  //ThreadPool pool;
   
 };
 
