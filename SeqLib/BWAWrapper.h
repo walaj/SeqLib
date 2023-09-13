@@ -9,6 +9,19 @@
 
 #include "SeqLib/BamRecord.h"
 #include "SeqLib/BamHeader.h"
+
+extern "C" {
+  #include "bwa/bwa.h"
+  #include "bwa/bwt.h"
+  #include "bwa/bntseq.h"
+  #include "bwa/kseq.h"
+  #include <stdlib.h>
+  #include "bwa/utils.h"
+  #include "bwa/bwamem.h"
+  int is_bwt(ubyte_t *T, int n);
+  KSEQ_DECLARE(gzFile)
+}
+
 #include "SeqLib/UnalignedSequence.h"
 
 // all of the bwa and kseq stuff is in unaligned sequence

@@ -1,19 +1,6 @@
 #ifndef SEQLIB_UNALIGNED_SEQ_H
 #define SEQLIB_UNALIGNED_SEQ_H
 
-extern "C" {
-  #include "bwa/bwa.h"
-  #include "bwa/bwt.h"
-  #include "bwa/bntseq.h"
-  #include "bwa/kseq.h"
-  #include <stdlib.h>
-  #include "bwa/utils.h"
-  #include "bwa/bwamem.h"
-  int is_bwt(ubyte_t *T, int n);
-  KSEQ_DECLARE(gzFile)
-}
-
-
 #include <cstring>
 #include <vector>
 #include <iostream>

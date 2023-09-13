@@ -2,17 +2,22 @@
 #define SEQLIB_FASTQ_READER_H
 
 #include <string>
-
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <zlib.h>
+
+extern "C" {
+  #include "bwa/kseq.h"
+  KSEQ_DECLARE(gzFile)
+}
 
 // all kseq stuff is in UnaligedSequence
 #include "SeqLib/UnalignedSequence.h"
 
 namespace SeqLib{
-
+  
   /** Simple reader for FASTA/FASTQ files */
 class FastqReader {
 
