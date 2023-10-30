@@ -450,14 +450,14 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     parseSeqLine(value);
     
   }
-
-
+    
+    
     // main function for determining if a read is valid
     bool AbstractRule::isValid(const BamRecord &r) {
-    
+      
       DEBUGIV(r, "starting AR:isValid")
-
-    // check if its keep all or none
+	
+	// check if its keep all or none
     if (isEvery())
       return true;
     
@@ -491,18 +491,21 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 
     DEBUGIV(r, "mapq pass")
     
-    // check for valid flags
-    if (!fr.isValid(r)) 
+      // check for valid flags
+      if (!fr.isValid(r)) 
       return false;
 
     DEBUGIV(r, "flag pass")
-    
-    // check the CIGAR
-    if (!ins.isEvery() || !del.isEvery()) {
-      if (!ins.isValid(r.MaxInsertionBases()))
-	return false;
-      if (!del.isValid(r.MaxDeletionBases()))
-	return false;
+
+      // check the CIGAR
+      if (!ins.isEvery() || !del.isEvery() || !nbases.isEvery()) {
+	if (!ins.isValid(r.MaxInsertionBases()))
+	  return false;
+	if (!del.isValid(r.MaxDeletionBases()))
+	  return false;
+	if (!nbases.isValid(r.MaxNBases()))
+	  return false;
+	
     }
 
     DEBUGIV(r, "cigar pass")

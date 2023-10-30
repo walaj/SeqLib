@@ -522,6 +522,17 @@ class BamRecord {
     return imax;
   }
 
+  /** Return the max N size on this cigar */
+  inline uint32_t MaxNBases() const {
+    uint32_t* c = bam_get_cigar(b);
+    uint32_t imax = 0;
+    for (size_t i = 0; i < b->core.n_cigar; i++) 
+      if (bam_cigar_opchr(c[i]) == 'N')
+	imax = std::max(bam_cigar_oplen(c[i]), imax);
+    return imax;
+  }
+
+  
   /** Return the max single deletion size on this cigar */
   inline uint32_t MaxDeletionBases() const {
     uint32_t* c = bam_get_cigar(b);
