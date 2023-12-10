@@ -1,8 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = bwa htslib fermi-lite src
+SUBDIRS = bwa fermi-lite src
 
 install:  
-	mkdir -p lib && cp src/libseqlib.a fermi-lite/libfml.a bwa/libbwa.a htslib/libhts.a lib
+	mkdir -p lib && cp src/libseqlib.a fermi-lite/libfml.a bwa/libbwa.a lib
 
 seqtools:
 	mkdir -p bin && cd src/seqtools && make && mv seqtools ../../bin
