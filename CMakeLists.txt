@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.10)
 
 project(seqlib)
 
+# Set the C++ standard required for the project
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Set O2 optimization
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+
 # Include directories for headers
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -32,21 +40,16 @@ if (htslib_FOUND)
     # If htslib was found on the system, use it
     message(STATUS "Using system htslib")
 else()
-    # Option for custom include directory
-    set(HTSLIB_INCLUDE_DIR "" CACHE PATH "Path to custom htslib include directory")
+    set(HTSLIB_DIR "" CACHE PATH "Path to HTSLib root directory")
 
-    # Option for custom library
-    set(HTSLIB_LIBRARY "" CACHE FILEPATH "Path to custom htslib library file")
-
-    # Check if the user provided custom paths and they are valid
-    if (HTSLIB_INCLUDE_DIR AND EXISTS "${HTSLIB_INCLUDE_DIR}" AND HTSLIB_LIBRARY AND EXISTS "${HTSLIB_LIBRARY}")
-        include_directories(${HTSLIB_INCLUDE_DIR})
-        message(STATUS "Using custom htslib from specified paths")
+    if (NOT HTSLIB_DIR)
+        message(FATAL_ERROR "HTSLIB_DIR not specified. Please specify -DHTSLIB_DIR=/path/to/htslib")
     else()
-        message(STATUS "htslib not found on system. You can specify custom paths with -DHTSLIB_INCLUDE_DIR and -DHTSLIB_LIBRARY")
+        # Automatically set include and library paths based on HTSLIB_DIR
+        include_directories(${HTSLIB_DIR}/include)
+        link_directories(${HTSLIB_DIR}/lib)
     endif()
-endif()
-
+endif()    
 
 # Find all source files
 file(GLOB SOURCES "src/*.cpp" "src/*.c")
@@ -76,7 +79,7 @@ target_link_libraries(seqlib
     ${CMAKE_CURRENT_SOURCE_DIR}/fermi-lite/libfml.a
     Threads::Threads
     ZLIB::ZLIB
-    ${HTSLIB_LIBRARY}
+    hts
     ${LZMA_LIBRARY}
     BZip2::BZip2
 )

@@ -105,13 +105,13 @@ namespace SeqLib {
       char buffer[max_s + 30];
       for (i = 0; i < bns->n_seqs; ++i) {
 	//err_printf("@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
-	sprintf(buffer, "@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
+	snprintf(buffer, max_s+ + 30, "@SQ\tSN:%s\tLN:%d\n", bns->anns[i].name, bns->anns[i].len);
 	out.append(buffer);
       }
     } else if (n_SQ != bns->n_seqs && bwa_verbose >= 2)
       fprintf(stderr, "[W::%s] %d @SQ lines provided with -H; %d sequences in the index. Continue anyway.\n", __func__, n_SQ, bns->n_seqs);
     
-    if (hdr_line) { char buffer[200]; sprintf(buffer, "%s\n", hdr_line); out.append(buffer); } //err_printf("%s\n", hdr_line);
+    if (hdr_line) { char buffer[200]; snprintf(buffer, 200, "%s\n", hdr_line); out.append(buffer); } //err_printf("%s\n", hdr_line);
     //if (bwa_pg) { char buffer[100]; sprintf(buffer, "%s\n", bwa_pg); out.append(buffer); } // err_printf("%s\n", bwa_pg);
     
     return out;

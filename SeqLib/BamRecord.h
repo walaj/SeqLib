@@ -580,14 +580,13 @@ class BamRecord {
    */
   double MeanPhred() const;
 
-  /** Performa a Smith-Waterman alignment between two strings
-   * @param name Name of the query sequence to align
-   * @param seq Sequence (ACTGN) of the query string
-   * @param ref Sequence (ACTGN) of the reference string
-   * @param gr Location of the reference string. The alignment record after Smith-Waterman alignment
-   * will be relative to this location.
-   */
-  BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
+  // Performa a Smith-Waterman alignment between two strings
+  //@param name Name of the query sequence to align
+  //@param seq Sequence (ACTGN) of the query string
+  //@param ref Sequence (ACTGN) of the reference string
+  //@param gr Location of the reference string. The alignment record after Smith-Waterman alignment
+  //will be relative to this location.
+  //BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
 
   /** Get the quality scores of this read as a string 
    * @param offset Encoding offset for phred quality scores. Default 33

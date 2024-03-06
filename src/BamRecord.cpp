@@ -5,7 +5,7 @@
 #include <cctype>
 #include <stdexcept>
 
-#include "SeqLib/ssw_cpp.h"
+//#include "SeqLib/ssw_cpp.h"
 
 #define TAG_DELIMITER "^"
 #define CTAG_DELIMITER '^'
@@ -140,7 +140,7 @@ namespace SeqLib {
     free(new_cig);
   }
 
-  BamRecord::BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
+  /*  BamRecord::BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr) {
 
     StripedSmithWaterman::Aligner aligner;
     // Declares a default filter
@@ -202,7 +202,7 @@ namespace SeqLib {
     // add in the actual alignment score
     AddIntTag("AS", alignment.sw_score);
       
-  }
+    }*/
 
   void BamRecord::SmartAddTag(const std::string& tag, const std::string& val)
   {

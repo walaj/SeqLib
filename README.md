@@ -37,7 +37,7 @@ git clone --recursive https://github.com/walaj/SeqLib.git
 cd SeqLib
 mkdir build
 cd build
-cmake .. ## if system htslib not found, add to the cmake .. command this: -DHTSLIB_INCLUDE_DIR=/path/to/htslib -DHTSLIB_LIBRARY=/path/to/htslib/libhts.a
+cmake .. ## if system htslib not found, add to the cmake .. command this: -DHTSLIB_DIR=/path/to/htslib
 make
 ```
 
