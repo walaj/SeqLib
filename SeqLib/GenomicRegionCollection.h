@@ -128,7 +128,7 @@ class GenomicRegionCollection {
 
   /** Add a new GenomicRegion (or child of) to end
    */
- void add(const T& g) { m_grv->push_back(g); /*createTreeMap();*/ }
+  void add(const T& g) { m_grv->push_back(g); idx = 0; }
 
   /** Is this object empty?
    */

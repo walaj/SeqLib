@@ -314,6 +314,10 @@ GenomicRegionVector GenomicRegionCollection<T>::AsGenomicRegionVector() const {
 template <class T>
 void GenomicRegionCollection<T>::CreateTreeMap() {
 
+  // clear out the old tree
+  m_tree->clear();
+
+  // can't build if empty
   if (!m_grv->size())
     return;
 
@@ -328,14 +332,12 @@ void GenomicRegionCollection<T>::CreateTreeMap() {
   }
 
   // for each chr, make the tree from the intervals
-  //for (auto it : map) {
   for (GenomicIntervalMap::iterator it = map.begin(); it != map.end(); ++it) {
     GenomicIntervalTreeMap::iterator ff = m_tree->find(it->first);
     if (ff != m_tree->end())
       ff->second = GenomicIntervalTree(it->second);
     else
       m_tree->insert(std::pair<int, GenomicIntervalTree>(it->first, GenomicIntervalTree(it->second)));
-    //old //m_tree[it.first] = GenomicIntervalTree(it.second);
   }
 
 }
@@ -397,7 +399,7 @@ size_t GenomicRegionCollection<T>::CountOverlaps(const T &gr) const {
 
   if (m_tree->size() == 0 && m_grv->size() != 0) 
     {
-      std::cerr << "!!!!!! WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
+      std::cerr << "!!!!!! WARNING: Trying to find overlaps on empty tree. Need to run this->CreateTreeMap() somewhere " << std::endl;
       return 0;
     }
 
@@ -419,7 +421,7 @@ size_t GenomicRegionCollection<T>::CountOverlaps(const T &gr) const {
       return false;
     
     if (m_tree->size() == 0 && m_grv->size() != 0) {
-      std::cerr << "!!!!!! WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
+      std::cerr << "!!!!!! WARNING: Trying to find overlaps on empty tree. Need to run this->CreateTreeMap() somewhere " << std::endl;
       return false;
     }
     
@@ -617,7 +619,7 @@ GenomicRegionCollection<GenomicRegion> GenomicRegionCollection<T>::FindOverlaps(
 
   GenomicRegionCollection<GenomicRegion> output;
   if (subject.NumTree() == 0 && subject.size() != 0) {
-    std::cerr << "!!!!!! findOverlaps: WARNING: Trying to find overlaps on empty tree. Need to run this->createTreeMap() somewhere " << std::endl;
+    std::cerr << "!!!!!! findOverlaps: WARNING: Trying to find overlaps on empty tree. Need to run this->CreateTreeMap() somewhere " << std::endl;
     return output;
   }
 
