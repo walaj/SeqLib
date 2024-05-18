@@ -274,7 +274,6 @@ namespace SeqLib {
 	  secondary_count_debug++;
       }
       std::cerr << "secondary count " << secondary_count_debug << std::endl;
-    }
 #endif    
 
     double primary_score = 0;
