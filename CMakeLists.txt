@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(seqlib)
 
 # Set the C++ standard required for the project
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -53,6 +53,13 @@ endif()
 
 # Find all source files
 file(GLOB SOURCES "src/*.cpp" "src/*.c")
+
+# Silence the deprecation warning in jsoncpp.cpp only
+set_source_files_properties(
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/jsoncpp.cpp"
+  PROPERTIES
+    COMPILE_FLAGS "-Wno-deprecated-declarations"
+)
 
 # Generate the executable
 add_library(seqlib ${SOURCES})

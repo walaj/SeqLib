@@ -206,7 +206,7 @@ class CigarField {
 class BamRecord {
 
   friend class BLATWraper;
-  friend class BWAWrapper;
+  friend class BWAAligner;
 
  public:
 
