@@ -280,7 +280,8 @@ class BamRecord {
     else if (   ( ReverseFlag() && Position() < MatePosition() && !MateReverseFlag()) ||
                 (!ReverseFlag() && Position() > MatePosition() &&  MateReverseFlag()))
       return RFORIENTATION;
-    assert(false);
+    throw std::runtime_error("BamRecord: Unknown pair orientation");
+    return -1;
   }
   
   /** BamRecord is failed QC */
