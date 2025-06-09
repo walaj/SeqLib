@@ -1,10 +1,10 @@
-#ifndef SEQLIB_FERMI_H
-#define SEQLIB_FERMI_H
+#pragma once
 
 #include <string>
 #include <cstdlib>
 #include <iostream>
 
+#include "SeqLib/UnalignedSequence.h"
 #include "SeqLib/BamRecord.h"
 
 extern "C" 
@@ -150,5 +150,3 @@ namespace SeqLib {
   
 
 }
-
-#endif

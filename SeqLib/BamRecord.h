@@ -1,13 +1,11 @@
-#ifndef SEQLIB_BAM_RECORD_H
-#define SEQLIB_BAM_RECORD_H
+#pragma once
 
-#include <stdint.h>
-//#include <cstdint> //+11
+#include <cstdint> //+11
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 #include <iostream>
-#include <sstream>
-#include <cassert>
-#include <algorithm>
+#include <string_view>
 
 extern "C" {
 #include "htslib/hts.h"
@@ -20,30 +18,26 @@ extern "C" {
 
 #include "SeqLib/SeqLibUtils.h"
 #include "SeqLib/GenomicRegion.h"
-#include "SeqLib/UnalignedSequence.h"
 #include "SeqLib/BamWalker.h"
 
-static const char BASES[16] = {' ', 'A', 'C', ' ',
-                               'G', ' ', ' ', ' ', 
-                               'T', ' ', ' ', ' ', 
-                               ' ', ' ', ' ', 'N'};
+constexpr char BASES[16] = {
+    ' ', 'A', 'C', ' ',
+    'G', ' ', ' ', ' ',
+    'T', ' ', ' ', ' ',
+    ' ', ' ', ' ', 'N'
+};
 
-static std::string cigar_delimiters = "MIDNSHPX";
+const inline std::string cigar_delimiters = "MIDNSHPX";
 
-static const uint8_t CIGTAB[255] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-#define FRORIENTATION 0
-#define FFORIENTATION 1
-#define RFORIENTATION 2
-#define RRORIENTATION 3
-#define UDORIENTATION 4
+constexpr uint8_t CIGTAB[255] = { 0 }; // Use constexpr if all zeroes for space and compile-time init
+
+enum Orientation : int {
+    FRORIENTATION = 0,
+    FFORIENTATION = 1,
+    RFORIENTATION = 2,
+    RRORIENTATION = 3,
+    UDORIENTATION = 4
+};
 
 namespace SeqLib {
 
@@ -62,37 +56,45 @@ class CigarField {
    * @param l Cigar length
    * @exception Throws an invalid_argument if l <= 0 or invalid cigar op
    */
-  CigarField(char t, uint32_t l); 
+  CigarField(char opChr, uint32_t len); 
 
   /** Construct the cigar op from the raw sam.h uint32_t (first 4 bits op, last 28 len) */
-  CigarField(uint32_t f) : data(f) {}
+  explicit CigarField(uint32_t f) : data(f) {}
 
-  /** Return the raw sam.h uint8_t cigar data */
-  inline uint32_t raw() const { return data; }
-
-  /** Print the cigar field (eg 35M) */
-  friend std::ostream& operator<<(std::ostream& out, const CigarField& c);
+  /** Return the raw sam.h uint32_t cigar data */
+  constexpr uint32_t raw() const noexcept { return data; }
 
   /** Return the cigar op type (one of MIDNSHPX) as a char */
-  inline char Type() const { return bam_cigar_opchr(data); } 
+  constexpr char Type() const noexcept { return bam_cigar_opchr(data); }
 
   /** Return the raw sam.h uint8_t cigar type (bam_cigar_op(data)) */
-  inline uint8_t RawType() const { return bam_cigar_op(data); } 
+  constexpr uint8_t RawType() const noexcept { return bam_cigar_op(data); }
 
   /** Return the length of the cigar op (eg 35M returns 35) */
-  inline uint32_t Length() const { return bam_cigar_oplen(data); } 
+  constexpr uint32_t Length() const noexcept { return bam_cigar_oplen(data); }
 
   /** Returns true if cigar op matches bases on the reference (MDN=X) */
-  inline bool ConsumesReference() const { return bam_cigar_type(bam_cigar_op(data))&2;  }
+  constexpr bool ConsumesReference() const noexcept {
+    return (bam_cigar_type(bam_cigar_op(data)) & 2) != 0;
+  }
 
   /** Returuns true cigar op matches bases on the query (MIS=X) */
-  inline bool ConsumesQuery() const { return bam_cigar_type(bam_cigar_op(data))&1;  }
+  constexpr bool ConsumesQuery() const noexcept {
+    return (bam_cigar_type(bam_cigar_op(data)) & 1) != 0;
+  }  
 
   /** Return whether two CigarField objects have same op and len */
-  inline bool operator==(const CigarField& c) const { return c.Type() == Type() && c.Length() == Length(); }
+  constexpr bool operator==(const CigarField& other) const noexcept {
+    return data == other.data;
+  }  
 
   /** Return whether two CigarField objects have different op and/or len */
-  inline bool operator!=(const CigarField& c) const { return !(c == *this); } 
+  constexpr bool operator!=(const CigarField& other) const noexcept {
+    return !(*this == other);
+  }
+
+  /** Print the cigar field (eg 35M) */
+  friend std::ostream& operator<<(std::ostream& out, const CigarField& c) noexcept;
 
  private:
 
@@ -110,82 +112,62 @@ class CigarField {
  public:
 
    /** Construct an empty CIGAR */
-   Cigar() {} 
+   Cigar() = default;
 
    /** Construct from a CIGAR string 
     * @param cig CIGAR string, e.g. 54M46S
     */
-   Cigar(const std::string& cig);
-
-   typedef std::vector<CigarField>::iterator iterator; ///< Iterator for move between CigarField ops
-   typedef std::vector<CigarField>::const_iterator const_iterator; ///< Iterator (const) for move between CigarField ops
-   iterator begin() { return m_data.begin(); } ///< Iterator (aka std::vector<CigarField>.begin()
-   iterator end()   { return m_data.end(); } ///< Iterator (aka std::vector<CigarField>.end()
-   const_iterator begin() const { return m_data.begin(); } ///< Iterator (aka std::vector<CigarField>.begin()
-   const_iterator end() const   { return m_data.end(); } ///< Iterator (aka std::vector<CigarField>.end() 
+   explicit Cigar(const std::string& cig);
+   
+   using iterator = std::vector<CigarField>::iterator;        ///< Iterator for moving between CigarField ops
+   using const_iterator = std::vector<CigarField>::const_iterator; ///< Const iterator for moving between CigarField ops
+   
+   iterator begin() noexcept { return m_data.begin(); }       ///< Begin iterator
+   iterator end()   noexcept { return m_data.end(); }         ///< End iterator
+   const_iterator begin() const noexcept { return m_data.begin(); }  ///< Const begin iterator
+   const_iterator end()   const noexcept { return m_data.end(); }    ///< Const end iterator
 
    /** Const reference to last cigar op */
-   inline const CigarField& back() const { return m_data.back(); }
-
+   const CigarField& back() const noexcept { return m_data.back(); }
    /** Reference to last cigar op */
-   inline CigarField& back() { return m_data.back(); }
+   CigarField&       back() noexcept       { return m_data.back(); }
 
    /** Const reference to first cigar op */
-   inline const CigarField& front() const { return m_data.front(); }
-
+   const CigarField& front() const noexcept { return m_data.front(); }
    /** Reference to first cigar op */
-   inline CigarField& front() { return m_data.front(); }
+   CigarField&       front() noexcept       { return m_data.front(); }
 
    /** Returns the number of cigar ops */
-   inline size_t size() const { return m_data.size(); }
+   size_t size() const noexcept { return m_data.size(); }
 
-   /** Returns the i'th cigar op */
-   inline CigarField& operator[](size_t i) { return m_data[i]; }
-
-   /** Returns the i'th cigar op (const) */
-   const CigarField& operator[](size_t i) const { return m_data[i]; }
-
-   /** Return the sum of all of the lengths for all kinds */
-   inline int TotalLength() const {
-     int t = 0;
-     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
-       //for (auto& c : m_data)
-       t += c->Length();
-     return t;
-   }
+   /// Reserve space for at least n CigarFields to avoid reallocations
+   void reserve(size_t n) { m_data.reserve(n); }
+   
+   /// (optional) query how many you can push without realloc
+   size_t capacity() const { return m_data.capacity(); }
+   
+   /** Access the i'th cigar op */
+   CigarField&       operator[](size_t i) noexcept       { return m_data[i]; }
+   /** Access the i'th cigar op (const) */
+   const CigarField& operator[](size_t i) const noexcept { return m_data[i]; }
 
    /** Return the number of query-consumed bases */
-   inline int NumQueryConsumed() const {
-     int out = 0;
-     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
-       if (c->ConsumesQuery())
-	 out += c->Length();
-     return out;
-   }
+   int NumQueryConsumed() const noexcept;
 
    /** Return the number of reference-consumed bases */
-   inline int NumReferenceConsumed() const {
-     int out = 0;
-     //    for (auto& c : m_data)
-     for (Cigar::const_iterator c = m_data.begin(); c != m_data.end(); ++c)
-       if (c->ConsumesReference())
-	 out += c->Length();
-     return out;
-   }
-
+   int NumReferenceConsumed() const noexcept;
+   
    /** Add a new cigar op */
-   inline void add(const CigarField& c) { 
-     m_data.push_back(c); 
-   }
+   void add(const CigarField& c);
 
    /** Return whether two Cigar objects are equivalent */
-   bool operator==(const Cigar& c) const;
+   bool operator==(const Cigar& c) const noexcept;
    
    /** Return whether two Cigar objects are not equivalent */
    bool operator!=(const Cigar& c) const { return !(c == *this); }
 
   /** Print cigar string (eg 35M25S) */
-  friend std::ostream& operator<<(std::ostream& out, const Cigar& c);
+  friend std::ostream& operator<<(std::ostream& out, const Cigar& c) noexcept;
   
    
  private:
@@ -211,7 +193,7 @@ class BamRecord {
  public:
 
   /** Construct a BamRecord manually from a name, sequence, cigar and location
-   * @param name Name of the read
+   * @param qname Name of the read
    * @param seq Sequence of the read (compsed of ACTG or N).
    * @param gr Location of the alignment
    * @param cig Cigar alignment
@@ -220,18 +202,17 @@ class BamRecord {
    * @exception Throws an invalid_argument exception if width of gr is not commensurate
    * with number of reference-bases consumed in cigar. 
    */
-  BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
-
+  BamRecord(std::string_view qname,
+	    std::string_view seq,
+	    const GenomicRegion& gr,
+	    const Cigar& cig);
+    
  /**
    * Take ownership of a raw bam1_t* (caller must not destroy it).
    * Wrapped in a shared_ptr so it'll be freed on destruction.
    */
   explicit BamRecord(bam1_t* raw)
     : b(raw, Bam1Deleter()) {}
-  
-  /** Construct an empty BamRecord by calling bam_init1() 
-   */
-  void init();
 
   /** Check if a read is empty (not initialized)
    * @return true if read was not initialized with any values
@@ -243,10 +224,10 @@ class BamRecord {
    * The BamRecord now controls the memory, and will delete at destruction
    * @param a An allocated bam1_t
    */
-  void assign(bam1_t* a);
+  //void assign(bam1_t* a);
 
   /** Make a BamRecord with no memory allocated and a null header */
-  BamRecord() {}
+  BamRecord();
 
   /** BamRecord is aligned on reverse strand */
   inline bool ReverseFlag() const { return b ? ((b->core.flag&BAM_FREVERSE) != 0) : false; }
@@ -274,22 +255,7 @@ class BamRecord {
    * 3 - RR (RRORIENTATION)
    * 4 - Undefined (UDORIENTATION) (unpaired or one/both is unmapped)
    */
-  inline int PairOrientation() const {
-    if (!PairMappedFlag())
-      return UDORIENTATION;
-    else if ( (!ReverseFlag() && Position() <= MatePosition() &&  MateReverseFlag() ) || // read 1
-	      (ReverseFlag()  && Position() >= MatePosition() && !MateReverseFlag() ) ) // read 2
-      return FRORIENTATION;
-    else if (!ReverseFlag() && !MateReverseFlag())
-      return FFORIENTATION;
-    else if (ReverseFlag() && MateReverseFlag())
-      return RRORIENTATION;
-    else if (   ( ReverseFlag() && Position() < MatePosition() && !MateReverseFlag()) ||
-                (!ReverseFlag() && Position() > MatePosition() &&  MateReverseFlag()))
-      return RFORIENTATION;
-    throw std::runtime_error("BamRecord: Unknown pair orientation");
-    return -1;
-  }
+  int PairOrientation() const;
   
   /** BamRecord is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }
@@ -310,22 +276,7 @@ class BamRecord {
   inline bool ProperPair() const { return b ? (b->core.flag&BAM_FPROPER_PAIR) : false;} 
 
   /** BamRecord has proper orientation (FR) */
-  inline bool ProperOrientation() const { 
-    if (!b)
-      return false;
-    
-    // mate on diff chrom gets false
-    if (b->core.tid != b->core.mtid)
-      return false;
-
-    // if FR return true
-    if (b->core.pos < b->core.mpos) {
-      return (b->core.flag&BAM_FREVERSE) == 0 && (b->core.flag&BAM_FMREVERSE) != 0 ? true : false;
-    } else {
-      return (b->core.flag&BAM_FREVERSE) == 0 && (b->core.flag&BAM_FMREVERSE) != 0 ? false : true;
-    }
-      
-  }
+  bool ProperOrientation() const;
 
   /** Count the total number of N bases in this sequence */
   int32_t CountNBases() const;
@@ -339,13 +290,13 @@ class BamRecord {
   void QualityTrimmedSequence(int32_t qualTrim, int32_t& startpoint, int32_t& endpoint) const;
 
   /** Retrieve the quality trimmed seqeuence from QT tag if made. Otherwise return normal seq */
-  std::string QualitySequence() const;
+  //std::string QualitySequence() const;
 
   /** Get the alignment position */
   inline int32_t Position() const { return b ? b->core.pos : -1; }
 
   /** Get the alignment position, including soft clips */
-  int32_t PositionWithSClips() const;
+  //int32_t PositionWithSClips() const;
   
   /** Get the alignment position of mate */
   inline int32_t MatePosition() const { return b ? b->core.mpos: -1; }
@@ -354,68 +305,53 @@ class BamRecord {
    * @note A secondary alignment is an alternative mapping. This may not
    * work for non-BWA aligners that may not place the XA tag.
    */
-  int32_t CountBWASecondaryAlignments() const;
+  //int32_t CountBWASecondaryAlignments() const;
 
   /** Count the number of chimeric alignments by looking at XP and SA tags 
    * @note A secondary alignment is an alternative mapping. This may not
    * work for non-BWA aligners that may not place the XP/SA tags. BWA-MEM 
    * used the XP tag prior to v0.7.5, and SA aftewards.
    */
-  int32_t CountBWAChimericAlignments() const;
+  //int32_t CountBWAChimericAlignments() const;
 
   /** Get the end of the alignment */
   int32_t PositionEnd() const;
 
   /** Get the end of the alignment, including soft clips */
-  int32_t PositionEndWithSClips() const;
+  //int32_t PositionEndWithSClips() const;
 
   /** Get the end of the aligment mate pair */
   int32_t PositionEndMate() const;
 
   /** Get the chromosome ID of the read */
-  inline int32_t ChrID() const { return b ? b->core.tid : -1; }
+  int32_t ChrID() const;
   
   /** Get the chrosome ID of the mate read */
-  inline int32_t MateChrID() const { return b ? b->core.mtid : -1; }
+  int32_t MateChrID() const;
   
   /** Get the mapping quality */
-  inline int32_t MapQuality() const { return b ? b->core.qual : -1; }
+  int32_t MapQuality() const;
 
   /** Set the qc fail flag on/off (true -> on) */
-  inline void SetQCFail(bool f) { 
-    if (f)
-      b->core.flag |= BAM_FQCFAIL;
-    else
-      b->core.flag &= ~BAM_FQCFAIL;
-  }
-
+  void SetQCFail(bool f);
+  
   /** Set the mapping quality */
-  inline void SetMapQuality(int32_t m) { if (b) b->core.qual = m; }
+  void SetMapQuality(int32_t m);
 
   /** Set the chr id */
-  inline void SetChrID(int32_t i) { b->core.tid = i; }
+  void SetChrID(int32_t i);
 
   /** Set the chr id of mate */
-  inline void SetChrIDMate(int32_t i) { b->core.mtid = i; }
+  void SetChrIDMate(int32_t i);
   
   /** Set the position of the mate read */
-  inline void SetPositionMate(int32_t i) { b->core.mpos = i; }
+  void SetPositionMate(int32_t i);
 
   /** Set the pair mapped flag on/off (true -> on) */
-  inline void SetPairMappedFlag(bool f) { 
-    if (f)
-      b->core.flag |= BAM_FPAIRED;
-    else
-      b->core.flag &= ~BAM_FPAIRED;
-  }
+  void SetPairMappedFlag(bool f);
 
   /** Set the mate reverse flag on/off (true -> on) */
-  inline void SetMateReverseFlag(bool f) { 
-    if (f)
-      b->core.flag |= BAM_FMREVERSE;
-    else
-      b->core.flag &= ~BAM_FMREVERSE;
-  }
+  void SetMateReverseFlag(bool f);
 
   /** Get the number of cigar fields */
   inline int32_t CigarSize() const { return b ? b->core.n_cigar : -1; }
@@ -441,18 +377,7 @@ class BamRecord {
   /** Get the read group, first from qname, then by RG tag 
    * @return empty string if no readgroup found
    */
-  inline std::string ParseReadGroup() const {
-
-    // try to get from RG tag first
-    std::string RG;
-    if (GetZTag("RG", RG))
-      return RG;
-
-    // try to get the read group tag from qname second
-    std::string qn = Qname();
-    size_t posr = qn.find(":", 0);
-    return (posr != std::string::npos) ? qn.substr(0, posr) : "NA";
-  }
+  std::string ParseReadGroup() const;
 
   /** Get the insert size, absolute value, and always taking into account read length */
   inline int32_t FullInsertSize() const {
@@ -468,23 +393,23 @@ class BamRecord {
   inline int32_t Length() const { return b->core.l_qseq; }
   
   /** Append a tag with new value, delimited by 'x' */
-  void SmartAddTag(const std::string& tag, const std::string& val);
+  //void SmartAddTag(const std::string& tag, const std::string& val);
   
   /** Set the query name */
-  void SetQname(const std::string& n);
+  void SetQname(std::string_view name);
 
   /** Set the quality scores 
-   * @param n String of quality scores or empty string
+   * @param quals String of quality scores or empty string
    * @param offset Offset parameter for encoding (eg 33)
    * @exception Throws an invalid_argument if n is non-empty
    * and different length than sequence
    */
-  void SetQualities(const std::string& n, int offset);
+  void SetQualities(std::string_view quals, int offset);
 
   /** Set the sequence name 
    * @param seq Sequence in upper-case (ACTGN) letters. 
    */
-  void SetSequence(const std::string& seq);
+  void SetSequence(std::string_view seq);
 
   /** Set the cigar field explicitly 
    * @param c Cigar operation to set
@@ -512,69 +437,22 @@ class BamRecord {
     *
     * @return The number of M, D, X, = and I bases
     */
-  inline int NumAlignedBases() const {
-    int out = 0;
-    uint32_t* c = bam_get_cigar(b);
-    for (size_t i = 0; i < b->core.n_cigar; i++) 
-      if (bam_cigar_opchr(c[i]) == 'M' || 
-	  bam_cigar_opchr(c[i]) == 'I' || 
-	  bam_cigar_opchr(c[i]) == '=' || 
-	  bam_cigar_opchr(c[i]) == 'X' || 
-	  bam_cigar_opchr(c[i]) == 'D')
-	out += bam_cigar_oplen(c[i]);
-    return out;
-  }
-  
+  int NumAlignedBases() const;
 
   /** Return the max single insertion size on this cigar */
-  inline uint32_t MaxInsertionBases() const {
-    uint32_t* c = bam_get_cigar(b);
-    uint32_t imax = 0;
-    for (size_t i = 0; i < b->core.n_cigar; i++) 
-      if (bam_cigar_opchr(c[i]) == 'I')
-	imax = std::max(bam_cigar_oplen(c[i]), imax);
-    return imax;
-  }
+  uint32_t MaxInsertionBases() const;
 
   /** Return the max single deletion size on this cigar */
-  inline uint32_t MaxDeletionBases() const {
-    uint32_t* c = bam_get_cigar(b);
-    uint32_t dmax = 0;
-    for (size_t i = 0; i < b->core.n_cigar; i++) 
-      if (bam_cigar_opchr(c[i]) == 'D')
-	dmax = std::max(bam_cigar_oplen(c[i]), dmax);
-    return dmax;
-  }
+  uint32_t MaxDeletionBases() const;
 
   /** Get the number of matched bases in this alignment */
-  inline uint32_t NumMatchBases() const {
-    uint32_t* c = bam_get_cigar(b);
-    uint32_t dmax = 0;
-    for (size_t i = 0; i < b->core.n_cigar; i++) 
-      if (bam_cigar_opchr(c[i]) == 'M')
-	dmax += bam_cigar_oplen(c[i]);
-    return dmax;
-  }
-
+  uint32_t NumMatchBases() const;
 
   /** Retrieve the CIGAR as a more managable Cigar structure */
-  Cigar GetCigar() const {
-    uint32_t* c = bam_get_cigar(b);
-    Cigar cig;
-    for (size_t k = 0; k < b->core.n_cigar; ++k) {
-      cig.add(CigarField(c[k]));
-    }
-    return cig;
-  }
+  Cigar GetCigar() const;
 
   /** Retrieve the inverse of the CIGAR as a more managable Cigar structure */
-  Cigar GetReverseCigar() const {
-    uint32_t* c = bam_get_cigar(b);
-    Cigar cig;
-    for (int k = b->core.n_cigar - 1; k >= 0; --k) 
-      cig.add(CigarField(c[k]));
-    return cig;
-  }
+  Cigar GetReverseCigar() const;
 
   /** Remove the sequence, quality and alignment tags. 
    * Make a more compact alignment stucture, without the string data
@@ -584,137 +462,52 @@ class BamRecord {
   /** Retrieve the sequence of this read as a string (ACTGN) */
   std::string Sequence() const;
 
-  /** Return the mean quality score 
-   */
-  double MeanPhred() const;
-
-  // Performa a Smith-Waterman alignment between two strings
-  //@param name Name of the query sequence to align
-  //@param seq Sequence (ACTGN) of the query string
-  //@param ref Sequence (ACTGN) of the reference string
-  //@param gr Location of the reference string. The alignment record after Smith-Waterman alignment
-  //will be relative to this location.
-  //BamRecord(const std::string& name, const std::string& seq, const std::string& ref, const GenomicRegion * gr);
-
   /** Get the quality scores of this read as a string 
    * @param offset Encoding offset for phred quality scores. Default 33
    * @return Qualties scores after converting offset. If first char is empty, returns empty string
    */
-  inline std::string Qualities(int offset = 33) const { 
-    uint8_t * p = bam_get_qual(b);
-    if (!p)
-      return std::string();
-    //if (!p[0])
-    //  return std::string();
-    std::string out(b->core.l_qseq, ' ');
-    for (int32_t i = 0; i < b->core.l_qseq; ++i) 
-      out[i] = (char)(p[i] + offset);
-    return out;
-  }
+  std::string Qualities(int offset = 33) const;
 
   /** Get the start of the alignment on the read, by removing soft-clips
    * Do this in the reverse orientation though.
    */
-  inline int32_t AlignmentPositionReverse() const {
-    uint32_t* c = bam_get_cigar(b);
-    int32_t p = 0;
-    for (int32_t i = b->core.n_cigar - 1; i >= 0; --i) {
-      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
-	p += bam_cigar_oplen(c[i]);
-      else // not a clip, so stop counting
-	break;
-    }
-    return p;
-  }
-  
+  int32_t AlignmentPositionReverse() const;
+
   /** Get the end of the alignment on the read, by removing soft-clips
    * Do this in the reverse orientation though.
    */
-  inline int32_t AlignmentEndPositionReverse() const {
-    uint32_t* c = bam_get_cigar(b);
-    int32_t p = 0;
-    for (size_t i = 0; i < b->core.n_cigar; ++i) { // loop from the end
-      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
-	p += bam_cigar_oplen(c[i]);
-      else // not a clip, so stop counting
-	break;
-    }
-    return (b->core.l_qseq - p);
-  }
-
+  int32_t AlignmentEndPositionReverse() const;
 
   /** Get the start of the alignment on the read, by removing soft-clips
    */
-  inline int32_t AlignmentPosition() const {
-    uint32_t* c = bam_get_cigar(b);
-    int32_t p = 0;
-    for (size_t i = 0; i < b->core.n_cigar; ++i) {
-      if (bam_cigar_opchr(c[i]) == 'S')
-	p += bam_cigar_oplen(c[i]);
-      else if (bam_cigar_opchr(c[i]) != 'H') 
-	break;
-    }
-    return p;
-  }
+  int32_t AlignmentPosition() const;
   
   /** Get the end of the alignment on the read, by removing soft-clips
    */
-  inline int32_t AlignmentEndPosition() const {
-    uint32_t* c = bam_get_cigar(b);
-    int32_t p = 0;
-    for (int32_t i = b->core.n_cigar - 1; i >= 0; --i) { // loop from the end
-      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H'))
-	p += bam_cigar_oplen(c[i]);
-      else // not a clip, so stop counting
-	break;
-    }
-    return (b->core.l_qseq - p);
-  }
-
+  int32_t AlignmentEndPosition() const;
+  
   /** Get the number of soft clipped bases */
-  inline int32_t NumSoftClip() const {
-      int32_t p = 0;
-      uint32_t* c = bam_get_cigar(b);
-      for (size_t i = 0; i < b->core.n_cigar; ++i)
-	if (bam_cigar_opchr(c[i]) == 'S')
-	  p += bam_cigar_oplen(c[i]);
-      return p;
-    }
+  int32_t NumSoftClip() const;
 
   /** Get the number of hard clipped bases */
-  inline int32_t NumHardClip() const {
-      int32_t p = 0;
-      uint32_t* c = bam_get_cigar(b);
-      for (size_t i = 0; i < b->core.n_cigar; ++i) 
-	if (bam_cigar_opchr(c[i]) == 'H')
-	  p += bam_cigar_oplen(c[i]);
-      return p;
-    }
-
+  int32_t NumHardClip() const;
 
   /** Get the number of clipped bases (hard clipped and soft clipped) */
-  inline int32_t NumClip() const {
-    int32_t p = 0;
-    uint32_t* c = bam_get_cigar(b);
-    for (size_t i = 0; i < b->core.n_cigar; ++i)
-      if ( (bam_cigar_opchr(c[i]) == 'S') || (bam_cigar_opchr(c[i]) == 'H') )
-	p += bam_cigar_oplen(c[i]);
-    return p;
-  }
+  int32_t NumClip() const;
   
   /** Get a string (Z) tag 
    * @param tag Name of the tag. eg "XP"
-   * @param s The string to be filled in with the tag information
+   * @param out The string to be filled in with the tag information
    * @return Returns true if the tag is present, even if empty. Return false if no tag or not a Z tag.
    */
-  bool GetZTag(const std::string& tag, std::string& s) const;
+  bool GetZTag(const std::string_view tag, std::string& out) const;
   
   /** Get a string of either Z, f or i type. Useful if tag type not known at compile time.
    * @param tag Name of the tag. eg "XP"
-   * @param s The string to be filled in with the tag information
+   * @param out The string to be filled in with the tag information
    * @return Returns true if the tag is present and is either Z or i, even if empty. Return false if no tag or not Z or i.
    */  
-  bool GetTag(const std::string& tag, std::string& s) const;
+  bool GetTag(std::string_view tag, std::string& out) const;
   
   /** Get a vector of type int from a Z tag delimited by "^"
    * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
@@ -723,7 +516,7 @@ class BamRecord {
    * @return A vector of ints, retrieved from the x delimited Z tag
    * @exception Throws an invalid_argument if cannot convert delimited field val to int
    */
-  std::vector<int> GetSmartIntTag(const std::string& tag) const;
+  //std::vector<int> GetSmartIntTag(const std::string& tag) const;
 
   /** Get a vector of type double from a Z tag delimited by "x"
    * Smart-tags allow one to store vectors of string, ints or doubles in the alignment tags, and
@@ -732,7 +525,7 @@ class BamRecord {
    * @return A vector of double elems, retrieved from the "^" delimited Z tag
    * @exception Throws an invalid_argument if cannot convert delimited field val to double
    */
-  std::vector<double> GetSmartDoubleTag(const std::string& tag) const;
+  //std::vector<double> GetSmartDoubleTag(const std::string& tag) const;
 
   /** Get a vector of strings from a Z tag delimited by "^"
    * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
@@ -740,81 +533,47 @@ class BamRecord {
    * @param tag Name of the tag eg "CN"
    * @return A vector of strngs, retrieved from the x delimited Z tag
    */
-  std::vector<std::string> GetSmartStringTag(const std::string& tag) const;
+  //std::vector<std::string> GetSmartStringTag(const std::string& tag) const;
 
   /** Get an int (i) tag 
    * @param tag Name of the tag. eg "XP"
    * @param t Value to be filled in with the tag value.
    * @return Return true if the tag exists.
    */
-  inline bool GetIntTag(const std::string& tag, int32_t& t) const {
-    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
-    if (!p)
-      return false;
-    t = bam_aux2i(p);
-    int type = *p++;
-    if (!(type == 'i' || type == 'C' || type=='S' || type=='s' || type =='I' || type=='c'))
-      return false;
-
-    return true;
-  }
+  bool GetIntTag(std::string_view tag, int32_t& t) const;
 
   /** Get a float (f) tag 
    * @param tag Name of the tag. eg "AS"
    * @param t Value to be filled in with the tag value.
    * @return Return true if the tag exists.
    */
-  inline bool GetFloatTag(const std::string& tag, float& t) const {
-    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
-    if (!p)
-      return false;
-
-    t = bam_aux2f(p);
-    int type = *p;
-    type = *p++;
-    if (!(type == 'f' || type == 'd'))
-      return false;
-
-    return true;
-  }
+  bool GetFloatTag(std::string_view tag, float& t) const;
 
   /** Add a string (Z) tag
    * @param tag Name of the tag. eg "XP"
    * @param val Value for the tag
    */
-  void AddZTag(std::string tag, std::string val);
+  void AddZTag(std::string_view tag, std::string_view val);
 
   /** Add an int (i) tag
    * @param tag Name of the tag. eg "XP"
    * @param val Value for the tag
    */
-  inline void AddIntTag(const std::string& tag, int32_t val) {
-    bam_aux_append(b.get(), tag.data(), 'i', 4, (uint8_t*)&val);
-  }
+  void AddIntTag(std::string_view tag, int32_t val);
 
   /** Set the chr id number 
    * @param id Chromosome id. Typically is 0 for chr1, etc
    */
-  inline void SetID(int32_t id) {
-    b->core.tid = id;
-  }
+  void SetID(int32_t id);
   
   /** Set the alignment start position
    * @param pos Alignment start position
    */
-  inline void SetPosition(int32_t pos) {
-    b->core.pos = pos;
-  }
-
+  void SetPosition(int32_t pos);
+  
   /** Convert CIGAR to a string
    */
-  inline std::string CigarString() const {
-    std::stringstream cig;
-    uint32_t* c = bam_get_cigar(b);
-    for (size_t k = 0; k < b->core.n_cigar; ++k)
-      cig << bam_cigar_oplen(c[k]) << "MIDNSHP=XB"[c[k]&BAM_CIGAR_MASK];
-    return cig.str();
-  }
+  std::string CigarString() const;
   
   /** Return a human readable chromosome name assuming chr is indexed
    * from 0 (eg id 0 return "1")
@@ -822,59 +581,26 @@ class BamRecord {
    * chromosomes (eg chrX becomes 23). For accurate string representation of 
    * any chromosomes, use the full ChrName with BamHeader input.
    */
-  inline std::string ChrName() const {
+  /*  inline std::string ChrName() const {
     std::stringstream ss;
     ss << (b->core.tid + 1);
 
     return ss.str();
     //return std::to_string(b->core.tid + 1); //c++11
-  }
+    }*/
 
   /** Retrieve the human readable chromosome name. 
    * @param h Dictionary for chr name lookup. If it is empty, assumes this is chr1 based reference.
    * @exception Throws an out_of_range exception if chr id is not in dictionary
    * @return Empty string if chr id < 0, otherwise chromosome name from dictionary.
    */
-  inline std::string ChrName(const SeqLib::BamHeader& h) const {
-    if (b->core.tid < 0)
-      return std::string();
-
-    if (!h.isEmpty())
-      return h.IDtoName(b->core.tid);
-
-    // c++98    
-    std::stringstream ss;
-    ss << b->core.tid;
-    
-    // no header, assume zero based
-    return ss.str(); //std::to_string(b->core.tid + 1);
-    
-  }
+  std::string ChrName(const SeqLib::BamHeader& hdr) const;
 
   /** Return a short description (chr:pos) of this read */
-  inline std::string Brief() const {
-    //if (!h)
-    // c++11
-    //  return(std::to_string(b->core.tid + 1) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");
-    // c++98
-    std::stringstream ss;
-    ss << (b->core.tid + 1) << ":" << AddCommas(b->core.pos) << "(" << ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") << ")";
-    return ss.str();
-    //else
-    // return(std::string(h->target_name[b->core.tid]) + ":" + AddCommas<int32_t>(b->core.pos) + "(" + ((b->core.flag&BAM_FREVERSE) != 0 ? "+" : "-") + ")");      
-  }
+  std::string Brief() const;
 
   /** Return a short description (chr:pos) of this read's mate */
-  inline std::string BriefMate() const {
-    //if (!h)
-    // c++11
-    // return(std::to_string(b->core.mtid + 1) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");
-    std::stringstream ss;
-    ss << (b->core.mtid + 1) << ":" << AddCommas(b->core.mpos) << "(" << ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") << ")";
-    return ss.str();
-    //else
-    //  return(std::string(h->target_name[b->core.mtid]) + ":" + AddCommas<int32_t>(b->core.mpos) + "(" + ((b->core.flag&BAM_FMREVERSE) != 0 ? "+" : "-") + ")");      
-  }
+  std::string BriefMate() const;
 
   /** Strip a particular alignment tag 
    * @param tag Tag to remove
@@ -904,7 +630,7 @@ class BamRecord {
   int OverlappingCoverage(const BamRecord& r) const;
   
   /** Return the shared pointer */
-  SeqPointer<bam1_t> shared_pointer() const { return b; }
+  //SeqPointer<bam1_t> shared_pointer() const { return b; }
 
   // Less than operator
   bool operator<(const BamRecord& other) const;
@@ -916,35 +642,39 @@ protected:
   
   SeqPointer<bam1_t> b; // bam1_t shared pointer
 
+private:
+
+  // init an empty bamread
+  void init_();
+  
 };
 
  typedef std::vector<BamRecord> BamRecordVector; ///< Store a vector of alignment records
- 
- typedef std::vector<BamRecordVector> BamRecordClusterVector; ///< Store a vector of alignment vectors
-
- /** @brief Sort methods for alignment records
-  */
- namespace BamRecordSort {
-
-   /** @brief Sort by read position 
-    */
-   struct ByReadPosition
-   {
-     bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
-       return (lx.ChrID() < rx.ChrID()) || (lx.ChrID() == rx.ChrID() && lx.Position() < rx.Position());
-     }
-   };
-
-   /** @brief Sort by mate position 
-    */
-   struct ByMatePosition
-   {
-     bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
-       return (lx.MateChrID() < rx.MateChrID()) || (lx.MateChrID() == rx.MateChrID() && lx.MatePosition() < rx.MatePosition());
-     }
-   };
-
+  
+  typedef std::vector<BamRecordVector> BamRecordClusterVector; ///< Store a vector of alignment vectors
+  
+  /** @brief Sort methods for alignment records
+   */
+  namespace BamRecordSort {
+    
+    /** @brief Sort by read position 
+     */
+    struct ByReadPosition
+    {
+      bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
+	return (lx.ChrID() < rx.ChrID()) || (lx.ChrID() == rx.ChrID() && lx.Position() < rx.Position());
+      }
+    };
+    
+    /** @brief Sort by mate position 
+     */
+    struct ByMatePosition
+    {
+      bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
+	return (lx.MateChrID() < rx.MateChrID()) || (lx.MateChrID() == rx.MateChrID() && lx.MatePosition() < rx.MatePosition());
+      }
+    };
+    
+  }
+  
 }
-
-}
-#endif

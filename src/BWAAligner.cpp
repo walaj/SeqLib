@@ -140,7 +140,6 @@ void BWAAligner::alignSequence(const std::string& seq,
       primaryScore = h.score;
 
     BamRecord b;
-    b.init();
     b.b->core.tid       = h.rid;
     b.b->core.pos       = h.pos;
     b.b->core.qual      = h.mapq;

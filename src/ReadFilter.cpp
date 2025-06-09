@@ -509,7 +509,7 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     DEBUGIV(r, "cigar pass")
       
     // get the sequence as trimmed
-    std::string tseq = r.QualitySequence(); //AddZTag("GV", r.Sequence().substr(startpoint, new_len));
+    std::string tseq = r.Sequence(); //AddZTag("GV", r.Sequence().substr(startpoint, new_len));
     
 #ifdef HAVE_C11
     // check for aho corasick motif match
@@ -551,12 +551,12 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     }
 
     // check for secondary alignments
-    if (!xp.isEvery()) {
+    /*    if (!xp.isEvery()) {
       if (!xp.isValid(r.CountBWASecondaryAlignments())) {
 	return false;
       }
       DEBUGIV(r, "XP pass")
-    }
+      }*/
 
     DEBUGIV(r, "**** READ ACCEPTED IN AR:ISVALID")
     return true;

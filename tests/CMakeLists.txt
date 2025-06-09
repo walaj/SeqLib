@@ -8,6 +8,7 @@ enable_testing()
 add_executable(test_all
   test_GenomicRegionCollection.cpp
   test_BamReader.cpp
+  test_BamRecord.cpp
 )
 
 target_link_libraries(test_all PRIVATE

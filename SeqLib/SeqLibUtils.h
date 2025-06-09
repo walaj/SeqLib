@@ -1,5 +1,4 @@
-#ifndef SEQLIB_UTILS_H
-#define SEQLIB_UTILS_H
+#pragma once
 
 #include <string>
 #include <time.h>
@@ -156,5 +155,3 @@ namespace SeqLib {
   //int weightedRandom(const std::vector<double>& cs);
 
 }
-
-#endif
