@@ -21,6 +21,7 @@ extern "C" {
 #include "SeqLib/SeqLibUtils.h"
 #include "SeqLib/GenomicRegion.h"
 #include "SeqLib/UnalignedSequence.h"
+#include "SeqLib/BamWalker.h"
 
 static const char BASES[16] = {' ', 'A', 'C', ' ',
                                'G', ' ', ' ', ' ', 
@@ -205,7 +206,6 @@ class CigarField {
  */
 class BamRecord {
 
-  friend class BLATWraper;
   friend class BWAAligner;
 
  public:
@@ -221,6 +221,13 @@ class BamRecord {
    * with number of reference-bases consumed in cigar. 
    */
   BamRecord(const std::string& name, const std::string& seq, const GenomicRegion * gr, const Cigar& cig);
+
+ /**
+   * Take ownership of a raw bam1_t* (caller must not destroy it).
+   * Wrapped in a shared_ptr so it'll be freed on destruction.
+   */
+  explicit BamRecord(bam1_t* raw)
+    : b(raw, Bam1Deleter()) {}
   
   /** Construct an empty BamRecord by calling bam_init1() 
    */

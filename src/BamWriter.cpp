@@ -75,7 +75,7 @@ bool BamWriter::BuildIndex() const {
     m_out = f;
 
     // hts open the writer
-    fop = SeqPointer<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), htsFile_delete());
+    fop = SeqPointer<htsFile>(hts_open(m_out.c_str(), output_format.c_str()), HtsFileDeleter());
 
     // open the thread pool. It's OK if already connected before opening
     //SetThreadPool(pool);
@@ -135,8 +135,17 @@ bool BamWriter::SetCramReference(const std::string& ref) {
   if (!fop)
     return false;
 
-  // need to open reference for CRAM writing 
-  char* fn_list = samfaipath(ref.c_str()); // eg ref = my.fa  returns my.fa.fai
+  if (ref.empty())
+    return false;
+  
+  // need to open reference for CRAM writing
+  char *fn_list = 0;
+  fn_list = (char*)calloc(strlen(ref.c_str()) + 5, 1);
+  strcat(strcpy(fn_list, ref.c_str()), ".fai");
+  if (access(fn_list, R_OK) == -1) { // fn_list is unreadable
+    std::cerr << "ERROR: Cannot read the index file for CRAM read/write" << std::endl;
+  }
+  
   if (fn_list) {
 
     // in theory hts_set_fai_filename should give back < 0

@@ -7,6 +7,7 @@
 #include <set>
 #include <stdexcept>
 #include <algorithm>
+#include <random>
 #include <zlib.h>
 
 #define GZBUFFER 65472
@@ -72,10 +73,11 @@ namespace SeqLib {
       m_sorted = true;
     }
   }
-  
+
   template<class T>
   void GenomicRegionCollection<T>::Shuffle() {
-    std::random_shuffle ( m_grv->begin(), m_grv->end() );
+    static thread_local std::mt19937 rng(std::random_device{}());
+    std::shuffle(m_grv->begin(), m_grv->end(), rng);
   }
 
   template<class T>

@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
-
+cmake_minimum_required(VERSION 3.14)
 project(seqlib)
 
 # Set the C++ standard required for the project
@@ -90,3 +89,28 @@ target_link_libraries(seqlib
     ${LZMA_LIBRARY}
     BZip2::BZip2
 )
+
+# enable CTest
+enable_testing()
+
+# pull in Catch2
+include(FetchContent)
+FetchContent_Declare(
+  catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v2.x   # or v3.x
+)
+FetchContent_MakeAvailable(catch2)
+
+add_definitions(-DTEST_DATA_DIR=\"${CMAKE_SOURCE_DIR}/tests/data\")
+
+# add your tests directory
+add_subdirectory(tests)
+
+
+
+if(ENABLE_COVERAGE)
+  message(STATUS "Building with Clang coverage")
+  add_compile_options(-fprofile-instr-generate -fcoverage-mapping -g -O0)
+  add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+endif()

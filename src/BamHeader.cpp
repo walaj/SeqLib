@@ -27,7 +27,7 @@ namespace SeqLib {
     hdr->text = strdup(text.str().c_str());
 
     // give to object
-    h = SeqPointer<bam_hdr_t>(hdr, bam_hdr_delete()); 
+    h = SeqPointer<bam_hdr_t>(hdr, BamHdrDeleter()); 
     ConstructName2IDTable();
   }
 
@@ -50,14 +50,16 @@ namespace SeqLib {
     return -1;
   }
 
-BamHeader::BamHeader(const std::string& hdr)  {
-
-  h = SeqPointer<bam_hdr_t>(sam_hdr_read2(hdr), bam_hdr_delete()); 
-
-  ConstructName2IDTable();
-
-}
-
+  BamHeader::BamHeader(const bam_hdr_t* hdr_in) {
+    if (!hdr_in) {
+      h.reset();
+    } else {
+      bam_hdr_t* dup = bam_hdr_dup(hdr_in);
+      h = SeqPointer<bam_hdr_t>(dup, BamHdrDeleter());
+      ConstructName2IDTable();
+    }
+  }
+  
   std::string BamHeader::AsString() const {
     
     std::stringstream ss;
@@ -65,14 +67,6 @@ BamHeader::BamHeader(const std::string& hdr)  {
     ss << h->text;
     return ss.str();
     
-  }
-
-  BamHeader::BamHeader(const bam_hdr_t * hdr) {
-
-    h = SeqPointer<bam_hdr_t>(bam_hdr_dup(hdr), bam_hdr_delete());
-
-    ConstructName2IDTable();
-
   }
 
   void BamHeader::ConstructName2IDTable() {

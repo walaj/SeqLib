@@ -59,7 +59,7 @@ namespace SeqLib {
      * 
      * @note This will make a copy of the input header
      */
-    BamHeader(const bam_hdr_t * hdr);
+    BamHeader(const bam_hdr_t * hdr_in);
     
     /** Return the number of sequences store in this dictionary
      * Returns 0 if header is unitialized.
