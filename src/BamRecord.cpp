@@ -537,8 +537,7 @@ namespace SeqLib {
       << core.mpos                << '\t'
       << r.FullInsertSize()       << '\t'
       << r.Sequence()             << '\t'
-      << '*'
-      << '\n';  // single newline, no flush
+      << '*';
     
     return out;
   }
