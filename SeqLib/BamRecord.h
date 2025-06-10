@@ -121,12 +121,20 @@ class CigarField {
    
    using iterator = std::vector<CigarField>::iterator;        ///< Iterator for moving between CigarField ops
    using const_iterator = std::vector<CigarField>::const_iterator; ///< Const iterator for moving between CigarField ops
+   using reverse_iterator       = std::vector<CigarField>::reverse_iterator;
+   using const_reverse_iterator = std::vector<CigarField>::const_reverse_iterator;
    
    iterator begin() noexcept { return m_data.begin(); }       ///< Begin iterator
    iterator end()   noexcept { return m_data.end(); }         ///< End iterator
    const_iterator begin() const noexcept { return m_data.begin(); }  ///< Const begin iterator
    const_iterator end()   const noexcept { return m_data.end(); }    ///< Const end iterator
 
+   // Reverseiteration
+   reverse_iterator rbegin()       noexcept { return m_data.rbegin(); }
+   reverse_iterator rend()         noexcept { return m_data.rend(); }
+   const_reverse_iterator rbegin() const noexcept { return m_data.rbegin(); }
+   const_reverse_iterator rend()   const noexcept { return m_data.rend(); }
+   
    /** Const reference to last cigar op */
    const CigarField& back() const noexcept { return m_data.back(); }
    /** Reference to last cigar op */

@@ -9,6 +9,14 @@
 
 namespace SeqLib {
 
+  BamHeader::BamHeader(const std::string& text) {
+    // parse a textual header block into a bam_hdr_t
+    bam_hdr_t* hdr = sam_hdr_parse(text.size(), text.c_str());
+    if (!hdr) throw std::runtime_error("BamHeader: failed to parse header text");
+    h = SeqPointer<bam_hdr_t>(hdr, BamHdrDeleter());
+    ConstructName2IDTable();
+  }
+  
   BamHeader::BamHeader(const HeaderSequenceVector& hsv) {
 
     bam_hdr_t * hdr = bam_hdr_init();

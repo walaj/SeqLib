@@ -62,7 +62,7 @@ public:
 
   friend std::ostream& operator<<(std::ostream& out, const BamReader& b);
   
-private:
+protected:
   HtsFilePtr fp_;         ///< HTSlib file handle
   HtsIdxPtr  idx_;        ///< Index for random access
   HtsItrPtr  itr_;        ///< Iterator for current region

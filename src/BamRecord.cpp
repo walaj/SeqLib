@@ -853,27 +853,33 @@ namespace SeqLib {
     out = bam_aux2i(aux);
     return true;
   }
-
+  
   std::string BamRecord::CigarString() const {
-    if (!b) return {};  // or throw if you prefer
-
+    if (!b) return {};
+    
     const uint32_t n = b->core.n_cigar;
-    auto* cig = bam_get_cigar(b.get());
+    auto* rawBytes = reinterpret_cast<const uint8_t*>(bam_get_cigar(b.get()));
     static constexpr char ops[] = "MIDNSHP=XB";
-
-    // pre-reserve a bit (avg ~34 chars per op)
+    
     std::string out;
     out.reserve(n * 4);
-
+    
     for (uint32_t i = 0; i < n; ++i) {
-        uint32_t len = bam_cigar_oplen(cig[i]);
-        char op   = ops[cig[i] & BAM_CIGAR_MASK];
-        out += std::to_string(len);
-        out.push_back(op);
+      uint32_t word;
+      // safe, alignment-agnostic load
+      std::memcpy(&word,
+		  rawBytes + i * sizeof(word),
+		  sizeof(word));
+      
+      uint32_t len = bam_cigar_oplen(word);
+      char     op  = ops[word & BAM_CIGAR_MASK];
+      
+      out += std::to_string(len);
+      out.push_back(op);
     }
     return out;
   }
-
+  
   // -----------------------------------------------------------------------------
   // --- getters ---------------------------------------------------------------
   
@@ -1014,11 +1020,16 @@ namespace SeqLib {
   Cigar BamRecord::GetCigar() const {
     Cigar cig;
     const auto n = b->core.n_cigar;
-    cig.reserve(n);                         // avoid reallocations if supported
-    auto* raw = bam_get_cigar(b.get());     // aligned, safe pointer
+    cig.reserve(n);
     
+    // raw bytes, may not be 4-byte aligned
+    auto* rawBytes = reinterpret_cast<const uint8_t*>(bam_get_cigar(b.get()));
     for (size_t i = 0; i < n; ++i) {
-      cig.add(CigarField{raw[i]});
+      uint32_t word;
+      std::memcpy(&word,
+		  rawBytes + i * sizeof(word),
+		  sizeof(word));
+      cig.add(CigarField{word});
     }
     return cig;
   }
@@ -1027,11 +1038,15 @@ namespace SeqLib {
     Cigar cig;
     const auto n = b->core.n_cigar;
     cig.reserve(n);
-    auto* raw = bam_get_cigar(b.get());
     
-    // reverse-iterate from raw[n-1] down to raw[0]
+    auto* rawBytes = reinterpret_cast<const uint8_t*>(bam_get_cigar(b.get()));
+    // reverse-iterate safely
     for (size_t i = n; i-- > 0; ) {
-      cig.add(CigarField{raw[i]});
+      uint32_t word;
+      std::memcpy(&word,
+		  rawBytes + i * sizeof(word),
+		  sizeof(word));
+      cig.add(CigarField{word});
     }
     return cig;
   }
@@ -1047,105 +1062,78 @@ namespace SeqLib {
       out.push_back(static_cast<char>(qual[i] + offset));
     return out;
   }
-  
+
+
   int32_t BamRecord::AlignmentPositionReverse() const {
+    // count trailing clips in the forward-orientation CIGAR
     if (!b) return -1;
-    auto* cig = bam_get_cigar(b.get());
-    const size_t n = b->core.n_cigar;
-    int32_t pos = 0;
-    for (size_t i = n; i-- > 0; ) {
-      char op = bam_cigar_opchr(cig[i]);
-      if (op == 'S' || op == 'H') 
-	pos += bam_cigar_oplen(cig[i]);
-      else 
-	break;
+    int32_t clip = 0;
+    for (auto it = GetCigar().rbegin(); it != GetCigar().rend(); ++it) {
+      char op = it->Type();
+      if (op=='S' || op=='H') clip += it->Length();
+      else break;
     }
-    return pos;
+    return clip;
   }
   
   int32_t BamRecord::AlignmentEndPositionReverse() const {
+    // total length minus trailing clips
     if (!b) return -1;
-    auto* cig = bam_get_cigar(b.get());
-    const size_t n = b->core.n_cigar;
-    int32_t clip = 0;
-    // count leading S/H in forward orientation
-    for (size_t i = 0; i < n; ++i) {
-      char op = bam_cigar_opchr(cig[i]);
-      if (op == 'S' || op == 'H')
-	clip += bam_cigar_oplen(cig[i]);
-      else
-	break;
-    }
-    return b->core.l_qseq - clip;
+    return b->core.l_qseq - AlignmentPositionReverse();
   }
   
   int32_t BamRecord::AlignmentPosition() const {
+    // count leading soft clips (ignore hard-clips)
     if (!b) return -1;
-    auto* cig = bam_get_cigar(b.get());
-    const size_t n = b->core.n_cigar;
     int32_t pos = 0;
-    // skip initial H then S
-    for (size_t i = 0; i < n; ++i) {
-      char op = bam_cigar_opchr(cig[i]);
-      if (op == 'H') 
-	continue;
-      if (op == 'S') 
-	pos += bam_cigar_oplen(cig[i]);
-      else 
-	break;
+    for (auto const& f : GetCigar()) {
+      char op = f.Type();
+      if (op=='H') continue;
+      if (op=='S') pos += f.Length();
+      else break;
     }
     return pos;
   }
   
   int32_t BamRecord::AlignmentEndPosition() const {
+    // total length minus leading clips from the reverse-orientation
     if (!b) return -1;
-    auto* cig = bam_get_cigar(b.get());
-    const size_t n = b->core.n_cigar;
+    // trailing S/H in reverse
     int32_t clip = 0;
-    // skip trailing S/H in reverse orientation
-    for (size_t i = n; i-- > 0; ) {
-      char op = bam_cigar_opchr(cig[i]);
-      if (op == 'S' || op == 'H')
-	clip += bam_cigar_oplen(cig[i]);
-      else
-	break;
+    for (auto it = GetCigar().rbegin(); it != GetCigar().rend(); ++it) {
+      char op = it->Type();
+      if (op=='S' || op=='H') clip += it->Length();
+      else break;
     }
     return b->core.l_qseq - clip;
   }
-
+  
   int32_t BamRecord::NumSoftClip() const {
     if (!b) return 0;
-    auto* cig = bam_get_cigar(b.get());
     int32_t total = 0;
-    uint32_t n = b->core.n_cigar;
-    for (uint32_t i = 0; i < n; ++i) {
-      if (bam_cigar_opchr(cig[i]) == 'S') 
-	total += bam_cigar_oplen(cig[i]);
+    for (auto const& f : GetCigar()) {
+      if (f.Type()=='S') total += f.Length();
     }
     return total;
   }
   
   int32_t BamRecord::NumHardClip() const {
     if (!b) return 0;
-    auto* cig = bam_get_cigar(b.get());
     int32_t total = 0;
-    uint32_t n = b->core.n_cigar;
-    for (uint32_t i = 0; i < n; ++i) {
-      if (bam_cigar_opchr(cig[i]) == 'H') 
-	total += bam_cigar_oplen(cig[i]);
+    for (auto const& f : GetCigar()) {
+      if (f.Type()=='H') total += f.Length();
     }
     return total;
   }
   
   int32_t BamRecord::NumClip() const {
     if (!b) return 0;
-    auto* cig = bam_get_cigar(b.get());
+    
     int32_t total = 0;
-    uint32_t n = b->core.n_cigar;
-    for (uint32_t i = 0; i < n; ++i) {
-      char op = bam_cigar_opchr(cig[i]);
+    for (const auto& cf : GetCigar()) {
+      char op = cf.Type();
       if (op == 'S' || op == 'H') 
-	total += bam_cigar_oplen(cig[i]);
+	total += cf.Length();
     }
     return total;
   }

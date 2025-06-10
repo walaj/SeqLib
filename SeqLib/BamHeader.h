@@ -53,7 +53,7 @@ namespace SeqLib {
      * a BAM header in human-readable form (e.g. PG ... )
      * @param hdr Text of a BAM header, with newlines separating lines
      */
-    BamHeader(const std::string& hdr);
+    BamHeader(const std::string& text);
 
     /** Create a new BamHeader from a raw HTSlib header.
      * 

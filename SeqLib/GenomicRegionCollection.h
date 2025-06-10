@@ -285,8 +285,43 @@ class GenomicRegionCollection {
    */
   template <class K>
   GenomicRegionCollection<GenomicRegion> Intersection(const GenomicRegionCollection<K>& subject, bool ignore_strand) const;
- 
- protected:
+
+  // ostream overload: prints size, first 3, ellipsis if more, last 3
+  friend std::ostream& operator<<(std::ostream& os, const GenomicRegionCollection& grc) {
+    size_t n = grc.size();
+    os << "GenomicRegionCollection(size=" << n << ")";
+    if (n == 0) return os;
+    
+    os << " [";
+    size_t headCount = std::min<size_t>(3, n);
+    auto it = grc.begin();
+    for (size_t i = 0; i < headCount; ++i, ++it) {
+      os << *it;
+      if (i + 1 < headCount) os << ", ";
+    }
+    
+    if (n > headCount + headCount) {
+      os << ", ... ";
+      size_t tailCount = headCount;
+      auto rit = grc.end();
+      for (size_t i = 0; i < tailCount; ++i) --rit;
+      for (size_t i = 0; i < tailCount; ++i, ++rit) {
+	os << *rit;
+	if (i + 1 < tailCount) os << ", ";
+      }
+    } else if (n > headCount) {
+      os << ", ";
+      for (; it != grc.end(); ++it) {
+	os << *it;
+	if (std::next(it) != grc.end()) os << ", ";
+      }
+    }
+    
+    os << "]";
+    return os;
+  }
+  
+protected:
 
  bool m_sorted;
  

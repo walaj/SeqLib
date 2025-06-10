@@ -183,15 +183,22 @@ void BWAAligner::alignSequence(const std::string& seq,
     // CIGAR
     std::memcpy(b.b->data + b.b->core.l_qname,
                 h.cigar, h.n_cigar<<2);
-    // convert N to S/H
     int newOp = hardclip ? BAM_CHARD_CLIP : BAM_CSOFT_CLIP;
-    auto* cig = bam_get_cigar(b.b);
-    for (int k = 0; k < b.b->core.n_cigar; ++k) {
-      if ((cig[k]&BAM_CIGAR_MASK)==BAM_CREF_SKIP) {
-        cig[k] &= ~BAM_CIGAR_MASK;
-        cig[k] |= newOp;
+    // grab the raw byte pointer to the cigar data
+    uint8_t* raw = reinterpret_cast<uint8_t*>(bam_get_cigar(b.b));
+    const size_t n = b.b->core.n_cigar;
+    for (size_t k = 0; k < n; ++k) {
+      uint32_t cigarOp;
+      // memcpy handles unaligned reads
+      std::memcpy(&cigarOp, raw + k * sizeof(uint32_t), sizeof(cigarOp));
+      
+      if ((cigarOp & BAM_CIGAR_MASK) == BAM_CREF_SKIP) {
+	cigarOp = (cigarOp & ~BAM_CIGAR_MASK) | static_cast<uint32_t>(newOp);
+	// memcpy handles unaligned writes
+	std::memcpy(raw + k * sizeof(uint32_t), &cigarOp, sizeof(cigarOp));
       }
     }
+
     std::free(h.cigar);
 
     // sequence

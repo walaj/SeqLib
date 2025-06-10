@@ -3,6 +3,7 @@
 #include <htslib/sam.h>
 #include <htslib/hts.h>
 #include <cstdlib>
+#include <filesystem>
 
 namespace SeqLib {
 
