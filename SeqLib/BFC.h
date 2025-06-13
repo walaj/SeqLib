@@ -1,11 +1,11 @@
-#ifndef SEQLIB_BFC_H
-#define SEQLIB_BFC_H
+#pragma once
 
 extern "C" {
   #include "fermi-lite/bfc.h"
   #include "fermi-lite/fml.h"
 }
 
+#include <string_view>
 #include "SeqLib/BamRecord.h"
 #include "SeqLib/UnalignedSequence.h"
 
@@ -22,38 +22,25 @@ namespace SeqLib {
   class BFC {
 
   public:
+    
     /** Construct a new BFC engine */
-    BFC() {
-      m_idx = 0;
-      bfc_opt_init(&bfc_opt);
-      ch = NULL;
-      kmer = 0;
-      flt_uniq = 0;
-      n_seqs = 0;
-      m_seqs = NULL;
-      kcov = 0;
-      tot_k = 0;
-      sum_k = 0;
-      tot_len = 0;
-      m_seqs_size = 0;
-    }
+    BFC();
 
-    ~BFC() {
-      clear();
-      if (ch)
-	bfc_ch_destroy(ch);
-    }
+    /** Clear all memory and destroy */
+    ~BFC();
 
     /** Peform BFC error correction on the sequences stored in this object */
-    bool ErrorCorrect();
+    void ErrorCorrect();
 
     /** Train the error corrector using the reads stored in this object */
-    bool Train();
+    void Train();
 
     /** Add a sequence for either training or correction 
      * @param seq A sequence to be copied into this object (A, T, C, G)
      */
-    bool AddSequence(const char* seq, const char* qual, const char* name);
+    bool AddSequence(std::string_view seq,
+		     std::string_view qual,
+		     std::string_view name);
 
     /** Set the k-mer size for training 
      * @note zero is auto
@@ -64,10 +51,10 @@ namespace SeqLib {
      * @param str Sequence of string to correct (ACTG)
      * @param q Quality score of sequence to correct 
      * @value Returns true if corrected */
-    bool CorrectSequence(std::string& str, const std::string& q);
+    //bool CorrectSequence(std::string& str, const std::string& q);
     
-    /** Clear the stored reads */
-    void clear();
+    /** Clear the stored reads, but not training outcome */
+    void ClearReads();
 
     /** Return the calculated kcov */
     float GetKCov() const { return kcov; }
@@ -76,7 +63,7 @@ namespace SeqLib {
     int GetKMer() const { return kmer; }
 
     /** Return the number of sequences controlled by this */
-    int NumSequences() const { return n_seqs; } 
+    int NumSequences() const { return m_seqs.size(); } 
 
     /** Return the next sequence stored in object 
      * @param s Empty string to be filled.
@@ -85,48 +72,24 @@ namespace SeqLib {
      */
     bool GetSequence(std::string& s, std::string& q);
 
-    /** Reset the sequence iterator inside GetSequence 
-     */
+    /** Reset the sequence iterator inside GetSequence */
     void ResetGetSequence() { m_idx = 0; };
 
   private:
 
     size_t m_idx;
 
-    // the amount of memory allocated
-    size_t m_seqs_size;
-
-    void learn_correct();
-
-    bfc_opt_t bfc_opt;
-
-    // histogram of kmer occurences
-    uint64_t hist[256];
-
-    // diff histogram of kmers??
-    uint64_t hist_high[64];
-
-    uint64_t tot_len;
-
-    uint64_t sum_k; // total valid kmer count (kmers above min_count) ? 
-
-    // total number of kmers?
-    uint64_t tot_k;
-
-    //
-    float kcov;
+    bfc_opt_t bfc_opt; // does not need to be destroyed
 
     // reads to correct in place
-    fseq1_t * m_seqs;
-
-    // number of sequeces
-    size_t n_seqs;
+    //fseq1_t * m_seqs;
+    std::vector<fseq1_t> m_seqs;
 
     // fermi lite options
     fml_opt_t fml_opt;
 
     // vector of names
-    std::vector<char*> m_names;
+    std::vector<std::string> m_names; 
 
     // assign names, qualities and seq to m_seqs
     void allocate_sequences_from_reads(const BamRecordVector& brv);
@@ -136,16 +99,13 @@ namespace SeqLib {
     
     void allocate_sequences_from_strings(const std::vector<std::string>& v);
     
-    // do the actual read correction
-    void correct_reads();
-
     // 0 turns off filter uniq
     int flt_uniq; // from fml_correct call
     
-    int l_pre;
-
     // 0 is auto learn
     int kmer;
+
+    float kcov;
 
     // holds data after learning how to correct
     bfc_ch_t *ch;
@@ -153,7 +113,6 @@ namespace SeqLib {
     // holds data for actual error correction
     ec_step_t es;
   };
+  
+}
 
-   }
-
-#endif

@@ -134,6 +134,7 @@ void BWAAligner::alignSequence(const std::string& seq,
     bool tooMany = isSec && (int(i) > maxSecondary);
     if (tooLow || tooMany) {
       std::free(h.cigar);
+      std::free(h.XA);
       continue;
     }
     if (!isSec)
@@ -234,7 +235,7 @@ void BWAAligner::alignSequence(const std::string& seq,
     }
 
     // qual = NULL
-    auto* q = bam_get_qual(b.b);
+    auto* q = bam_get_qual(b.b); // does not copy or assign memory
     q[0] = 0xff;
 
     // tags
@@ -244,6 +245,9 @@ void BWAAligner::alignSequence(const std::string& seq,
     b.AddIntTag("AS", h.score);
     if (b.SecondaryFlag()) ++secondaryCount;
 
+    // free up memory
+    std::free(h.XA);
+    
     out.push_back(std::move(b));
   }
 

@@ -21,6 +21,12 @@ namespace SeqLib {
 
     bam_hdr_t * hdr = bam_hdr_init();
     hdr->n_targets = hsv.size();
+
+    // Free defaults, just in case
+    free(hdr->target_len);
+    free(hdr->target_name);
+    free(hdr->text);
+    
     hdr->target_len = (uint32_t*)malloc(hdr->n_targets * sizeof(uint32_t));
     hdr->target_name = (char**)malloc(hdr->n_targets * sizeof(char*));
     
@@ -33,6 +39,7 @@ namespace SeqLib {
       text << "@SQ\tSN:" << hsv[i].Name << "\tLN:" << hsv[i].Length << std::endl;
     }
     hdr->text = strdup(text.str().c_str());
+    hdr->l_text = strlen(hdr->text);
 
     // give to object
     h = SeqPointer<bam_hdr_t>(hdr, BamHdrDeleter()); 
@@ -46,6 +53,16 @@ namespace SeqLib {
       
   }
 
+  int BamHeader::Name2ID(const std::string& name) const {
+    
+    SeqHashMap<std::string, int>::const_iterator ff = n2i->find(name);
+    if (ff != n2i->end())
+      return ff->second;
+    else
+      return -1;
+    
+  }
+  
   int BamHeader::GetSequenceLength(const std::string& id) const {
     
     int nid = Name2ID(id);
@@ -85,59 +102,9 @@ namespace SeqLib {
       for (int i = 0; i < h->n_targets; ++i)
 	n2i->insert(std::pair<std::string, int>(std::string(h->target_name[i]), i));
     }
-
-  }
-
-  int BamHeader::Name2ID(const std::string& name) const {
-
-    SeqHashMap<std::string, int>::const_iterator ff = n2i->find(name);
-    if (ff != n2i->end())
-      return ff->second;
-    else
-      return -1;
-
-  }
-
-bam_hdr_t* BamHeader::sam_hdr_read2(const std::string& hdr) const {
-
-  kstring_t str;
-  bam_hdr_t *hhh;
-  str.l = str.m = 0; str.s = 0;
-  
-  std::istringstream iss(hdr);
-  std::string line;
-  while (std::getline(iss, line, '\n')) {
-    //while (hts_getline(fp, KS_SEP_LINE, &fp->line) >= 0) {
-    if (line.length() == 0 || line.at(0) != '@') break;
     
-    //if (line.length() > 3 && line.substr(0,3) == "@SQ") has_SQ = 1;
-    //if (fp->line.l > 3 && strncmp(fp->line.s,"@SQ",3) == 0) has_SQ = 1;
-    //kputsn(fp->line.s, fp->line.l, &str);
-    kputsn(line.c_str(), line.length(), &str);
-    kputc('\n', &str);
   }
-
-  /*
-    if (! has_SQ && fp->fn_aux) {
-    char line[2048];
-    FILE *f = fopen(fp->fn_aux, "r");
-    if (f == NULL) return NULL;
-    while (fgets(line, sizeof line, f)) {
-    const char *name = strtok(line, "\t");
-    const char *length = strtok(NULL, "\t");
-    ksprintf(&str, "@SQ\tSN:%s\tLN:%s\n", name, length);
-    }
-    fclose(f);
-    }
-  */
-
-  if (str.l == 0) 
-    kputsn("", 0, &str);
-  hhh = sam_hdr_parse(str.l, str.s);
-  hhh->l_text = str.l; hhh->text = str.s; // hhh->text needs to be freed
-  return hhh;
-}
-
+  
   /** Return the reference sequences as vector of HeaderSequence objects */
   HeaderSequenceVector BamHeader::GetHeaderSequenceVector() const {
 
