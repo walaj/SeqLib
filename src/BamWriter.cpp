@@ -108,7 +108,7 @@ bool BamWriter::WriteRecord(const BamRecord &r)
     if (sam_write1(fop.get(), hdr.get(), r.raw()) < 0)
       return false;
   }
-
+  
   return true;
 }
 

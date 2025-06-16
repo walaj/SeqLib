@@ -7,6 +7,8 @@
 
 namespace SeqLib {
 
+  class BWAAligner;
+  
 class BWAAligner {
 public:
   BWAAligner(BWAIndexPtr idx)
@@ -48,14 +50,14 @@ public:
   
   void alignSequence(const std::string& seq,
 		     const std::string& name,
-		     BamRecordVector& out,
+		     BamRecordPtrVector& out,
 		     bool hardclip,
 		     double keepSecFrac,
 		     int maxSecondary) const;
 
   /// Alias for above that uses SeqLIb notation
   void alignSequence(const UnalignedSequence& us,
-		     BamRecordVector&           out,
+		     BamRecordPtrVector&           out,
 		     bool                       hardclip,
 		     double                     keepSecFrac,
 		     int                        maxSecondary) const;

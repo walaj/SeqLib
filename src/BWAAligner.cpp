@@ -85,188 +85,181 @@ namespace SeqLib {
     }
     memopt_->split_factor = trigger;
   }
+  
+  void BWAAligner::alignSequence(const std::string& seq,
+				 const std::string& name,
+				 BamRecordPtrVector& out,
+				 bool hardclip,
+				 double keepSecFrac,
+				 int maxSecondary) const
+  {
 
-void BWAAligner::alignSequence(const std::string& seq,
-                               const std::string& name,
-                               BamRecordVector& out,
-                               bool hardclip,
-                               double keepSecFrac,
-                               int maxSecondary) const
-{
-  // nothing to do if no index
-  if (index_->IsEmpty()) return;
-
-  // run BWA-MEM core
-  mem_alnreg_v regs = mem_align1(memopt_, index_->idx_->bwt, index_->idx_->bns,
-				 index_->idx_->pac,
-                                 seq.size(), seq.data());
-
-  double primaryScore = 0;
-  int   secondaryCount = 0;
-
-  // filter & convert to mem_aln_t
-  std::vector<mem_aln_t> hits;
-  hits.reserve(regs.n);
-  for (int i = 0; i < regs.n; ++i) {
-    auto& r = regs.a[i];
+    //assert(out.empty());
+    //out.clear();
     
-    // skip secondaries if frac param invalid
-    if ((r.secondary) &&
-        (keepSecFrac < 0.0 || keepSecFrac > 1.0))
-      continue;
-    hits.push_back(mem_reg2aln(memopt_,
-                               index_->idx_->bns,
-                               index_->idx_->pac,
-                               seq.size(),
-                               seq.data(),
-                               &r));
-  }
-  std::free(regs.a);
-
-  // sort
-  std::sort(hits.begin(), hits.end(), aln_sort);
-
-  // emit BamRecord for each hit
-  for (size_t i = 0; i < hits.size(); ++i) {
-    auto& h = hits[i];
-    bool isSec   = (h.flag & BAM_FSECONDARY);
-    bool tooLow  = isSec && (primaryScore * keepSecFrac > h.score);
-    bool tooMany = isSec && (int(i) > maxSecondary);
-    if (tooLow || tooMany) {
-      std::free(h.cigar);
-      std::free(h.XA);
-      continue;
-    }
-    if (!isSec)
-      primaryScore = h.score;
-
-    BamRecord b;
-    b.b->core.tid       = h.rid;
-    b.b->core.pos       = h.pos;
-    b.b->core.qual      = h.mapq;
-    b.b->core.flag      = h.flag;
-    b.b->core.n_cigar   = h.n_cigar;
-    b.b->core.mtid      = -1;
-    b.b->core.mpos      = -1;
-    b.b->core.isize     = 0;
-    if (h.is_rev) b.b->core.flag |= BAM_FREVERSE;
-
-    // optionally hardclip out
-    std::string clipped = seq;
-    if (hardclip) {
-      size_t tstart = 0, clen = 0;
-      for (int c = 0; c < h.n_cigar; ++c) {
-        auto op = bam_cigar_op(h.cigar[c]);
-        if (c == 0 && op == BAM_CREF_SKIP)
-          tstart = bam_cigar_oplen(h.cigar[c]);
-        else if (bam_cigar_type(op)&1)
-          clen += bam_cigar_oplen(h.cigar[c]);
-      }
-      assert(clen && tstart+clen <= seq.size());
-      clipped = seq.substr(tstart, clen);
-    }
-
-    // allocate & fill
-    b.b->core.l_qname = name.size()+1;
-    b.b->core.l_qseq  = clipped.size();
-    b.b->l_data       = b.b->core.l_qname
-                      + (h.n_cigar<<2)
-                      + ((b.b->core.l_qseq+1)>>1)
-                      + b.b->core.l_qseq;
-    b.b->data  = static_cast<uint8_t*>(std::malloc(b.b->l_data));
-    if (!b.b->data) {
-      throw std::bad_alloc();
-    }
-    //b.b->data = uint8_t(malloc(b.b->l_data));
-
-    // qname
-    std::memcpy(b.b->data, name.c_str(), name.size()+1);
-    // CIGAR
-    std::memcpy(b.b->data + b.b->core.l_qname,
-                h.cigar, h.n_cigar<<2);
-    int newOp = hardclip ? BAM_CHARD_CLIP : BAM_CSOFT_CLIP;
-    // grab the raw byte pointer to the cigar data
-    uint8_t* raw = reinterpret_cast<uint8_t*>(bam_get_cigar(b.b));
-    const size_t n = b.b->core.n_cigar;
-    for (size_t k = 0; k < n; ++k) {
-      uint32_t cigarOp;
-      // memcpy handles unaligned reads
-      std::memcpy(&cigarOp, raw + k * sizeof(uint32_t), sizeof(cigarOp));
+    // nothing to do if no index
+    if (index_->IsEmpty()) return;
+    
+    // run BWA-MEM core
+    mem_alnreg_v regs = mem_align1(memopt_,
+				   index_->idx_->bwt,
+				   index_->idx_->bns,
+				   index_->idx_->pac,
+				   seq.size(),
+				   seq.data());
+    
+    double primaryScore = 0;
+    int secondaryCount = 0;
+    
+    std::vector<mem_aln_t> hits;
+    hits.reserve(regs.n);
+    
+    for (int i = 0; i < regs.n; ++i) {
+      auto& r = regs.a[i];
       
-      if ((cigarOp & BAM_CIGAR_MASK) == BAM_CREF_SKIP) {
-	cigarOp = (cigarOp & ~BAM_CIGAR_MASK) | static_cast<uint32_t>(newOp);
-	// memcpy handles unaligned writes
-	std::memcpy(raw + k * sizeof(uint32_t), &cigarOp, sizeof(cigarOp));
-      }
+      if (r.secondary && (keepSecFrac < 0.0 || keepSecFrac > 1.0))
+	continue;
+      
+      hits.push_back(mem_reg2aln(memopt_,
+				 index_->idx_->bns,
+				 index_->idx_->pac,
+				 seq.size(),
+				 seq.data(),
+				 &r));
     }
-
-    std::free(h.cigar);
-
-    // sequence
-    auto* seqbuf = b.b->data
-                 + b.b->core.l_qname
-                 + (b.b->core.n_cigar<<2);
-    int sl = clipped.size();
-    if (h.is_rev) {
-      int j=0;
-      for (int p=sl-1; p>=0; --p, ++j) {
-        uint8_t v=15;
-        switch (clipped[p]) {
-          case 'A': v=8; break;
-          case 'C': v=2; break;
-          case 'G': v=4; break;
-          case 'T': v=1; break;
-        }
-        seqbuf[j>>1] &= ~(0xF<<((~j&1)<<2));
-        seqbuf[j>>1] |= v<<((~j&1)<<2);
-      }
-    } else {
-      for (int p=0; p<sl; ++p) {
-        uint8_t v=15;
-        switch (clipped[p]) {
-          case 'A': v=1; break;
-          case 'C': v=2; break;
-          case 'G': v=4; break;
-          case 'T': v=8; break;
-        }
-        seqbuf[p>>1] &= ~(0xF<<((~p&1)<<2));
-        seqbuf[p>>1] |= v<<((~p&1)<<2);
-      }
-    }
-
-    // qual = NULL
-    auto* q = bam_get_qual(b.b); // does not copy or assign memory
-    q[0] = 0xff;
-
-    // tags
-    b.AddIntTag("NA", regs.n);
-    b.AddIntTag("NM", h.NM);
-    if (h.XA) b.AddZTag("XA", std::string(h.XA));
-    b.AddIntTag("AS", h.score);
-    if (b.SecondaryFlag()) ++secondaryCount;
-
-    // free up memory
-    std::free(h.XA);
     
-    out.push_back(std::move(b));
+    std::free(regs.a);
+    
+    std::sort(hits.begin(), hits.end(), aln_sort);
+
+    // emit a BamRecord for each hit
+    for (size_t i = 0; i < hits.size(); ++i) {
+      auto& h = hits[i];
+      bool isSec   = (h.flag & BAM_FSECONDARY);
+      bool tooLow  = isSec && (primaryScore * keepSecFrac > h.score);
+      bool tooMany = isSec && (int(i) > maxSecondary);
+      
+      if (tooLow || tooMany) {
+	std::free(h.cigar);
+	std::free(h.XA);
+	continue;
+      }
+      
+      if (!isSec)
+	primaryScore = h.score;
+      
+      auto b = std::make_shared<BamRecord>();
+      
+      b->b->core.tid     = h.rid;
+      b->b->core.pos     = h.pos;
+      b->b->core.qual    = h.mapq;
+      b->b->core.flag    = h.flag;
+      b->b->core.n_cigar = h.n_cigar;
+      b->b->core.mtid    = -1;
+      b->b->core.mpos    = -1;
+      b->b->core.isize   = 0;
+      if (h.is_rev)
+	b->b->core.flag |= BAM_FREVERSE;
+
+      // optionally hard clip out
+      std::string clipped = seq;
+      if (hardclip) {
+	size_t tstart = 0, clen = 0;
+	for (int c = 0; c < h.n_cigar; ++c) {
+	  auto op = bam_cigar_op(h.cigar[c]);
+	  if (c == 0 && op == BAM_CREF_SKIP)
+	    tstart = bam_cigar_oplen(h.cigar[c]);
+	  else if (bam_cigar_type(op) & 1)
+	    clen += bam_cigar_oplen(h.cigar[c]);
+	}
+	assert(clen && tstart + clen <= seq.size());
+	clipped = seq.substr(tstart, clen);
+      }
+      
+      b->b->core.l_qname = name.size() + 1;
+      b->b->core.l_qseq  = clipped.size();
+      b->b->l_data       = b->b->core.l_qname +
+	(h.n_cigar << 2) +
+	((b->b->core.l_qseq + 1) >> 1) +
+	b->b->core.l_qseq;
+      
+      b->b->data = static_cast<uint8_t*>(std::malloc(b->b->l_data));
+      if (!b->b->data)
+	throw std::bad_alloc();
+      
+      std::memcpy(b->b->data, name.c_str(), name.size() + 1); //qname
+      std::memcpy(b->b->data + b->b->core.l_qname, h.cigar, h.n_cigar << 2); //cigar
+      
+      int newOp = hardclip ? BAM_CHARD_CLIP : BAM_CSOFT_CLIP;
+      uint8_t* raw = reinterpret_cast<uint8_t*>(bam_get_cigar(b->b));
+      for (size_t k = 0; k < b->b->core.n_cigar; ++k) {
+	uint32_t cigarOp;
+	std::memcpy(&cigarOp, raw + k * sizeof(uint32_t), sizeof(cigarOp));
+	if ((cigarOp & BAM_CIGAR_MASK) == BAM_CREF_SKIP) {
+	  cigarOp = (cigarOp & ~BAM_CIGAR_MASK) | static_cast<uint32_t>(newOp);
+	  std::memcpy(raw + k * sizeof(uint32_t), &cigarOp, sizeof(cigarOp));
+	}
+      }
+      
+      std::free(h.cigar);
+      
+      auto* seqbuf = b->b->data + b->b->core.l_qname + (b->b->core.n_cigar << 2);
+      int sl = clipped.size();
+      if (h.is_rev) {
+	int j = 0;
+	for (int p = sl - 1; p >= 0; --p, ++j) {
+	  uint8_t v = 15;
+	  switch (clipped[p]) {
+          case 'A': v = 8; break;
+          case 'C': v = 2; break;
+          case 'G': v = 4; break;
+          case 'T': v = 1; break;
+	  }
+	  seqbuf[j >> 1] &= ~(0xF << ((~j & 1) << 2));
+	  seqbuf[j >> 1] |= v << ((~j & 1) << 2);
+	}
+      } else {
+	for (int p = 0; p < sl; ++p) {
+	  uint8_t v = 15;
+	  switch (clipped[p]) {
+          case 'A': v = 1; break;
+          case 'C': v = 2; break;
+          case 'G': v = 4; break;
+          case 'T': v = 8; break;
+	  }
+	  seqbuf[p >> 1] &= ~(0xF << ((~p & 1) << 2));
+	  seqbuf[p >> 1] |= v << ((~p & 1) << 2);
+	}
+      }
+      
+      auto* q = bam_get_qual(b->b);
+      q[0] = 0xff;
+      
+      b->AddIntTag("NA", regs.n);
+      b->AddIntTag("NM", h.NM);
+      if (h.XA) b->AddZTag("XA", std::string(h.XA));
+      b->AddIntTag("AS", h.score);
+      if (b->SecondaryFlag())
+	++secondaryCount;
+      
+      std::free(h.XA);
+      
+      out.push_back(b);
+    }
+    
   }
 
-  // add secondary counts
-  for (auto& rec : out)
-    rec.AddIntTag("SQ", secondaryCount);
-}
-
-void BWAAligner::alignSequence(const UnalignedSequence& us,
-                               BamRecordVector&           out,
-                               bool                       hardclip,
-                               double                     keepSecFrac,
-                               int                        maxSecondary) const
-{
-  // delegate then optionally append BC tag
-  alignSequence(us.Seq, us.Name, out, hardclip, keepSecFrac, maxSecondary);
-  if (!copyComment_) return;
-  for (auto& rec : out)
-    rec.AddZTag("BC", us.Com);
-}
+  void BWAAligner::alignSequence(const UnalignedSequence& us,
+				 BamRecordPtrVector&           out,
+				 bool                       hardclip,
+				 double                     keepSecFrac,
+				 int                        maxSecondary) const
+  {
+    // delegate then optionally append BC tag
+    alignSequence(us.Seq, us.Name, out, hardclip, keepSecFrac, maxSecondary);
+    if (!copyComment_) return;
+    for (auto& rec : out)
+      rec->AddZTag("BC", us.Com);
+  }
   
 }

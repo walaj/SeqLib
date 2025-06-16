@@ -642,8 +642,28 @@ namespace SeqLib {
     
     return false;
   }
-  
+
   void BamRecord::AddZTag(std::string_view tag, std::string_view val) {
+    if (tag.empty() || val.empty()) return;
+    
+    bam1_t* rec = b.get();  // your underlying bam1_t*
+    
+    // Step 1: Get pointer to existing tag (if any)
+    uint8_t* existing = bam_aux_get(rec, tag.data());
+    if (existing) {
+      // Step 2: Remove existing tag in-place
+      bam_aux_del(rec, existing);
+    }
+    
+    // Step 3: Add new tag value
+    bam_aux_append(rec,
+		   tag.data(),
+		   'Z',
+		   static_cast<int>(val.size() + 1),
+		   reinterpret_cast<const uint8_t*>(val.data()));
+  }
+  
+  /* void BamRecord::AddZTag(std::string_view tag, std::string_view val) {
     if (tag.empty() || val.empty()) return;
     // bam_aux_append expects a C-string with trailing '\0'
     bam_aux_append(b.get(),
@@ -651,7 +671,7 @@ namespace SeqLib {
 		   'Z',
 		   static_cast<int>(val.size() + 1),
 		   reinterpret_cast<const uint8_t*>(val.data()));
-  }
+		   }*/
   
   bool BamRecord::GetZTag(std::string_view tag, std::string& out) const {
     if (auto* p = bam_aux_get(b.get(), tag.data())) {
@@ -1163,6 +1183,36 @@ namespace SeqLib {
   }
 
   int BamRecord::PairOrientation() const {
+    // if either end is unmapped or this isnt actually paired, call it unoriented
+    if (!MappedFlag() || !MateMappedFlag())  
+      return UDORIENTATION;
+    
+    // grab flags + positions
+    bool rev       = ReverseFlag();
+    bool mate_rev  = MateReverseFlag();
+    int  chr       = ChrID();
+    int  mate_chr  = MateChrID();
+    int  pos       = Position();
+    int  mate_pos  = MatePosition();
+    
+    // decide which end is leftmost
+    bool left_is_this = (chr < mate_chr) || (chr == mate_chr && pos <= mate_pos);
+    
+    // pick the proper rev flags for left & right
+    bool left_rev  = left_is_this ? rev      : mate_rev;
+    bool right_rev = left_is_this ? mate_rev : rev;
+    
+    // now uniquely classify
+    if (!left_rev  &&  right_rev)  return FRORIENTATION;
+    if (!left_rev  && !right_rev)  return FFORIENTATION;
+    if ( left_rev  &&  right_rev)  return RRORIENTATION;
+    if ( left_rev  && !right_rev)  return RFORIENTATION;
+    
+    // fallback (shouldn't happen)
+    return UDORIENTATION;
+  }
+  /*  
+  int BamRecord::PairOrientation() const {
     if (!PairMappedFlag())
       return UDORIENTATION;
     
@@ -1192,6 +1242,7 @@ namespace SeqLib {
     // shouldn't happen, but fall back to unoriented
     return UDORIENTATION;
   }
+  */
   
   bool BamRecord::ProperOrientation() const {
     if (!b) 

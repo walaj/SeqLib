@@ -134,6 +134,8 @@ class GenomicRegionCollection {
    */
   bool IsEmpty() const { return !m_grv->size(); }
 
+  bool empty() const { return m_grv->empty(); }
+
   /** Clear out all of the GenomicRegion objects
    */
   void clear() { m_grv->clear(); 

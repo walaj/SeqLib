@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <string_view>
+#include <memory>
 
 extern "C" {
 #include "htslib/hts.h"
@@ -185,7 +186,11 @@ class CigarField {
  };
 
  typedef SeqHashMap<std::string, size_t> CigarMap;
-
+  
+  class BamRecord;
+  typedef std::shared_ptr<BamRecord> BamRecordPtr;
+  typedef std::vector<BamRecordPtr> BamRecordPtrVector;
+  
 /** Class to store and interact with a SAM alignment record
  *
  * HTSLibrary reads are stored in the bam1_t struct. Memory allocation
@@ -222,6 +227,21 @@ class BamRecord {
   explicit BamRecord(bam1_t* raw)
     : b(raw, Bam1Deleter()) {}
 
+  /**
+   * Construct a blank BamRecord, but still need to tell it how to delete
+   */
+  BamRecord();
+
+  // Delete the copy constructor
+  BamRecord(const BamRecord&) = delete;
+
+  // Optionally also delete copy assignment
+  BamRecord& operator=(const BamRecord&) = delete;
+
+  // Still allow move operations:
+  BamRecord(BamRecord&&) = default;
+  BamRecord& operator=(BamRecord&&) = default;
+  
   /** Check if a read is empty (not initialized)
    * @return true if read was not initialized with any values
    */
@@ -233,9 +253,6 @@ class BamRecord {
    * @param a An allocated bam1_t
    */
   //void assign(bam1_t* a);
-
-  /** Make a BamRecord with no memory allocated and a null header */
-  BamRecord();
 
   /** BamRecord is aligned on reverse strand */
   inline bool ReverseFlag() const { return b ? ((b->core.flag&BAM_FREVERSE) != 0) : false; }
@@ -671,6 +688,20 @@ private:
     {
       bool operator()( const BamRecord& lx, const BamRecord& rx ) const {
 	return (lx.ChrID() < rx.ChrID()) || (lx.ChrID() == rx.ChrID() && lx.Position() < rx.Position());
+      }
+    };
+    
+    struct ByReadPositionPtr {
+      bool operator()(const BamRecord* lx, const BamRecord* rx) const {
+	return (lx->ChrID() < rx->ChrID()) ||
+	  (lx->ChrID() == rx->ChrID() && lx->Position() < rx->Position());
+      }
+    };
+
+    struct ByReadPositionSharedPtr {
+      bool operator()(const std::shared_ptr<BamRecord>& lx, const std::shared_ptr<BamRecord>& rx) const {
+	return (lx->ChrID() < rx->ChrID()) ||
+	  (lx->ChrID() == rx->ChrID() && lx->Position() < rx->Position());
       }
     };
     
