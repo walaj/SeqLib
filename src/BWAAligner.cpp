@@ -1,4 +1,21 @@
 #include "SeqLib/BWAAligner.h"
+#include <htslib/sam.h>
+
+extern "C" {
+  // signature must match exactly how theyre defined in bwamem_extra.c / bwamem.c
+  mem_alnreg_v mem_align1_core(const mem_opt_t *opt,
+                                const bwt_t *bwt,
+                                const bntseq_t *bns,
+                                const uint8_t *pac,
+                                int l_seq,
+                                char *seq,
+                                void *buf);
+
+  void mem_mark_primary_se(const mem_opt_t *opt,
+                           int n,
+                           mem_alnreg_t *a,
+                           int64_t id);
+}
 
 namespace SeqLib {
 
@@ -85,13 +102,208 @@ namespace SeqLib {
     }
     memopt_->split_factor = trigger;
   }
+
+  void BWAAligner::allocBuffer(size_t read_len) {
+    read_len_ = read_len;
+    seq_buf = (char*) malloc(read_len_);
+    core_buf = calloc(1, 1 << 16);  // 64KB internal working space (can tune)
+  }
+
+  mem_alnreg_v BWAAligner::mem_align1_reuse(const mem_opt_t* opt,
+				const bwt_t* bwt,
+				const bntseq_t* bns,
+				const uint8_t* pac,
+				int l_seq,
+				const char* seq_in,
+				char* seq_buf,
+				void* core_buf) {
+    memcpy(seq_buf, seq_in, l_seq);  // cheaper since you reuse the same buffer
+    mem_alnreg_v ar = mem_align1_core(opt, bwt, bns, pac, l_seq, seq_buf, core_buf);
+    mem_mark_primary_se(opt, ar.n, ar.a, 0); //lrand48());
+    return ar;
+  }
+
+  bseq1_t BWAAligner::convertToBseq(const UnalignedSequence& us) {
+    bseq1_t bs;
+    // 1) qname
+    bs.name    = strdup(us.Name.c_str());
+    bs.comment = nullptr;
+    
+    // 2) seq: 4-bit encoded using seq_nt16_table[]
+    bs.l_seq = us.Seq.size();
+    bs.seq   = (char*)malloc(bs.l_seq);
+    memcpy(bs.seq, us.Seq.data(), bs.l_seq);    
+    
+    // 3) qual: Phred-scaled, robust to empty
+    bs.qual   = nullptr;
+    
+    bs.sam = nullptr;
+      
+    return bs;
+  }
+
+std::vector<Alignment> BWAAligner::alignBatch(
+			 const UnalignedSequenceVector& inputs) {
+  
+  int n = inputs.size();
+  // 1) Build array of bseq1_t
+  std::vector<bseq1_t> bseqs(n);
+  for(int i = 0; i < n; ++i)
+    bseqs[i] = convertToBseq(inputs[i]);
+
+  // 2) Call the batch aligner
+  mem_process_seqs(
+    memopt_,
+    index_->idx_->bwt,
+    index_->idx_->bns,
+    index_->idx_->pac,
+    processedCount_,  // number of reads already done
+    n,
+    bseqs.data(),
+    /* pes0 = */ nullptr   // let BWA infer fragment statistics
+		   );
+  
+    // 3) Parse the SAM text in bseqs[i].sam into Alignment structs
+  std::vector<Alignment> out;
+  out.reserve(n * 2);
+
+      for (int i = 0; i < n; ++i) {
+      char* ptr = bseqs[i].sam;
+      if (!ptr) continue;
+
+      while (*ptr) {
+        // grab one line
+        char* nl = strchr(ptr, '\n');
+        size_t len = nl ? (nl - ptr) : strlen(ptr);
+        std::string line(ptr, len);
+        ptr = nl ? nl + 1 : ptr + len;
+        if (line.empty()) continue;
+
+        // split on tabs
+        std::istringstream iss(line);
+        std::vector<std::string> f;
+        std::string fld;
+        while (std::getline(iss, fld, '\t')) f.push_back(fld);
+
+        // 1) flag is always numeric
+        int flag = std::stoi(f[1]);
+        // 2) skip unmapped reads
+        if (flag & 0x4) continue;
+
+        // 3) now its safe to parse POS and MAPQ
+        int64_t pos = std::stoll(f[3]) - 1;   // SAM is 1-based
+        int     mapq = std::stoi(f[4]);
+        std::string cigar = f[5];
+
+        // 4) map contig name (f[2]) to an integer rid if you really need one
+        //    or store it as string if thats sufficient.
+        int rid = -1;
+        std::string rname = f[2];
+        for (int j = 0; j < index_->idx_->bns->n_seqs; ++j) {
+          if (rname == index_->idx_->bns->anns[j].name) { rid = j; break; }
+        }
+
+        // 5) strand
+        bool is_rev = (flag & 0x10) != 0;
+
+        // 6) push your Alignment
+        Alignment A;
+        A.qname  = f[0];
+        A.rid    = rid;      // or store rname if you change your struct
+        A.pos    = pos;
+        A.mapq   = mapq;
+        A.cigar  = std::move(cigar);
+        A.is_rev = is_rev;
+        out.push_back(std::move(A));
+      }
+    
+    // 4) clean up this bseq1_t
+    free(bseqs[i].name);
+    free(bseqs[i].seq);
+    if (bseqs[i].qual) free(bseqs[i].qual);
+    free(bseqs[i].sam);
+  }
+  
+  // 5) advance counter
+  processedCount_ += n;
+  return out;
+}
+  
+  // void BWAAligner::alignBatch(const UnalignedSequenceVector& inputs,
+  // 			      BamRecordPtrVector& out,
+  // 			      bool hardclip, double keepSecFrac, int maxSecondary) const
+  // {
+  //   int batchSize = inputs.size();
+  //   std::vector<bam1_t*> bamBatch(batchSize);
+  //   // 1) Convert your UnalignedSequence bam1_t* for each read
+  //   for(int i = 0; i < batchSize; ++i) {
+  //     bamBatch[i] = convertToBam1(inputs[i]); 
+  //   }
+    
+  //   // 2) Call the batched aligner
+  //   int64_t id = 0; // ok this is a seed for breaking "ties"
+  //   // for primary vesrus secondary. I don't care that much about
+  //   // these reads to will set as a fixed number (zero) rather than
+  //   // allowing for randomness
+    
+  //   mem_alnreg_v* regs = mem_process_seqs(
+  //       memopt_,
+  //       index_->idx_->bwt,
+  //       index_->idx_->bns,
+  //       index_->idx_->pac,
+  //       processedCount_,
+  //       batchSize,
+  //       bamBatch.data(),
+  //       id
+  //   );
+
+  //   // 3) For each read, there may be multiple regions (regs[i].n)
+  //   for(size_t i = 0; i < batchSize; ++i) {
+  //       auto& vr = regs[i];
+
+  //       // The original unmapped record (we'll clone it per region)
+  //       bam1_t* original = bamBatch[i];
+
+  //       for(int r = 0; r < vr.n; ++r) {
+  //           // 4) Clone the template record
+  //           bam1_t* aligned = bam_dup1(original);
+
+  //           // 5) Populate it for *only that one* region
+  //           //    - n = 1, a = &vr.a[r]
+  //           mem_reg2aln(
+  //               memopt_,
+  //               1,
+  //               &vr.a[r],
+  //               aligned,
+  //               hardclip ? 1 : 0,
+  //               keepSecFrac
+  //           );
+  //           // note: mem_reg2aln does not write SA tags; it's one region only
+
+  //           // 6) Wrap in your BamRecordPtr and store
+  //           out.emplace_back(std::make_shared<SeqLib::BamRecord>(aligned));
+
+  //           // free the bam1_t inside the shared_ptr
+  //           // (SeqLib::BamRecords destructor should do bam_destroy1 for you)
+  //       }
+
+  //       // clean up this reads regions
+  //       free(vr.a);
+  //       // and the original unmapped record
+  //       bam_destroy1(original);
+  //   }
+
+  //   free(regs);
+  //   processedCount_ += batchSize;
+  // }
+  
   
   void BWAAligner::alignSequence(const std::string& seq,
 				 const std::string& name,
 				 BamRecordPtrVector& out,
 				 bool hardclip,
 				 double keepSecFrac,
-				 int maxSecondary) const
+				 int maxSecondary)
   {
 
     //assert(out.empty());
@@ -101,12 +313,28 @@ namespace SeqLib {
     if (index_->IsEmpty()) return;
     
     // run BWA-MEM core
+    // auto t0 = std::chrono::high_resolution_clock::now();
+    
+    // mem_alnreg_v regs = mem_align1_reuse(memopt_,
+    // 					 index_->idx_->bwt,
+    // 					 index_->idx_->bns,
+    // 					 index_->idx_->pac,
+    // 					 seq.size(),
+    // 					 seq.data(),
+    // 					 seq_buf,
+    // 					 core_buf);
+
+    
     mem_alnreg_v regs = mem_align1(memopt_,
 				   index_->idx_->bwt,
 				   index_->idx_->bns,
 				   index_->idx_->pac,
 				   seq.size(),
 				   seq.data());
+    // auto t1 = std::chrono::high_resolution_clock::now();
+    // std::cout << "Part A: "
+    //           << std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count()
+    //           << " ns\n";
     
     double primaryScore = 0;
     int secondaryCount = 0;
@@ -243,9 +471,13 @@ namespace SeqLib {
 	++secondaryCount;
       
       std::free(h.XA);
-      
       out.push_back(b);
     }
+    // auto t2 = std::chrono::high_resolution_clock::now();
+    // std::cout << "Part B: "
+    //           << std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count()
+    //           << " ns\n";
+    
     
   }
 
@@ -253,7 +485,7 @@ namespace SeqLib {
 				 BamRecordPtrVector&           out,
 				 bool                       hardclip,
 				 double                     keepSecFrac,
-				 int                        maxSecondary) const
+				 int                        maxSecondary)
   {
     // delegate then optionally append BC tag
     alignSequence(us.Seq, us.Name, out, hardclip, keepSecFrac, maxSecondary);

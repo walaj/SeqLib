@@ -6,7 +6,16 @@
 #include "SeqLib/UnalignedSequence.h"
 
 namespace SeqLib {
-
+  
+  struct Alignment {
+    std::string qname;
+    int         rid;       // reference ID
+    int64_t     pos;       // 0-based leftmost
+    bool        is_rev;    // strand
+    int         mapq;
+    std::string cigar;
+  };
+  
   class BWAAligner;
   
 class BWAAligner {
@@ -19,6 +28,8 @@ public:
 
   ~BWAAligner() {
     if (memopt_) free(memopt_);
+    if(seq_buf)  free(seq_buf);
+    if(core_buf) free(core_buf);
   }
 
   /// Set the gap-open penalty (must be >= 0)
@@ -53,18 +64,48 @@ public:
 		     BamRecordPtrVector& out,
 		     bool hardclip,
 		     double keepSecFrac,
-		     int maxSecondary) const;
+		     int maxSecondary);
 
   /// Alias for above that uses SeqLIb notation
   void alignSequence(const UnalignedSequence& us,
 		     BamRecordPtrVector&           out,
 		     bool                       hardclip,
 		     double                     keepSecFrac,
-		     int                        maxSecondary) const;
+		     int                        maxSecondary);
+
+  void allocBuffer(size_t read_len);
+
+  void alignBatch(const UnalignedSequenceVector& inputs,
+		  BamRecordPtrVector& out,
+		  bool hardclip, double keepSecFrac, int maxSecondary) const;
+
+  std::vector<Alignment> alignBatch(
+						const UnalignedSequenceVector& inputs);
+
   
 private:
   BWAIndexPtr   index_;
   mem_opt_t*    memopt_;
   bool          copyComment_ = false;
+
+  char* seq_buf = nullptr; 
+  void* core_buf = nullptr;
+  size_t read_len_ = 1024;
+
+  bam1_t* convertToBam1(const UnalignedSequence& us) const;
+  
+  mem_alnreg_v mem_align1_reuse(const mem_opt_t* opt,
+				const bwt_t* bwt,
+				const bntseq_t* bns,
+				const uint8_t* pac,
+				int l_seq,
+				const char* seq_in,
+				char* seq_buf,
+				void* core_buf);
+
+  bseq1_t convertToBseq(const UnalignedSequence& us);
+  
+  int64_t processedCount_ = 0;
+  
 };
 }

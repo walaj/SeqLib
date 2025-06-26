@@ -34,13 +34,13 @@ namespace SeqLib {
      * @param t Strand of the sequence, one of '*', '+', '-'
      */
     UnalignedSequence(const std::string& n, const std::string& s, const std::string& q, char t) : Name(n), Com(std::string()), Seq(s), Qual(q), Strand(t) {}
-
-     std::string Name; ///< Name of the contig
-     std::string Com;  ///< Comment of the contig
-     std::string Seq;  ///< Sequence of the contig (upper-case ACTGN)
-     std::string Qual; ///< Quality scores
-     char Strand;      ///< Strand of the sequence. Default is '*'
-     
+    
+    std::string Name; ///< Name of the contig
+    std::string Com;  ///< Comment of the contig
+    std::string Seq;  ///< Sequence of the contig (upper-case ACTGN)
+    std::string Qual; ///< Quality scores
+    char Strand;      ///< Strand of the sequence. Default is '*'
+    
     /** Output an unaligned sequence to ostream
      * @param os ostream
      * @param us UnalignedSequence

@@ -849,12 +849,13 @@ namespace SeqLib {
     // or std::string, otherwise you may need to materialize it.
     uint8_t* aux = bam_aux_get(b.get(), tag.data());
     if (!aux) return false;                          // tag not present
+
+    out = bam_aux2f(aux);                            // extract as float
     
     char type = *aux++;
     if (type != 'f' && type != 'd')                  // not a float/double tag
       return false;
-    
-    out = bam_aux2f(aux);                            // extract as float
+
     return true;
   }
 
@@ -862,14 +863,15 @@ namespace SeqLib {
     if (!b) return false;                                 // no record
     uint8_t* aux = bam_aux_get(b.get(), tag.data());
     if (!aux) return false;                                // tag not present
-    
-    char type = *aux++;
+
+    out = bam_aux2i(aux);
+    int type = *aux++;
+
     // only integer-like tags:
     if (type!='i' && type!='I' && type!='c' && type!='C' &&
         type!='s' && type!='S')
       return false;
     
-    out = bam_aux2i(aux);
     return true;
   }
   
@@ -1194,6 +1196,10 @@ namespace SeqLib {
     int  mate_chr  = MateChrID();
     int  pos       = Position();
     int  mate_pos  = MatePosition();
+
+    // if each align to same position, when insert size is < 2x readlength then assume FR
+    if (chr == mate_chr && pos == mate_pos)
+      return FRORIENTATION;
     
     // decide which end is leftmost
     bool left_is_this = (chr < mate_chr) || (chr == mate_chr && pos <= mate_pos);
@@ -1201,6 +1207,8 @@ namespace SeqLib {
     // pick the proper rev flags for left & right
     bool left_rev  = left_is_this ? rev      : mate_rev;
     bool right_rev = left_is_this ? mate_rev : rev;
+
+
     
     // now uniquely classify
     if (!left_rev  &&  right_rev)  return FRORIENTATION;

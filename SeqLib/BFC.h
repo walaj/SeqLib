@@ -42,6 +42,8 @@ namespace SeqLib {
 		     std::string_view qual,
 		     std::string_view name);
 
+    void clear();
+    
     /** Set the k-mer size for training 
      * @note zero is auto
      */
@@ -75,14 +77,14 @@ namespace SeqLib {
     /** Reset the sequence iterator inside GetSequence */
     void ResetGetSequence() { m_idx = 0; };
 
+        bfc_opt_t bfc_opt; // does not need to be destroyed
   private:
 
     size_t m_idx;
 
-    bfc_opt_t bfc_opt; // does not need to be destroyed
+
 
     // reads to correct in place
-    //fseq1_t * m_seqs;
     std::vector<fseq1_t> m_seqs;
 
     // fermi lite options
@@ -103,7 +105,7 @@ namespace SeqLib {
     int flt_uniq; // from fml_correct call
     
     // 0 is auto learn
-    int kmer;
+    int kmer = 0;
 
     float kcov;
 

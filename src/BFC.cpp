@@ -48,12 +48,20 @@ namespace SeqLib {
   }
 
   BFC::~BFC() {
+    clear();
+  }
+
+  void BFC::clear() {
+
     ClearReads();
-    // clear the old if there
     if (ch) {
       bfc_ch_destroy(ch);
       ch = nullptr;
     }
+
+    // reset kmer etc
+    bfc_opt_init(&bfc_opt);
+    
   }
   
   bool BFC::AddSequence(std::string_view seq,
@@ -221,17 +229,19 @@ namespace SeqLib {
       fml_opt_adjust(&fml_opt, m_seqs.size(), m_seqs.data());
       kmer = fml_opt.ec_k;
     }
-
+    bfc_opt.k = kmer;
+    
     // initialize BFC options
     //////
     
     // Compute total sequence length
-    uint64_t tot_len = 0;
-    for (auto const& s : m_seqs) tot_len += s.l_seq;
-    // l_pre = min(tot_len - 8, 20)
-    bfc_opt.l_pre = (tot_len > 8)
-      ? static_cast<int>(std::min<uint64_t>(tot_len - 8, 20))
-      : 0;
+    // NOT sure why need to do this, just set to 20
+    //uint64_t tot_len = 0;
+    //for (auto const& s : m_seqs) tot_len += s.l_seq;
+    // bfc_opt.l_pre = (tot_len > 8)
+    //   ? static_cast<int>(std::min<uint64_t>(tot_len - 8, 20))
+    //   : 0; //debug
+    bfc_opt.l_pre = 20;
     
     //OLD
     //for (size_t i = 0; i < n_seqs; ++i) 
@@ -243,8 +253,6 @@ namespace SeqLib {
     std::memset(&es, 0, sizeof(es));    
     //OLD //memset(&es, 0, sizeof(ec_step_t));
     //kmer is learned before this
-    
-    bfc_opt.k = kmer;
     
     //es.opt = &bfc_opt, es.n_seqs = n_seqs, es.seqs = m_seqs, es.flt_uniq = flt_uniq;
     
