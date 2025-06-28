@@ -630,22 +630,22 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
       
     bool bic = r.Interchromosomal();
 
-    int PO = r.PairOrientation();
+    Orientation PO = r.PairOrientation();
 
     // its FR and it CANT be FR (off) or its !FR and it MUST be FR (ON)
     // orienation not defined for inter-chrom, so exclude these with !ic
     if (!bic) { // PROCEED IF INTRA-CHROMOSOMAL
       //if ( (bfr && fr.isOff()) || (!bfr && fr.isOn())) 
-      if ( (PO == FRORIENTATION && fr.isOff()) || (PO != FRORIENTATION && fr.isOn())) 
+      if ( (PO == Orientation::FR && fr.isOff()) || (PO != Orientation::FR && fr.isOn())) 
 	return false;
       //if ( (brr && rr.isOff()) || (!brr && rr.isOn())) 
-      if ( (PO == RRORIENTATION && rr.isOff()) || (PO != RRORIENTATION && rr.isOn())) 
+      if ( (PO == Orientation::RR && rr.isOff()) || (PO != Orientation::RR && rr.isOn())) 
 	return false;
       //if ( (brf && rf.isOff()) || (!brf && rf.isOn())) 
-      if ( (PO == RFORIENTATION && rf.isOff()) || (PO != RFORIENTATION&& rf.isOn())) 
+      if ( (PO == Orientation::RF && rf.isOff()) || (PO != Orientation::RF&& rf.isOn())) 
 	return false;
       //if ( (bff && ff.isOff()) || (!bff && ff.isOn())) 
-      if ( (PO == FFORIENTATION && ff.isOff()) || (PO != FFORIENTATION && ff.isOn())) 
+      if ( (PO == Orientation::FF && ff.isOff()) || (PO != Orientation::FF && ff.isOn())) 
 	return false;
     }
     if ( (bic && ic.isOff()) || (!bic && ic.isOn()))

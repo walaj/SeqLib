@@ -32,16 +32,17 @@ const inline std::string cigar_delimiters = "MIDNSHPX";
 
 constexpr uint8_t CIGTAB[255] = { 0 }; // Use constexpr if all zeroes for space and compile-time init
 
-enum Orientation : int {
-    FRORIENTATION = 0,
-    FFORIENTATION = 1,
-    RFORIENTATION = 2,
-    RRORIENTATION = 3,
-    UDORIENTATION = 4
-};
 
 namespace SeqLib {
 
+  enum class Orientation : int {
+    FR,
+    FF,
+    RF,
+    RR,
+    UD
+  };
+  
 /** Basic container for a single cigar operation
  *
  * Stores a single cigar element in a compact 32bit form (same as HTSlib).
@@ -272,15 +273,8 @@ class BamRecord {
   /** BamRecord is paired */
   inline bool PairedFlag() const { return b ? ((b->core.flag&BAM_FPAIRED) != 0) : false; }
 
-  /** Get the relative pair orientations 
-   * 
-   * 0 - FR (RFORIENTATION) (lower pos read is Fwd strand, higher is reverse)
-   * 1 - FF (FFORIENTATION)
-   * 2 - RF (RFORIENTATION)
-   * 3 - RR (RRORIENTATION)
-   * 4 - Undefined (UDORIENTATION) (unpaired or one/both is unmapped)
-   */
-  int PairOrientation() const;
+  /** Get the relative pair orientations */
+  Orientation PairOrientation() const;
   
   /** BamRecord is failed QC */
   inline bool QCFailFlag() const { return b ? ((b->core.flag&BAM_FQCFAIL) != 0) : false; }

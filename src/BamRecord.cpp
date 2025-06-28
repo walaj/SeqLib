@@ -1184,10 +1184,10 @@ namespace SeqLib {
       + '(' + strand + ')';
   }
 
-  int BamRecord::PairOrientation() const {
+  Orientation BamRecord::PairOrientation() const {
     // if either end is unmapped or this isnt actually paired, call it unoriented
     if (!MappedFlag() || !MateMappedFlag())  
-      return UDORIENTATION;
+      return Orientation::UD;
     
     // grab flags + positions
     bool rev       = ReverseFlag();
@@ -1199,7 +1199,7 @@ namespace SeqLib {
 
     // if each align to same position, when insert size is < 2x readlength then assume FR
     if (chr == mate_chr && pos == mate_pos)
-      return FRORIENTATION;
+      return Orientation::FR;
     
     // decide which end is leftmost
     bool left_is_this = (chr < mate_chr) || (chr == mate_chr && pos <= mate_pos);
@@ -1211,18 +1211,18 @@ namespace SeqLib {
 
     
     // now uniquely classify
-    if (!left_rev  &&  right_rev)  return FRORIENTATION;
-    if (!left_rev  && !right_rev)  return FFORIENTATION;
-    if ( left_rev  &&  right_rev)  return RRORIENTATION;
-    if ( left_rev  && !right_rev)  return RFORIENTATION;
+    if (!left_rev  &&  right_rev)  return Orientation::FR;
+    if (!left_rev  && !right_rev)  return Orientation::FF;
+    if ( left_rev  &&  right_rev)  return Orientation::RR;
+    if ( left_rev  && !right_rev)  return Orientation::RF;
     
     // fallback (shouldn't happen)
-    return UDORIENTATION;
+    return Orientation::UD;
   }
   /*  
   int BamRecord::PairOrientation() const {
     if (!PairMappedFlag())
-      return UDORIENTATION;
+      return UD;
     
     const bool rev      = ReverseFlag();
     const bool mate_rev = MateReverseFlag();
@@ -1232,23 +1232,23 @@ namespace SeqLib {
     // FR: first forward, mate reverse
     if ((!rev && pos <= mpos &&  mate_rev) ||
 	( rev && pos >= mpos && !mate_rev))
-      return FRORIENTATION;
+      return FR;
     
     // FF: both forward
     if (!rev && !mate_rev)
-      return FFORIENTATION;
+      return FF;
     
     // RR: both reverse
     if (rev && mate_rev)
-      return RRORIENTATION;
+      return RR;
     
     // RF: read reverse, mate forward
     if (( rev && pos <  mpos && !mate_rev) ||
 	(!rev && pos >  mpos &&  mate_rev))
-      return RFORIENTATION;
+      return RF;
     
     // shouldn't happen, but fall back to unoriented
-    return UDORIENTATION;
+    return UD;
   }
   */
   

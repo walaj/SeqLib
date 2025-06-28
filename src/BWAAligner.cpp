@@ -324,7 +324,24 @@ std::vector<Alignment> BWAAligner::alignBatch(
     // 					 seq_buf,
     // 					 core_buf);
 
-    
+  // mem_alnreg_t:
+  //   int64_t rb, re; // [rb,re): reference sequence in the alignment
+  //   int qb, qe;     // [qb,qe): query sequence in the alignment
+  //   int rid;        // reference seq ID
+  //   int score;      // best local SW score
+  //   int truesc;     // actual score corresponding to the aligned region; possibly smaller than $score
+  //   int sub;        // 2nd best SW score
+  //   int alt_sc;
+  //   int csub;       // SW score of a tandem hit
+  //   int sub_n;      // approximate number of suboptimal hits
+  //   int w;          // actual band width used in extension
+  //   int seedcov;    // length of regions coverged by seeds
+  //   int secondary;  // index of the parent hit shadowing the current hit; <0 if primary
+  //   int secondary_all;
+  //   int seedlen0;   // length of the starting seed
+  //   int n_comp:30, is_alt:2; // number of sub-alignments chained together
+  //   float frac_rep;
+  //   uint64_t hash;
     mem_alnreg_v regs = mem_align1(memopt_,
 				   index_->idx_->bwt,
 				   index_->idx_->bns,
@@ -338,16 +355,31 @@ std::vector<Alignment> BWAAligner::alignBatch(
     
     double primaryScore = 0;
     int secondaryCount = 0;
-    
+
+//     typedef struct { // This struct is only used for the convenience of API.
+// 	int64_t pos;     // forward strand 5'-end mapping position
+// 	int rid;         // reference sequence index in bntseq_t; <0 for unmapped
+// 	int flag;        // extra flag
+// 	uint32_t is_rev:1, is_alt:1, mapq:8, NM:22; // is_rev: whether on the reverse strand; mapq: mapping quality; NM: edit distance
+// 	int n_cigar;     // number of CIGAR operations
+// 	uint32_t *cigar; // CIGAR in the BAM encoding: opLen<<4|op; op to integer mapping: MIDSH=>01234
+// 	char *XA;        // alternative mappings
+
+// 	int score, sub, alt_sc;
+// } mem_aln_t;
     std::vector<mem_aln_t> hits;
     hits.reserve(regs.n);
-    
+
     for (int i = 0; i < regs.n; ++i) {
       auto& r = regs.a[i];
-      
-      if (r.secondary && (keepSecFrac < 0.0 || keepSecFrac > 1.0))
-	continue;
-      
+
+      // don't overdo seconarry
+      if (r.secondary >= 0) { // <0 is primay
+	++secondaryCount;
+	if (secondaryCount > maxSecondary)
+	  continue;
+      }
+	
       hits.push_back(mem_reg2aln(memopt_,
 				 index_->idx_->bns,
 				 index_->idx_->pac,
@@ -355,26 +387,26 @@ std::vector<Alignment> BWAAligner::alignBatch(
 				 seq.data(),
 				 &r));
     }
-    
+
     std::free(regs.a);
-    
     std::sort(hits.begin(), hits.end(), aln_sort);
 
     // emit a BamRecord for each hit
+      
     for (size_t i = 0; i < hits.size(); ++i) {
       auto& h = hits[i];
-      bool isSec   = (h.flag & BAM_FSECONDARY);
-      bool tooLow  = isSec && (primaryScore * keepSecFrac > h.score);
-      bool tooMany = isSec && (int(i) > maxSecondary);
       
-      if (tooLow || tooMany) {
+      // set the score for the primary
+      bool isSecondary   = (h.flag & BAM_FSECONDARY);      
+      if (!isSecondary)
+	primaryScore = h.score;
+      
+      // don't add if the alignment score a secondary is too low
+      if (isSecondary && (h.score < primaryScore * keepSecFrac)) {
 	std::free(h.cigar);
 	std::free(h.XA);
 	continue;
       }
-      
-      if (!isSec)
-	primaryScore = h.score;
       
       auto b = std::make_shared<BamRecord>();
       
@@ -463,14 +495,15 @@ std::vector<Alignment> BWAAligner::alignBatch(
       auto* q = bam_get_qual(b->b);
       q[0] = 0xff;
       
-      b->AddIntTag("NA", regs.n);
+      // add score tags
       b->AddIntTag("NM", h.NM);
-      if (h.XA) b->AddZTag("XA", std::string(h.XA));
+      if (h.XA)
+	b->AddZTag("XA", std::string(h.XA));
       b->AddIntTag("AS", h.score);
-      if (b->SecondaryFlag())
-	++secondaryCount;
+      b->AddIntTag("XS", h.sub);
       
       std::free(h.XA);
+      
       out.push_back(b);
     }
     // auto t2 = std::chrono::high_resolution_clock::now();
@@ -480,7 +513,7 @@ std::vector<Alignment> BWAAligner::alignBatch(
     
     
   }
-
+  
   void BWAAligner::alignSequence(const UnalignedSequence& us,
 				 BamRecordPtrVector&           out,
 				 bool                       hardclip,
