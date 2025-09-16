@@ -468,32 +468,44 @@ std::vector<Alignment> BWAAligner::alignBatch(
       if (h.is_rev) {
 	int j = 0;
 	for (int p = sl - 1; p >= 0; --p, ++j) {
-	  uint8_t v = 15;
+	  uint8_t v = 15; // N
 	  switch (clipped[p]) {
-          case 'A': v = 8; break;
-          case 'C': v = 2; break;
-          case 'G': v = 4; break;
-          case 'T': v = 1; break;
+	  case 'A': v = 8; break; // T
+	  case 'C': v = 4; break; // G
+	  case 'G': v = 2; break; // C
+	  case 'T': v = 1; break; // A
+	  case 'N': v = 15; break;
 	  }
 	  seqbuf[j >> 1] &= ~(0xF << ((~j & 1) << 2));
 	  seqbuf[j >> 1] |= v << ((~j & 1) << 2);
 	}
       } else {
 	for (int p = 0; p < sl; ++p) {
-	  uint8_t v = 15;
+	  uint8_t v = 15; // N
 	  switch (clipped[p]) {
-          case 'A': v = 1; break;
-          case 'C': v = 2; break;
-          case 'G': v = 4; break;
-          case 'T': v = 8; break;
+	  case 'A': v = 1; break;
+	  case 'C': v = 2; break;
+	  case 'G': v = 4; break;
+	  case 'T': v = 8; break;
+	  case 'N': v = 15; break;
 	  }
 	  seqbuf[p >> 1] &= ~(0xF << ((~p & 1) << 2));
 	  seqbuf[p >> 1] |= v << ((~p & 1) << 2);
 	}
-      }
+      }      
       
       auto* q = bam_get_qual(b->b);
-      q[0] = 0xff;
+      if (h.is_rev) {
+	for (int j = 0, p = sl - 1; p >= 0; --p, ++j) {
+	  q[j] = 0x23; // or your real qualities; 0xFF is special ("missing")
+	}
+      } else {
+	for (int p = 0; p < sl; ++p) {
+	  q[p] = 0x23; // placeholder; set real per-base Q if you have it
+	}
+      }
+      
+      //q[0] = 0xff; //old
       
       // add score tags
       b->AddIntTag("NM", h.NM);

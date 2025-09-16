@@ -297,6 +297,9 @@ class BamRecord {
   /** BamRecord has proper orientation (FR) */
   bool ProperOrientation() const;
 
+  /** return if this read is the left-most aligned compared with mate */
+  bool IsLeftMostAlignment() const;
+  
   /** Count the total number of N bases in this sequence */
   int32_t CountNBases() const;
 

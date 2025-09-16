@@ -1184,6 +1184,18 @@ namespace SeqLib {
       + '(' + strand + ')';
   }
 
+  bool BamRecord::IsLeftMostAlignment() const {
+    // grab flags + positions
+    bool rev       = ReverseFlag();
+    bool mate_rev  = MateReverseFlag();
+    int  chr       = ChrID();
+    int  mate_chr  = MateChrID();
+    int  pos       = Position();
+    int  mate_pos  = MatePosition();
+    
+    return (chr < mate_chr) || (chr == mate_chr && pos <= mate_pos);
+  }
+  
   Orientation BamRecord::PairOrientation() const {
     // if either end is unmapped or this isnt actually paired, call it unoriented
     if (!MappedFlag() || !MateMappedFlag())  
@@ -1202,13 +1214,11 @@ namespace SeqLib {
       return Orientation::FR;
     
     // decide which end is leftmost
-    bool left_is_this = (chr < mate_chr) || (chr == mate_chr && pos <= mate_pos);
+    bool left_is_this = IsLeftMostAlignment();
     
     // pick the proper rev flags for left & right
     bool left_rev  = left_is_this ? rev      : mate_rev;
     bool right_rev = left_is_this ? mate_rev : rev;
-
-
     
     // now uniquely classify
     if (!left_rev  &&  right_rev)  return Orientation::FR;

@@ -149,7 +149,7 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
     tmp[q - reg.c_str()] = 0;
     tid = hdr.Name2ID(std::string(tmp)); //bam_name2id(h.get(), tmp);
     if (tid < 0) {
-      std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
+      std::string inv = "GenomicRegion constructor: Failed to set region for " + reg + " due to an invalid contig name: " + tmp;
       throw std::invalid_argument(inv);
     }
 
@@ -159,7 +159,7 @@ std::ostream& operator<<(std::ostream& out, const GenomicRegion& gr) {
       end = hdr.GetSequenceLength(reg);
     }
   } else {
-    std::string inv = "GenomicRegion constructor: Failed to set region for " + reg;
+    std::string inv = "GenomicRegion constructor: Failed to set region for " + reg + " check if contig:x-y if x < y";
     throw std::invalid_argument(inv);
   }
   
