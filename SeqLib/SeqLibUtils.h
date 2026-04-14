@@ -73,18 +73,15 @@ namespace SeqLib {
   }
 
   /** Display the runtime (CPU and Wall)
-   * 
+   *
    * @param start Running timer
    * @return Time formatted as "CPU: XmYs Wall: XmYs"
-   * @note Does not work on OSX or Windows (returns "not configured")
+   *
+   * @note clock_gettime(CLOCK_MONOTONIC, ...) works on macOS 10.12+,
+   * Linux, and any recent POSIX platform. The old __APPLE__ guard has
+   * been removed.
    */
-  inline std::string displayRuntime(
-#ifndef __APPLE__
-				    const timespec start
-#endif
-				    ) {
-    
-#ifndef __APPLE__
+  inline std::string displayRuntime(const timespec start) {
     struct timespec finish;
     clock_gettime(CLOCK_MONOTONIC, &finish);
     double elapsed = (finish.tv_sec - start.tv_sec);
@@ -92,13 +89,10 @@ namespace SeqLib {
     int min = (int)std::floor(elapsed / 60.0);
     int sec = (int)(elapsed-min*60);
     char buffer[100];
-    sprintf (buffer, "CPU: %4dm%02ds Wall: %4dm%02ds", 
-	     (int)floor( ((double)t) /60.0), t % 60, min, sec);
+    snprintf(buffer, sizeof(buffer), "CPU: %4dm%02ds Wall: %4dm%02ds",
+             (int)floor(((double)t) / 60.0), t % 60, min, sec);
     buffer[99] = '\0';
     return std::string(buffer);
-#else
-    return "--- time not configured for apple\n";
-#endif
   }
 
   /** Reverse complement in-place sequence containg upper/lower case ACTGN
