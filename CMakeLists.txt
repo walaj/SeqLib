@@ -16,11 +16,8 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/bwa    
 )
 
-# Look for htslib on the system
-find_package(htslib QUIET)
-
 # Find required system level type libraries
-find_package(Threads REQUIRED)  
+find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 
 ## LZMA
@@ -35,20 +32,73 @@ endif()
 find_package(BZip2 REQUIRED)
 
 ## HTSLIB
-if (htslib_FOUND)
-    # If htslib was found on the system, use it
-    message(STATUS "Using system htslib")
-else()
-    set(HTSLIB_DIR "" CACHE PATH "Path to HTSLib root directory")
+#
+# Detection order (same as the parent svaba build):
+#   1. find_package(htslib)    — only works when htslib ships a
+#      htslibConfig.cmake (conda/vcpkg).
+#   2. pkg-config --exists htslib
+#      — system installs from brew / apt ship htslib.pc, which works.
+#   3. find_path/find_library on default system search paths.
+#   4. Explicit -DHTSLIB_DIR=/path for non-standard installs.
+#
+# This duplicates the logic in the parent svaba CMakeLists intentionally
+# because SeqLib is reused standalone by other projects (plus parent
+# add_subdirectory(SeqLib) runs before the parent's own htslib detection
+# kicks in, so we can't rely on the parent's values here).
+find_package(htslib QUIET)
 
-    if (NOT HTSLIB_DIR)
-        message(FATAL_ERROR "HTSLIB_DIR not specified. Please specify -DHTSLIB_DIR=/path/to/htslib")
-    else()
-        # Automatically set include and library paths based on HTSLIB_DIR
+set(SEQLIB_HTSLIB_FOUND FALSE)
+set(SEQLIB_HTSLIB_LIBRARIES "")
+
+if (htslib_FOUND)
+    message(STATUS "SeqLib: htslib found via find_package()")
+    set(SEQLIB_HTSLIB_FOUND TRUE)
+    set(SEQLIB_HTSLIB_LIBRARIES hts)
+endif()
+
+if (NOT SEQLIB_HTSLIB_FOUND)
+    find_package(PkgConfig QUIET)
+    if (PkgConfig_FOUND)
+        pkg_check_modules(HTSLIB_PC QUIET htslib)
+        if (HTSLIB_PC_FOUND)
+            message(STATUS "SeqLib: htslib found via pkg-config (version ${HTSLIB_PC_VERSION})")
+            include_directories(${HTSLIB_PC_INCLUDE_DIRS})
+            link_directories(${HTSLIB_PC_LIBRARY_DIRS})
+            set(SEQLIB_HTSLIB_FOUND TRUE)
+            set(SEQLIB_HTSLIB_LIBRARIES ${HTSLIB_PC_LIBRARIES})
+        endif()
+    endif()
+endif()
+
+if (NOT SEQLIB_HTSLIB_FOUND)
+    find_path(HTSLIB_INCLUDE_DIR NAMES htslib/hts.h
+              DOC "Directory containing htslib/hts.h")
+    find_library(HTSLIB_LIBRARY NAMES hts
+                 DOC "Path to the hts library")
+    if (HTSLIB_INCLUDE_DIR AND HTSLIB_LIBRARY)
+        message(STATUS "SeqLib: htslib headers at ${HTSLIB_INCLUDE_DIR}, lib at ${HTSLIB_LIBRARY}")
+        include_directories(${HTSLIB_INCLUDE_DIR})
+        set(SEQLIB_HTSLIB_FOUND TRUE)
+        set(SEQLIB_HTSLIB_LIBRARIES ${HTSLIB_LIBRARY})
+    endif()
+endif()
+
+if (NOT SEQLIB_HTSLIB_FOUND)
+    set(HTSLIB_DIR "" CACHE PATH "Path to HTSLib root directory")
+    if (HTSLIB_DIR)
+        message(STATUS "SeqLib: using explicit HTSLIB_DIR=${HTSLIB_DIR}")
         include_directories(${HTSLIB_DIR}/include)
         link_directories(${HTSLIB_DIR}/lib)
+        set(SEQLIB_HTSLIB_FOUND TRUE)
+        set(SEQLIB_HTSLIB_LIBRARIES hts)
+    else()
+        message(FATAL_ERROR
+            "SeqLib: htslib not found. Install htslib system-wide (e.g. "
+            "`brew install htslib` or `apt install libhts-dev`) so "
+            "pkg-config / find_library locate it automatically, or pass "
+            "-DHTSLIB_DIR=/path/to/htslib to point at a manual build.")
     endif()
-endif()    
+endif()
 
 # Find all source files
 file(GLOB SOURCES "src/*.cpp" "src/*.c")
@@ -85,7 +135,7 @@ target_link_libraries(seqlib
     ${CMAKE_CURRENT_SOURCE_DIR}/fermi-lite/libfml.a
     Threads::Threads
     ZLIB::ZLIB
-    hts
+    ${SEQLIB_HTSLIB_LIBRARIES}
     ${LZMA_LIBRARY}
     BZip2::BZip2
 )
