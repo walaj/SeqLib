@@ -54,6 +54,20 @@ public:
   /** True if a file is currently open. */
   bool IsOpen() const { return static_cast<bool>(fp_); }
 
+  /**
+   * Enable htslib thread pool for BGZF decompression on this file.
+   *
+   * Must be called AFTER Open() and BEFORE the first Next() — htslib wires
+   * the pool into the currently-open file's BGZF layer. A pool of `n`
+   * threads lets decompression run in parallel with the main thread's
+   * record parsing, which typically delivers a 3–5x speedup at n=4..8 for
+   * dense BAMs. No-op (and silently tolerated) if the file isn't open or
+   * the underlying format doesn't support pooling (e.g. uncompressed SAM).
+   *
+   * @param n number of threads for the BGZF pool (0 = disable)
+   */
+  void SetThreads(int n) { if (fp_) hts_set_threads(fp_.get(), n); }
+
   /** Set the path to the reference needed to unpack a CRAM file */
   void SetCramReference(const std::string& cram);
 

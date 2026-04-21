@@ -78,6 +78,20 @@ class BamWriter  {
   /** Return if the writer has opened the file */
   bool IsOpen() const { return fop.get() != NULL; }
 
+  /**
+   * Enable htslib thread pool for BGZF compression on this writer.
+   *
+   * Must be called AFTER Open() and BEFORE the first WriteRecord() —
+   * htslib wires the pool into the currently-open file's BGZF layer.
+   * Compression is usually the dominant cost when writing a BAM; a pool
+   * of `n` threads typically yields a 3–5x speedup at n=4..8 on dense
+   * BAMs. No-op (and silently tolerated) if the file isn't open or the
+   * underlying format doesn't support pooling.
+   *
+   * @param n number of threads for the BGZF pool (0 = disable)
+   */
+  void SetThreads(int n) { if (fop) hts_set_threads(fop.get(), n); }
+
   /** Write an alignment to the output BAM file 
    * @param r The BamRecord to save
    * @return False if cannot write alignment
