@@ -215,12 +215,6 @@ namespace SeqLib {
 
   void BFC::Train() {
 
-    // clear the old if there
-    if (ch) {
-      bfc_ch_destroy(ch);
-      ch = nullptr;
-    }
-    
     // Initialize Fermi-lite options
     fml_opt_init(&fml_opt);
 
@@ -230,49 +224,29 @@ namespace SeqLib {
       kmer = fml_opt.ec_k;
     }
     bfc_opt.k = kmer;
-    
-    // initialize BFC options
-    //////
-    
-    // Compute total sequence length
-    // NOT sure why need to do this, just set to 20
-    //uint64_t tot_len = 0;
-    //for (auto const& s : m_seqs) tot_len += s.l_seq;
-    // bfc_opt.l_pre = (tot_len > 8)
-    //   ? static_cast<int>(std::min<uint64_t>(tot_len - 8, 20))
-    //   : 0; //debug
     bfc_opt.l_pre = 20;
-    
-    //OLD
-    //for (size_t i = 0; i < n_seqs; ++i) 
-    //  tot_len += m_seqs[i].l_seq; // compute total length
-    //bfc_opt.l_pre = tot_len - 8 < 20? tot_len - 8 : 20;
-    
-    //  setup the counting of kmers
+
     // Reset error-correction state
-    std::memset(&es, 0, sizeof(es));    
-    //OLD //memset(&es, 0, sizeof(ec_step_t));
-    //kmer is learned before this
-    
-    //es.opt = &bfc_opt, es.n_seqs = n_seqs, es.seqs = m_seqs, es.flt_uniq = flt_uniq;
-    
-    // hold count info. also called bfc_ch_s. Composed of
-    //    int k
-    //    int l_pre
-    //    cnthash_t **h
-    //        h is of size 1<<l_pre (2^l_pre). It is array of hash tables
-    //        h[i] is initialized with kh_init(cnt) which makes a cnthash_t
-    // bfc_ch_t *ch; // set in BFC.h
-    
-    // Perform k-mer counting
-    ch = fml_count(
-		   m_seqs.size(),
-		   m_seqs.data(),
-      bfc_opt.k,
-      bfc_opt.q,
-      bfc_opt.l_pre,
-      bfc_opt.n_threads
-    );
+    std::memset(&es, 0, sizeof(es));
+
+    // Perform k-mer counting. If we already have a hash table from a
+    // previous Train() call with the same k, reuse it: bfc_ch_clear
+    // memsets the flag arrays (~1M sub-tables) instead of free+malloc
+    // each one. This eliminates ~2M malloc/free calls per region —
+    // measured at 31% (init) + 16% (destroy) = 47% of worker time.
+    if (ch && bfc_ch_get_k(ch) == bfc_opt.k) {
+      fml_count_into(ch,
+        m_seqs.size(), m_seqs.data(),
+        bfc_opt.k, bfc_opt.q, bfc_opt.n_threads);
+    } else {
+      if (ch) {
+        bfc_ch_destroy(ch);
+        ch = nullptr;
+      }
+      ch = fml_count(
+        m_seqs.size(), m_seqs.data(),
+        bfc_opt.k, bfc_opt.q, bfc_opt.l_pre, bfc_opt.n_threads);
+    }
     //ch = fml_count(n_seqs, m_seqs, bfc_opt.k, bfc_opt.q, bfc_opt.l_pre, bfc_opt.n_threads);
 
 #ifdef DEBUG_BFC

@@ -77,6 +77,16 @@ namespace SeqLib {
     /** Reset the sequence iterator inside GetSequence */
     void ResetGetSequence() { m_idx = 0; };
 
+    /** Release ownership of the trained k-mer hash.
+     *  Returns the raw bfc_ch_t pointer and nulls the internal copy,
+     *  so the destructor won't free it. Caller is responsible for
+     *  calling bfc_ch_destroy() on the returned pointer. */
+    bfc_ch_t* ReleaseHash() {
+      bfc_ch_t* h = ch;
+      ch = nullptr;
+      return h;
+    }
+
         bfc_opt_t bfc_opt; // does not need to be destroyed
   private:
 

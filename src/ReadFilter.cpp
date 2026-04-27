@@ -507,18 +507,20 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     }
 
     DEBUGIV(r, "cigar pass")
-      
-    // get the sequence as trimmed
-    std::string tseq = r.Sequence(); //AddZTag("GV", r.Sequence().substr(startpoint, new_len));
-    
+
+    // Sequence length from the BAM core struct — no string allocation.
+    // r.Length() == b->core.l_qseq, identical to the old r.Sequence().length()
+    // since no trimming is applied.
+    const int32_t seq_len = r.Length();
+
 #ifdef HAVE_C11
-    // check for aho corasick motif match
+    // Aho-Corasick motif match needs the actual sequence string
     if (aho.count) {
-      if (!aho.QueryText(tseq))
+      if (!aho.QueryText(r.Sequence()))
       return false;
       DEBUGIV(r, "aho pass")
     }
-#endif    
+#endif
 
     // check for valid NM
     if (!nm.isEvery()) {
@@ -528,7 +530,7 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 	return false;
       DEBUGIV(r, "NM pass")
     }
-    
+
     // check the N bases
     if (!nbases.isEvery()) {
       size_t n = r.CountNBases();
@@ -538,13 +540,13 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
     }
 
     // check for valid length
-    if (!len.isValid(tseq.length())) {
+    if (!len.isValid(seq_len)) {
       return false;
       DEBUGIV(r, "len pass")
     }
 
     // check for valid clip
-    int new_clipnum = r.NumClip() - (r.Length() - tseq.length()); // get clips, minus amount trimmed off
+    int new_clipnum = r.NumClip(); // no trimming → clip count is just NumClip()
     if (!clip.isValid(new_clipnum)) {
       return false;
       DEBUGIV(r, "clip pass with clip size " + tostring(new_clipnum))
