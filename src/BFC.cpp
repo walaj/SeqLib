@@ -43,6 +43,7 @@ namespace SeqLib {
     fml_opt_init(&fml_opt);
     ch        = nullptr;
     kmer      = 0;
+    kmer_fixed = false;
     flt_uniq  = 0;
     kcov      = 0;
   }
@@ -218,8 +219,17 @@ namespace SeqLib {
     // Initialize Fermi-lite options
     fml_opt_init(&fml_opt);
 
-    // Auto-learn kmer size if not set
-    if (kmer <= 0) {
+    // Determine the EC k-mer size. In auto mode, RE-LEARN it from THIS region's
+    // reads on every Train() -- do NOT cache it across regions. The BFC object
+    // is reused across regions (alloc-reuse perf optimization), so caching k
+    // froze it to whatever region a worker thread processed first; because
+    // region->thread assignment is nondeterministic at -p>1, that made
+    // error-correction -- and therefore the entire call set -- nondeterministic
+    // run to run (identical inputs, different output). Re-learning per region is
+    // cheap and restores per-region determinism (matching pre-reuse behavior).
+    // An explicit SetKmer() still pins k (kmer_fixed). The count-hash is still
+    // reused whenever consecutive regions resolve to the same k (check below).
+    if (!kmer_fixed) {
       fml_opt_adjust(&fml_opt, m_seqs.size(), m_seqs.data());
       kmer = fml_opt.ec_k;
     }

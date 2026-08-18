@@ -47,7 +47,7 @@ namespace SeqLib {
     /** Set the k-mer size for training 
      * @note zero is auto
      */
-    void SetKmer(int k) { kmer = k; }
+    void SetKmer(int k) { kmer = k; kmer_fixed = true; }
 
     /** Correct a single new sequence not stored in object 
      * @param str Sequence of string to correct (ACTG)
@@ -116,6 +116,9 @@ namespace SeqLib {
     
     // 0 is auto learn
     int kmer = 0;
+    // true only when SetKmer() pinned k; otherwise k is RE-LEARNED per region
+    // in Train() (caching it made EC nondeterministic under -p>1; see BFC.cpp)
+    bool kmer_fixed = false;
 
     float kcov;
 
