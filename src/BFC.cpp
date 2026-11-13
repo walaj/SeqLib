@@ -234,7 +234,12 @@ namespace SeqLib {
       kmer = fml_opt.ec_k;
     }
     bfc_opt.k = kmer;
-    bfc_opt.l_pre = 20;
+    // Local-assembly windows have far fewer distinct k-mers than a whole
+    // sequencing run; a million sub-tables makes clearing, histogramming and
+    // allocation dominate small windows. Through k=35 bfc_ch_init raises a
+    // smaller prefix as needed to keep every key bit (same rule as
+    // fermi-lite's fml_correct_core); above that the hash folds bits, so keep 20.
+    bfc_opt.l_pre = bfc_opt.k <= 35 ? 12 : 20;
 
     // Reset error-correction state
     std::memset(&es, 0, sizeof(es));
